@@ -1,5 +1,7 @@
 # OpenAPI Client Library
 
+[![Build Status](https://travis-ci.org/SaxoBank/openapi-clientlib-js.svg?branch=master)](https://travis-ci.org/SaxoBank/openapi-clientlib-js)
+
 The OpenApi Client Library a JavaScript library for, among other things, consuming OpenAPI endpoints. 
 The library implements all details regarding security, handshake, heartbeat, endpoint data contracts, subscriptions and batching. 
 It also has hooks for custom conversion of data and mocked data as well as a bunch of utility functions.
