@@ -1,0 +1,15 @@
+﻿/**
+ * The shared library
+ * @namespace saxo
+ */
+
+/**
+ * Access to Open API. Includes classes to help REST transport and streaming.
+ * @namespace saxo.openapi
+ */
+
+/**
+ * Utility functions
+ * @namespace saxo.utils
+ */
+

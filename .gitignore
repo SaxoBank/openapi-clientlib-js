@@ -1,0 +1,11 @@
+.grunt
+node_modules
+tmp
+bin
+obj
+dist
+Properties
+SharedJS.csproj.user
+*.suo
+.idea
+.vs

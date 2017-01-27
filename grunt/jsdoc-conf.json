@@ -1,0 +1,17 @@
+{
+	"source": {
+		"include": [ "src/" ]
+	},
+	"opts": {
+		"template": "./node_modules/ink-docstrap/template",
+		"destination": "./dist/doc",
+		"recurse": true,
+		"readme": "./changelog.md",
+	  	"access": "public,undefined"
+	},
+	"templates": {
+		"theme": "cerulean",
+		"systemName": "OpenAPI Client Library documentation",
+		"footer":  "<script>(function(){var t=document.getElementsByClassName('page-title')[0];if(t.textContent==='Index')t.textContent='Changelog';}());</script>"
+	}
+}
