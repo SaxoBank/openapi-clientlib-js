@@ -47,7 +47,9 @@ var openapi = require("openapi-client");
 var prices = new openapi.Prices(options);
 ```
 
-### Dependencies
+### External dependencies
+The library requires below dependencies to be provided in environment where it will be used.
+
 |Dependency |Version                 |Details & URL |
 |-----------|------------------------|--------------|
 |SignalR    |2.0.3                   |Signal-R can be downloaded from https://github.com/SignalR/SignalR/releases/tag/2.0.3.|
