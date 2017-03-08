@@ -27,11 +27,6 @@ var txt = {
 		bold + indent + sharedConfig.serverBaseURL + sharedConfig.jasmineCoverageOutputFile + reset,
 		bold + indent + sharedConfig.serverBaseURL + sharedConfig.jasmineTestIntegrationOutputFile + reset
 	],
-	'minitrader': [
-		bold + 'Get to minitrader on this url:' + reset,
-		'',
-		bold + indent + sharedConfig.serverBaseURL + 'minitrader' + reset
-	],
 	'helptext': [
 		bold + 'The following grunt commands are available' + reset,
 		'',
@@ -42,7 +37,6 @@ var txt = {
 		bold + indent + 'grunt test-watch' + reset + ' (Run the unittests under a watch - auto reruns tests when code changes)',
 		bold + indent + 'grunt test-server' + reset + ' (Run the unittests in your own browser - sets up a server you can connect to)',
 		bold + indent + 'grunt test-build' + reset + ' (Tests that the build mechanism works)',
-		bold + indent + 'grunt minitrader' + reset + ' (Sets up a server where you can access the bundled minitrader, which uses the library)'
 	]
 };
 
