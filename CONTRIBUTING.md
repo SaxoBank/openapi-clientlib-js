@@ -44,7 +44,7 @@ We happily accept Pull Requests, so here are a few guidelines to get you started
 * Push your changes to a topic branch in your fork of the repository.
 * Submit a pull request to the repository in the SaxoBank organization.
 * The core team looks at Pull Requests on a regular basis.
-* After feedback has been given we expect responses within two weeks. After two
-* weeks we may close the pull request if it isn't showing any activity.
+* After feedback has been given we expect responses within two weeks.
+* After two weeks we may close the pull request if it isn't showing any activity.
 
 Happy committing!
