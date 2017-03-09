@@ -14,7 +14,7 @@ var globalOptions = {
 	"eqnull": true,
 	"forin": true,
 	"proto": true,
-	"predef": ["fetch", "Promise", "MessageChannel", "$", "location"]
+	"predef": ["fetch", "Promise", "MessageChannel", "$", "location", "-console"]
 };
 
 var defaultTask = {

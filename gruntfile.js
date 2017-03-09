@@ -27,7 +27,7 @@ module.exports = function (grunt) {
 
 	/* Register our own base tasks */
 
-	grunt.registerTask('print', require("./grunt/print-task"));
+	grunt.registerTask('print', require("./grunt/print-task")(grunt));
 	grunt.registerTask("force", require("./grunt/force-task")(grunt));
 	grunt.registerTask("generate-index-html", require("./grunt/generate-index-html-task")(grunt));
 	grunt.registerTask("shrinkwrap-test", require("./grunt/shrinkwrap-test-task")(grunt));
