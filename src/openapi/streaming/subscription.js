@@ -1,10 +1,15 @@
 /**
- * @module saxo/openapi/streaming/subscription
+ * @module iit/openapi/streaming/subscription
  * @ignore
  */
 
 import { extend } from '../../utils/object';
 import log from '../../log';
+import {
+	ACTION_SUBSCRIBE,
+	ACTION_UNSUBSCRIBE
+} from './subscription-actions';
+import SubscriptionQueue from './subscription-queue';
 
 //-- Local variables section --
 
@@ -19,9 +24,6 @@ const STATE_UNSUBSCRIBE_REQUESTED = 0x4;
 const STATE_UNSUBSCRIBED = 0x8;
 
 const TRANSITIONING_STATES = STATE_SUBSCRIBE_REQUESTED | STATE_UNSUBSCRIBE_REQUESTED;
-
-const ACTION_SUBSCRIBE = 0x20;
-const ACTION_UNSUBSCRIBE = 0x40;
 
 const DEFAULT_REFRESH_RATE_MS = 1000;
 const MIN_REFRESH_RATE_MS = 100;
@@ -70,12 +72,14 @@ function unsubscribe() {
 }
 
 /**
- * Queues or performs an action based on the curent state.
+ * Queues or performs an action based on the current state.
+ * Supports queue for more then one action, to support consecutive modify requests,
+ * which invoke unsubscribe and subscribe one after another.
  * @param action
  */
 function tryPerformAction(action) {
 	if (!this.connectionAvailable || TRANSITIONING_STATES & this.currentState) {
-		this.nextAction = action;
+		this.queue.enqueue(action);
 	} else {
 		performAction.call(this, action);
 	}
@@ -85,12 +89,11 @@ function tryPerformAction(action) {
  * Callback for when the subscription is ready to perform the next action.
  */
 function onReadyToPerformNextAction() {
-	if (!this.connectionAvailable) {
+	if (!this.connectionAvailable || this.queue.isEmpty()) {
 		return;
 	}
-	if (this.nextAction) {
-		performAction.call(this, this.nextAction);
-	}
+
+	performAction.call(this, this.queue.dequeue());
 }
 
 /**
@@ -124,7 +127,12 @@ function performAction(action) {
 		default:
 			throw new Error("unrecognised action " + action);
 	}
-	this.nextAction = null;
+
+	// Required to manually rerun next action, because if nothing happens in given cycle,
+	// next task from a queue will never be picked up.
+	if (!this.queue.isEmpty() && !(TRANSITIONING_STATES & this.currentState)) {
+		performAction.call(this, this.queue.dequeue());
+	}
 }
 
 /**
@@ -167,15 +175,15 @@ function onSubscribeSuccess(referenceId, result) {
 	if (this.onSubscriptionCreated) {
 		this.onSubscriptionCreated();
 	}
-
+	var nextActionValue = this.queue.peek();
 	// do not fire events if we are waiting to unsubscribe
-	if (this.nextAction !== ACTION_UNSUBSCRIBE) {
-	    try {
-	        this.onUpdate(responseData.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
-	    }
-	    catch(ex) {
-	        log.error(LOG_AREA, "exception occurred in streaming snapshot update callback");
-	    }
+	if (nextActionValue !== ACTION_UNSUBSCRIBE) {
+		try {
+			this.onUpdate(responseData.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
+		}
+		catch(ex) {
+			log.error(LOG_AREA, "exception occurred in streaming snapshot update callback");
+		}
 
 		if (this.updatesBeforeSubscribed) {
 			for(let i = 0, updateMsg; updateMsg = this.updatesBeforeSubscribed[i]; i++) {
@@ -200,9 +208,9 @@ function onSubscribeError(referenceId, response) {
 
 	this.currentState = STATE_UNSUBSCRIBED;
 	log.error(LOG_AREA, "An error occurred subscribing", { response: response, url: this.url });
-
+	var nextActionValue = this.queue.peek();
 	// if we are unsubscribed, do not fire the error handler
-	if (this.nextAction !== ACTION_UNSUBSCRIBE) {
+	if (nextActionValue !== ACTION_UNSUBSCRIBE) {
 		if (this.onError) {
 			this.onError(response);
 		}
@@ -274,6 +282,12 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
 	 */
 	this.referenceId = null;
 
+	/**
+	 * The action queue
+	 * @type {SubscriptionQueue}
+	 */
+	this.queue = new SubscriptionQueue();
+
 	this.transport = transport;
 	this.serviceGroup = serviceGroup;
 	this.url = url;
@@ -312,12 +326,13 @@ Subscription.prototype.OPENAPI_DELETE_PROPERTY = "__meta_deleted";
  * @private
  */
 Subscription.prototype.reset = function() {
+	var nextActionValue = this.queue.peek();
 
 	switch(this.currentState) {
 		case STATE_UNSUBSCRIBED:
 		case STATE_UNSUBSCRIBE_REQUESTED:
 			// do not do anything if we are on our way to unsubscribed unless the next action would be to subscribe
-			if (this.nextAction & ACTION_SUBSCRIBE) {
+			if (nextActionValue & ACTION_SUBSCRIBE) {
 				break;
 			}
 			return;
@@ -331,7 +346,7 @@ Subscription.prototype.reset = function() {
 			return;
 	}
 
-	this.nextAction = null;
+	this.queue.reset();
 
 	// do not unsubscribe because a reset happens when the existing subscription is broken
 	//  * on a new connection (new context id, subscription will be cleaned up)
@@ -406,7 +421,6 @@ Subscription.prototype.onStreamingData = function(message) {
 
 	onActivity.call(this);
 
-
 	switch(this.currentState) {
 		// if we are unsubscribed or trying to unsubscribe then ignore the data
 		case STATE_UNSUBSCRIBE_REQUESTED:
@@ -429,7 +443,7 @@ Subscription.prototype.onStreamingData = function(message) {
 		this.onUpdate(message, this.UPDATE_TYPE_DELTA);
 	}
 	catch(error) {
-	    log.error(LOG_AREA, "exception occurred in streaming delta update callback", error);
+		log.error(LOG_AREA, "exception occurred in streaming delta update callback", error);
 	}
 };
 

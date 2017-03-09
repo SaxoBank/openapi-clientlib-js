@@ -91,26 +91,26 @@ describe("openapi StreamingSubscription", () => {
 		});
 
 		it("catches exceptions thrown during initial update", (done) => {
-		    var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
-		    subscription.onSubscribe();
+			var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
+			subscription.onSubscribe();
 
-		    updateSpy.and.throwError("Unhandled Exception");
+			updateSpy.and.throwError("Unhandled Exception");
 
-		    var initialResponse = {Snapshot: {Data: [1,'fish',3]}};
-		    sendInitialResponse(initialResponse);
+			var initialResponse = {Snapshot: {Data: [1,'fish',3]}};
+			sendInitialResponse(initialResponse);
 
-		    tick(() => {
+			tick(() => {
 
-		        expect(updateSpy.calls.count()).toEqual(1);
+				expect(updateSpy.calls.count()).toEqual(1);
 
-		        const streamingData = {ReferenceId: subscription.referenceId, Data: [1, 3]};
-		        subscription.onStreamingData(streamingData);
+				const streamingData = {ReferenceId: subscription.referenceId, Data: [1, 3]};
+				subscription.onStreamingData(streamingData);
 
-		        // check we have not artificiailly set the streaming state as unsubscribed
-		        expect(updateSpy.calls.count()).toEqual(2);
+				// check we have not artificiailly set the streaming state as unsubscribed
+				expect(updateSpy.calls.count()).toEqual(2);
 
-		        done();
-		    });
+				done();
+			});
 		});
 	});
 
@@ -387,7 +387,10 @@ describe("openapi StreamingSubscription", () => {
 			});
 		});
 
-		it ("ignores a unsubscribe followed by a subscribe when waiting for an action to respond", (done) => {
+		/**
+		 * Unsubscribe before subscribe is required for modify action.
+ 		 */
+		it ("accept unsubscribe followed by a subscribe when waiting for an action to respond", (done) => {
 			var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
 
 			spyOn(saxo.log, "error");
@@ -403,7 +406,7 @@ describe("openapi StreamingSubscription", () => {
 			tick(() => {
 
 				expect(transport.post.calls.count()).toEqual(0);
-				expect(transport.delete.calls.count()).toEqual(0);
+				expect(transport.delete.calls.count()).toEqual(1);
 
 				expect(saxo.log.error.calls.count()).toEqual(0);
 

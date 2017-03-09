@@ -20,6 +20,8 @@ import TransportRetry from './openapi/transport/retry';
 import Streaming from './openapi/streaming/streaming';
 import StreamingOrphanFinder from './openapi/streaming/orphan-finder';
 import StreamingSubscription from './openapi/streaming/subscription';
+import StreamingSubscriptionQueue from './openapi/streaming/subscription-queue';
+import * as StreamingSubscriptionActions from './openapi/streaming/subscription-actions';
 
 export default {
 	log: log,
@@ -38,6 +40,8 @@ export default {
 		// privates exposed for testing
 		_StreamingOrphanFinder: StreamingOrphanFinder,
 		_StreamingSubscription: StreamingSubscription,
+		_StreamingSubscriptionQueue: StreamingSubscriptionQueue,
+		_StreamingSubscriptionActions: StreamingSubscriptionActions,
 	},
 	utils: {
 		"enum": utils_enum,
