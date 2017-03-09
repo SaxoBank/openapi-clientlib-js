@@ -93,9 +93,9 @@
       "dev": true
     },
     "aws4": {
-      "version": "1.5.0",
+      "version": "1.6.0",
       "from": "aws4@>=1.2.1 <2.0.0",
-      "resolved": "https://registry.npmjs.org/aws4/-/aws4-1.5.0.tgz",
+      "resolved": "https://registry.npmjs.org/aws4/-/aws4-1.6.0.tgz",
       "dev": true
     },
     "babel-code-frame": {
@@ -421,9 +421,9 @@
       "dev": true
     },
     "bcrypt-pbkdf": {
-      "version": "1.0.0",
+      "version": "1.0.1",
       "from": "bcrypt-pbkdf@>=1.0.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/bcrypt-pbkdf/-/bcrypt-pbkdf-1.0.0.tgz",
+      "resolved": "https://registry.npmjs.org/bcrypt-pbkdf/-/bcrypt-pbkdf-1.0.1.tgz",
       "dev": true,
       "optional": true
     },
@@ -1201,9 +1201,9 @@
       "dev": true
     },
     "grunt-contrib-jasmine": {
-      "version": "1.0.1",
-      "from": "grunt-contrib-jasmine@1.0.1",
-      "resolved": "https://registry.npmjs.org/grunt-contrib-jasmine/-/grunt-contrib-jasmine-1.0.1.tgz",
+      "version": "1.0.3",
+      "from": "grunt-contrib-jasmine@1.0.3",
+      "resolved": "https://registry.npmjs.org/grunt-contrib-jasmine/-/grunt-contrib-jasmine-1.0.3.tgz",
       "dev": true,
       "dependencies": {
         "lodash": {
@@ -1289,9 +1289,9 @@
       "dev": true,
       "dependencies": {
         "rimraf": {
-          "version": "2.5.4",
+          "version": "2.6.1",
           "from": "rimraf@>=2.5.2 <3.0.0",
-          "resolved": "https://registry.npmjs.org/rimraf/-/rimraf-2.5.4.tgz",
+          "resolved": "https://registry.npmjs.org/rimraf/-/rimraf-2.6.1.tgz",
           "dev": true
         }
       }
@@ -1507,9 +1507,9 @@
       "dev": true
     },
     "is-my-json-valid": {
-      "version": "2.15.0",
+      "version": "2.16.0",
       "from": "is-my-json-valid@>=2.12.4 <3.0.0",
-      "resolved": "https://registry.npmjs.org/is-my-json-valid/-/is-my-json-valid-2.15.0.tgz",
+      "resolved": "https://registry.npmjs.org/is-my-json-valid/-/is-my-json-valid-2.16.0.tgz",
       "dev": true
     },
     "is-property": {
@@ -1606,9 +1606,9 @@
       "dev": true
     },
     "jsbn": {
-      "version": "0.1.0",
+      "version": "0.1.1",
       "from": "jsbn@>=0.1.0 <0.2.0",
-      "resolved": "https://registry.npmjs.org/jsbn/-/jsbn-0.1.0.tgz",
+      "resolved": "https://registry.npmjs.org/jsbn/-/jsbn-0.1.1.tgz",
       "dev": true,
       "optional": true
     },
@@ -2164,9 +2164,9 @@
       "dev": true
     },
     "qs": {
-      "version": "6.3.0",
+      "version": "6.3.2",
       "from": "qs@>=6.3.0 <6.4.0",
-      "resolved": "https://registry.npmjs.org/qs/-/qs-6.3.0.tgz",
+      "resolved": "https://registry.npmjs.org/qs/-/qs-6.3.2.tgz",
       "dev": true
     },
     "range-parser": {
@@ -2574,9 +2574,9 @@
       "dev": true
     },
     "sshpk": {
-      "version": "1.10.2",
+      "version": "1.11.0",
       "from": "sshpk@>=1.7.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/sshpk/-/sshpk-1.10.2.tgz",
+      "resolved": "https://registry.npmjs.org/sshpk/-/sshpk-1.11.0.tgz",
       "dev": true,
       "dependencies": {
         "assert-plus": {
