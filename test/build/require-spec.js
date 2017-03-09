@@ -9,7 +9,7 @@ beforeAll((done) => {
 	const loadRequireJS = new Promise((resolve) => {
 		const requirejsScript = document.createElement('script');
 		requirejsScript.onload = resolve;
-		requirejsScript.src = '../libs/require.js';
+		requirejsScript.src = '../node_modules/requirejs/require.js';
 		document.head.appendChild(requirejsScript);
 	});
 
