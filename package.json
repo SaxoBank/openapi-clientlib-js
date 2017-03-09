@@ -1,6 +1,6 @@
 {
-  "name": "@saxo/openapi-client",
-  "version": "6.0.0",
+  "name": "openapi-clientlib",
+  "version": "1.0.0",
   "engines": {
     "node": ">=4"
   },
@@ -12,6 +12,11 @@
     "dist",
     "src"
   ],
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/SaxoBank/openapi-clientlib-js.git"
+  },
+  "licence": "Apache-2.0",
   "devDependencies": {
     "babel-preset-es2015-rollup": "1.1.1",
     "grunt": "1.0.1",
@@ -29,6 +34,6 @@
     "jsdoc-75lb": "3.5.4",
     "remap-istanbul": "0.5.1",
     "rollup-plugin-babel": "2.4.0",
-    "taffydb": "^2.7.3"
+    "taffydb": "2.7.3"
   }
 }
