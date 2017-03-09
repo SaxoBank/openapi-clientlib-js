@@ -40,12 +40,14 @@ var txt = {
 	]
 };
 
-function print(subTask) {
-	var lines = txt[subTask];
-	console.log();
-	for (var i = 0, l = lines.length; i < l; i++) {
-		console.log(lines[i]);
-	}
+function createPrint(grunt) {
+    return function (subTask) {
+        var lines = txt[subTask];
+        grunt.log.writeln();
+        for (var i = 0, l = lines.length; i < l; i++) {
+            grunt.log.writeln(lines[i]);
+        }
+    };
 }
 
-module.exports = print;
+module.exports = createPrint;
