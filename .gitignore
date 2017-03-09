@@ -5,7 +5,7 @@ bin
 obj
 dist
 Properties
-SharedJS.csproj.user
+openapi-clientlib-js.csproj.user
 *.suo
 .idea
 .vs
