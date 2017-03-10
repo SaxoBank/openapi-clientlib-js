@@ -16,21 +16,21 @@
     "type" : "git",
     "url" : "https://github.com/SaxoBank/openapi-clientlib-js.git"
   },
-  "licence": "Apache-2.0",
+  "license": "Apache-2.0",
   "devDependencies": {
-    "babel-preset-es2015-rollup": "1.1.1",
+    "babel-preset-es2015-rollup": "3.0.0",
     "grunt": "1.0.1",
     "grunt-cli": "1.2.0",
     "grunt-contrib-clean": "1.0.0",
     "grunt-contrib-connect": "1.0.2",
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-jasmine": "1.0.3",
-    "grunt-contrib-jshint": "1.0.0",
+    "grunt-contrib-jshint": "1.1.0",
     "grunt-contrib-watch": "1.0.0",
-    "grunt-rollup": "0.7.1",
+    "grunt-rollup": "1.0.1",
     "grunt-template-jasmine-istanbul": "0.4.0",
-    "remap-istanbul": "0.5.1",
-    "rollup-plugin-babel": "2.4.0",
+    "remap-istanbul": "0.9.1",
+    "rollup-plugin-babel": "2.7.1",
     "taffydb": "2.7.3"
   }
 }
