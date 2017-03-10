@@ -1,3 +1,4 @@
 dir: src
 articles: 
  - Changelog: changelog.md
+ - Readme: README.md

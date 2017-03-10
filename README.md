@@ -56,7 +56,11 @@ The library requires below dependencies to be provided in environment where it w
 |jQuery     |>1.11                  |We do not depend on jQuery, but SignalR does. You can use any version of jquery that SignalR supports.|
 
 ### Browser Support
-The library requires an ES5-compatible browser and requires fetch and promises to be polyfilled.
+The library requires an ES5-compatible browser and requires fetch and promises to be available or polyfilled.
+
+### Documentation
+
+Documentation for the API is built from the source jsdoc and [available on doclets.io](https://doclets.io/SaxoBank/openapi-clientlib-js/master).
 
 # Contributing
 You want to contribute? Great! Have a look at our [contribution guidelines](CONTRIBUTING.md).

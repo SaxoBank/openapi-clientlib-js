@@ -9,7 +9,6 @@ module.exports = function (grunt) {
 		jasmine: require("./grunt/jasmine-conf"),
 		jshint: require("./grunt/jshint-conf"),
 		rollup: require("./grunt/rollup-conf"),
-		shell: require("./grunt/shell-conf"),
 		watch: require("./grunt/watch-conf"),
 		remapIstanbul: require("./grunt/remap-istanbul-conf")
 	});
@@ -22,23 +21,18 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks("grunt-contrib-jshint");
 	grunt.loadNpmTasks("grunt-contrib-watch");
 	grunt.loadNpmTasks("grunt-rollup");
-	grunt.loadNpmTasks("grunt-shell");
 	grunt.loadNpmTasks('remap-istanbul');
 
 	/* Register our own base tasks */
 
 	grunt.registerTask('print', require("./grunt/print-task")(grunt));
 	grunt.registerTask("force", require("./grunt/force-task")(grunt));
-	grunt.registerTask("generate-index-html", require("./grunt/generate-index-html-task")(grunt));
 	grunt.registerTask("shrinkwrap-test", require("./grunt/shrinkwrap-test-task")(grunt));
 
 	/* Register our task chains */
 
 	grunt.registerTask('default', ['print:helptext']);
-	grunt.registerTask('jsdoc', ['clean:tmp', 'clean:doc', 'shell:jsdoc', 'print:jsdoc']);
 	grunt.registerTask('dist', ['shrinkwrap-test', 'clean:tmp', 'clean:release', 'rollup:dist', 'print:release']);
-
-	grunt.registerTask('publish', ['test-coverage', 'jsdoc', 'generate-index-html']);
 
 	// Test Tasks
 	grunt.registerTask('test', ['jshint', 'dist', 'rollup:test', 'connect', 'jasmine:unit', 'jasmine:build-requirejs']);
