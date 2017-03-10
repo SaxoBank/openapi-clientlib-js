@@ -8,6 +8,8 @@ var packageConfig = require("../package.json");
 var sharedConfig = require("./_shared-config");
 var fs = require("fs");
 var babel = require("rollup-plugin-babel");
+var nodeResolve = require("rollup-plugin-node-resolve");
+var commonjs = require("rollup-plugin-commonjs");
 
 // prepare the template. This will provide the banner and footer allowing us greater control
 // we could use the format: "umd" but we wouldn't be able to merge the namespaces when used
@@ -32,6 +34,8 @@ module.exports = {
 			banner: outputParts[0],
 			footer: outputParts[1],
 			plugins: [
+				nodeResolve({ jsnext: true, main: true, browser: true }),
+				commonjs(),
 				babel()
 			]
 		},
@@ -46,7 +50,9 @@ module.exports = {
 		options: {
 			format: "iife",
 			plugins: [
-				babel()
+				nodeResolve({ jsnext: true, main: true, browser: true }),
+				babel(),
+				commonjs()
 			]
 		},
 		files: [

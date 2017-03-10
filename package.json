@@ -13,8 +13,8 @@
     "src"
   ],
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/SaxoBank/openapi-clientlib-js.git"
+    "type": "git",
+    "url": "https://github.com/SaxoBank/openapi-clientlib-js.git"
   },
   "licence": "Apache-2.0",
   "devDependencies": {
@@ -31,6 +31,11 @@
     "grunt-template-jasmine-istanbul": "0.4.0",
     "remap-istanbul": "0.5.1",
     "rollup-plugin-babel": "2.4.0",
+    "rollup-plugin-commonjs": "8.0.0",
+    "rollup-plugin-node-resolve": "2.0.0",
     "taffydb": "2.7.3"
+  },
+  "dependencies": {
+    "asap": "2.0.5"
   }
 }

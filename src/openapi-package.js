@@ -1,5 +1,4 @@
 ﻿import * as utils_enum from './utils/enum';
-import * as utils_function from './utils/function';
 import * as utils_object from './utils/object';
 import * as utils_string from './utils/string';
 import utils_fetch from './utils/fetch';
@@ -41,7 +40,6 @@ export default {
 	},
 	utils: {
 		"enum": utils_enum,
-		"function": utils_function,
 		"object": utils_object,
 		"string": utils_string,
 		fetch: utils_fetch

@@ -6,7 +6,7 @@
 //-- Local variables section --
 
 import TransportQueue from './queue';
-import { nextTick } from '../../utils/function';
+import asap from 'asap/raw';
 import { formatUrl, createGUID } from '../../utils/string';
 import { parse as parseBatch, build as buildBatch } from '../batch-util';
 import log from '../../log';
@@ -150,6 +150,8 @@ function TransportBatch(transport, baseUrl, authProvider, options) {
 	this.authProvider = authProvider;
 	this.timeoutMs = options && options.timeoutMs || 0;
 	this.isQueueing = true;
+
+	this.runBatches = this.runBatches.bind(this);
 }
 TransportBatch.prototype = Object.create(TransportQueue.prototype, {constructor: { value: TransportBatch, enumerable: false, writable: true, configurable: true }});
 
@@ -163,12 +165,12 @@ TransportBatch.prototype.addToQueue = function(item) {
 	if (!this.nextTickTimer || this.timeoutMs > 0) {
 		if (this.timeoutMs === 0) {
 			this.nextTickTimer = true;
-			nextTick(this.runBatches.bind(this));
+			asap(this.runBatches);
 		} else {
 			if (this.nextTickTimer) {
 				clearTimeout(this.nextTickTimer);
 			}
-			this.nextTickTimer = setTimeout(this.runBatches.bind(this), this.timeoutMs);
+			this.nextTickTimer = setTimeout(this.runBatches, this.timeoutMs);
 		}
 	}
 };
