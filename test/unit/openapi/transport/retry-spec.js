@@ -85,7 +85,7 @@ describe("openapi TransportRetry", () => {
         var deletePromise = transportRetry.delete();
         tick(() => {
             expect(transport.delete.calls.count()).toEqual(1);
-            transport.deleteReject({ status: 404, response: "test"});
+            transport.deleteReject(new TypeError('Network request failed'));
             var isResolved = false;
             deletePromise.then(() => {
                 isResolved = true;
@@ -120,7 +120,7 @@ describe("openapi TransportRetry", () => {
         });
         tick(() => {
             expect(transport.delete.calls.count()).toEqual(1);
-            transport.deleteReject({ status: 404, response: "test"});
+            transport.deleteReject(new TypeError('Network request failed'));
             tick(() => {
                 //1st retry
                 expect(transportRetry.failedCalls.length).toEqual(1);
@@ -128,7 +128,7 @@ describe("openapi TransportRetry", () => {
                 jasmine.clock().tick(2000);  // now go forward 2 seconds
                 expect(transport.delete.calls.count()).toEqual(2);
                 expect(transportRetry.retryTimer).toBeNull(); //the timer is unset
-                transport.deleteReject({ status: 404, response: "test"});
+                transport.deleteReject(new TypeError('Network request failed'));
 
                 tick(() => {
                     //2nd retry
@@ -138,7 +138,7 @@ describe("openapi TransportRetry", () => {
                     expect(transport.delete.calls.count()).toEqual(3);
                     expect(transportRetry.retryTimer).toBeNull(); //the timer is unset
                     expect(transportRetry.failedCalls.length).toEqual(0);
-                    transport.deleteReject({ status: 404, response: "test"});
+                    transport.deleteReject(new TypeError('Network request failed'));
 
                     tick(() => {
                         //3rd retry
@@ -148,7 +148,7 @@ describe("openapi TransportRetry", () => {
                         expect(transport.delete.calls.count()).toEqual(4); //4 delete calls in total
                         expect(transportRetry.retryTimer).toBeNull(); //the timer is unset
                         expect(transportRetry.failedCalls.length).toEqual(0);
-                        transport.deleteReject({ status: 404, response: "test"});
+                        transport.deleteReject(new TypeError('Network request failed'));
 
                         tick(() => {
                             //no more retries after 3rd retry failed
@@ -162,6 +162,26 @@ describe("openapi TransportRetry", () => {
                         });
                     });
                 });
+            });
+        });
+    });
+
+    it("does not retry rejected calls with a valid status code", (done) => {
+        transportRetry = new TransportRetry(transport, {retryTimeout:2000, methods:{'delete':{retryLimit:3}}});
+        var deletePromise = transportRetry.delete();
+        tick(() => {
+            expect(transport.delete.calls.count()).toEqual(1);
+            transport.deleteReject({ status: 404, response: "test"});
+            var isRejected = false;
+            deletePromise.catch(() => {
+                isRejected = true;
+            });
+            tick(() => {
+                expect(isRejected).toEqual(true);
+                jasmine.clock().tick(2000);
+                expect(transportRetry.failedCalls.length).toEqual(0);
+                expect(transport.delete.calls.count()).toEqual(1);
+                done();
             });
         });
     });

@@ -114,14 +114,15 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
     this.transport[transportCall.method]
         .apply(this.transport, transportCall.args)
         .then(transportCall.resolve,
-              () => {
-                  if (transportCall.retryCount < this.methods[transportCall.method].retryLimit) {
-                      this.addFailedCall(transportCall);
-                  }
-                  else {
-                      transportCall.reject.apply(null, arguments);
-                  }
-              });
+            (response) => {
+                if (!(response && response.status) &&
+                    (transportCall.retryCount < this.methods[transportCall.method].retryLimit)) {
+                    this.addFailedCall(transportCall);
+                }
+                else {
+                    transportCall.reject.apply(null, arguments);
+                }
+            });
 };
 
 /**
