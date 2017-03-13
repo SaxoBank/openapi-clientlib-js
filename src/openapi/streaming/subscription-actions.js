@@ -1,2 +1,5 @@
-export const ACTION_SUBSCRIBE = 0x20;
-export const ACTION_UNSUBSCRIBE = 0x40;
+export const ACTION_SUBSCRIBE = 0x1;
+export const ACTION_UNSUBSCRIBE = 0x2;
+export const ACTION_MODIFY = 0x4;
+
+export const ACTION_MODIFY_SUBSCRIBE = ACTION_SUBSCRIBE | ACTION_MODIFY;

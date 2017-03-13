@@ -277,7 +277,7 @@ function resetAllSubscriptions() {
  */
 function resetSubscriptions(referenceIdList) {
 
-    if (!referenceIdList || !referenceIdList.length) {
+	if (!referenceIdList || !referenceIdList.length) {
 		resetAllSubscriptions.call(this);
 		return;
 	}
@@ -467,9 +467,9 @@ Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptio
  *
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to start.
  */
-Streaming.prototype.subscribe = function(subscription) {
+Streaming.prototype.subscribe = function(subscription, modify) {
 
-	subscription.onSubscribe();
+	subscription.onSubscribe(modify);
 };
 
 /**
@@ -478,6 +478,18 @@ Streaming.prototype.subscribe = function(subscription) {
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to stop.
  */
 Streaming.prototype.unsubscribe = function(subscription) {
+
+	ignoreSubscriptions[subscription.referenceId] = true;
+	setTimeout(() => delete ignoreSubscriptions[subscription.referenceId], MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
+	subscription.onUnsubscribe();
+};
+
+/**
+ * Makes a subscription stop (can be restarted). See {@link saxo.openapi.Streaming#disposeSubscription} for permanently stopping a subscription.
+ *
+ * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to stop.
+ */
+Streaming.prototype.modify = function(subscription) {
 
 	ignoreSubscriptions[subscription.referenceId] = true;
 	setTimeout(() => delete ignoreSubscriptions[subscription.referenceId], MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);

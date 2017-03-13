@@ -7,7 +7,8 @@ import { extend } from '../../utils/object';
 import log from '../../log';
 import {
 	ACTION_SUBSCRIBE,
-	ACTION_UNSUBSCRIBE
+	ACTION_UNSUBSCRIBE,
+	ACTION_MODIFY_SUBSCRIBE,
 } from './subscription-actions';
 import SubscriptionQueue from './subscription-queue';
 
@@ -61,7 +62,6 @@ function subscribe() {
  * Does an actual unsubscribe.
  */
 function unsubscribe() {
-
 	this.currentState = STATE_UNSUBSCRIBE_REQUESTED;
 	// capture the reference id so we can tell in the response whether it is the latest call
 	var referenceId = this.referenceId;
@@ -103,6 +103,7 @@ function onReadyToPerformNextAction() {
 function performAction(action) {
 	switch(action) {
 		case ACTION_SUBSCRIBE:
+		case ACTION_MODIFY_SUBSCRIBE:
 			switch(this.currentState) {
 				case STATE_SUBSCRIBED:
 					break;
@@ -364,13 +365,13 @@ Subscription.prototype.reset = function() {
  * Try to subscribe.
  * @private
  */
-Subscription.prototype.onSubscribe = function() {
+Subscription.prototype.onSubscribe = function(modify) {
 
 	if (this.isDisposed) {
 		throw new Error('Subscribing a disposed subscription - you will not get data');
 	}
 
-	tryPerformAction.call(this, ACTION_SUBSCRIBE);
+	tryPerformAction.call(this, modify ? ACTION_MODIFY_SUBSCRIBE : ACTION_SUBSCRIBE);
 };
 
 /**

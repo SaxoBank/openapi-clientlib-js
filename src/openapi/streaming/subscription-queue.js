@@ -10,7 +10,8 @@
 
 import {
 	ACTION_SUBSCRIBE,
-	ACTION_UNSUBSCRIBE
+	ACTION_UNSUBSCRIBE,
+	ACTION_MODIFY_SUBSCRIBE,
 } from './subscription-actions';
 
 /**
@@ -41,7 +42,14 @@ SubscriptionQueue.prototype.enqueue = function(action) {
 		let task = this.items[i];
 		let nextTask = this.items[i + 1];
 
-		if (task === ACTION_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE || task === nextTask) {
+		if (task === ACTION_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
+			task === ACTION_UNSUBSCRIBE && nextTask === ACTION_SUBSCRIBE ||
+			task === ACTION_SUBSCRIBE && nextTask === ACTION_MODIFY_SUBSCRIBE ||
+			task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_SUBSCRIBE ||
+			task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
+			task === nextTask
+		)
+		{
 			this.items.splice(i, 1);
 		}
 	}

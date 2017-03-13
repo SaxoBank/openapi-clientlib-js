@@ -406,7 +406,7 @@ describe("openapi StreamingSubscription", () => {
 			tick(() => {
 
 				expect(transport.post.calls.count()).toEqual(0);
-				expect(transport.delete.calls.count()).toEqual(1);
+				expect(transport.delete.calls.count()).toEqual(0);
 
 				expect(saxo.log.error.calls.count()).toEqual(0);
 
