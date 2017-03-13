@@ -11,9 +11,9 @@ var globalOptions = {
 	display: 'none',
 	summary: true,
 	vendor: [
-		"libs/fetch.js",
-		"libs/es6-promise.js",
-		"libs/jquery-2.1.4.js",
+		"node_modules/whatwg-fetch/fetch.js",
+		"node_modules/es6-promise/dist/es6-promise.js",
+		"node_modules/jquery/dist/jquery.min.js",
 		"libs/jquery.signalR-2.0.3.js"]
 };
 
