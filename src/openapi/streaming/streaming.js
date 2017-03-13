@@ -463,13 +463,24 @@ Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptio
 };
 
 /**
- * Makes a subscription start
+ * Makes a subscription start.
  *
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to start.
  */
-Streaming.prototype.subscribe = function(subscription, modify) {
+Streaming.prototype.subscribe = function(subscription) {
 
-	subscription.onSubscribe(modify);
+	subscription.onSubscribe();
+};
+
+/**
+ * Makes a subscription start with modification.
+ * Modify subscription will keep pending unsubscribe followed by modify subscribe.
+ *
+ * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to modify.
+ */
+Streaming.prototype.modify = function(subscription) {
+
+	subscription.onSubscribe(true);
 };
 
 /**
@@ -478,18 +489,6 @@ Streaming.prototype.subscribe = function(subscription, modify) {
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to stop.
  */
 Streaming.prototype.unsubscribe = function(subscription) {
-
-	ignoreSubscriptions[subscription.referenceId] = true;
-	setTimeout(() => delete ignoreSubscriptions[subscription.referenceId], MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
-	subscription.onUnsubscribe();
-};
-
-/**
- * Makes a subscription stop (can be restarted). See {@link saxo.openapi.Streaming#disposeSubscription} for permanently stopping a subscription.
- *
- * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to stop.
- */
-Streaming.prototype.modify = function(subscription) {
 
 	ignoreSubscriptions[subscription.referenceId] = true;
 	setTimeout(() => delete ignoreSubscriptions[subscription.referenceId], MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
