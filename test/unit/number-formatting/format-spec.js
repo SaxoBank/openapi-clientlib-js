@@ -24,18 +24,22 @@ describe("NumberFormatting format", () => {
 			expect(formatNumberNoRounding(0, 4)).toEqual("0.0000");
 			expect(formatNumberNoRounding(1.1, 4)).toEqual("1.1000");
 			expect(formatNumberNoRounding(1.1212, 1)).toEqual("1.1212");
+			expect(formatNumberNoRounding(5e-7, 1)).toEqual("0.0000005");
 
 			expect(formatNumberNoRounding(-1.1212, 1)).toEqual("-1.1212");
 			expect(formatNumberNoRounding(-1.1, 4)).toEqual("-1.1000");
+			expect(formatNumberNoRounding(-5e-7, 1)).toEqual("-0.0000005");
 
 			expect(formatNumberNoRounding(0, 1, 2)).toEqual("0.0");
 			expect(formatNumberNoRounding(0, 4, 6)).toEqual("0.0000");
 			expect(formatNumberNoRounding(1.1, 4, 6)).toEqual("1.1000");
 			expect(formatNumberNoRounding(1.1212, 1, 3)).toEqual("1.121");
+			expect(formatNumberNoRounding(5e-7, 4, 8)).toEqual("0.0000005");
 
 			expect(formatNumberNoRounding(-1.1212, 1, 2)).toEqual("-1.12");
 			expect(formatNumberNoRounding(-1.126, 1, 2)).toEqual("-1.13");
 			expect(formatNumberNoRounding(-1.1, 4, 5)).toEqual("-1.1000");
+			expect(formatNumberNoRounding(-5e-7, 4, 8)).toEqual("-0.0000005");
 		});
 	});
 
@@ -70,11 +74,14 @@ describe("NumberFormatting format", () => {
 			expect(formatNumber(1.756, 2, en_us)).toEqual("1.76");
 			expect(formatNumber(1.45, 2, en_us)).toEqual("1.45");
 			expect(formatNumber(1, 2, en_us)).toEqual("1.00");
+			expect(formatNumber(5e-7, 2, en_us)).toEqual("0.00");
+			expect(formatNumber(5e-7, 7, en_us)).toEqual("0.0000005");
 
 			expect(formatNumber(545750.43, 0, en_us)).toEqual("545,750");
 			expect(formatNumber(1.756, 0, en_us)).toEqual("2");
 			expect(formatNumber(1.45, 0, en_us)).toEqual("1");
 			expect(formatNumber(1, 0, en_us)).toEqual("1");
+			expect(formatNumber(5e-7, 0, en_us)).toEqual("0");
 		});
 		it("works without decimals", () => {
 			expect(formatNumber(545750.43)).toEqual("545,750.43");
@@ -93,13 +100,16 @@ describe("NumberFormatting format", () => {
 			expect(formatNumber(-0.8, 0, en_us)).toEqual("-1");
 			expect(formatNumber(-0.5, 0, en_us)).toEqual("-1");
 			expect(formatNumber(-0.3, 0, en_us)).toEqual("0");
+			expect(formatNumber(-5e-7, 0, en_us)).toEqual("0");
 			expect(formatNumber(0, 0, en_us)).toEqual("0");
 			expect(formatNumber(-0, 0, en_us)).toEqual("0");
+			expect(formatNumber(5e-7, 0, en_us)).toEqual("0");
 			expect(formatNumber(0.3, 0, en_us)).toEqual("0");
 			expect(formatNumber(0.5, 0, en_us)).toEqual("1");
 			expect(formatNumber(0.8, 0, en_us)).toEqual("1");
 			expect(formatNumber(1.2, 0, en_us)).toEqual("1");
 			expect(formatNumber(1.5, 0, en_us)).toEqual("2");
+
 
 			expect(formatNumber(-1.15, 1, en_us)).toEqual("-1.2");
 			expect(formatNumber(-1.13, 1, en_us)).toEqual("-1.1");
@@ -109,6 +119,8 @@ describe("NumberFormatting format", () => {
 			expect(formatNumber(1.13, 1, en_us)).toEqual("1.1");
 			expect(formatNumber(0.05, 1, en_us)).toEqual("0.1");
 			expect(formatNumber(0.01, 1, en_us)).toEqual("0.0");
+			expect(formatNumber(5e-7, 6, en_us)).toEqual("0.000001");
+			expect(formatNumber(-5e-7, 6, en_us)).toEqual("-0.000001");
 		});
 	});
 });

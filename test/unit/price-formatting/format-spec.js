@@ -35,6 +35,9 @@ describe("price-formatting format", () => {
 		expect(priceFormatting.format(1234567.23451, 4)).toEqual("1,234,567.2345");
 		expect(priceFormatting.format(-1234567.23451, 4)).toEqual("-1,234,567.2345");
 
+		expect(priceFormatting.format(5e-7, 7)).toEqual("0.0000005");
+		expect(priceFormatting.format(5.23e-7, 9)).toEqual("0.000000523");
+
 		expect(priceFormatting.format(42, 4, priceFormatOptions.Fractions)).toEqual("42");
 
 		expect(priceFormatting.format(42.0625, 4, priceFormatOptions.Fractions)).toEqual("42\u00a01/16");

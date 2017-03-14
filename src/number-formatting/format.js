@@ -12,6 +12,21 @@ function formatNegativeNumber(str, options) {
 }
 
 /**
+ * converts a number to a decimal string if it is on scientific notation
+ * @param number
+ */
+function convertNumbertToString(number, precision) {
+	let numberString = String(number);
+
+	// if the number is in scientific notation, convert to decimal
+	if(/\d+\.?\d*e[\+\-]*\d+/i.test(numberString)) {
+		numberString = number.toFixed(precision).trim('0');
+	}
+
+	return numberString;
+}
+
+/**
  * expands the number of decimals and introduces decimal groups.
  * @param number
  * @param precision
@@ -22,7 +37,7 @@ function formatNegativeNumber(str, options) {
 function expandNumber(number, precision, groupSizes, sep, decimalChar) {
 	var curSize = groupSizes[0],
 			curGroupIndex = 1,
-			numberString = String(number),
+			numberString = convertNumbertToString(number, precision),
 			decimalIndex = numberString.indexOf('.'),
 			right = "",
 			i;
