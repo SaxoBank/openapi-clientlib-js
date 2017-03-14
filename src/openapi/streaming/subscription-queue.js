@@ -19,9 +19,9 @@ import {
  * @param maxSize {Number} - Maximum queue size. Defaults to 2, which works best for current needs.
  * @constructor
  */
-function SubscriptionQueue(maxSize = 2) {
+function SubscriptionQueue(maxSize) {
 	this.items = [];
-	this.maxSize = maxSize;
+	this.maxSize = maxSize || 2;
 }
 
 /**
