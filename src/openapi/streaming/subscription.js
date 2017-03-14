@@ -1,5 +1,5 @@
 /**
- * @module iit/openapi/streaming/subscription
+ * @module saxo/openapi/streaming/subscription
  * @ignore
  */
 
@@ -176,9 +176,9 @@ function onSubscribeSuccess(referenceId, result) {
 	if (this.onSubscriptionCreated) {
 		this.onSubscriptionCreated();
 	}
-	var nextActionValue = this.queue.peek();
+
 	// do not fire events if we are waiting to unsubscribe
-	if (nextActionValue !== ACTION_UNSUBSCRIBE) {
+	if (this.queue.peek() !== ACTION_UNSUBSCRIBE) {
 		try {
 			this.onUpdate(responseData.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
 		}
@@ -209,9 +209,9 @@ function onSubscribeError(referenceId, response) {
 
 	this.currentState = STATE_UNSUBSCRIBED;
 	log.error(LOG_AREA, "An error occurred subscribing", { response: response, url: this.url });
-	var nextActionValue = this.queue.peek();
+
 	// if we are unsubscribed, do not fire the error handler
-	if (nextActionValue !== ACTION_UNSUBSCRIBE) {
+	if (this.queue.peek() !== ACTION_UNSUBSCRIBE) {
 		if (this.onError) {
 			this.onError(response);
 		}
@@ -327,13 +327,12 @@ Subscription.prototype.OPENAPI_DELETE_PROPERTY = "__meta_deleted";
  * @private
  */
 Subscription.prototype.reset = function() {
-	var nextActionValue = this.queue.peek();
 
 	switch(this.currentState) {
 		case STATE_UNSUBSCRIBED:
 		case STATE_UNSUBSCRIBE_REQUESTED:
 			// do not do anything if we are on our way to unsubscribed unless the next action would be to subscribe
-			if (nextActionValue & ACTION_SUBSCRIBE) {
+			if (this.queue.peek() & ACTION_SUBSCRIBE) {
 				break;
 			}
 			return;
