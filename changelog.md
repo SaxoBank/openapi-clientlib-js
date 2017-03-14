@@ -1,3 +1,7 @@
+#### v1.0.3
+
++ Support formatting prices that javascript would format using scientific notation (high precision)
+
 #### v1.0.2
 
 + RetryTransport now only retries if has not received a response (e.g. network failure)
