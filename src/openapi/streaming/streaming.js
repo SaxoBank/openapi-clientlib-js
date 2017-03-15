@@ -477,10 +477,11 @@ Streaming.prototype.subscribe = function(subscription) {
  * Modify subscription will keep pending unsubscribe followed by modify subscribe.
  *
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to modify.
+ * @param {Object} args - The target arguments of modified subscription.
  */
-Streaming.prototype.modify = function(subscription) {
+Streaming.prototype.modify = function(subscription, args) {
 
-	subscription.onSubscribe(true);
+	subscription.onModify(args);
 };
 
 /**

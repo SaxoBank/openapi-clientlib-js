@@ -362,6 +362,8 @@ Subscription.prototype.reset = function() {
 
 /**
  * Try to subscribe.
+ * @param {Boolean} modify - The modify flag indicates that subscription action is part of subscription modification.
+ *                           If true, any unsubscribe before subscribe will be kept. Otherwise they are dropped.
  * @private
  */
 Subscription.prototype.onSubscribe = function(modify) {
@@ -371,6 +373,22 @@ Subscription.prototype.onSubscribe = function(modify) {
 	}
 
 	tryPerformAction.call(this, modify ? ACTION_MODIFY_SUBSCRIBE : ACTION_SUBSCRIBE);
+};
+
+/**
+ * Try to modify.
+ * @param {Object} args - The arguments of modified subscription.
+ * @private
+ */
+Subscription.prototype.onModify = function(args) {
+
+    if (this.isDisposed) {
+        throw new Error('Modifying a disposed subscription - you will not get data');
+    }
+
+    this.onUnsubscribe();
+    this.subscriptionData.Arguments = args;
+    this.onSubscribe(true);
 };
 
 /**
