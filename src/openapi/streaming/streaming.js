@@ -277,7 +277,7 @@ function resetAllSubscriptions() {
  */
 function resetSubscriptions(referenceIdList) {
 
-    if (!referenceIdList || !referenceIdList.length) {
+	if (!referenceIdList || !referenceIdList.length) {
 		resetAllSubscriptions.call(this);
 		return;
 	}
@@ -463,13 +463,25 @@ Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptio
 };
 
 /**
- * Makes a subscription start
+ * Makes a subscription start.
  *
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to start.
  */
 Streaming.prototype.subscribe = function(subscription) {
 
 	subscription.onSubscribe();
+};
+
+/**
+ * Makes a subscription start with modification.
+ * Modify subscription will keep pending unsubscribe followed by modify subscribe.
+ *
+ * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to modify.
+ * @param {Object} args - The target arguments of modified subscription.
+ */
+Streaming.prototype.modify = function(subscription, args) {
+
+	subscription.onModify(args);
 };
 
 /**

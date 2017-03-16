@@ -5,6 +5,12 @@
 
 import { extend } from '../../utils/object';
 import log from '../../log';
+import {
+	ACTION_SUBSCRIBE,
+	ACTION_UNSUBSCRIBE,
+	ACTION_MODIFY_SUBSCRIBE,
+} from './subscription-actions';
+import SubscriptionQueue from './subscription-queue';
 
 //-- Local variables section --
 
@@ -19,9 +25,6 @@ const STATE_UNSUBSCRIBE_REQUESTED = 0x4;
 const STATE_UNSUBSCRIBED = 0x8;
 
 const TRANSITIONING_STATES = STATE_SUBSCRIBE_REQUESTED | STATE_UNSUBSCRIBE_REQUESTED;
-
-const ACTION_SUBSCRIBE = 0x20;
-const ACTION_UNSUBSCRIBE = 0x40;
 
 const DEFAULT_REFRESH_RATE_MS = 1000;
 const MIN_REFRESH_RATE_MS = 100;
@@ -59,7 +62,6 @@ function subscribe() {
  * Does an actual unsubscribe.
  */
 function unsubscribe() {
-
 	this.currentState = STATE_UNSUBSCRIBE_REQUESTED;
 	// capture the reference id so we can tell in the response whether it is the latest call
 	var referenceId = this.referenceId;
@@ -70,12 +72,14 @@ function unsubscribe() {
 }
 
 /**
- * Queues or performs an action based on the curent state.
+ * Queues or performs an action based on the current state.
+ * Supports queue for more then one action, to support consecutive modify requests,
+ * which invoke unsubscribe and subscribe one after another.
  * @param action
  */
 function tryPerformAction(action) {
 	if (!this.connectionAvailable || TRANSITIONING_STATES & this.currentState) {
-		this.nextAction = action;
+		this.queue.enqueue(action);
 	} else {
 		performAction.call(this, action);
 	}
@@ -85,12 +89,11 @@ function tryPerformAction(action) {
  * Callback for when the subscription is ready to perform the next action.
  */
 function onReadyToPerformNextAction() {
-	if (!this.connectionAvailable) {
+	if (!this.connectionAvailable || this.queue.isEmpty()) {
 		return;
 	}
-	if (this.nextAction) {
-		performAction.call(this, this.nextAction);
-	}
+
+	performAction.call(this, this.queue.dequeue());
 }
 
 /**
@@ -100,6 +103,7 @@ function onReadyToPerformNextAction() {
 function performAction(action) {
 	switch(action) {
 		case ACTION_SUBSCRIBE:
+		case ACTION_MODIFY_SUBSCRIBE:
 			switch(this.currentState) {
 				case STATE_SUBSCRIBED:
 					break;
@@ -124,7 +128,12 @@ function performAction(action) {
 		default:
 			throw new Error("unrecognised action " + action);
 	}
-	this.nextAction = null;
+
+	// Required to manually rerun next action, because if nothing happens in given cycle,
+	// next task from a queue will never be picked up.
+	if (!this.queue.isEmpty() && !(TRANSITIONING_STATES & this.currentState)) {
+		performAction.call(this, this.queue.dequeue());
+	}
 }
 
 /**
@@ -169,13 +178,13 @@ function onSubscribeSuccess(referenceId, result) {
 	}
 
 	// do not fire events if we are waiting to unsubscribe
-	if (this.nextAction !== ACTION_UNSUBSCRIBE) {
-	    try {
-	        this.onUpdate(responseData.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
-	    }
-	    catch(ex) {
-	        log.error(LOG_AREA, "exception occurred in streaming snapshot update callback");
-	    }
+	if (this.queue.peek() !== ACTION_UNSUBSCRIBE) {
+		try {
+			this.onUpdate(responseData.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
+		}
+		catch(ex) {
+			log.error(LOG_AREA, "exception occurred in streaming snapshot update callback");
+		}
 
 		if (this.updatesBeforeSubscribed) {
 			for(let i = 0, updateMsg; updateMsg = this.updatesBeforeSubscribed[i]; i++) {
@@ -202,7 +211,7 @@ function onSubscribeError(referenceId, response) {
 	log.error(LOG_AREA, "An error occurred subscribing", { response: response, url: this.url });
 
 	// if we are unsubscribed, do not fire the error handler
-	if (this.nextAction !== ACTION_UNSUBSCRIBE) {
+	if (this.queue.peek() !== ACTION_UNSUBSCRIBE) {
 		if (this.onError) {
 			this.onError(response);
 		}
@@ -274,6 +283,12 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
 	 */
 	this.referenceId = null;
 
+	/**
+	 * The action queue
+	 * @type {SubscriptionQueue}
+	 */
+	this.queue = new SubscriptionQueue();
+
 	this.transport = transport;
 	this.serviceGroup = serviceGroup;
 	this.url = url;
@@ -317,7 +332,7 @@ Subscription.prototype.reset = function() {
 		case STATE_UNSUBSCRIBED:
 		case STATE_UNSUBSCRIBE_REQUESTED:
 			// do not do anything if we are on our way to unsubscribed unless the next action would be to subscribe
-			if (this.nextAction & ACTION_SUBSCRIBE) {
+			if (this.queue.peek() & ACTION_SUBSCRIBE) {
 				break;
 			}
 			return;
@@ -331,7 +346,7 @@ Subscription.prototype.reset = function() {
 			return;
 	}
 
-	this.nextAction = null;
+	this.queue.reset();
 
 	// do not unsubscribe because a reset happens when the existing subscription is broken
 	//  * on a new connection (new context id, subscription will be cleaned up)
@@ -347,15 +362,33 @@ Subscription.prototype.reset = function() {
 
 /**
  * Try to subscribe.
+ * @param {Boolean} modify - The modify flag indicates that subscription action is part of subscription modification.
+ *                           If true, any unsubscribe before subscribe will be kept. Otherwise they are dropped.
  * @private
  */
-Subscription.prototype.onSubscribe = function() {
+Subscription.prototype.onSubscribe = function(modify) {
 
 	if (this.isDisposed) {
 		throw new Error('Subscribing a disposed subscription - you will not get data');
 	}
 
-	tryPerformAction.call(this, ACTION_SUBSCRIBE);
+	tryPerformAction.call(this, modify ? ACTION_MODIFY_SUBSCRIBE : ACTION_SUBSCRIBE);
+};
+
+/**
+ * Try to modify.
+ * @param {Object} args - The arguments of modified subscription.
+ * @private
+ */
+Subscription.prototype.onModify = function(args) {
+
+    if (this.isDisposed) {
+        throw new Error('Modifying a disposed subscription - you will not get data');
+    }
+
+    this.onUnsubscribe();
+    this.subscriptionData.Arguments = args;
+    this.onSubscribe(true);
 };
 
 /**
@@ -406,7 +439,6 @@ Subscription.prototype.onStreamingData = function(message) {
 
 	onActivity.call(this);
 
-
 	switch(this.currentState) {
 		// if we are unsubscribed or trying to unsubscribe then ignore the data
 		case STATE_UNSUBSCRIBE_REQUESTED:
@@ -429,7 +461,7 @@ Subscription.prototype.onStreamingData = function(message) {
 		this.onUpdate(message, this.UPDATE_TYPE_DELTA);
 	}
 	catch(error) {
-	    log.error(LOG_AREA, "exception occurred in streaming delta update callback", error);
+		log.error(LOG_AREA, "exception occurred in streaming delta update callback", error);
 	}
 };
 
