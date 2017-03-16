@@ -1,3 +1,7 @@
+#### v1.1.0
+
++ Introduce modify method for subscriptions which queues the subscription modification
+
 #### v1.0.3
 
 + Support formatting prices that javascript would format using scientific notation (high precision)
