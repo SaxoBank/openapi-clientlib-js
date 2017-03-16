@@ -42,10 +42,12 @@ SubscriptionQueue.prototype.enqueue = function(action) {
 		let task = this.items[i];
 		let nextTask = this.items[i + 1];
 
-		if (task === ACTION_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
+		if (task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_SUBSCRIBE) {
+			// Removing subscribe in such case to keep requested subscription modification.
+            this.items.splice(i + 1, 1);
+		} else if (task === ACTION_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
 			task === ACTION_UNSUBSCRIBE && nextTask === ACTION_SUBSCRIBE ||
 			task === ACTION_SUBSCRIBE && nextTask === ACTION_MODIFY_SUBSCRIBE ||
-			task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_SUBSCRIBE ||
 			task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
 			task === nextTask
 		)

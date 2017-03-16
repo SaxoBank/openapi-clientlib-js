@@ -59,11 +59,13 @@ describe("openapi SubscriptionQueue", () => {
 			expect(queue.isEmpty()).toBe(true);
 		})
 
-		it('should drop modify subscribe followed by subscribe', () => {
+		it('should drop subscribe when previous actions is modify', () => {
+			queue.enqueue(SubscriptionActions.ACTION_UNSUBSCRIBE);
 			queue.enqueue(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
 			queue.enqueue(SubscriptionActions.ACTION_SUBSCRIBE);
 
-			expect(queue.dequeue()).toBe(SubscriptionActions.ACTION_SUBSCRIBE);
+			expect(queue.dequeue()).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
+			expect(queue.dequeue()).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
 			expect(queue.isEmpty()).toBe(true);
 		})
 
