@@ -9,9 +9,9 @@
  */
 
 import {
-	ACTION_SUBSCRIBE,
-	ACTION_UNSUBSCRIBE,
-	ACTION_MODIFY_SUBSCRIBE,
+    ACTION_SUBSCRIBE,
+    ACTION_UNSUBSCRIBE,
+    ACTION_MODIFY_SUBSCRIBE,
 } from './subscription-actions';
 
 /**
@@ -20,8 +20,8 @@ import {
  * @constructor
  */
 function SubscriptionQueue(maxSize) {
-	this.items = [];
-	this.maxSize = maxSize || 2;
+    this.items = [];
+    this.maxSize = maxSize || 2;
 }
 
 /**
@@ -32,34 +32,33 @@ function SubscriptionQueue(maxSize) {
  * @param {Number} action - action to add to the queue.
  */
 SubscriptionQueue.prototype.enqueue = function(action) {
-	this.items.push(action);
+    this.items.push(action);
 
-	if (this.items.length < this.maxSize) {
-		return;
-	}
+    if (this.items.length < this.maxSize) {
+        return;
+    }
 
-	for (let i = this.items.length - 2; i >= 0; i--) {
-		let task = this.items[i];
-		let nextTask = this.items[i + 1];
+    for (let i = this.items.length - 2; i >= 0; i--) {
+        const task = this.items[i];
+        const nextTask = this.items[i + 1];
 
-		if (task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_SUBSCRIBE) {
-			// Removing subscribe in such case to keep requested subscription modification.
+        if (task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_SUBSCRIBE) {
+            // Removing subscribe in such case to keep requested subscription modification.
             this.items.splice(i + 1, 1);
-		} else if (task === ACTION_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
-			task === ACTION_UNSUBSCRIBE && nextTask === ACTION_SUBSCRIBE ||
-			task === ACTION_SUBSCRIBE && nextTask === ACTION_MODIFY_SUBSCRIBE ||
-			task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
-			task === nextTask
-		)
-		{
-			this.items.splice(i, 1);
-		}
-	}
+        } else if (task === ACTION_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
+            task === ACTION_UNSUBSCRIBE && nextTask === ACTION_SUBSCRIBE ||
+            task === ACTION_SUBSCRIBE && nextTask === ACTION_MODIFY_SUBSCRIBE ||
+            task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
+            task === nextTask
+        ) {
+            this.items.splice(i, 1);
+        }
+    }
 
-	if (this.items.length > this.maxSize) {
-		// Removes elements from the beginning of a queue, to match maximum allowed size.
-		this.items.splice(0, this.items.length - this.maxSize);
-	}
+    if (this.items.length > this.maxSize) {
+        // Removes elements from the beginning of a queue, to match maximum allowed size.
+        this.items.splice(0, this.items.length - this.maxSize);
+    }
 };
 
 /**
@@ -67,7 +66,7 @@ SubscriptionQueue.prototype.enqueue = function(action) {
  * @return {Number} Next action.
  */
 SubscriptionQueue.prototype.peek = function() {
-	return this.items[0];
+    return this.items[0];
 };
 
 /**
@@ -75,22 +74,22 @@ SubscriptionQueue.prototype.peek = function() {
  * @return {Number|undefined} First action, if queue is not empty. Otherwise undefined.
  */
 SubscriptionQueue.prototype.dequeue = function() {
-	return this.items.shift();
+    return this.items.shift();
 };
 
 /**
  * Resets queue.
  */
-SubscriptionQueue.prototype.reset = function () {
-	this.items = [];
+SubscriptionQueue.prototype.reset = function() {
+    this.items = [];
 };
 
 /**
  * Returns true if queue is empty.
  * @return {boolean} True if empty.
  */
-SubscriptionQueue.prototype.isEmpty = function () {
-	return this.items.length === 0;
+SubscriptionQueue.prototype.isEmpty = function() {
+    return this.items.length === 0;
 };
 
 export default SubscriptionQueue;

@@ -13,28 +13,34 @@
     "src"
   ],
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/SaxoBank/openapi-clientlib-js.git"
+    "type": "git",
+    "url": "https://github.com/SaxoBank/openapi-clientlib-js.git"
   },
   "license": "Apache-2.0",
   "devDependencies": {
     "babel-preset-es2015-rollup": "3.0.0",
+    "es6-promise": "2.1.1",
+    "eslint": "3.17.1",
+    "eslint-import-resolver-node": "0.2.3",
+    "eslint-plugin-destructuring": "2.1.0",
+    "eslint-plugin-import": "2.2.0",
+    "eslint-plugin-promise": "3.5.0",
+    "eslint-plugin-switch-case": "1.1.2",
     "grunt": "1.0.1",
     "grunt-cli": "1.2.0",
     "grunt-contrib-clean": "1.0.0",
     "grunt-contrib-connect": "1.0.2",
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-jasmine": "1.0.3",
-    "grunt-contrib-jshint": "1.1.0",
     "grunt-contrib-watch": "1.0.0",
+    "grunt-eslint": "19.0.0",
     "grunt-rollup": "1.0.1",
     "grunt-template-jasmine-istanbul": "0.4.0",
+    "jquery": "2.1.4",
     "remap-istanbul": "0.9.1",
+    "requirejs": "2.3.3",
     "rollup-plugin-babel": "2.7.1",
     "taffydb": "2.7.3",
-    "es6-promise": "2.1.1",
-    "requirejs": "2.3.3",
-    "whatwg-fetch": "2.0.3",
-    "jquery": "2.1.4"
+    "whatwg-fetch": "2.0.3"
   }
 }

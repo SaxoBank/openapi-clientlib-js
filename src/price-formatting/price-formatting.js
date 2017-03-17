@@ -11,11 +11,11 @@ import { format as formatTemplate } from '../utils/string';
 import { getValidPriceCharacters, getValidPriceRegex } from './valid-characters';
 import { getModernFractionsSeparator } from './modern-fractions-character';
 
-//-- Local variables section --
+// -- Local variables section --
 
-//-- Local methods section --
+// -- Local methods section --
 
-//-- Exported methods section --
+// -- Exported methods section --
 
 /**
  * Constructs a new PriceFormatting instance that can be used to format and parse prices.
@@ -27,21 +27,22 @@ import { getModernFractionsSeparator } from './modern-fractions-character';
  * var formattedPrice = priceFormatting.format(1.23, 2);
  */
 function PriceFormatting(numberOptions) {
-	this.numberFormatting = new NumberFormatting(numberOptions);
+    this.numberFormatting = new NumberFormatting(numberOptions);
 }
 
 /**
  * Formats a number as a price string.
  * @param {number} value - Number to format.
  * @param {number} decimals  - The number of decimal places to display.
- * @param {string|Object.<string, boolean>} [formatFlags="Normal"] - The format flags to use when formatting - see {@link saxo.priceFormatOptions}. If the flag is not recognised, it will be treated as if it is "Normal"
+ * @param {string|Object.<string, boolean>} [formatFlags="Normal"] - The format flags to use when formatting
+ *          - see {@link saxo.priceFormatOptions}. If the flag is not recognised, it will be treated as if it is "Normal"
  * @param {number} [numeratorDecimals=0] - The number of decimal places of the numerator in the case of fractions and modern fractions.
  * @returns {string} The formatting string.
  */
 PriceFormatting.prototype.format = function(value, decimals, formatFlags, numeratorDecimals) {
 
-	var parts = formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals);
-	return parts.Pre + parts.First + parts.Pips + parts.DeciPips + parts.Post;
+    const parts = formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals);
+    return parts.Pre + parts.First + parts.Pips + parts.DeciPips + parts.Post;
 };
 
 /**
@@ -63,7 +64,7 @@ PriceFormatting.prototype.format = function(value, decimals, formatFlags, numera
  * @returns {saxo.PriceParts} formatted price parts.
  */
 PriceFormatting.prototype.formatPriceParts = function(value, decimals, formatFlags, numeratorDecimals) {
-	return formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals);
+    return formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals);
 };
 
 /**
@@ -76,11 +77,11 @@ PriceFormatting.prototype.formatPriceParts = function(value, decimals, formatFla
  * @returns {string} A formatted string.
  */
 PriceFormatting.prototype.formatTemplated = function(value, decimals, formatFlags, numeratorDecimals, templateStr) {
-	if (!templateStr) {
-		templateStr = "{Pre}{First}{Pips}<small>{DeciPips}</small>{Post}";
-	}
-	var parts = formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals);
-	return formatTemplate(templateStr, parts);
+    if (!templateStr) {
+        templateStr = '{Pre}{First}{Pips}<small>{DeciPips}</small>{Post}';
+    }
+    const parts = formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals);
+    return formatTemplate(templateStr, parts);
 };
 
 /**
@@ -91,7 +92,7 @@ PriceFormatting.prototype.formatTemplated = function(value, decimals, formatFlag
  * @returns {number}
  */
 PriceFormatting.prototype.parse = function(str, decimals, formatFlags) {
-	return parsePrice(this.numberFormatting, str, decimals, formatFlags);
+    return parsePrice(this.numberFormatting, str, decimals, formatFlags);
 };
 
 /**
@@ -100,7 +101,7 @@ PriceFormatting.prototype.parse = function(str, decimals, formatFlags) {
  * @returns {string}
  */
 PriceFormatting.prototype.getValidPriceCharacters = function(includeScenarios) {
-	return getValidPriceCharacters(this.numberFormatting, includeScenarios);
+    return getValidPriceCharacters(this.numberFormatting, includeScenarios);
 };
 
 /**
@@ -109,7 +110,7 @@ PriceFormatting.prototype.getValidPriceCharacters = function(includeScenarios) {
  * @returns {RegExp}
  */
 PriceFormatting.prototype.getValidPriceRegex = function(includeScenarios) {
-	return getValidPriceRegex(this.numberFormatting, includeScenarios);
+    return getValidPriceRegex(this.numberFormatting, includeScenarios);
 };
 
 /**
@@ -117,9 +118,9 @@ PriceFormatting.prototype.getValidPriceRegex = function(includeScenarios) {
  * @returns {String}
  */
 PriceFormatting.prototype.getModernFractionsSeparator = function() {
-	return getModernFractionsSeparator(this.numberFormatting);
+    return getModernFractionsSeparator(this.numberFormatting);
 };
 
-//-- Export section --
+// -- Export section --
 
 export default PriceFormatting;

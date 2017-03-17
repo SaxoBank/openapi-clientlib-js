@@ -6,10 +6,10 @@
  */
 
 function shrinkwrapTest(grunt) {
-	return function () {
-		if (!grunt.file.exists("./npm-shrinkwrap.json")) {
-			grunt.fail.fatal("The shrinkwrap file must exist.");
-		}
-	};
+    return function () {
+        if (!grunt.file.exists("./npm-shrinkwrap.json")) {
+            grunt.fail.fatal("The shrinkwrap file must exist.");
+        }
+    };
 }
 module.exports = shrinkwrapTest;

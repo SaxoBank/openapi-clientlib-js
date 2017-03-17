@@ -14,48 +14,48 @@ var babel = require("rollup-plugin-babel");
 // without amd
 var exportName = sharedConfig.rootNamespace;
 var outputParts = fs.readFileSync("grunt/output-template.js", { encoding: 'utf8' })
-	.replace(/'EXPORT_PLACEHOLDER'/g, exportName)
-	.replace(/'NS_PLACEHOLDER'/g,  sharedConfig.rootNamespace)
-	.replace("'OUTPUT_NAME'",  packageConfig.name)
-	.replace("'OUTPUT_VERSION'",  packageConfig.version)
-	.split("/*SPLIT PLACEHOLDER FOR ROLLUP*/");
+    .replace(/'EXPORT_PLACEHOLDER'/g, exportName)
+    .replace(/'NS_PLACEHOLDER'/g,  sharedConfig.rootNamespace)
+    .replace("'OUTPUT_NAME'",  packageConfig.name)
+    .replace("'OUTPUT_VERSION'",  packageConfig.version)
+    .split("/*SPLIT PLACEHOLDER FOR ROLLUP*/");
 
 module.exports = {
-	options: {
-		sourceMap: true,
-		sourceMapRelativePaths: true
-	},
-	dist: {
-		options: {
-			format: "iife",
-			moduleName: exportName,
-			banner: outputParts[0],
-			footer: outputParts[1],
-			plugins: [
-				babel()
-			]
-		},
-		files: [
-			{
-				src: "src/openapi-package.js",
-				dest: sharedConfig.releaseFile
-			}
-		]
-	},
-	test: {
-		options: {
-			format: "iife",
-			plugins: [
-				babel()
-			]
-		},
-		files: [
-			{
-				expand: true,
-				cwd: 'test',
-				src: ['**/*-spec.js'],
-				dest: '.grunt/rolledup-tests'
-			}
-		]
-	}
+    options: {
+        sourceMap: true,
+        sourceMapRelativePaths: true
+    },
+    dist: {
+        options: {
+            format: "iife",
+            moduleName: exportName,
+            banner: outputParts[0],
+            footer: outputParts[1],
+            plugins: [
+                babel()
+            ]
+        },
+        files: [
+            {
+                src: "src/openapi-package.js",
+                dest: sharedConfig.releaseFile
+            }
+        ]
+    },
+    test: {
+        options: {
+            format: "iife",
+            plugins: [
+                babel()
+            ]
+        },
+        files: [
+            {
+                expand: true,
+                cwd: 'test',
+                src: ['**/*-spec.js'],
+                dest: '.grunt/rolledup-tests'
+            }
+        ]
+    }
 };

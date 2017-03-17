@@ -3,11 +3,11 @@
   */
 
 var serverTask = {
-	options: {
-		port: 8081
-	}
+    options: {
+        port: 8081
+    }
 };
 
 module.exports = {
-	server: serverTask
+    server: serverTask
 };

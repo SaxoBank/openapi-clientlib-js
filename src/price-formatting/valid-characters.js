@@ -6,11 +6,11 @@
 import { extend } from '../utils/object';
 import { getModernFractionsSeparator } from './modern-fractions-character';
 
-//-- Local variables section --
+// -- Local variables section --
 
-//-- Local methods section --
+// -- Local methods section --
 
-//-- Exported methods section --
+// -- Exported methods section --
 
 /**
  * Returns characters valid for entering prices.
@@ -19,35 +19,35 @@ import { getModernFractionsSeparator } from './modern-fractions-character';
  * @returns {string}
  */
 function getValidPriceCharacters(numberFormatting, includeScenarios) {
-	var characters;
+    let characters;
 
-	if (!includeScenarios) {
-		includeScenarios = {};
-	}
+    if (!includeScenarios) {
+        includeScenarios = {};
+    }
 
-	characters = numberFormatting.groupSeparator;
+    characters = numberFormatting.groupSeparator;
 
-	if (characters.charCodeAt(0) === 160) { // if non breaking space
-		characters += " ";	// add normal space
-	}
+    if (characters.charCodeAt(0) === 160) { // if non breaking space
+        characters += ' ';    // add normal space
+    }
 
-	if (!includeScenarios.integer) {
-		characters += numberFormatting.decimalSeparator;
-	}
+    if (!includeScenarios.integer) {
+        characters += numberFormatting.decimalSeparator;
+    }
 
-	if (includeScenarios.negative) {
-		characters += numberFormatting.negativePattern.replace("{0}", "");
-	}
+    if (includeScenarios.negative) {
+        characters += numberFormatting.negativePattern.replace('{0}', '');
+    }
 
-	if (includeScenarios.price) {
-		characters += getModernFractionsSeparator(numberFormatting) + " /" + String.fromCharCode(160);
-	}
+    if (includeScenarios.price) {
+        characters += getModernFractionsSeparator(numberFormatting) + ' /' + String.fromCharCode(160);
+    }
 
-	if (includeScenarios.numbers !== false) {
-		characters += "0123456789";
-	}
+    if (includeScenarios.numbers !== false) {
+        characters += '0123456789';
+    }
 
-	return characters;
+    return characters;
 }
 
 /**
@@ -57,17 +57,16 @@ function getValidPriceCharacters(numberFormatting, includeScenarios) {
  * @returns {RegExp}
  */
 function getValidPriceRegex(numberFormatting, includeScenarios) {
-	var valid, regex = "", i;
+    const valid = getValidPriceCharacters(numberFormatting, extend({}, includeScenarios || {}, { numbers: false }));
+    let regex = '';
 
-	valid = getValidPriceCharacters(numberFormatting, extend({}, includeScenarios || {}, { numbers: false }));
+    for (let i = 0; i < valid.length; i++) {
+        regex += '\\x' + valid.charCodeAt(i).toString(16);
+    }
 
-	for (i = 0; i < valid.length; i++) {
-		regex += "\\x" + valid.charCodeAt(i).toString(16);
-	}
-
-	return new RegExp("^[\\d" + regex + "]+$");
+    return new RegExp('^[\\d' + regex + ']+$');
 }
 
-//-- Export section --
+// -- Export section --
 
-export {getValidPriceCharacters, getValidPriceRegex};
+export { getValidPriceCharacters, getValidPriceRegex };

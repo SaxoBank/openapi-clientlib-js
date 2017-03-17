@@ -1,86 +1,86 @@
 ﻿import {de_ch, da_dk, fr_fr, ar_eg, hi_in, en_us} from '../locales';
 
 const PriceFormatting = saxo.PriceFormatting,
-	priceFormatOptions = saxo.priceFormatOptions;
+    priceFormatOptions = saxo.priceFormatOptions;
 
 function testHasCharacters(price, decimals, formatFlags, options, includeScenarios) {
-	var prices = new PriceFormatting(options);
-	var formattedPrice = prices.format(price, decimals, formatFlags),
-		validChars = prices.getValidPriceCharacters(includeScenarios),
-		i;
+    var prices = new PriceFormatting(options);
+    var formattedPrice = prices.format(price, decimals, formatFlags),
+        validChars = prices.getValidPriceCharacters(includeScenarios),
+        i;
 
-	for (i = 0; i < formattedPrice.length; i++) {
-		if (validChars.indexOf(formattedPrice.charAt(i)) < 0) {
-			return false;
-		}
-	}
-	return true;
+    for (i = 0; i < formattedPrice.length; i++) {
+        if (validChars.indexOf(formattedPrice.charAt(i)) < 0) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function testRegex(price, decimals, formatFlags, options, includeScenarios) {
-	var prices = new PriceFormatting(options);
-	var formattedPrice = prices.format(price, decimals, formatFlags),
-		validRegex = prices.getValidPriceRegex(includeScenarios);
+    var prices = new PriceFormatting(options);
+    var formattedPrice = prices.format(price, decimals, formatFlags),
+        validRegex = prices.getValidPriceRegex(includeScenarios);
 
-	return Boolean(formattedPrice.match(validRegex));
+    return Boolean(formattedPrice.match(validRegex));
 }
 
 describe("price-formatting valid-characters", () => {
-	it("support the daDk locale", () => {
-		expect(testHasCharacters(1.23451, 2, null, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
-		expect(testRegex(1.23451, 2, null, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
+    it("support the daDk locale", () => {
+        expect(testHasCharacters(1.23451, 2, null, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testRegex(1.23451, 2, null, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
 
-		expect(testHasCharacters(-1.23451, 2, null, da_dk, { integer: false, negative: false, price: true })).toEqual(false);
-		expect(testRegex(-1.23451, 2, null, da_dk, { integer: false, negative: false, price: true })).toEqual(false);
+        expect(testHasCharacters(-1.23451, 2, null, da_dk, { integer: false, negative: false, price: true })).toEqual(false);
+        expect(testRegex(-1.23451, 2, null, da_dk, { integer: false, negative: false, price: true })).toEqual(false);
 
-		expect(testHasCharacters(-1.23451, 2, null, da_dk, { integer: false, negative: true, price: true })).toEqual(true);
-		expect(testRegex(-1.23451, 2, null, da_dk, { integer: false, negative: true, price: true })).toEqual(true);
+        expect(testHasCharacters(-1.23451, 2, null, da_dk, { integer: false, negative: true, price: true })).toEqual(true);
+        expect(testRegex(-1.23451, 2, null, da_dk, { integer: false, negative: true, price: true })).toEqual(true);
 
-		expect(testHasCharacters(1.23451, 2, null, da_dk, { integer: true, negative: false, price: true })).toEqual(false);
-		expect(testRegex(1.23451, 2, null, da_dk, { integer: true, negative: false, price: true })).toEqual(false);
+        expect(testHasCharacters(1.23451, 2, null, da_dk, { integer: true, negative: false, price: true })).toEqual(false);
+        expect(testRegex(1.23451, 2, null, da_dk, { integer: true, negative: false, price: true })).toEqual(false);
 
-		expect(testHasCharacters(1, 0, null, da_dk, { integer: true, negative: false, price: true })).toEqual(true);
-		expect(testRegex(1, 0, null, da_dk, { integer: true, negative: false, price: true })).toEqual(true);
+        expect(testHasCharacters(1, 0, null, da_dk, { integer: true, negative: false, price: true })).toEqual(true);
+        expect(testRegex(1, 0, null, da_dk, { integer: true, negative: false, price: true })).toEqual(true);
 
-		expect(testHasCharacters(1234567.23451, 4, null, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
-		expect(testRegex(1234567.23451, 4, null, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testHasCharacters(1234567.23451, 4, null, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testRegex(1234567.23451, 4, null, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
 
-		expect(testHasCharacters(42.0625, 4, priceFormatOptions.Fractions, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
-		expect(testRegex(42.0625, 4, priceFormatOptions.Fractions, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testHasCharacters(42.0625, 4, priceFormatOptions.Fractions, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testRegex(42.0625, 4, priceFormatOptions.Fractions, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
 
-		expect(testHasCharacters(42.0625, 4, priceFormatOptions.Fractions, da_dk, { integer: false, negative: false, price: false })).toEqual(false);
-		expect(testRegex(42.0625, 4, priceFormatOptions.Fractions, da_dk, { integer: false, negative: false, price: false })).toEqual(false);
-	});
-	it("supports the frFR locale", () => {
-		expect(testHasCharacters(1.23451, 2, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
-		expect(testRegex(1.23451, 2, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testHasCharacters(42.0625, 4, priceFormatOptions.Fractions, da_dk, { integer: false, negative: false, price: false })).toEqual(false);
+        expect(testRegex(42.0625, 4, priceFormatOptions.Fractions, da_dk, { integer: false, negative: false, price: false })).toEqual(false);
+    });
+    it("supports the frFR locale", () => {
+        expect(testHasCharacters(1.23451, 2, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testRegex(1.23451, 2, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
 
-		expect(testHasCharacters(-1.23451, 2, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(false);
-		expect(testRegex(-1.23451, 2, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(false);
+        expect(testHasCharacters(-1.23451, 2, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(false);
+        expect(testRegex(-1.23451, 2, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(false);
 
-		expect(testHasCharacters(-1.23451, 2, null, fr_fr, { integer: false, negative: true, price: true })).toEqual(true);
-		expect(testRegex(-1.23451, 2, null, fr_fr, { integer: false, negative: true, price: true })).toEqual(true);
+        expect(testHasCharacters(-1.23451, 2, null, fr_fr, { integer: false, negative: true, price: true })).toEqual(true);
+        expect(testRegex(-1.23451, 2, null, fr_fr, { integer: false, negative: true, price: true })).toEqual(true);
 
-		expect(testHasCharacters(1.23451, 2, null, fr_fr, { integer: true, negative: false, price: true })).toEqual(false);
-		expect(testRegex(1.23451, 2, null, fr_fr, { integer: true, negative: false, price: true })).toEqual(false);
+        expect(testHasCharacters(1.23451, 2, null, fr_fr, { integer: true, negative: false, price: true })).toEqual(false);
+        expect(testRegex(1.23451, 2, null, fr_fr, { integer: true, negative: false, price: true })).toEqual(false);
 
-		expect(testHasCharacters(1, 0, null, fr_fr, { integer: true, negative: false, price: true })).toEqual(true);
-		expect(testRegex(1, 0, null, fr_fr, { integer: true, negative: false, price: true })).toEqual(true);
+        expect(testHasCharacters(1, 0, null, fr_fr, { integer: true, negative: false, price: true })).toEqual(true);
+        expect(testRegex(1, 0, null, fr_fr, { integer: true, negative: false, price: true })).toEqual(true);
 
-		expect(testHasCharacters(1234567.23451, 4, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
-		expect(testRegex(1234567.23451, 4, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testHasCharacters(1234567.23451, 4, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testRegex(1234567.23451, 4, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
 
-		expect(testHasCharacters(42.0625, 4, priceFormatOptions.Fractions, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
-		expect(testRegex(42.0625, 4, priceFormatOptions.Fractions, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testHasCharacters(42.0625, 4, priceFormatOptions.Fractions, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testRegex(42.0625, 4, priceFormatOptions.Fractions, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
 
-		expect(testHasCharacters(42.0625, 4, priceFormatOptions.Fractions, fr_fr, { integer: false, negative: false, price: false })).toEqual(false);
-		expect(testRegex(42.0625, 4, priceFormatOptions.Fractions, fr_fr, { integer: false, negative: false, price: false })).toEqual(false);
-	});
-	it("supports the deCh locale", () => {
-		expect(testHasCharacters(2567.90625, 7, priceFormatOptions.ModernFractions, de_ch, { integer: false, negative: false, price: true })).toEqual(true);
-		expect(testRegex(2567.90625, 7, priceFormatOptions.ModernFractions, de_ch, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testHasCharacters(42.0625, 4, priceFormatOptions.Fractions, fr_fr, { integer: false, negative: false, price: false })).toEqual(false);
+        expect(testRegex(42.0625, 4, priceFormatOptions.Fractions, fr_fr, { integer: false, negative: false, price: false })).toEqual(false);
+    });
+    it("supports the deCh locale", () => {
+        expect(testHasCharacters(2567.90625, 7, priceFormatOptions.ModernFractions, de_ch, { integer: false, negative: false, price: true })).toEqual(true);
+        expect(testRegex(2567.90625, 7, priceFormatOptions.ModernFractions, de_ch, { integer: false, negative: false, price: true })).toEqual(true);
 
-		expect(testHasCharacters(2567.90625, 7, priceFormatOptions.ModernFractions, de_ch, { integer: false, negative: false, price: false })).toEqual(false);
-		expect(testRegex(2567.90625, 7, priceFormatOptions.ModernFractions, de_ch, { integer: false, negative: false, price: false })).toEqual(false);
-	});
+        expect(testHasCharacters(2567.90625, 7, priceFormatOptions.ModernFractions, de_ch, { integer: false, negative: false, price: false })).toEqual(false);
+        expect(testRegex(2567.90625, 7, priceFormatOptions.ModernFractions, de_ch, { integer: false, negative: false, price: false })).toEqual(false);
+    });
 });

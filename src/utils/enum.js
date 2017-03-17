@@ -5,11 +5,11 @@
 
 import { extend } from './object';
 
-//-- Local variables section --
+// -- Local variables section --
 
-//-- Local methods section --
+// -- Local methods section --
 
-//-- Exported methods section --
+// -- Exported methods section --
 
 /**
  * @namespace saxo.utils.enum
@@ -21,8 +21,8 @@ import { extend } from './object';
  * @param {Array.<string>|string|Object} values
  * @returns {Object}
  * @example
- * var enumUtils = require("saxo/utils/enum");	// AMD
- * var enumUtils = saxo.utils.enum;				// Namespaces
+ * var enumUtils = require("saxo/utils/enum");    // AMD
+ * var enumUtils = saxo.utils.enum;                // Namespaces
  * var obj = enumUtils.toObject("DeciPips,Percentage");
  * if (obj.DeciPips) {
  *     assert("We should reach here");
@@ -30,28 +30,28 @@ import { extend } from './object';
  * var otherFormats = enumUtils.toObject(["DeciPips", "Percentage"]);
  */
 function toObject(values) {
-	if (Array.isArray(values)) {
-		let obj = {};
-		for (let i = 0, l = values.length; i < l; i++) {
-			let value = values[i];
-			if (value) {
-				obj[value] = true;
-			}
-		}
-		return obj;
-	}
-	if (typeof values !== 'string') {
-		return values;
-	}
-	let obj = {};
-	let valueList = values.split(',');
-	for (let i = 0, l = valueList.length; i < l; i++) {
-		let value = valueList[i].trim();
-		if (value) {
-			obj[value] = true;
-		}
-	}
-	return obj;
+    if (Array.isArray(values)) {
+        const obj = {};
+        for (let i = 0, l = values.length; i < l; i++) {
+            const value = values[i];
+            if (value) {
+                obj[value] = true;
+            }
+        }
+        return obj;
+    }
+    if (typeof values !== 'string') {
+        return values;
+    }
+    const obj = {};
+    const valueList = values.split(',');
+    for (let i = 0, l = valueList.length; i < l; i++) {
+        const value = valueList[i].trim();
+        if (value) {
+            obj[value] = true;
+        }
+    }
+    return obj;
 }
 
 /**
@@ -68,15 +68,15 @@ function toObject(values) {
  * //     }
  */
 function makeDefinition(values) {
-	var enumDefinition = {};
+    const enumDefinition = {};
 
-	for (let i = 0, l = values.length; i < l; i++) {
-		enumDefinition[values[i]] = values[i];
-	}
+    for (let i = 0, l = values.length; i < l; i++) {
+        enumDefinition[values[i]] = values[i];
+    }
 
-	Object.freeze(enumDefinition);
+    Object.freeze(enumDefinition);
 
-	return enumDefinition;
+    return enumDefinition;
 }
 
 /**
@@ -89,9 +89,9 @@ function makeDefinition(values) {
  * // enum == { Percentage: true, DeciPips: true }
  */
 function union(enumA, enumB) {
-	enumA = toObject(enumA);
-	enumB = toObject(enumB);
-	return extend({}, enumA, enumB);
+    enumA = toObject(enumA);
+    enumB = toObject(enumB);
+    return extend({}, enumA, enumB);
 }
 
 /**
@@ -104,16 +104,16 @@ function union(enumA, enumB) {
  * // enum == { Percentage: true }
  */
 function exclusion(enumA, enumB) {
-	enumA = toObject(enumA);
-	enumB = toObject(enumB);
-	var enumResult = {};
+    enumA = toObject(enumA);
+    enumB = toObject(enumB);
+    const enumResult = {};
 
-	for (let value in enumA) {
-		if (enumA.hasOwnProperty(value) && enumA[value] && (!enumB.hasOwnProperty(value) || !enumB[value])) {
-			enumResult[value] = true;
-		}
-	}
-	return enumResult;
+    for (const value in enumA) {
+        if (enumA.hasOwnProperty(value) && enumA[value] && (!enumB.hasOwnProperty(value) || !enumB[value])) {
+            enumResult[value] = true;
+        }
+    }
+    return enumResult;
 }
 
 /**
@@ -125,8 +125,8 @@ function exclusion(enumA, enumB) {
  * // str == "DeciPips, Percentage"
  */
 function toString(enumA) {
-    var items = [];
-    for(var key in enumA) {
+    const items = [];
+    for (const key in enumA) {
         if (enumA.hasOwnProperty(key) && enumA[key]) {
             items.push(key);
         }
@@ -134,6 +134,6 @@ function toString(enumA) {
     return items.join(', ');
 }
 
-//-- Export section --
+// -- Export section --
 
 export { toObject, makeDefinition, exclusion, union, toString };

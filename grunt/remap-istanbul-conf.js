@@ -6,14 +6,14 @@
 var sharedConfig = require("./_shared-config");
 
 module.exports = {
-		build: {
-			src: sharedConfig.dist + '/coverage/coverage.json',
-			options: {
-				reports: {
-					'json': sharedConfig.dist + '/coverage/coverage-final.json',
-					'html': sharedConfig.dist + '/coverage/',
-					'text': null
-				}
-			}
-		}
+        build: {
+            src: sharedConfig.dist + '/coverage/coverage.json',
+            options: {
+                reports: {
+                    'json': sharedConfig.dist + '/coverage/coverage-final.json',
+                    'html': sharedConfig.dist + '/coverage/',
+                    'text': null
+                }
+            }
+        }
 };
