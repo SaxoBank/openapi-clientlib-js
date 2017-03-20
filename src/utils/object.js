@@ -3,11 +3,11 @@
  * @ignore
  */
 
-//-- Local variables section --
+// -- Local variables section --
 
-//-- Local methods section --
+// -- Local methods section --
 
-//-- Exported methods section --
+// -- Exported methods section --
 
 /**
  * @namespace saxo.utils.object
@@ -21,33 +21,34 @@
  * @static
  */
 function extend() {
-	// optimized extend
-	// speed tested - http://jsperf.com/jquery-extend-vs-custom
-	var deep = arguments[0] === true;
-	var l = arguments.length;
-	var i = deep ? 1 : 0;
-	var result = arguments[i++] || {};
+    // optimized extend
+    // speed tested - http://jsperf.com/jquery-extend-vs-custom
+    const deep = arguments[0] === true;
+    const l = arguments.length;
+    let i = deep ? 1 : 0;
+    const result = arguments[i++] || {};
+    let current;
+    let val;
 
-	for (var current, val; i < l; i++) {
-		current = arguments[i];
-		for (var prop in current) {
-			if(current.hasOwnProperty(prop)) {
-				val = current[prop];
-				if (!deep || typeof val !== "object") {
-					result[prop] = val;
-				} 
-				else {
-					if(typeof val !== typeof result[prop] || Array.isArray(val) !== Array.isArray(result[prop])) {
-						result[prop] =  Array.isArray(val) ? [] : {};
-					}
-					extend(true, result[prop], val);
-				}
-			}
-		}
-	}
-	return result;
+    for (; i < l; i++) {
+        current = arguments[i];
+        for (const prop in current) {
+            if (current.hasOwnProperty(prop)) {
+                val = current[prop];
+                if (!deep || typeof val !== 'object') {
+                    result[prop] = val;
+                } else {
+                    if (typeof val !== typeof result[prop] || Array.isArray(val) !== Array.isArray(result[prop])) {
+                        result[prop] = Array.isArray(val) ? [] : {};
+                    }
+                    extend(true, result[prop], val);
+                }
+            }
+        }
+    }
+    return result;
 }
 
-//-- Export section --
+// -- Export section --
 
 export { extend };

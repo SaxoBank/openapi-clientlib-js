@@ -3,42 +3,43 @@
  * @ignore
  */
 
-//-- Local variables section --
+// -- Local variables section --
 
-//-- Local methods section --
+// -- Local methods section --
 
 function transportMethod(method) {
     return function() {
-        //checking if http method call should be handled by RetryTransport
+        // checking if http method call should be handled by RetryTransport
         if (this.methods[method] && this.methods[method].retryLimit > 0) {
 
             return new Promise((resolve, reject) => {
 
-                var transportCall = {
-                    method: method,
+                const transportCall = {
+                    method,
                     args: arguments,
-                    resolve: resolve,
-                    reject: reject,
-                    retryCount: 0
+                    resolve,
+                    reject,
+                    retryCount: 0,
                 };
 
                 this.sendTransportCall(transportCall);
             });
-        } else {
-            //calls underlying transport http method
-            return this.transport[method].apply(this.transport, arguments);
         }
+            // calls underlying transport http method
+        return this.transport[method].apply(this.transport, arguments);
+
     };
 }
 
-//-- Exported methods section --
+// -- Exported methods section --
 
 /**
  * TransportRetry wraps a transport class to allow the retrying of failed transport calls, so the calls are resent after a timeout.
  * @class
  * @alias saxo.openapi.TransportRetry
  * @param {Transport} transport - The transport to wrap.
- * @param {object} [options] - Settings options. Define retry timeout, http methods to retry and max retry limit per http method type. If not given then calls will run with underlying transport without retry logic.
+ * @param {object} [options] - Settings options. Define retry timeout, http methods to retry and max retry limit
+ *      per http method type. If not given then calls will run with underlying transport without retry logic.
  * @param {number} [options.retryTimeout=0] - The number of ms after that the retry calls should be done.
  * @param {object.<string,object>} [options.methods] - Http methods that should retry. For each method provide an object with `retryLimit` parameter.
  * @example
@@ -47,7 +48,7 @@ function transportMethod(method) {
  */
 function TransportRetry(transport, options) {
     if (!transport) {
-        throw new Error("Missing required parameter: transport in TransportRetry");
+        throw new Error('Missing required parameter: transport in TransportRetry');
     }
     this.retryTimeout = (options && options.retryTimeout > 0) ? options.retryTimeout : 0;
     this.methods = (options && options.methods) ? options.methods : {};
@@ -61,49 +62,49 @@ function TransportRetry(transport, options) {
  * @see {@link saxo.openapi.TransportRetry#get}
  * @function
  */
-TransportRetry.prototype.get = transportMethod("get");
+TransportRetry.prototype.get = transportMethod('get');
 
 /**
  * Performs a post request.
  * @see {@link saxo.openapi.TransportRetry#post}
  * @function
  */
-TransportRetry.prototype.post = transportMethod("post");
+TransportRetry.prototype.post = transportMethod('post');
 
 /**
  * Performs a put request.
  * @see {@link saxo.openapi.TransportRetry#put}
  * @function
  */
-TransportRetry.prototype.put = transportMethod("put");
+TransportRetry.prototype.put = transportMethod('put');
 
 /**
  * Performs a delete request.
  * @see {@link saxo.openapi.TransportRetry#delete}
  * @function
  */
-TransportRetry.prototype.delete = transportMethod("delete");
+TransportRetry.prototype.delete = transportMethod('delete');
 
 /**
  * Performs a patch request.
  * @see {@link saxo.openapi.TransportRetry#patch}
  * @function
  */
-TransportRetry.prototype.patch = transportMethod("patch");
+TransportRetry.prototype.patch = transportMethod('patch');
 
 /**
  * Performs a patch request.
  * @see {@link saxo.openapi.TransportRetry#head}
  * @function
  */
-TransportRetry.prototype.head = transportMethod("head");
+TransportRetry.prototype.head = transportMethod('head');
 
 /**
  * Performs a patch request.
  * @see {@link saxo.openapi.TransportRetry#options}
  * @function
  */
-TransportRetry.prototype.options = transportMethod("options");
+TransportRetry.prototype.options = transportMethod('options');
 
 /**
  * @protected
@@ -118,8 +119,7 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
                 if (!(response && response.status) &&
                     (transportCall.retryCount < this.methods[transportCall.method].retryLimit)) {
                     this.addFailedCall(transportCall);
-                }
-                else {
+                } else {
                     transportCall.reject.apply(null, arguments);
                 }
             });
@@ -160,5 +160,5 @@ TransportRetry.prototype.dispose = function() {
     this.transport.dispose();
 };
 
-//-- Export section --
+// -- Export section --
 export default TransportRetry;

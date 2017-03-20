@@ -8,11 +8,11 @@
 
 import emitter from './micro-emitter';
 
-//-- Local variables section --
+// -- Local variables section --
 
-//-- Local methods section --
+// -- Local methods section --
 
-//-- Exported methods section --
+// -- Exported methods section --
 
 /**
  * The shared js log, which allows posting messages and listening to them.
@@ -28,31 +28,31 @@ import emitter from './micro-emitter';
  * log.on(log.WARN, console.info.bind(console));
  * log.on(log.ERROR, console.error.bind(console));
  */
-var log = {};
+const log = {};
 
 /**
  * The Debug event constant.
  * @alias saxo.log.DEBUG
  */
 
-log.DEBUG = "debug";
+log.DEBUG = 'debug';
 /**
  * The info event constant.
  * @alias saxo.log.INFO
  */
-log.INFO = "info";
+log.INFO = 'info';
 
 /**
  * The warn event constant.
  * @alias saxo.log.WARN
  */
-log.WARN = "warn";
+log.WARN = 'warn';
 
 /**
  * the error event constant.
  * @alias saxo.log.ERROR
  */
-log.ERROR = "error";
+log.ERROR = 'error';
 
 emitter.mixinTo(log);
 
@@ -92,6 +92,6 @@ log.warn = log.trigger.bind(log, log.WARN);
  */
 log.error = log.trigger.bind(log, log.ERROR);
 
-//-- Export section --
+// -- Export section --
 
 export default log;

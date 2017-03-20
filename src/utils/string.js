@@ -3,13 +3,13 @@
  * @ignore
  */
 
-//-- Local variables section --
+// -- Local variables section --
 
-var formatRx = /\{([^{]+?)\}/g;
+const formatRx = /\{([^{]+?)\}/g;
 
-//-- Local methods section --
+// -- Local methods section --
 
-//-- Exported methods section --
+// -- Exported methods section --
 
 /**
  * @namespace saxo.utils.string
@@ -23,8 +23,12 @@ var formatRx = /\{([^{]+?)\}/g;
  * @returns {string}
  */
 function format(sTemplate, args) {
-	if(typeof args !== 'object') args = Array.prototype.slice.call(arguments, 1);
-	return sTemplate.replace(formatRx, function (capture, p1) { return args[p1] !== undefined ? args[p1] : '{' + p1 + '}'; });
+    if (typeof args !== 'object') {
+        args = Array.prototype.slice.call(arguments, 1);
+    }
+    return sTemplate.replace(formatRx, function(capture, p1) {
+        return args[p1] === undefined ? '{' + p1 + '}' : args[p1];
+    });
 }
 
 /**
@@ -36,11 +40,11 @@ function format(sTemplate, args) {
  * @returns {boolean}
  */
 function startsWith(haystack, needle, isCaseSensitive) {
-	if (isCaseSensitive === false) {
-		haystack = haystack.toLowerCase();
-		needle = needle.toLowerCase();
-	}
-	return haystack.lastIndexOf(needle, 0) === 0;
+    if (isCaseSensitive === false) {
+        haystack = haystack.toLowerCase();
+        needle = needle.toLowerCase();
+    }
+    return haystack.lastIndexOf(needle, 0) === 0;
 }
 
 /**
@@ -52,11 +56,11 @@ function startsWith(haystack, needle, isCaseSensitive) {
  * @returns {boolean}
  */
 function endsWith(haystack, needle, isCaseSensitive) {
-	if (isCaseSensitive === false) {
-		haystack = haystack.toLowerCase();
-		needle = needle.toLowerCase();
-	}
-	return haystack.lastIndexOf(needle) === haystack.length - needle.length;
+    if (isCaseSensitive === false) {
+        haystack = haystack.toLowerCase();
+        needle = needle.toLowerCase();
+    }
+    return haystack.lastIndexOf(needle) === haystack.length - needle.length;
 }
 
 /**
@@ -68,11 +72,11 @@ function endsWith(haystack, needle, isCaseSensitive) {
  * // out === "**"
  */
 function multiply(s, count) {
-	var res = "", i;
-	for (i = 0; i < count; i++) {
-		res = res + s;
-	}
-	return res;
+    let res = '';
+    for (let i = 0; i < count; i++) {
+        res += s;
+    }
+    return res;
 }
 
 /**
@@ -85,11 +89,19 @@ function multiply(s, count) {
  * // out === "001"
  */
 function padLeft(value, length, padChar) {
-	if (length <= value.length) {
-		return value;
-	}
+    if (length <= value.length) {
+        return value;
+    }
 
-	return multiply(padChar, length - value.length) + value;
+    return multiply(padChar, length - value.length) + value;
+}
+
+function s4(num) {
+    let ret = num.toString(16);
+    while (ret.length < 4) {
+        ret = '0' + ret;
+    }
+    return ret;
 }
 
 /**
@@ -98,30 +110,24 @@ function padLeft(value, length, padChar) {
  * @returns {string} A GUID.
  */
 function createGUID() {
-	/* global crypto */
-	if (typeof crypto !== 'undefined' &&
-		typeof crypto.getRandomValues !== 'undefined') {
+    if (typeof crypto !== 'undefined' &&
+        typeof crypto.getRandomValues !== 'undefined') {
 
-		// If we have a cryptographically secure PRNG, use that
-		// http://stackoverflow.com/questions/6906916/collisions-when-generating-uuids-in-javascript
-		var buf = new Uint16Array(8);
-		crypto.getRandomValues(buf);
-		var S4 = function(num) {
-			var ret = num.toString(16);
-			while (ret.length < 4) {
-				ret = "0" + ret;
-			}
-			return ret;
-		};
-		return (S4(buf[0]) + S4(buf[1]) + "-" + S4(buf[2]) + "-" + S4(buf[3]) + "-" + S4(buf[4]) + "-" + S4(buf[5]) + S4(buf[6]) + S4(buf[7]));
-	} else {
-		// Otherwise, just use Math.random
-		// http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/2117523#2117523
-		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-			var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-			return v.toString(16);
-		});
-	}
+        // If we have a cryptographically secure PRNG, use that
+        // http://stackoverflow.com/questions/6906916/collisions-when-generating-uuids-in-javascript
+        const buf = new Uint16Array(8);
+        crypto.getRandomValues(buf);
+        return (s4(buf[0]) + s4(buf[1]) + '-' + s4(buf[2]) + '-' + s4(buf[3]) + '-' + s4(buf[4]) + '-' + s4(buf[5]) + s4(buf[6]) + s4(buf[7]));
+    }
+
+    // Otherwise, just use Math.random
+    // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/2117523#2117523
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+
 }
 
 /**
@@ -134,42 +140,41 @@ function createGUID() {
  */
 function formatUrl(urlTemplate, templateArgs, queryParams) {
 
-	var url;
+    let url;
 
-	if (templateArgs) {
-		let urlEncodedTemplateArgs = {};
-		for (let arg in templateArgs) {
-			if (templateArgs.hasOwnProperty(arg)) {
-				urlEncodedTemplateArgs[arg] = encodeURIComponent(templateArgs[arg]);
-			}
-		}
-		url = format(urlTemplate, urlEncodedTemplateArgs);
-	}
-	else {
-		url = urlTemplate;
-	}
+    if (templateArgs) {
+        const urlEncodedTemplateArgs = {};
+        for (const arg in templateArgs) {
+            if (templateArgs.hasOwnProperty(arg)) {
+                urlEncodedTemplateArgs[arg] = encodeURIComponent(templateArgs[arg]);
+            }
+        }
+        url = format(urlTemplate, urlEncodedTemplateArgs);
+    } else {
+        url = urlTemplate;
+    }
 
-	if (queryParams) {
-		let firstQueryParam = url.indexOf('?') < 0;
-		for(let queryParamKey in queryParams) {
-			if (queryParams.hasOwnProperty(queryParamKey) && queryParams[queryParamKey] != null) {
-				url += (firstQueryParam ? '?' : '&') + queryParamKey + '=' + encodeURIComponent(queryParams[queryParamKey]);
-				firstQueryParam = false;
-			}
-		}
-	}
+    if (queryParams) {
+        let firstQueryParam = url.indexOf('?') < 0;
+        for (const queryParamKey in queryParams) {
+            if (queryParams.hasOwnProperty(queryParamKey) && queryParams[queryParamKey] != null) {
+                url += (firstQueryParam ? '?' : '&') + queryParamKey + '=' + encodeURIComponent(queryParams[queryParamKey]);
+                firstQueryParam = false;
+            }
+        }
+    }
 
-	return url;
+    return url;
 }
 
-//-- Export section --
+// -- Export section --
 
 export {
-	format,
-	formatUrl,
-	startsWith,
-	endsWith,
-	multiply,
-	padLeft,
-	createGUID
+    format,
+    formatUrl,
+    startsWith,
+    endsWith,
+    multiply,
+    padLeft,
+    createGUID,
 };

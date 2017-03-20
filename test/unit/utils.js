@@ -11,8 +11,8 @@ ES6Promise.polyfill();
  */
 var realSetTimeout = setTimeout;
 var tick = function(func) {
-	jasmine.clock().tick(1); // for phantomjs
-	realSetTimeout(func, 1); // for when running in a modern browser (that doesn't fallback to nextTick=setTimeout)
+    jasmine.clock().tick(1); // for phantomjs
+    realSetTimeout(func, 1); // for when running in a modern browser (that doesn't fallback to nextTick=setTimeout)
 };
 
 var global = (0, eval)('this');
@@ -20,17 +20,17 @@ var global = (0, eval)('this');
 var mockDate = new Date(2015, 3, 27);
 
 function multiline() {
-	var lines = Array.prototype.slice.call(arguments);
-	return lines.join("\r\n");
+    var lines = Array.prototype.slice.call(arguments);
+    return lines.join("\r\n");
 }
 
 function installClock() {
-	jasmine.clock().install();
-	jasmine.clock().mockDate(mockDate);
+    jasmine.clock().install();
+    jasmine.clock().mockDate(mockDate);
 }
 function uninstallClock() {
-	jasmine.clock().tick(1);
-	jasmine.clock().uninstall();
+    jasmine.clock().tick(1);
+    jasmine.clock().uninstall();
 }
 
 export { tick, global, multiline, installClock, uninstallClock, mockDate };

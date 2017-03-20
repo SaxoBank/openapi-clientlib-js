@@ -3,11 +3,11 @@
  * @ignore
  */
 
-//-- Local variables section --
+// -- Local variables section --
 
-//-- Local methods section --
+// -- Local methods section --
 
-//-- Exported methods section --
+// -- Exported methods section --
 
 /**
  * This set of functions can be mixed into any class or object.
@@ -72,76 +72,76 @@
  * myInstance.trigger("event");
  */
 function mixinEmitter(target) {
-	var subscribers = {};
+    const subscribers = {};
 
-	if (target.on || target.off || target.trigger) {
-		throw new Error("Mixing in would hide existing implementations of on/off/trigger");
-	}
+    if (target.on || target.off || target.trigger) {
+        throw new Error('Mixing in would hide existing implementations of on/off/trigger');
+    }
 
     function addSubscriber(eventType, onFunction, that, isOne) {
         if (!eventType) {
-            var methodName = isOne ? "one" : "on";
-			throw new Error(methodName + " method requires an eventType - have you typo'd ?");
-		}
-		if (!onFunction) {
-			throw new Error("Subscribing without a function to call");
-		}
-        var eventSubscribers = subscribers[eventType];
-		if (!eventSubscribers) {
-			eventSubscribers = subscribers[eventType] = [];
-		}
-		eventSubscribers.push({ onFunction: onFunction, that: that, isOne: isOne });
+            const methodName = isOne ? 'one' : 'on';
+            throw new Error(methodName + ' method requires an eventType - have you typo\'d ?');
+        }
+        if (!onFunction) {
+            throw new Error('Subscribing without a function to call');
+        }
+        let eventSubscribers = subscribers[eventType];
+        if (!eventSubscribers) {
+            eventSubscribers = subscribers[eventType] = [];
+        }
+        eventSubscribers.push({ onFunction, that, isOne });
     }
 
-	target.one = function(eventType, onFunction, that) {
+    target.one = function(eventType, onFunction, that) {
         addSubscriber(eventType, onFunction, that, true);
-		return this;
-	};
+        return this;
+    };
 
-	target.on = function(eventType, onFunction, that) {
+    target.on = function(eventType, onFunction, that) {
         addSubscriber(eventType, onFunction, that, false);
         return this;
-	};
+    };
 
-	target.off = function(eventType, onFunction, that) {
-		if (eventType) {
-			var eventSubscribers = subscribers[eventType];
-			if (eventSubscribers) {
-				for(let i = eventSubscribers.length - 1, subscriber; subscriber = eventSubscribers[i] ; i--) {
-					if ((!onFunction || subscriber.onFunction === onFunction) &&
-						(!subscriber.that || subscriber.that === that)) {
-						eventSubscribers.splice(i, 1);
-					}
-				}
-				if (eventSubscribers.length === 0) {
-					delete subscribers[eventType];
-				}
-			}
-		} else {
-			for (eventType in subscribers) {
-				if (subscribers.hasOwnProperty(eventType)) {
-					target.off(eventType, onFunction, that);
-				}
-			}
-		}
+    target.off = function(eventType, onFunction, that) {
+        if (eventType) {
+            const eventSubscribers = subscribers[eventType];
+            if (eventSubscribers) {
+                for (let i = eventSubscribers.length - 1, subscriber; subscriber = eventSubscribers[i]; i--) {
+                    if ((!onFunction || subscriber.onFunction === onFunction) &&
+                    (!subscriber.that || subscriber.that === that)) {
+                        eventSubscribers.splice(i, 1);
+                    }
+                }
+                if (eventSubscribers.length === 0) {
+                    delete subscribers[eventType];
+                }
+            }
+        } else {
+            for (eventType in subscribers) {
+                if (subscribers.hasOwnProperty(eventType)) {
+                    target.off(eventType, onFunction, that);
+                }
+            }
+        }
         return this;
-	};
+    };
 
-	target.trigger = function(eventType) {
-		var eventSubscribers = subscribers[eventType];
-		if (eventSubscribers) {
-			var args = Array.prototype.slice.call(arguments, 1);
-			for(let i = eventSubscribers.length - 1, subscriber; subscriber = eventSubscribers[i] ; i--) {
+    target.trigger = function(eventType) {
+        const eventSubscribers = subscribers[eventType];
+        if (eventSubscribers) {
+            const args = Array.prototype.slice.call(arguments, 1);
+            for (let i = eventSubscribers.length - 1, subscriber; subscriber = eventSubscribers[i]; i--) {
                 if (subscriber.isOne) {
                     target.off(eventType, subscriber.onFunction, subscriber.that);
                 }
                 subscriber.onFunction.apply(subscriber.that, args);
-			}
-		}
+            }
+        }
         return this;
-	};
+    };
 }
 
-//-- Export section --
+// -- Export section --
 
 export default { mixinTo: mixinEmitter };

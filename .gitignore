@@ -4,8 +4,5 @@ tmp
 bin
 obj
 dist
-Properties
-SharedJS.csproj.user
-*.suo
 .idea
-.vs
+.eslintcache

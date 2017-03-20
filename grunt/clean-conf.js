@@ -10,8 +10,8 @@ var releaseTask = ['dist/release'];
 var coverageTask = ['dist/coverage'];
 
 module.exports = {
-	tmp: tmpTask,
-	doc: docTask,
-	release: releaseTask,
-	coverage: coverageTask
+    tmp: tmpTask,
+    doc: docTask,
+    release: releaseTask,
+    coverage: coverageTask
 };

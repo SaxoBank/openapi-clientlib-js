@@ -5,14 +5,14 @@
  */
 
 function force(grunt) {
-	return function (set) {
-		if (set === "on") {
-			grunt.option("force", true);
-		}
-		else if (set === "off") {
-			grunt.option("force", false);
-		}
-	};
+    return function (set) {
+        if (set === "on") {
+            grunt.option("force", true);
+        }
+        else if (set === "off") {
+            grunt.option("force", false);
+        }
+    };
 }
 
 module.exports = force;

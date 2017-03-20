@@ -1,9 +1,9 @@
 var sharedConfig = {
-	serverBaseURL: 'http://localhost:8081/',
-	tmp: ".grunt",
-	rootNamespace: "saxo",
-	dist: "dist",
-	releaseFilename: "openapi-client.js"
+    serverBaseURL: 'http://localhost:8081/',
+    tmp: ".grunt",
+    rootNamespace: "saxo",
+    dist: "dist",
+    releaseFilename: "openapi-client.js"
 };
 
 sharedConfig.transpiledSrc = sharedConfig.tmp + "/transpiled-src";

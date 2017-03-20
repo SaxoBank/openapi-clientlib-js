@@ -1,8 +1,8 @@
-﻿import * as utils_enum from './utils/enum';
-import * as utils_function from './utils/function';
-import * as utils_object from './utils/object';
-import * as utils_string from './utils/string';
-import utils_fetch from './utils/fetch';
+﻿import * as utilsEnum from './utils/enum';
+import * as utilsFunction from './utils/function';
+import * as utilsObject from './utils/object';
+import * as utilsString from './utils/string';
+import utilsFetch from './utils/fetch';
 
 import PriceFormatting from './price-formatting/price-formatting';
 import priceFormatOptions from './price-formatting/format-options';
@@ -24,30 +24,30 @@ import StreamingSubscriptionQueue from './openapi/streaming/subscription-queue';
 import * as StreamingSubscriptionActions from './openapi/streaming/subscription-actions';
 
 export default {
-	log: log,
-	microEmitter: microEmitter,
-	NumberFormatting: NumberFormatting,
-	PriceFormatting: PriceFormatting,
-	priceFormatOptions: priceFormatOptions,
-	openapi: {
-		batch: batch,
-		TransportCore: TransportCore,
-		TransportAuth: TransportAuth,
-		TransportBatch: TransportBatch,
-		TransportQueue: TransportQueue,
-        TransportRetry: TransportRetry,
-		Streaming: Streaming,
-		// privates exposed for testing
-		_StreamingOrphanFinder: StreamingOrphanFinder,
-		_StreamingSubscription: StreamingSubscription,
-		_StreamingSubscriptionQueue: StreamingSubscriptionQueue,
-		_StreamingSubscriptionActions: StreamingSubscriptionActions,
-	},
-	utils: {
-		"enum": utils_enum,
-		"function": utils_function,
-		"object": utils_object,
-		"string": utils_string,
-		fetch: utils_fetch
-	}
+    log,
+    microEmitter,
+    NumberFormatting,
+    PriceFormatting,
+    priceFormatOptions,
+    openapi: {
+        batch,
+        TransportCore,
+        TransportAuth,
+        TransportBatch,
+        TransportQueue,
+        TransportRetry,
+        Streaming,
+        // privates exposed for testing
+        _StreamingOrphanFinder: StreamingOrphanFinder,
+        _StreamingSubscription: StreamingSubscription,
+        _StreamingSubscriptionQueue: StreamingSubscriptionQueue,
+        _StreamingSubscriptionActions: StreamingSubscriptionActions,
+    },
+    utils: {
+        'enum': utilsEnum,
+        'function': utilsFunction,
+        'object': utilsObject,
+        'string': utilsString,
+        fetch: utilsFetch,
+    },
 };
