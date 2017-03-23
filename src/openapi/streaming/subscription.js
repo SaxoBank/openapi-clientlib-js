@@ -31,6 +31,9 @@ const MIN_REFRESH_RATE_MS = 100;
 
 const LOG_AREA = 'Subscription';
 
+const RETRY_DELAY = 1000; // retry subscribing on 504's
+const MAX_RETRIES = 5;
+
 // -- Local methods section --
 
 /**
@@ -205,7 +208,14 @@ function onSubscribeSuccess(referenceId, result) {
     }
     this.updatesBeforeSubscribed = null;
 
+    this.retryCounter = 0;
+
     onReadyToPerformNextAction.call(this);
+}
+
+function retrySubscription() {
+    this.onUnsubscribe();
+    setTimeout(this.onSubscribe.bind(this), RETRY_DELAY);
 }
 
 /**
@@ -218,13 +228,20 @@ function onSubscribeError(referenceId, response) {
         return;
     }
 
-    this.currentState = STATE_UNSUBSCRIBED;
-    log.error(LOG_AREA, 'An error occurred subscribing', { response, url: this.url });
+    if (response && response.status === '504' && this.retryCounter++ < MAX_RETRIES) {
+        log.error(LOG_AREA, 'Received gateway timeout when subscribing. Retrying.', { response, url: this.url });
 
-    // if we are unsubscribed, do not fire the error handler
-    if (this.queue.peek() !== ACTION_UNSUBSCRIBE) {
-        if (this.onError) {
-            this.onError(response);
+        this.currentState = STATE_SUBSCRIBED; // set to subscribed so that unsubscribe request isn't ignored
+        retrySubscription.call(this);
+    } else {
+        this.currentState = STATE_UNSUBSCRIBED;
+        log.error(LOG_AREA, 'An error occurred subscribing', { response, url: this.url });
+
+        // if we are unsubscribed, do not fire the error handler
+        if (this.queue.peek() !== ACTION_UNSUBSCRIBE) {
+            if (this.onError) {
+                this.onError(response);
+            }
         }
     }
     onReadyToPerformNextAction.call(this);
@@ -293,6 +310,11 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
      * @type {string}
      */
     this.referenceId = null;
+
+    /**
+     * The number of retries this subscription has made
+     */
+    this.retryCounter = 0;
 
     /**
      * The action queue
