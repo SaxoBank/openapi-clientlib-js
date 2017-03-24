@@ -49,6 +49,21 @@ function extend() {
     return result;
 }
 
+/**
+ * Safely gets value of object's property.
+ * @alias saxo.utils.object.get
+ * @param {Object} obj - Object can be undefined.
+ * @param {string} key - Object's property name.
+ * @returns {Object}
+ * @static
+ */
+function get(obj, key) {
+    if (obj && key in obj) {
+        return obj[key];
+    }
+    return null;
+}
+
 // -- Export section --
 
-export { extend };
+export { extend, get };

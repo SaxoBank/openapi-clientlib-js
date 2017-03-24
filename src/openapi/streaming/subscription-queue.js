@@ -29,35 +29,64 @@ function SubscriptionQueue(maxSize) {
  * - duplicates.
  * - ACTION_SUBSCRIBE action before ACTION_UNSUBSCRIBE.
  *
- * @param {Number} action - action to add to the queue.
+ * @param {Object} queuedAction - action with arguments to add to the queue.
  */
-SubscriptionQueue.prototype.enqueue = function(action) {
-    this.items.push(action);
+SubscriptionQueue.prototype.enqueue = function(queuedAction) {
 
-    if (this.items.length < this.maxSize) {
+    if (!queuedAction.action) {
+        throw new Error('Subscription queued action is invalid');
+    }
+    const { action } = queuedAction;
+
+    if (!this.canEnqueueAction(action)) {
         return;
     }
 
-    for (let i = this.items.length - 2; i >= 0; i--) {
-        const task = this.items[i];
-        const nextTask = this.items[i + 1];
-
-        if (task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_SUBSCRIBE) {
-            // Removing subscribe in such case to keep requested subscription modification.
-            this.items.splice(i + 1, 1);
-        } else if (task === ACTION_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
-            task === ACTION_UNSUBSCRIBE && nextTask === ACTION_SUBSCRIBE ||
-            task === ACTION_SUBSCRIBE && nextTask === ACTION_MODIFY_SUBSCRIBE ||
-            task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
-            task === nextTask
-        ) {
-            this.items.splice(i, 1);
-        }
+    if (action === ACTION_UNSUBSCRIBE ||
+        action === ACTION_SUBSCRIBE) {
+        this.reset();
+    } else if (action === ACTION_MODIFY_SUBSCRIBE) {
+        this.removeAllExcept(ACTION_UNSUBSCRIBE);
     }
+
+    this.items.push(queuedAction);
 
     if (this.items.length > this.maxSize) {
         // Removes elements from the beginning of a queue, to match maximum allowed size.
         this.items.splice(0, this.items.length - this.maxSize);
+    }
+};
+
+SubscriptionQueue.prototype.canEnqueueAction = function canEnqueueAction(nextAction) {
+
+    // Removing subscribe in such case to keep requested subscription modification.
+    if (this.containsAction(ACTION_MODIFY_SUBSCRIBE) && nextAction === ACTION_SUBSCRIBE) {
+        return false;
+    }
+    return true;
+};
+
+SubscriptionQueue.prototype.containsAction = function(action) {
+    let i = 0;
+
+    while (i < this.items.length) {
+        if (this.items[i].action === action) {
+            return true;
+        }
+        i++;
+    }
+    return false;
+};
+
+SubscriptionQueue.prototype.removeAllExcept = function(action) {
+    let i = 0;
+
+    while (i < this.items.length) {
+        if (this.items[i].action !== action) {
+            this.items.splice(i, 1);
+            continue;
+        }
+        i++;
     }
 };
 

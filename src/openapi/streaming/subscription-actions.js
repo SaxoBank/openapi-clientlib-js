@@ -1,6 +1,7 @@
 export const ACTION_SUBSCRIBE = 0x1;
 export const ACTION_UNSUBSCRIBE = 0x2;
 export const ACTION_MODIFY = 0x4;
+export const ACTION_MODIFY_PATCH = 0x8;
 
 // Subscrtiption action variant that drives queue merging logic for subscription modification.
 // Whenever ACTION_UNSUBSCRIBE is followed by ACTION_MODIFY_SUBSCRIBE, both actions will be kept.
