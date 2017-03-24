@@ -472,6 +472,23 @@ describe("openapi Streaming", () => {
 
             expect(subscription.onUnsubscribe.calls.count()).toEqual(1);
         });
+
+        it("passes options on modify", () => {
+            var streaming = new Streaming(transport, 'testUrl', authProvider);
+            stateChangedCallback({newState: 1 /* connected */});
+
+            var subscription = jasmine.createSpyObj("subscription", ["onModify"]);
+            subscription.referenceId = "MySpy";
+            streaming.subscriptions.push(subscription);
+
+            const args = "SubscriptionArgs";
+            const options = { test: 'test options' };
+            streaming.modify(subscription, args, options);
+
+            expect(subscription.onModify.calls.count()).toEqual(1);
+            expect(subscription.onModify.calls.mostRecent().args[0]).toEqual(args);
+            expect(subscription.onModify.calls.mostRecent().args[1]).toEqual(options);
+        });
     });
 
     describe("options", () => {

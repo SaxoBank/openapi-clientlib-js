@@ -48,7 +48,6 @@ function extend() {
     }
     return result;
 }
-
 // -- Export section --
 
 export { extend };

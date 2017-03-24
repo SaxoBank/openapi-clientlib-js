@@ -2,6 +2,7 @@ import { tick, global, installClock, uninstallClock } from '../../utils';
 import mockTransport from '../../mocks/transport';
 
 const Subscription = saxo.openapi._StreamingSubscription;
+const extend = saxo.utils.object.extend;
 
 var transport;
 var updateSpy, createdSpy, errorSpy;
@@ -136,6 +137,18 @@ describe("openapi StreamingSubscription", () => {
         });
 
         it("handles single-valued updates", () => {
+            const streamingData = {ReferenceId: subscription.referenceId, Data: ['foo']};
+            subscription.onStreamingData(streamingData);
+
+            expect(updateSpy.calls.count()).toEqual(1);
+            expect(updateSpy.calls.argsFor(0)).toEqual([streamingData, subscription.UPDATE_TYPE_DELTA]);
+        });
+
+        it("handles single-valued updates in modify patch state", () => {
+
+            const patchArgsDelta = { argsDelta: 'delta' };
+            subscription.onModify({args: 'test' }, { isPatch: true, patchArgsDelta });
+
             const streamingData = {ReferenceId: subscription.referenceId, Data: ['foo']};
             subscription.onStreamingData(streamingData);
 
@@ -471,7 +484,7 @@ describe("openapi StreamingSubscription", () => {
     });
 
     describe("activity detection", () => {
-        it("has an infinite time till when unsubscribed, subscribing and unsubscribed", (done) => {
+        it("has an infinite time when unsubscribed, subscribing and unsubscribing", (done) => {
             var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
 
             expect(subscription.timeTillOrphaned(Date.now())).toEqual(Infinity);
@@ -693,16 +706,140 @@ describe("openapi StreamingSubscription", () => {
 
                 let oldReferenceId = subscription.referenceId;
                 subscription.reset();
+
+                // sends delete request for old subscription
+                expect(transport.delete.calls.count()).toEqual(1);
+                expect(transport.delete.calls.mostRecent().args[2].referenceId).toEqual(oldReferenceId);
+
                 expect(oldReferenceId).not.toEqual(subscription.referenceId);
 
                 // sent off another new request for a subscription
                 expect(transport.post.calls.count()).toEqual(1);
                 transport.post.calls.reset();
-                expect(transport.delete.calls.count()).toEqual(0);
 
                 done();
             });
+        });
+    });
 
+    describe("modify behaviour", () => {
+
+        it("calls patch on modify with patch method option", (done) => {
+            var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
+
+            const initialArgs = { initialArgs: 'initialArgs' };
+            subscription.subscriptionData.Arguments = initialArgs;
+            subscription.onSubscribe();
+
+            sendInitialResponse({InactivityTimeout: 100, Snapshot: { resetResponse: true }});
+
+            tick(() => {
+                const newArgs = {
+                    newArgs: 'newArgs',
+                    testArgs: 'test',
+                };
+                const patchArgsDelta = { testArgs: 'argsDelta' };
+                subscription.onModify(newArgs, { isPatch: true, patchArgsDelta });
+                // new arguments assigned to the subscription
+                expect(subscription.subscriptionData.Arguments).toEqual({
+                    newArgs: 'newArgs',
+                    testArgs: 'test',
+                });
+                // sends patch request on modify
+                expect(transport.patch.calls.count()).toEqual(1);
+
+                done();
+            });
+        });
+
+        it("resubscribes with new arguments on modify without patch method option", (done) => {
+            var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
+
+            const initialArgs = { initialArgs: 'initialArgs' };
+            subscription.subscriptionData.Arguments = initialArgs;
+            subscription.onSubscribe();
+
+            sendInitialResponse({InactivityTimeout: 100, Snapshot: { resetResponse: true }});
+
+            tick(() => {
+                const newArgs = { newArgs: 'test' };
+                subscription.onModify(newArgs);
+                // subscribed with new arguments
+                expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
+                // sends delete request on modify
+                expect(transport.delete.calls.count()).toEqual(1);
+                expect(transport.post.calls.count()).toEqual(1);
+
+                done();
+            });
+        });
+
+        it("sends next patch request only after previous patch completed", (done) => {
+            var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
+
+            const initialArgs = { initialArgs: 'initialArgs' };
+            subscription.subscriptionData.Arguments = initialArgs;
+            subscription.onSubscribe();
+
+            sendInitialResponse({InactivityTimeout: 100, Snapshot: { resetResponse: true }});
+
+            tick(() => {
+                const newArgs = { newArgs: 'test' };
+                subscription.onModify(newArgs, { isPatch: true, patchArgsDelta: { newArgs: 'firstArgs' }});
+                subscription.onModify(newArgs, { isPatch: true, patchArgsDelta: { newArgs: 'secondArgs' } });
+                expect(transport.patch.calls.count()).toEqual(1);
+                // first patch arguments sent
+                expect(transport.patch.calls.all()[0].args[3].body).toEqual({ newArgs: 'firstArgs' });
+
+                transport.patchResolve({ status: "200", response: "" });
+
+                tick(() => {
+                    expect(transport.patch.calls.count()).toEqual(2);
+                    // second patch arguments sent
+                    expect(transport.patch.calls.all()[1].args[3].body).toEqual({ newArgs: 'secondArgs' });
+                    done();
+                });
+            });
+        });
+
+        it("does not set state back to STATE_SUBSCRIBED after reset", (done) => {
+            var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
+            subscription.onSubscribe();
+
+            sendInitialResponse({InactivityTimeout: 100, Snapshot: { resetResponse: true }});
+
+            tick(() => {
+                const stateBeforeModify = subscription.currentState;
+                const patchArgsDelta = { argsDelta: 'argsDelta' };
+                subscription.onModify({ newArgs: 'test' }, { isPatch: true, patchArgsDelta });
+                subscription.reset();
+
+                transport.patchResolve({ status: "200", response: "" });
+                tick(() => {
+                    expect(subscription.currentState).not.toEqual(stateBeforeModify);
+                    done();
+                });
+            });
+        });
+
+        it("does not set state back to STATE_SUBSCRIBED after reset on modify patch error", (done) => {
+            var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
+            subscription.onSubscribe();
+
+            sendInitialResponse({InactivityTimeout: 100, Snapshot: { resetResponse: true }});
+
+            tick(() => {
+                const stateBeforeModify = subscription.currentState;
+                const patchArgsDelta = { argsDelta: 'argsDelta' };
+                subscription.onModify({ newArgs: 'test' }, { isPatch: true, patchArgsDelta });
+                subscription.reset();
+
+                transport.patchReject({ status: "500", response: "patch failed" });
+                tick(() => {
+                    expect(subscription.currentState).not.toEqual(stateBeforeModify);
+                    done();
+                });
+            });
         });
     });
 });
