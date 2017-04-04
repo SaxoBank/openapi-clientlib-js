@@ -3,7 +3,7 @@
  * @module saxo/openapi/streaming/subscription
  * @ignore
  */
-import { extend, get } from '../../utils/object';
+import { extend } from '../../utils/object';
 import log from '../../log';
 import {
     ACTION_SUBSCRIBE,
@@ -117,11 +117,10 @@ function onReadyToPerformNextAction() {
 
 /**
  * Performs an action to a subscription based on the current state.
- * @param action
- * @param arguments
+ * @param queuedAction
  */
-function performAction(queuedActiond) {
-    const { action, args } = queuedActiond;
+function performAction(queuedAction) {
+    const { action, args } = queuedAction;
 
     switch (action) {
         case ACTION_SUBSCRIBE:
@@ -220,7 +219,7 @@ function onSubscribeSuccess(referenceId, result) {
     }
 
     // do not fire events if we are waiting to unsubscribe
-    if (get(this.queue.peek(), 'action') !== ACTION_UNSUBSCRIBE) {
+    if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
         try {
             this.onUpdate(responseData.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
         } catch (ex) {
@@ -252,7 +251,7 @@ function onSubscribeError(referenceId, response) {
     log.error(LOG_AREA, 'An error occurred subscribing', { response, url: this.url });
 
     // if we are unsubscribed, do not fire the error handler
-    if (get(this.queue.peek(), 'action') !== ACTION_UNSUBSCRIBE) {
+    if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
         if (this.onError) {
             this.onError(response);
         }
@@ -298,6 +297,11 @@ function onUnsubscribeError(referenceId, response) {
  * @param response
  */
 function onModifyPatchSuccess(referenceId, response) {
+    if (referenceId !== this.referenceId) {
+        log.error(LOG_AREA, 'Received a response for modify patch a subscription that has afterwards been reset - ignoring');
+        return;
+    }
+
     this.currentState = STATE_SUBSCRIBED;
     onReadyToPerformNextAction.call(this);
 }
@@ -307,6 +311,11 @@ function onModifyPatchSuccess(referenceId, response) {
  * @param response
  */
 function onModifyPatchError(referenceId, response) {
+    if (referenceId !== this.referenceId) {
+        log.error(LOG_AREA, 'Received an error response for modify patch a subscription that has afterwards been reset - ignoring');
+        return;
+    }
+
     this.currentState = STATE_SUBSCRIBED;
     log.error(LOG_AREA, 'An error occurred patching', { response, url: this.url });
     onReadyToPerformNextAction.call(this);
@@ -391,7 +400,7 @@ Subscription.prototype.reset = function() {
         case STATE_UNSUBSCRIBED:
         case STATE_UNSUBSCRIBE_REQUESTED:
             // do not do anything if we are on our way to unsubscribed unless the next action would be to subscribe
-            if (get(this.queue.peek(), 'action') & ACTION_SUBSCRIBE) {
+            if (this.queue.peekAction() & ACTION_SUBSCRIBE) {
                 break;
             }
             return;

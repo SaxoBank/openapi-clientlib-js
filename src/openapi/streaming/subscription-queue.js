@@ -7,7 +7,6 @@
  * @module saxo/openapi/streaming/subscription queue
  * @ignore
  */
-
 import {
     ACTION_SUBSCRIBE,
     ACTION_UNSUBSCRIBE,
@@ -22,6 +21,39 @@ import {
 function SubscriptionQueue(maxSize) {
     this.items = [];
     this.maxSize = maxSize || 2;
+
+    this.canEnqueueAction = function(nextAction) {
+
+        // Removing subscribe in such case to keep requested subscription modification.
+        if (this.containsAction(ACTION_MODIFY_SUBSCRIBE) && nextAction === ACTION_SUBSCRIBE) {
+            return false;
+        }
+        return true;
+    };
+
+    this.containsAction = function(action) {
+        let i = 0;
+
+        while (i < this.items.length) {
+            if (this.items[i].action === action) {
+                return true;
+            }
+            i++;
+        }
+        return false;
+    };
+
+    this.removeAllExcept = function(action) {
+        let i = 0;
+
+        while (i < this.items.length) {
+            if (this.items[i].action !== action) {
+                this.items.splice(i, 1);
+                continue;
+            }
+            i++;
+        }
+    };
 }
 
 /**
@@ -57,45 +89,15 @@ SubscriptionQueue.prototype.enqueue = function(queuedAction) {
     }
 };
 
-SubscriptionQueue.prototype.canEnqueueAction = function canEnqueueAction(nextAction) {
-
-    // Removing subscribe in such case to keep requested subscription modification.
-    if (this.containsAction(ACTION_MODIFY_SUBSCRIBE) && nextAction === ACTION_SUBSCRIBE) {
-        return false;
-    }
-    return true;
-};
-
-SubscriptionQueue.prototype.containsAction = function(action) {
-    let i = 0;
-
-    while (i < this.items.length) {
-        if (this.items[i].action === action) {
-            return true;
-        }
-        i++;
-    }
-    return false;
-};
-
-SubscriptionQueue.prototype.removeAllExcept = function(action) {
-    let i = 0;
-
-    while (i < this.items.length) {
-        if (this.items[i].action !== action) {
-            this.items.splice(i, 1);
-            continue;
-        }
-        i++;
-    }
-};
-
 /**
  * Returns the action from the beggining of a queue without removing it.
  * @return {Number} Next action.
  */
-SubscriptionQueue.prototype.peek = function() {
-    return this.items[0];
+SubscriptionQueue.prototype.peekAction = function() {
+    if (this.isEmpty()) {
+        return undefined;
+    }
+    return this.items[0].action;
 };
 
 /**

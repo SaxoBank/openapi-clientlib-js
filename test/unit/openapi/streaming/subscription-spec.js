@@ -784,5 +784,43 @@ describe("openapi StreamingSubscription", () => {
                 });
             });
         });
+
+        it("does not set state back to STATE_SUBSCRIBED after reset", (done) => {
+            var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
+            subscription.onSubscribe();
+
+            sendInitialResponse({InactivityTimeout: 100, Snapshot: { resetResponse: true }});
+
+            tick(() => {
+                const stateBeforeModify = subscription.currentState;
+                subscription.onModify({ newArgs: 'newArgs' }, { isPatch: true });
+                subscription.reset();
+
+                transport.patchResolve({ status: "200", response: "" });
+                tick(() => {
+                    expect(subscription.currentState).not.toEqual(stateBeforeModify);
+                    done();
+                });
+            });
+        });
+
+        it("does not set state back to STATE_SUBSCRIBED after reset on modify patch error", (done) => {
+            var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
+            subscription.onSubscribe();
+
+            sendInitialResponse({InactivityTimeout: 100, Snapshot: { resetResponse: true }});
+
+            tick(() => {
+                const stateBeforeModify = subscription.currentState;
+                subscription.onModify({ newArgs: 'newArgs' }, { isPatch: true });
+                subscription.reset();
+
+                transport.patchReject({ status: "500", response: "patch failed" });
+                tick(() => {
+                    expect(subscription.currentState).not.toEqual(stateBeforeModify);
+                    done();
+                });
+            });
+        });
     });
 });

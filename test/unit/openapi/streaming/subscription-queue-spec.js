@@ -12,7 +12,7 @@ describe("openapi SubscriptionQueue", () => {
 
         it('should add one action', () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
-            expect(queue.peek().action).toBe(SubscriptionActions.ACTION_SUBSCRIBE);
+            expect(queue.peekAction()).toBe(SubscriptionActions.ACTION_SUBSCRIBE);
             expect(queue.isEmpty()).toBe(false);
         })
 
@@ -20,7 +20,7 @@ describe("openapi SubscriptionQueue", () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
             queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
 
-            expect(queue.peek().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
+            expect(queue.peekAction()).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
             expect(queue.isEmpty()).toBe(false);
         })
 
@@ -155,7 +155,7 @@ describe("openapi SubscriptionQueue", () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
 
             expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
-            expect(queue.peek().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
+            expect(queue.peekAction()).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
             expect(queue.isEmpty()).toBe(false);
         })
 
@@ -181,7 +181,7 @@ describe("openapi SubscriptionQueue", () => {
 
         it('should return first and only item', () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
-            expect(queue.peek().action).toBe(SubscriptionActions.ACTION_SUBSCRIBE);
+            expect(queue.peekAction()).toBe(SubscriptionActions.ACTION_SUBSCRIBE);
             expect(queue.isEmpty()).toBe(false);
         })
 
@@ -189,12 +189,12 @@ describe("openapi SubscriptionQueue", () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
             queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
 
-            expect(queue.peek().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
+            expect(queue.peekAction()).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
             expect(queue.isEmpty()).toBe(false);
         })
 
         it('should return undefined for empty queue', () => {
-            expect(queue.peek()).toBe(undefined);
+            expect(queue.peekAction()).toBe(undefined);
             expect(queue.isEmpty()).toBe(true);
         })
 
@@ -202,13 +202,13 @@ describe("openapi SubscriptionQueue", () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
             queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
 
-            expect(queue.peek().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
+            expect(queue.peekAction()).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
             expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
 
-            expect(queue.peek().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
+            expect(queue.peekAction()).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
             expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
 
-            expect(queue.peek()).toBe(undefined);
+            expect(queue.peekAction()).toBe(undefined);
             expect(queue.isEmpty()).toBe(true);
         })
     });
