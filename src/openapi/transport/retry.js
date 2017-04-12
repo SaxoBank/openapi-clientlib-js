@@ -124,9 +124,10 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
         .then(transportCall.resolve,
             (response) => {
                 const callOptions = this.methods[transportCall.method];
-                if ((!(response && response.status) || callOptions.statuses && callOptions.statuses.indexOf(response.status) >= 0) &&
-                    (callOptions.retryLimit > 0 && transportCall.retryCount < callOptions.retryLimit ||
-                        callOptions.retryTimeouts && transportCall.retryCount < callOptions.retryTimeouts.length)) {
+                const isRetryRequest = !(response && response.status) || callOptions.statuses && callOptions.statuses.indexOf(response.status) >= 0;
+                const isWithinRetryLimitOption = callOptions.retryLimit > 0 && transportCall.retryCount < callOptions.retryLimit;
+                const isWithinRetryTimeoutsOption = callOptions.retryTimeouts && transportCall.retryCount < callOptions.retryTimeouts.length;
+                if (isRetryRequest && (isWithinRetryLimitOption || isWithinRetryTimeoutsOption)) {
                     this.addFailedCall(transportCall);
                 } else {
                     transportCall.reject.apply(null, arguments);
@@ -192,13 +193,13 @@ TransportRetry.prototype.retryIndividualFailedCall = function(transportCall) {
 TransportRetry.prototype.dispose = function() {
     this.failedCalls.forEach((failedCall) => {
         if (failedCall.retryTimer) {
-            failedCall.retryTimer.clear();
+            failedCall.retryTimer.clearTimeout();
             failedCall.retryTimer = null;
         }
     });
     this.failedCalls.length = 0;
     if (this.retryTimer) {
-        this.retryTimer.clear();
+        this.retryTimer.clearTimeout();
     }
     this.transport.dispose();
 };
