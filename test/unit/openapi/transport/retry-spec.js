@@ -334,4 +334,45 @@ describe("openapi TransportRetry", () => {
             });
         });
     });
+
+    it("stops retrying and rejects outstanding promises after transport was disposed", (done) => {
+        transportRetry = new TransportRetry(transport, {retryTimeout:1000, methods:{'delete':{retryLimit:3}, 'post':{retryTimeouts:[1000, 2000]}}});
+        var deletePromise = transportRetry.delete();
+        var postPromise = transportRetry.post();
+        var isDeleteRejected = false;
+        deletePromise.catch(() => {
+            isDeleteRejected = true;
+        });
+        var isPostRejected = false;
+        postPromise.catch(() => {
+            isPostRejected = true;
+        });
+        tick(() => {
+            expect(transport.delete.calls.count()).toEqual(1);
+            expect(transport.post.calls.count()).toEqual(1);
+            transport.deleteReject(new TypeError('Network request failed'));
+            transport.postReject(new TypeError('Network request failed'));
+            tick(() => {
+                expect(transportRetry.individualFailedCalls.length).toEqual(1); //contain the post call
+                expect(transportRetry.failedCalls.length).toEqual(1); //contain the delete call
+                expect(transportRetry.retryTimer).toBeDefined(); //the global timer is set
+                const call1 = transportRetry.individualFailedCalls[0];
+                expect(call1.retryTimer).toBeDefined(); //the individual timer is set
+
+                transportRetry.dispose();
+
+                tick(() => {
+                    //promises rejected, no more retries
+                    expect(isDeleteRejected).toEqual(true);
+                    expect(isPostRejected).toEqual(true);
+                    expect(transportRetry.individualFailedCalls.length).toEqual(0);
+                    expect(transportRetry.failedCalls.length).toEqual(0);
+                    jasmine.clock().tick(2000);
+                    expect(transportRetry.individualFailedCalls.length).toEqual(0);
+                    expect(transportRetry.failedCalls.length).toEqual(0);
+                    done();
+                });
+            })
+        });
+    });
 });
