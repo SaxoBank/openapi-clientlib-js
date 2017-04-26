@@ -1,3 +1,7 @@
+#### v1.2.0
+
++ Add custom timeouts based on response code to the retry transport
+
 #### v1.1.0
 
 + Introduce modify method for subscriptions which queues the subscription modification
