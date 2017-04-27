@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+/* eslint max-lines: ["error", 600] */
 /**
  * @module saxo/openapi/streaming/subscription
  * @ignore
@@ -298,7 +298,7 @@ function onUnsubscribeError(referenceId, response) {
  */
 function onModifyPatchSuccess(referenceId, response) {
     if (referenceId !== this.referenceId) {
-        log.error(LOG_AREA, 'Received a response for modify patch a subscription that has afterwards been reset - ignoring');
+        log.debug(LOG_AREA, 'Received a response for modify patch a subscription that has afterwards been reset - ignoring');
         return;
     }
 

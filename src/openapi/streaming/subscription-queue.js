@@ -11,6 +11,7 @@ import {
     ACTION_SUBSCRIBE,
     ACTION_UNSUBSCRIBE,
     ACTION_MODIFY_SUBSCRIBE,
+    ACTION_MODIFY_PATCH,
 } from './subscription-actions';
 
 /**
@@ -20,39 +21,12 @@ import {
  */
 function SubscriptionQueue(maxSize) {
     this.items = [];
-    this.maxSize = maxSize || 2;
 
-    this.canEnqueueAction = function(nextAction) {
-
-        // Removing subscribe in such case to keep requested subscription modification.
-        if (this.containsAction(ACTION_MODIFY_SUBSCRIBE) && nextAction === ACTION_SUBSCRIBE) {
-            return false;
+    this.getLastItem = function() {
+        if (this.isEmpty()) {
+            return undefined;
         }
-        return true;
-    };
-
-    this.containsAction = function(action) {
-        let i = 0;
-
-        while (i < this.items.length) {
-            if (this.items[i].action === action) {
-                return true;
-            }
-            i++;
-        }
-        return false;
-    };
-
-    this.removeAllExcept = function(action) {
-        let i = 0;
-
-        while (i < this.items.length) {
-            if (this.items[i].action !== action) {
-                this.items.splice(i, 1);
-                continue;
-            }
-            i++;
-        }
+        return this.items[this.items.length - 1];
     };
 }
 
@@ -61,32 +35,49 @@ function SubscriptionQueue(maxSize) {
  * - duplicates.
  * - ACTION_SUBSCRIBE action before ACTION_UNSUBSCRIBE.
  *
- * @param {Object} queuedAction - action with arguments to add to the queue.
+ * @param {Object} queuedItem - action with arguments to add to the queue.
  */
-SubscriptionQueue.prototype.enqueue = function(queuedAction) {
+SubscriptionQueue.prototype.enqueue = function(queuedItem) {
 
-    if (!queuedAction.action) {
+    if (!queuedItem.action) {
         throw new Error('Subscription queued action is invalid');
     }
-    const { action } = queuedAction;
-
-    if (!this.canEnqueueAction(action)) {
+    if (this.isEmpty()) {
+        this.items.push(queuedItem);
         return;
     }
 
-    if (action === ACTION_UNSUBSCRIBE ||
-        action === ACTION_SUBSCRIBE) {
-        this.reset();
-    } else if (action === ACTION_MODIFY_SUBSCRIBE) {
-        this.removeAllExcept(ACTION_UNSUBSCRIBE);
+    const { action } = queuedItem;
+    const prevAction = this.getLastItem().action;
+
+    // ..UM => UM
+    if (action === ACTION_MODIFY_SUBSCRIBE) {
+        if (prevAction === ACTION_UNSUBSCRIBE) {
+            this.items = [{ action: ACTION_UNSUBSCRIBE }, queuedItem];
+        } else {
+            this.items = [queuedItem];
+        }
+        return;
     }
 
-    this.items.push(queuedAction);
-
-    if (this.items.length > this.maxSize) {
-        // Removes elements from the beginning of a queue, to match maximum allowed size.
-        this.items.splice(0, this.items.length - this.maxSize);
+    // MM => M, UU=>U, SS => S
+    if (action === prevAction && action !== ACTION_MODIFY_PATCH) {
+        return;
     }
+
+    // MS => M
+    if (prevAction === ACTION_MODIFY_SUBSCRIBE && action === ACTION_SUBSCRIBE) {
+        return;
+    }
+
+    // US => S
+    // SU => U
+    if (prevAction === ACTION_UNSUBSCRIBE && action === ACTION_SUBSCRIBE ||
+        prevAction === ACTION_SUBSCRIBE && action === ACTION_UNSUBSCRIBE) {
+        this.items.splice(-1);
+    }
+
+    this.items.push(queuedItem);
 };
 
 /**
@@ -105,7 +96,38 @@ SubscriptionQueue.prototype.peekAction = function() {
  * @return {Number|undefined} First action, if queue is not empty. Otherwise undefined.
  */
 SubscriptionQueue.prototype.dequeue = function() {
-    return this.items.shift();
+
+    if (this.isEmpty()) {
+        return undefined;
+    }
+
+    const nextItem = this.items.shift();
+
+    if (this.isEmpty()) {
+        return nextItem;
+    }
+    const nextAction = nextItem.action;
+    const lastItem = this.getLastItem();
+    const lastAction = lastItem.action;
+
+    if (nextAction === ACTION_MODIFY_SUBSCRIBE && lastAction !== ACTION_UNSUBSCRIBE) {
+        // M, U, S => U, M
+        // M, U, M, U, M => U, M
+        // U, M, P, P => UM
+        this.reset();
+        return nextItem;
+    }
+
+    if (lastAction === ACTION_UNSUBSCRIBE) {
+        // M, U, S, U => U
+        // S, U => U
+        // S, U, S, U => U
+        // P, U => U
+        this.reset();
+        return lastItem;
+    }
+
+    return nextItem;
 };
 
 /**

@@ -128,6 +128,30 @@ describe("openapi SubscriptionQueue", () => {
             expect(queue.isEmpty()).toBe(true);
         })
 
+        it('should merge and only leave one subscribe', () => {
+            queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
+
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_SUBSCRIBE);
+            expect(queue.isEmpty()).toBe(true);
+        })
+
+        it('should merge and only leave one unsubscribe', () => {
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
+
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
+            expect(queue.isEmpty()).toBe(true);
+        })
+
+        it('should merge and only leave one modify subscribe', () => {
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
+
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
+            expect(queue.isEmpty()).toBe(true);
+        })
+
         it('should merge and only leave subscribe', () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
             queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
@@ -135,6 +159,43 @@ describe("openapi SubscriptionQueue", () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
 
             expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_SUBSCRIBE);
+            expect(queue.isEmpty()).toBe(true);
+        })
+
+        it('should not merge patch actions', () => {
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_PATCH });
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_PATCH });
+
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_PATCH);
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_PATCH);
+            expect(queue.isEmpty()).toBe(true);
+        })
+
+        it('should not insert subscribe after modify subscribe', () => {
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
+
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
+            expect(queue.isEmpty()).toBe(true);
+        })
+
+        it('should remove all actions before unsubscribe followed by modify subscribe', () => {
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_PATCH });
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_PATCH });
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
+
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
+            expect(queue.isEmpty()).toBe(true);
+        })
+
+        it('should insert modify subscribe and remove any non unsubscribe actions', () => {
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_PATCH });
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_PATCH });
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
+
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
             expect(queue.isEmpty()).toBe(true);
         })
     });
@@ -170,6 +231,29 @@ describe("openapi SubscriptionQueue", () => {
 
         it('should return undefined for dequeue on empty queue', () => {
             expect(queue.dequeue()).toBe(undefined);
+            expect(queue.isEmpty()).toBe(true);
+        })
+
+        it('should remove all actions before last unsubscribe', () => {
+
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
+
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
+            expect(queue.isEmpty()).toBe(true);
+        })
+
+        it('should remove all actions after modify subscribe', () => {
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_PATCH });
+
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
             expect(queue.isEmpty()).toBe(true);
         })
     });
@@ -264,40 +348,6 @@ describe("openapi SubscriptionQueue", () => {
             queue.enqueue({ action: 1 });
             queue.enqueue({ action: 2 });
             queue.reset();
-            expect(queue.isEmpty()).toBe(true);
-        })
-    })
-
-    describe('maxSize', () => {
-        it('should use default max size of 2', () => {
-            queue = new SubscriptionQueue();
-            queue.enqueue({ action: 1 });
-            queue.enqueue({ action: 2 });
-            queue.enqueue({ action: 3 });
-            queue.enqueue({ action: 4 });
-
-            expect(queue.dequeue().action).toBe(3);
-            expect(queue.dequeue().action).toBe(4);
-            expect(queue.isEmpty()).toBe(true);
-        })
-
-        it('should use default specified maxSize of 6', () => {
-            queue = new SubscriptionQueue(6);
-            queue.enqueue({ action: '1' });
-            queue.enqueue({ action: '2' });
-            queue.enqueue({ action: '3' });
-            queue.enqueue({ action: '4' });
-            queue.enqueue({ action: '5' });
-            queue.enqueue({ action: '6' });
-            queue.enqueue({ action: '7' });
-            queue.enqueue({ action: '8' });
-
-            expect(queue.dequeue().action).toBe('3');
-            expect(queue.dequeue().action).toBe('4');
-            expect(queue.dequeue().action).toBe('5');
-            expect(queue.dequeue().action).toBe('6');
-            expect(queue.dequeue().action).toBe('7');
-            expect(queue.dequeue().action).toBe('8');
             expect(queue.isEmpty()).toBe(true);
         })
     })
