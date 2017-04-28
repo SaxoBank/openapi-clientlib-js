@@ -1,3 +1,7 @@
+#### v1.2.1
+
++ Dispose the retry transport correctly
+
 #### v1.2.0
 
 + Add custom timeouts based on response code to the retry transport
