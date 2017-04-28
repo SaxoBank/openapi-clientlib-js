@@ -112,6 +112,52 @@ describe("openapi StreamingSubscription", () => {
                 done();
             });
         });
+
+        it("retries subscribing if receive gateway timeout", (done) => {
+            var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, null, errorSpy);
+            subscription.onSubscribe();
+
+            transport.postReject({ status: "504", response: { message: "Gateway Timeout"}});
+
+            tick(() => {
+                expect(transport.delete.calls.count()).toEqual(1);
+                transport.deleteResolve();
+                tick(() => {
+
+                    jasmine.clock().tick(1000);
+                    // second time round server responds with 200
+                    sendInitialResponse();
+
+                    tick(() => {
+                        expect(errorSpy).not.toHaveBeenCalled();
+                        expect(createdSpy.calls.count()).toEqual(1);
+                        done();
+                    });
+                });
+            });
+        });
+
+        it("retries subscribing 5 times before giving up", (done) => {
+            var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, null, errorSpy);
+            subscription.onSubscribe();
+
+            const retry = (retryCount) => {
+                if (retryCount > 5) {
+                    expect(errorSpy.calls.count()).toEqual(1);
+                    done();
+                } else {
+                    transport.postReject({ status: "504", response: { message: "Gateway Timeout"}});
+                    tick(() => {
+                        transport.deleteResolve();
+                        tick(() => {
+                            jasmine.clock().tick(1000);
+                            retry(++retryCount);
+                        });
+                    });
+                }
+            }
+            retry(0);
+        });
     });
 
     describe("streamed update", () => {
