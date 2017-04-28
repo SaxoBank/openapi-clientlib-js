@@ -63,6 +63,7 @@ function TransportRetry(transport, options) {
     this.failedCalls = [];
     this.individualFailedCalls = [];
     this.retryTimer = null;
+    this.isDisposed = false;
 }
 
 /**
@@ -119,7 +120,6 @@ TransportRetry.prototype.options = transportMethod('options');
  * @param transportCall
  */
 TransportRetry.prototype.sendTransportCall = function(transportCall) {
-
     this.transport[transportCall.method]
         .apply(this.transport, transportCall.args)
         .then(transportCall.resolve,
@@ -128,7 +128,7 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
                 const isRetryRequest = !(response && response.status) || callOptions.statuses && callOptions.statuses.indexOf(response.status) >= 0;
                 const isWithinRetryLimitOption = callOptions.retryLimit > 0 && transportCall.retryCount < callOptions.retryLimit;
                 const isWithinRetryTimeoutsOption = callOptions.retryTimeouts && transportCall.retryCount < callOptions.retryTimeouts.length;
-                if (isRetryRequest && (isWithinRetryLimitOption || isWithinRetryTimeoutsOption)) {
+                if (isRetryRequest && (isWithinRetryLimitOption || isWithinRetryTimeoutsOption) && !this.isDisposed) {
                     this.addFailedCall(transportCall);
                 } else {
                     transportCall.reject.apply(null, arguments);
@@ -187,16 +187,22 @@ TransportRetry.prototype.retryIndividualFailedCall = function(transportCall) {
  * Disposes the underlying transport, the failed calls queue and clears retry timers.
  */
 TransportRetry.prototype.dispose = function() {
+    this.isDisposed = true;
     this.individualFailedCalls.forEach((failedCall) => {
-        if (failedCall.retryTimer) {
-            failedCall.retryTimer.clearTimeout();
+        if (failedCall.retryTimer != null) {
+            clearTimeout(failedCall.retryTimer);
             failedCall.retryTimer = null;
         }
     });
-    this.failedCalls.length = 0;
     if (this.retryTimer) {
-        this.retryTimer.clearTimeout();
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
     }
+    this.individualFailedCalls.concat(this.failedCalls).forEach((transportCall) => {
+        transportCall.reject.apply(null);
+    });
+    this.individualFailedCalls.length = 0;
+    this.failedCalls.length = 0;
     this.transport.dispose();
 };
 
