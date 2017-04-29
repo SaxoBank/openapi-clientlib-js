@@ -219,7 +219,13 @@ function onSubscribeError(referenceId, response) {
     }
 
     this.currentState = STATE_UNSUBSCRIBED;
-    log.error(LOG_AREA, 'An error occurred subscribing', { response, url: this.url });
+    log.error(LOG_AREA, 'An error occurred subscribing', {
+        response,
+        url: this.url,
+        ContextId: this.streamingContextId,
+        ReferenceId: this.referenceId,
+        subscriptionData: this.subscriptionData,
+    });
 
     // if we are unsubscribed, do not fire the error handler
     if (this.queue.peek() !== ACTION_UNSUBSCRIBE) {

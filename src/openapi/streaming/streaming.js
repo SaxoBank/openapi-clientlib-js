@@ -133,7 +133,7 @@ function onConnectionStateChanged(change) {
     switch (this.connectionState) {
         case this.CONNECTION_STATE_DISCONNECTED:
 
-            log.error(LOG_AREA, 'connection disconnected');
+            log.warn(LOG_AREA, 'connection disconnected');
 
             this.orphanFinder.stop();
 
