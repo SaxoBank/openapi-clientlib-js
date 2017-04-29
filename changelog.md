@@ -1,3 +1,7 @@
+#### v1.2.2
+
++ Improve logging - arguments on failed subscriptions and treat disconnect as a warning
+
 #### v1.2.1
 
 + Dispose the retry transport correctly
