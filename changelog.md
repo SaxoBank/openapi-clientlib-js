@@ -1,3 +1,7 @@
+#### v1.2.3
+
++ Improve logging - include url in failed fetch calls
+
 #### v1.2.2
 
 + Improve logging - arguments on failed subscriptions and treat disconnect as a warning
