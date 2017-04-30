@@ -22,22 +22,20 @@ let cacheBreakNum = Date.now();
  * Returns a rejected promise, needed to keep the promise rejected.
  * @param result
  */
-function convertFetchReject(result) {
-    log.warn(LOG_AREA, 'Failed request', result);
-    return convertFetchResponse(result, true);
+function convertFetchReject(url, body, result) {
+    return convertFetchResponse(url, body, result, true);
 }
 
 /**
  * Converts the fetch response and returns either a resolved or rejected Promise.
  * @param result
  */
-function convertFetchSuccess(result) {
+function convertFetchSuccess(url, body, result) {
     // See also the same logic applied to the batch response
     if ((result.status < 200 || result.status > 299) && result.status !== 304) {
-        log.warn(LOG_AREA, 'non-200-299,304 http response', result);
-        return convertFetchResponse(result, true);
+        return convertFetchResponse(url, body, result, true);
     }
-    return convertFetchResponse(result);
+    return convertFetchResponse(url, body, result);
 }
 
 /**
@@ -45,10 +43,17 @@ function convertFetchSuccess(result) {
  * @param result
  * @returns {Promise}
  */
-function convertFetchResponse(result, isRejected) {
+function convertFetchResponse(url, body, result, isRejected) {
+
     // if this ia an exception rather than a result, reject immediately without
     // trying to parse
     if (!result || !result.status || !result.headers) {
+        log.error(LOG_AREA, 'rejected non-response', {
+            url,
+            body,
+            result,
+        });
+
         return Promise.reject(result);
     }
     const contentType = result.headers.get('content-type');
@@ -62,42 +67,79 @@ function convertFetchResponse(result, isRejected) {
                         status: result.status,
                         headers: result.headers,
                         size: text.length,
+                        url,
                     };
                 } catch (e) {
                     log.error(LOG_AREA, 'Received a JSON response from OpenApi that could not be parsed', {
                         text,
                         response: result,
                         size: text.length,
+                        url,
                     });
                     return {
                         response: text,
                         status: result.status,
                         headers: result.headers,
                         size: text.length,
+                        url,
                     };
                 }
             });
     } else if (contentType && contentType.indexOf('multipart/mixed') > -1) {
         convertedPromise = result.text()
             .then(function(text) {
-                return { response: text, status: result.status, headers: result.headers, size: text.length };
+                return {
+                    response: text,
+                    status: result.status,
+                    headers: result.headers,
+                    size: text.length,
+                    url,
+                };
             });
     } else if (contentType && contentType.indexOf('image/') > -1) {
         convertedPromise = result.blob().then(function(blob) {
-            return { response: blob, status: result.status, headers: result.headers, size: blob.size };
+            return {
+                response: blob,
+                status: result.status,
+                headers: result.headers,
+                size: blob.size,
+                url,
+            };
         });
     } else {
         convertedPromise = result.text().then(function(text) {
-            return { response: text, status: result.status, headers: result.headers, size: text ? text.length : 0 };
+            return {
+                response: text,
+                status: result.status,
+                headers: result.headers,
+                size: text ? text.length : 0,
+                url,
+            };
         }).catch(() => {
             // since we guess that it can be interpreted as text, do not fail the promise
             // if we fail to get text
-            return { status: result.status, headers: result.headers, size: 0 };
+            return {
+                status: result.status,
+                headers: result.headers,
+                size: 0,
+                url,
+            };
         });
     }
+
     if (isRejected) {
-        convertedPromise = convertedPromise.then((newResult) => Promise.reject(newResult));
+        convertedPromise = convertedPromise.then((newResult) => {
+            log.warn(LOG_AREA, 'rejected server response', {
+                url,
+                body,
+                status: newResult.status,
+                response: newResult.response,
+            });
+
+            return Promise.reject(newResult);
+        });
     }
+
     return convertedPromise;
 }
 
@@ -162,7 +204,7 @@ function localFetch(method, url, options) {
         headers['Cache-Control'] = 'no-cache';
     }
     return fetch(url, { headers, method, body, credentials })
-        .then(convertFetchSuccess, convertFetchReject);
+        .then(convertFetchSuccess.bind(null, url, body), convertFetchReject.bind(null, url, body));
 }
 
 // -- Export section --
