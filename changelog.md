@@ -1,3 +1,7 @@
+#### v1.2.4
+
++ Only try a new action when the connection becomes available if we are not already transitioning
+
 #### v1.2.3
 
 + Improve logging - include url in failed fetch calls
