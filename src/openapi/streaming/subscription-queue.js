@@ -54,13 +54,11 @@ SubscriptionQueue.prototype.enqueue = function(queuedItem) {
     if (action === ACTION_MODIFY_SUBSCRIBE) {
         if (prevAction === ACTION_UNSUBSCRIBE) {
             this.items = [{ action: ACTION_UNSUBSCRIBE }, queuedItem];
-        } else {
-            this.items = [queuedItem];
         }
         return;
     }
 
-    // MM => M, UU=>U, SS => S
+    // MM => M, UU => U, SS => S
     if (action === prevAction && action !== ACTION_MODIFY_PATCH) {
         return;
     }
@@ -111,9 +109,9 @@ SubscriptionQueue.prototype.dequeue = function() {
     const lastAction = lastItem.action;
 
     if (nextAction === ACTION_MODIFY_SUBSCRIBE && lastAction !== ACTION_UNSUBSCRIBE) {
-        // M, U, S => U, M
-        // M, U, M, U, M => U, M
-        // U, M, P, P => UM
+        // M, U, S => M
+        // M, U, M, U, M => M
+        // M, P, P => M
         this.reset();
         return nextItem;
     }

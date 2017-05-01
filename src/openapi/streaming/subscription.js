@@ -535,6 +535,7 @@ Subscription.prototype.onStreamingData = function(message) {
 
         // the normal state, go ahead
         case STATE_SUBSCRIBED:
+        case STATE_PATCH_REQUESTED:
             break;
 
         default:
@@ -565,7 +566,10 @@ Subscription.prototype.timeTillOrphaned = function(now) {
 
     // this works because there are no suspended and resume states.
     // once subscribed, orphan finder will be notified.
-    if (!this.connectionAvailable || this.currentState !== STATE_SUBSCRIBED || this.inactivityTimeout === 0) {
+    if (!this.connectionAvailable || this.inactivityTimeout === 0 ||
+        this.currentState === STATE_UNSUBSCRIBED ||
+        this.currentState === STATE_UNSUBSCRIBE_REQUESTED ||
+        this.currentState === STATE_SUBSCRIBE_REQUESTED) {
         return Infinity;
     }
 

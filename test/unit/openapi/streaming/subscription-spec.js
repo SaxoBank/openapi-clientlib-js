@@ -144,6 +144,17 @@ describe("openapi StreamingSubscription", () => {
             expect(updateSpy.calls.argsFor(0)).toEqual([streamingData, subscription.UPDATE_TYPE_DELTA]);
         });
 
+        it("handles single-valued updates in modify patch state", () => {
+
+            subscription.onModify({args: 'test' }, { isPatch: true });
+
+            const streamingData = {ReferenceId: subscription.referenceId, Data: ['foo']};
+            subscription.onStreamingData(streamingData);
+
+            expect(updateSpy.calls.count()).toEqual(1);
+            expect(updateSpy.calls.argsFor(0)).toEqual([streamingData, subscription.UPDATE_TYPE_DELTA]);
+        });
+
         it("catches exceptions thrown during updates", () => {
             updateSpy.and.throwError("Unhandled Exception");
 
@@ -472,7 +483,7 @@ describe("openapi StreamingSubscription", () => {
     });
 
     describe("activity detection", () => {
-        it("has an infinite time till when unsubscribed, subscribing and unsubscribed", (done) => {
+        it("has an infinite time when unsubscribed, subscribing and unsubscribing", (done) => {
             var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
 
             expect(subscription.timeTillOrphaned(Date.now())).toEqual(Infinity);

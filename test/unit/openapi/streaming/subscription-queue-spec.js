@@ -69,14 +69,6 @@ describe("openapi SubscriptionQueue", () => {
             expect(queue.isEmpty()).toBe(true);
         })
 
-        it('should drop subscribe followed by modify subscribe', () => {
-            queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
-            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
-
-            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
-            expect(queue.isEmpty()).toBe(true);
-        })
-
         it('should keep unsubscribe followed by modify subscribe', () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
             queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
@@ -186,15 +178,6 @@ describe("openapi SubscriptionQueue", () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
 
             expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
-            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
-            expect(queue.isEmpty()).toBe(true);
-        })
-
-        it('should insert modify subscribe and remove any non unsubscribe actions', () => {
-            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_PATCH });
-            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_PATCH });
-            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
-
             expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
             expect(queue.isEmpty()).toBe(true);
         })
