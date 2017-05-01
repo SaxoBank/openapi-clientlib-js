@@ -490,10 +490,11 @@ Streaming.prototype.subscribe = function(subscription) {
  *
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to modify.
  * @param {Object} args - The target arguments of modified subscription.
+ * @param {Object} options - Options for subscription modification.
  */
-Streaming.prototype.modify = function(subscription, args) {
+Streaming.prototype.modify = function(subscription, args, options) {
 
-    subscription.onModify(args);
+    subscription.onModify(args, options);
 };
 
 /**

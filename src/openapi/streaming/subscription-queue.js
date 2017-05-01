@@ -7,12 +7,19 @@
  * @module saxo/openapi/streaming/subscription queue
  * @ignore
  */
-
 import {
     ACTION_SUBSCRIBE,
     ACTION_UNSUBSCRIBE,
     ACTION_MODIFY_SUBSCRIBE,
+    ACTION_MODIFY_PATCH,
 } from './subscription-actions';
+
+function getLastItem() {
+    if (this.isEmpty()) {
+        return undefined;
+    }
+    return this.items[this.items.length - 1];
+}
 
 /**
  * Queue (FIFO) for storing pending subscription actions.
@@ -21,7 +28,6 @@ import {
  */
 function SubscriptionQueue(maxSize) {
     this.items = [];
-    this.maxSize = maxSize || 2;
 }
 
 /**
@@ -29,44 +35,58 @@ function SubscriptionQueue(maxSize) {
  * - duplicates.
  * - ACTION_SUBSCRIBE action before ACTION_UNSUBSCRIBE.
  *
- * @param {Number} action - action to add to the queue.
+ * @param {Object} queuedItem - action with arguments to add to the queue.
  */
-SubscriptionQueue.prototype.enqueue = function(action) {
-    this.items.push(action);
+SubscriptionQueue.prototype.enqueue = function(queuedItem) {
 
-    if (this.items.length < this.maxSize) {
+    if (!queuedItem.action) {
+        throw new Error('Subscription queued action is invalid');
+    }
+    if (this.isEmpty()) {
+        this.items.push(queuedItem);
         return;
     }
 
-    for (let i = this.items.length - 2; i >= 0; i--) {
-        const task = this.items[i];
-        const nextTask = this.items[i + 1];
+    const { action } = queuedItem;
+    const prevAction = getLastItem.call(this).action;
 
-        if (task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_SUBSCRIBE) {
-            // Removing subscribe in such case to keep requested subscription modification.
-            this.items.splice(i + 1, 1);
-        } else if (task === ACTION_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
-            task === ACTION_UNSUBSCRIBE && nextTask === ACTION_SUBSCRIBE ||
-            task === ACTION_SUBSCRIBE && nextTask === ACTION_MODIFY_SUBSCRIBE ||
-            task === ACTION_MODIFY_SUBSCRIBE && nextTask === ACTION_UNSUBSCRIBE ||
-            task === nextTask
-        ) {
-            this.items.splice(i, 1);
+    // ..UM => UM
+    if (action === ACTION_MODIFY_SUBSCRIBE) {
+        if (prevAction === ACTION_UNSUBSCRIBE) {
+            this.items = [{ action: ACTION_UNSUBSCRIBE }, queuedItem];
         }
+        return;
     }
 
-    if (this.items.length > this.maxSize) {
-        // Removes elements from the beginning of a queue, to match maximum allowed size.
-        this.items.splice(0, this.items.length - this.maxSize);
+    // MM => M, UU => U, SS => S
+    if (action === prevAction && action !== ACTION_MODIFY_PATCH) {
+        return;
     }
+
+    // MS => M
+    if (prevAction === ACTION_MODIFY_SUBSCRIBE && action === ACTION_SUBSCRIBE) {
+        return;
+    }
+
+    // US => S
+    // SU => U
+    if (prevAction === ACTION_UNSUBSCRIBE && action === ACTION_SUBSCRIBE ||
+        prevAction === ACTION_SUBSCRIBE && action === ACTION_UNSUBSCRIBE) {
+        this.items.splice(-1);
+    }
+
+    this.items.push(queuedItem);
 };
 
 /**
  * Returns the action from the beggining of a queue without removing it.
  * @return {Number} Next action.
  */
-SubscriptionQueue.prototype.peek = function() {
-    return this.items[0];
+SubscriptionQueue.prototype.peekAction = function() {
+    if (this.isEmpty()) {
+        return undefined;
+    }
+    return this.items[0].action;
 };
 
 /**
@@ -74,7 +94,38 @@ SubscriptionQueue.prototype.peek = function() {
  * @return {Number|undefined} First action, if queue is not empty. Otherwise undefined.
  */
 SubscriptionQueue.prototype.dequeue = function() {
-    return this.items.shift();
+
+    if (this.isEmpty()) {
+        return undefined;
+    }
+
+    const nextItem = this.items.shift();
+
+    if (this.isEmpty()) {
+        return nextItem;
+    }
+    const nextAction = nextItem.action;
+    const lastItem = getLastItem.call(this);
+    const lastAction = lastItem.action;
+
+    if (nextAction === ACTION_MODIFY_SUBSCRIBE && lastAction !== ACTION_UNSUBSCRIBE) {
+        // M, U, S => M
+        // M, U, M, U, M => M
+        // M, P, P => M
+        this.reset();
+        return nextItem;
+    }
+
+    if (lastAction === ACTION_UNSUBSCRIBE) {
+        // M, U, S, U => U
+        // S, U => U
+        // S, U, S, U => U
+        // P, U => U
+        this.reset();
+        return lastItem;
+    }
+
+    return nextItem;
 };
 
 /**
