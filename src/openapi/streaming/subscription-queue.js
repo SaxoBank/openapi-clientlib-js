@@ -14,6 +14,13 @@ import {
     ACTION_MODIFY_PATCH,
 } from './subscription-actions';
 
+function getLastItem() {
+    if (this.isEmpty()) {
+        return undefined;
+    }
+    return this.items[this.items.length - 1];
+}
+
 /**
  * Queue (FIFO) for storing pending subscription actions.
  * @param maxSize {Number} - Maximum queue size. Defaults to 2, which works best for current needs.
@@ -21,13 +28,6 @@ import {
  */
 function SubscriptionQueue(maxSize) {
     this.items = [];
-
-    this.getLastItem = function() {
-        if (this.isEmpty()) {
-            return undefined;
-        }
-        return this.items[this.items.length - 1];
-    };
 }
 
 /**
@@ -48,7 +48,7 @@ SubscriptionQueue.prototype.enqueue = function(queuedItem) {
     }
 
     const { action } = queuedItem;
-    const prevAction = this.getLastItem().action;
+    const prevAction = getLastItem.call(this).action;
 
     // ..UM => UM
     if (action === ACTION_MODIFY_SUBSCRIBE) {
@@ -105,7 +105,7 @@ SubscriptionQueue.prototype.dequeue = function() {
         return nextItem;
     }
     const nextAction = nextItem.action;
-    const lastItem = this.getLastItem();
+    const lastItem = getLastItem.call(this);
     const lastAction = lastItem.action;
 
     if (nextAction === ACTION_MODIFY_SUBSCRIBE && lastAction !== ACTION_UNSUBSCRIBE) {
