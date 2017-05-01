@@ -445,7 +445,11 @@ Subscription.prototype.onConnectionUnavailable = function() {
  */
 Subscription.prototype.onConnectionAvailable = function() {
     this.connectionAvailable = true;
-    onReadyToPerformNextAction.call(this);
+
+    // if we waited to do something and we are not transitioning, then try something
+    if (!(TRANSITIONING_STATES & this.currentState)) {
+        onReadyToPerformNextAction.call(this);
+    }
 };
 
 /**

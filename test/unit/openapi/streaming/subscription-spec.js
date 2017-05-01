@@ -315,6 +315,36 @@ describe("openapi StreamingSubscription", () => {
                 });
             });
         });
+        it ("does not subscribe if connection becomes available whilst unsubscribing", (done) => {
+            var subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
+            subscription.onSubscribe();
+            expect(transport.post.calls.count()).toEqual(1);
+            transport.post.calls.reset();
+
+            sendInitialResponse();
+
+            tick(() => {
+                // now subscribed.
+
+                subscription.onUnsubscribe();
+                expect(transport.delete.calls.count()).toEqual(1);
+
+                subscription.onConnectionUnavailable();
+                subscription.onSubscribe();
+                expect(transport.post.calls.count()).toEqual(0);
+
+                subscription.onConnectionAvailable();
+                expect(transport.post.calls.count()).toEqual(0);
+
+                transport.deleteResolve({status: 200});
+
+                tick(() => {
+                    expect(transport.post.calls.count()).toEqual(1);
+
+                    done();
+                });
+            });
+        });
     });
 
     describe("subscribe/unsubscribe queuing", () => {
