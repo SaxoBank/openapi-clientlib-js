@@ -1,3 +1,7 @@
+#### v1.2.5
+
++ use throw instead of return Promise.reject to avoid unnecessary unhandledrejections
+
 #### v1.2.4
 
 + Only try a new action when the connection becomes available if we are not already transitioning
