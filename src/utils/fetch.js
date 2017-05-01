@@ -54,7 +54,7 @@ function convertFetchResponse(url, body, result, isRejected) {
             result,
         });
 
-        return Promise.reject(result);
+        throw result;
     }
     const contentType = result.headers.get('content-type');
     let convertedPromise;
@@ -136,7 +136,7 @@ function convertFetchResponse(url, body, result, isRejected) {
                 response: newResult.response,
             });
 
-            return Promise.reject(newResult);
+            throw newResult;
         });
     }
 

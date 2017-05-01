@@ -143,7 +143,7 @@ function onTransportError(result) {
             log.info(LOG_AREA, 'Received an auth error, auth is now expired.', result);
         }
     }
-    return Promise.reject(result);
+    throw result;
 
 }
 
