@@ -45,7 +45,7 @@ function onTokenChanged(token, expiry) {
 
     let elapse = expiry - (new Date()).getTime();
 
-    // If in the past try anyway to refresh token - page can have reload and normallly we have some margin for refreshing the token server side
+    // If in the past try anyway to refresh token - page can have reload and normally we have some margin for refreshing the token server side
     if (elapse <= 0) {
         this.isAuthorised = false;
         this.refreshOpenApiToken();
@@ -286,7 +286,7 @@ TransportAuth.prototype.refreshOpenApiToken = function() {
 };
 
 /**
- * Tells transport auth that the token is invalid and it should immediatly try to refresh if it isn't already
+ * Tells transport auth that the token is invalid and it should immediately try to refresh if it isn't already
  */
 TransportAuth.prototype.onTokenInvalid = function() {
 
