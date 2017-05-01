@@ -1,6 +1,12 @@
+#### v1.3.0
+
++ Delete subscriptions when a reset occurs
++ Allow modifying with a patch request with
++ Fixes to the subscription state management
+
 #### v1.2.5
 
-+ use throw instead of return Promise.reject to avoid unnecessary unhandledrejections
++ Use throw instead of return Promise.reject to avoid unnecessary unhandledrejections
 
 #### v1.2.4
 
