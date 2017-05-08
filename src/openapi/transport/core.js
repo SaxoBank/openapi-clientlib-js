@@ -43,8 +43,8 @@ function generateTransportCall(method) {
         const url = formatUrl(urlTemplate, templateArgs, queryParams);
 
         if (this.language) {
-            if (!headers.Language) {
-                headers.Language = this.language;
+            if (!headers['Accept-Language']) {
+                headers['Accept-Language'] = this.language + ', *;q=0.5';
             }
         }
         return this.fetch(method, this.baseUrl + '/' + serviceGroup + '/' + url, {
