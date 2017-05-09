@@ -1,3 +1,7 @@
+#### v1.3.1
+
++ Fix the language header to be Accept-Language
+
 #### v1.3.0
 
 + Delete subscriptions when a reset occurs
