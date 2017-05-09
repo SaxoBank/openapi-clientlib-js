@@ -340,57 +340,67 @@ describe("openapi TransportCore", () => {
     describe("language", () => {
 
         beforeEach(() => {
-            transport = new TransportCore('localhost/openapi', { language:"dk"});
+            transport = new TransportCore('localhost/openapi', { language: "dk" });
         });
-        afterEach(() => transport.dispose());
+
+        afterEach(() => {
+            return transport.dispose();
+        });
 
         function expectTheLanguageToBeSetTo(assertedLanguage) {
             expect(fetch.calls.count()).toEqual(1);
-            expect(fetch.calls.argsFor(0)).toEqual([jasmine.anything(), jasmine.objectContaining({headers: jasmine.objectContaining({ Language: assertedLanguage})})]);
+            expect(fetch.calls.argsFor(0)).toEqual(
+                [
+                    jasmine.anything(),
+                    jasmine.objectContaining({
+                        headers: jasmine.objectContaining({ 'Accept-Language': assertedLanguage }),
+                    }),
+                ]
+            );
         }
 
         it("adds on the language", () => {
 
             transport.get("service_group", "url", null, {});
-            expectTheLanguageToBeSetTo("dk");
+            expectTheLanguageToBeSetTo("dk, *;q=0.5");
             fetch.calls.reset();
 
             transport.put("service_group", "url", null, null);
-            expectTheLanguageToBeSetTo("dk");
+            expectTheLanguageToBeSetTo("dk, *;q=0.5");
             fetch.calls.reset();
 
             transport.post("service_group", "url", null, { headers: null });
-            expectTheLanguageToBeSetTo("dk");
+            expectTheLanguageToBeSetTo("dk, *;q=0.5");
             fetch.calls.reset();
 
             transport.delete("service_group", "url", null, { headers: {} });
-            expectTheLanguageToBeSetTo("dk");
+            expectTheLanguageToBeSetTo("dk, *;q=0.5");
             fetch.calls.reset();
 
             transport.patch("service_group", "url");
-            expectTheLanguageToBeSetTo("dk");
+            expectTheLanguageToBeSetTo("dk, *;q=0.5");
             fetch.calls.reset();
         });
 
         it("does not override a custom language", () => {
 
-            transport.get("service_group", "url", {}, { headers: {Language:"en"}});
+            transport.get("service_group", "url", {}, { headers: {"Accept-Language":"en"}});
             expectTheLanguageToBeSetTo("en");
             fetch.calls.reset();
 
-            transport.put("service_group", "url", {}, { headers: {Language:"dk"}});
+            transport.put("service_group", "url", {}, { headers: {"Accept-Language":"dk"}});
             expectTheLanguageToBeSetTo("dk");
             fetch.calls.reset();
 
-            transport.post("service_group", "url", {}, { headers: {Language:"sv"}});
+            transport.post("service_group", "url", {}, { headers: {"Accept-Language":"sv"}});
             expectTheLanguageToBeSetTo("sv");
             fetch.calls.reset();
 
-            transport.delete("service_group", "url", {}, { headers: {Language:"en"}});
+            transport.delete("service_group", "url", {}, { headers: {"Accept-Language":"en"}});
             expectTheLanguageToBeSetTo("en");
             fetch.calls.reset();
 
-            transport.patch("service_group", "url", {}, { headers: {otherHeader: "yes", Language:"en"}});
+            transport.patch("service_group", "url", {}, { headers: {otherHeader: "yes", "Accept-Language":"en"}});
             expectTheLanguageToBeSetTo("en");
             fetch.calls.reset();
         });
