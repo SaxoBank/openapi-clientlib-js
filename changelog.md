@@ -1,3 +1,7 @@
+#### v1.3.2
+
++ Fix the interface for modify-patch subscriptions
+
 #### v1.3.1
 
 + Fix the language header to be Accept-Language
