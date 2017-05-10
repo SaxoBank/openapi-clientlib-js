@@ -146,7 +146,8 @@ describe("openapi StreamingSubscription", () => {
 
         it("handles single-valued updates in modify patch state", () => {
 
-            subscription.onModify({args: 'test' }, { isPatch: true });
+            const patchArgsDelta = { argsDelta: 'delta' };
+            subscription.onModify({args: 'test' }, { isPatch: true, patchArgsDelta });
 
             const streamingData = {ReferenceId: subscription.referenceId, Data: ['foo']};
             subscription.onStreamingData(streamingData);
@@ -763,11 +764,17 @@ describe("openapi StreamingSubscription", () => {
             sendInitialResponse({InactivityTimeout: 100, Snapshot: { resetResponse: true }});
 
             tick(() => {
-                const args = { testArgs: 'test' };
-                subscription.onModify(args, { isPatch: true });
-                const mergedArgs = extend(initialArgs, args);
-                // subscription arguments are updated
-                expect(subscription.subscriptionData.Arguments).toEqual(mergedArgs);
+                const newArgs = {
+                    newArgs: 'newArgs',
+                    testArgs: 'test',
+                };
+                const patchArgsDelta = { testArgs: 'argsDelta' };
+                subscription.onModify(newArgs, { isPatch: true, patchArgsDelta });
+                // new arguments assigned to the subscription
+                expect(subscription.subscriptionData.Arguments).toEqual({
+                    newArgs: 'newArgs',
+                    testArgs: 'test',
+                });
                 // sends patch request on modify
                 expect(transport.patch.calls.count()).toEqual(1);
 
@@ -807,20 +814,22 @@ describe("openapi StreamingSubscription", () => {
             sendInitialResponse({InactivityTimeout: 100, Snapshot: { resetResponse: true }});
 
             tick(() => {
-                const firstArgs = { newArgs: 'firstArgs' };
-                const secondArgs = { newArgs: 'secondArgs' };
-                subscription.onModify(firstArgs, { isPatch: true });
-                subscription.onModify(secondArgs, { isPatch: true });
+                const args = { args: 'args' };
+                const newArgs = { args: 'newArgs' };
+                subscription.onModify(args, { isPatch: true, patchArgsDelta: { newArgs: 'firstArgs' }});
+                subscription.onModify(newArgs, { isPatch: true, patchArgsDelta: { newArgs: 'secondArgs' } });
+
                 expect(transport.patch.calls.count()).toEqual(1);
                 // first patch arguments sent
-                expect(transport.patch.calls.all()[0].args[3].body).toEqual(firstArgs);
+                expect(transport.patch.calls.all()[0].args[3].body).toEqual({ newArgs: 'firstArgs' });
 
                 transport.patchResolve({ status: "200", response: "" });
 
                 tick(() => {
                     expect(transport.patch.calls.count()).toEqual(2);
                     // second patch arguments sent
-                    expect(transport.patch.calls.all()[1].args[3].body).toEqual(secondArgs);
+                    expect(transport.patch.calls.all()[1].args[3].body).toEqual({ newArgs: 'secondArgs' });
+                    expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
                     done();
                 });
             });
@@ -834,7 +843,8 @@ describe("openapi StreamingSubscription", () => {
 
             tick(() => {
                 const stateBeforeModify = subscription.currentState;
-                subscription.onModify({ newArgs: 'newArgs' }, { isPatch: true });
+                const patchArgsDelta = { argsDelta: 'argsDelta' };
+                subscription.onModify({ newArgs: 'test' }, { isPatch: true, patchArgsDelta });
                 subscription.reset();
 
                 transport.patchResolve({ status: "200", response: "" });
@@ -853,7 +863,8 @@ describe("openapi StreamingSubscription", () => {
 
             tick(() => {
                 const stateBeforeModify = subscription.currentState;
-                subscription.onModify({ newArgs: 'newArgs' }, { isPatch: true });
+                const patchArgsDelta = { argsDelta: 'argsDelta' };
+                subscription.onModify({ newArgs: 'test' }, { isPatch: true, patchArgsDelta });
                 subscription.reset();
 
                 transport.patchReject({ status: "500", response: "patch failed" });
