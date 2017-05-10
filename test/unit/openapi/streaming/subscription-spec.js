@@ -814,9 +814,11 @@ describe("openapi StreamingSubscription", () => {
             sendInitialResponse({InactivityTimeout: 100, Snapshot: { resetResponse: true }});
 
             tick(() => {
-                const newArgs = { newArgs: 'test' };
-                subscription.onModify(newArgs, { isPatch: true, patchArgsDelta: { newArgs: 'firstArgs' }});
+                const args = { args: 'args' };
+                const newArgs = { args: 'newArgs' };
+                subscription.onModify(args, { isPatch: true, patchArgsDelta: { newArgs: 'firstArgs' }});
                 subscription.onModify(newArgs, { isPatch: true, patchArgsDelta: { newArgs: 'secondArgs' } });
+
                 expect(transport.patch.calls.count()).toEqual(1);
                 // first patch arguments sent
                 expect(transport.patch.calls.all()[0].args[3].body).toEqual({ newArgs: 'firstArgs' });
@@ -826,7 +828,8 @@ describe("openapi StreamingSubscription", () => {
                 tick(() => {
                     expect(transport.patch.calls.count()).toEqual(2);
                     // second patch arguments sent
-                     expect(transport.patch.calls.all()[1].args[3].body).toEqual({ newArgs: 'secondArgs' });
+                    expect(transport.patch.calls.all()[1].args[3].body).toEqual({ newArgs: 'secondArgs' });
+                    expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
                     done();
                 });
             });

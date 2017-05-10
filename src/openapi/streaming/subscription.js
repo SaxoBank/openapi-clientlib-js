@@ -465,17 +465,15 @@ Subscription.prototype.onModify = function(newArgs, options) {
         throw new Error('Modifying a disposed subscription - you will not get data');
     }
 
+    this.subscriptionData.Arguments = newArgs;
     if (options && options.isPatch) {
         if (!options.patchArgsDelta) {
             throw new Error('Modify options patchArgsDelta is not defined');
         }
-
-        this.subscriptionData.Arguments = newArgs;
         tryPerformAction.call(this, ACTION_MODIFY_PATCH, options.patchArgsDelta);
     } else {
         // resubscribe with new arguments
         this.onUnsubscribe();
-        this.subscriptionData.Arguments = newArgs;
         this.onSubscribe(true);
     }
 };
