@@ -456,23 +456,26 @@ Subscription.prototype.onSubscribe = function(modify) {
 
 /**
  * Try to modify.
- * @param {Object} args - The arguments of modified subscription.
+ * @param {Object} newArgs - Updated arguments of modified subscription.
  * @private
  */
-Subscription.prototype.onModify = function(args, options) {
+Subscription.prototype.onModify = function(newArgs, options) {
 
     if (this.isDisposed) {
         throw new Error('Modifying a disposed subscription - you will not get data');
     }
 
     if (options && options.isPatch) {
-        // modify arguments and patch subscription
-        this.subscriptionData.Arguments = extend(this.subscriptionData.Arguments, args);
-        tryPerformAction.call(this, ACTION_MODIFY_PATCH, args);
+        if (!options.patchArgsDelta) {
+            throw new Error('Modify options patchArgsDelta is not defined');
+        }
+
+        this.subscriptionData.Arguments = newArgs;
+        tryPerformAction.call(this, ACTION_MODIFY_PATCH, options.patchArgsDelta);
     } else {
         // resubscribe with new arguments
         this.onUnsubscribe();
-        this.subscriptionData.Arguments = args;
+        this.subscriptionData.Arguments = newArgs;
         this.onSubscribe(true);
     }
 };
