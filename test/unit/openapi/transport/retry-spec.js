@@ -45,6 +45,34 @@ describe("openapi TransportRetry", () => {
         });
     });
 
+    it("passes failed api response in reject callback as params", (done) => {
+        transportRetry = new TransportRetry(transport, {retryTimeout:2000, methods:{'delete':{retryLimit:1}}});
+        expect(transportRetry.retryTimeout).toEqual(2000);
+        var deletePromise = transportRetry.delete();
+        var apiResponse;
+        deletePromise.catch((response) => {
+            apiResponse = response;
+        });
+        tick(() => {
+            expect(transport.delete.calls.count()).toEqual(1);
+            transport.deleteReject(new TypeError('First Network request failed'));
+            tick(() => {
+                //1st retry
+                expect(transportRetry.failedCalls.length).toEqual(1);
+                expect(transportRetry.retryTimer).toBeDefined(); //the timer is set
+                jasmine.clock().tick(2000);  // now go forward 2 seconds
+                expect(transport.delete.calls.count()).toEqual(2);
+                expect(transportRetry.retryTimer).toBeNull(); //the timer is unset
+                var errorResponse = new TypeError('Seconed Network request failed');
+                transport.deleteReject(errorResponse);
+                tick(() => {
+                    expect(apiResponse).toEqual(errorResponse);
+                    done();
+                });
+            });
+        });
+    });
+
     it("does not retry a successful call", (done) => {
         transportRetry = new TransportRetry(transport, {retryTimeout:10000, methods:{'delete':{retryLimit:3}}});
         var deletePromise = transportRetry.delete();
