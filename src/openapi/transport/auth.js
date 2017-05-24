@@ -59,6 +59,7 @@ function onTokenChanged(token, expiry) {
             elapse = 0;
         }
         this.isAuthorised = true;
+        this.tokenRefreshTimerFireTime = Date.now() + elapse;
         this.tokenRefreshTimer = setTimeout(this.refreshOpenApiToken.bind(this), elapse);
     }
 }
@@ -83,6 +84,7 @@ function onApiTokenReceiveFail(result) {
 
     if (this.retries < this.maxRetryCount) {
         this.retries++;
+        this.tokenRefreshTimerFireTime = Date.now() + this.retryDelayMs;
         this.tokenRefreshTimer = setTimeout(this.refreshOpenApiToken.bind(this), this.retryDelayMs);
     }
 }
@@ -291,7 +293,20 @@ TransportAuth.prototype.refreshOpenApiToken = function() {
 TransportAuth.prototype.onTokenInvalid = function() {
 
     if (this.state & STATE_WAITING && this.retries === 0 && this.maxRetryCount > 0) {
-        log.error(LOG_AREA, 'Token is invalid, refresh has not been attempted (may still be valid or timeout not fired).');
+
+        const lateBy = Date.now() - this.tokenRefreshTimerFireTime;
+        // if we the timeout was set but it was missed, the liklihood is we woke from sleep
+        if (this.tokenRefreshTimerFireTime && (lateBy > (1000 * 20))) {
+            log.warn(LOG_AREA, 'Token is invalid, timeout is more than 20 seconds late', {
+                retries: this.retries,
+                lateBy,
+            });
+        } else {
+            log.error(LOG_AREA, 'Token is invalid before timeout is fired', {
+                retries: this.retries,
+                lateBy,
+            });
+        }
         this.refreshOpenApiToken();
     } else {
         log.info(LOG_AREA, 'Token invalid, currently trying to refresh.');
