@@ -131,7 +131,7 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
                 if (isRetryRequest && (isWithinRetryLimitOption || isWithinRetryTimeoutsOption) && !this.isDisposed) {
                     this.addFailedCall(transportCall);
                 } else {
-                    transportCall.reject.apply(null, arguments);
+                    transportCall.reject(response);
                 }
             });
 };
