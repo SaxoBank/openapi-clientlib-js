@@ -1,3 +1,9 @@
+#### v1.3.3
+
++ Fix transport retry to send on reject objects correctly
++ Remove reference to unused Tag parameters
++ Make open api refresh problems warnings when it is due to sleeping on android
+
 #### v1.3.2
 
 + Fix the interface for modify-patch subscriptions
