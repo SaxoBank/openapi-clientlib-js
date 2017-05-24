@@ -449,7 +449,6 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP = {
  * @param {string} url - The name of the resource to subscribe to, e.g. '/v1/infoprices/subscriptions'.
  * @param {object} subscriptionArgs - Arguments that detail the subscription.
  * @param {number} [subscriptionArgs.RefreshRate=1000] - The data refresh rate (passed to OpenAPI).
- * @param {string} [subscriptionArgs.Tag] - The tag for the subscription (passed to OpenAPI).
  * @param {string} [subscriptionArgs.Format] - The format for the subscription (passed to OpenAPI).
  * @param {object} [subscriptionArgs.Arguments] - The subscription arguments (passed to OpenAPI).
  * @param {function} onUpdate - A callback function that is invoked when an initial snapshot or update is received.

@@ -50,7 +50,7 @@ function subscribe() {
 
     const data = extend({}, this.subscriptionData, {
         ContextId: this.streamingContextId,
-        ReferenceId: this.referenceId,
+        ReferenceId: referenceId,
     });
 
     log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: this.url });
@@ -70,7 +70,7 @@ function unsubscribe() {
 
     this.transport.delete(this.serviceGroup, this.url + '/{contextId}/{referenceId}', {
         contextId: this.streamingContextId,
-        referenceId: this.referenceId,
+        referenceId,
     })
         .then(onUnsubscribeSuccess.bind(this, referenceId))
         .catch(onUnsubscribeError.bind(this, referenceId));
@@ -184,7 +184,6 @@ function performAction(queuedAction) {
  *          before considering it invalid.
  * {number=0} result.RefreshRate Actual refresh rate assigned to the subscription according to the customers SLA.
  * {Object} result.Snapshot Snapshot of the current data available
- * {string} result.Tag Client specified tag assigned to the subscription, if specified in the request.
  */
 function onSubscribeSuccess(referenceId, result) {
 
@@ -379,7 +378,6 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
         log.warn(LOG_AREA, 'Low refresh rate. This has been rounded up to the minimum.', { minimumRate: MIN_REFRESH_RATE_MS });
         this.subscriptionData.RefreshRate = MIN_REFRESH_RATE_MS;
     }
-    this.tag = subscriptionArgs.Tag;
     this.connectionAvailable = true;
 
     this.currentState = STATE_UNSUBSCRIBED;
