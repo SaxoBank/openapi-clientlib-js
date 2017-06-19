@@ -55,7 +55,7 @@ function subscribe() {
 
     log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: this.url });
     this.currentState = STATE_SUBSCRIBE_REQUESTED;
-    this.transport.post(this.serviceGroup, this.url + '/active', null, { body: data })
+    this.transport.post(this.serviceGroup, this.url, null, { body: data })
         .then(onSubscribeSuccess.bind(this, referenceId))
         .catch(onSubscribeError.bind(this, referenceId));
 }
@@ -82,7 +82,7 @@ function modifyPatch(args) {
     this.currentState = STATE_PATCH_REQUESTED;
     const referenceId = this.referenceId;
 
-    this.transport.patch(this.serviceGroup, this.url + '/active/{contextId}/{referenceId}', {
+    this.transport.patch(this.serviceGroup, this.url + '/{contextId}/{referenceId}', {
         contextId: this.streamingContextId,
         referenceId: this.referenceId,
     }, { body: args })
