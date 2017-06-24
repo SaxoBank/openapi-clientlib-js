@@ -1,3 +1,4 @@
+/* globals requirejs */
 /*
  * This tests that the requirejs wrapper fundamentally works
  */
@@ -15,21 +16,19 @@ beforeAll((done) => {
 
     const getVersion = fetch('../package.json')
         .then((packageJsonResponse) => packageJsonResponse.json())
-        .then((packageObj) => {
-            return packageObj.version;
-        });
+        .then((packageObj) => packageObj.version);
     Promise.all([getVersion, loadRequireJS])
-        .then(function (promiseResults) {
-            const version = promiseResults[0];
-            requirejs([`../dist/release/openapi-client.js`], (lib) => {
+        .then(function(promiseResults) {
+            // const version = promiseResults[0];
+            requirejs(['../dist/release/openapi-client.js'], (lib) => {
                 iitOpenApi = lib;
                 done();
             });
-        })
+        });
 });
 
-describe("running with require", () => {
-    it("loads iit", () => {
+describe('running with require', () => {
+    it('loads iit', () => {
         expect(iitOpenApi).toEqual(jasmine.objectContaining({ utils: jasmine.anything(), openapi: jasmine.anything() }));
     });
 });

@@ -4,22 +4,22 @@ function FetchResponse(status, response, contentType) {
     this.status = status;
     this.response = response;
 
-    var headersMap = {
-        "content-type": contentType || (
-            typeof response === "object" ? "application/json; utf-8" : "application/text"
-        )
+    const headersMap = {
+        'content-type': contentType || (
+            typeof response === 'object' ? 'application/json; utf-8' : 'application/text'
+        ),
     };
 
     this.headers = {
         get(headerName) {
             headerName = headerName.toLowerCase();
             return headersMap[headerName];
-        }
+        },
     };
 
     this.text = function() {
         return new Promise(function(resolve) {
-            if (typeof response === "object") {
+            if (typeof response === 'object') {
                 resolve(JSON.stringify(response));
             } else {
                 resolve(response);
@@ -29,7 +29,7 @@ function FetchResponse(status, response, contentType) {
 }
 
 function mockFetch() {
-    spyOn(global, "fetch");
+    spyOn(global, 'fetch');
     fetch.and.callFake(function() {
         return new Promise(function(resolve, reject) {
             // assign in here so that a particular resolve/reject can be captured

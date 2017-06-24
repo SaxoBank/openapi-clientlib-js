@@ -1,17 +1,16 @@
 import { multiline } from '../utils';
 
-const batch = saxo.openapi.batch,
-    batchBuild = batch.build,
-    batchParse = batch.parse;
+const batch = saxo.openapi.batch;
+const batchBuild = batch.build;
+const batchParse = batch.parse;
 
-var testAuth = {token: "XYZ", expiry: new Date()};
+describe('openapi batchUtil', () => {
 
-describe("openapi batchUtil", () => {
-    it("parses an empty response", () => {
-        expect(batchParse("--X--")).toEqual([]);
+    it('parses an empty response', () => {
+        expect(batchParse('--X--')).toEqual([]);
     });
 
-    it("parses a single response", () => {
+    it('parses a single response', () => {
         expect(batchParse(multiline(
             '--90f26034-d914-44a0-bd16-908fc535018d',
             'Content-Type: application/http; msgtype=response',
@@ -28,11 +27,11 @@ describe("openapi batchUtil", () => {
             '--90f26034-d914-44a0-bd16-908fc535018d--',
             ''
             ))).toEqual([
-                {status: 201, response: {"mydata": {"Prop": 1}}}
+                { status: 201, response: { 'mydata': { 'Prop': 1 } } },
             ]);
     });
 
-    it("parses array data", () => {
+    it('parses array data', () => {
         expect(batchParse(multiline(
             '--90f26034-d914-44a0-bd16-908fc535018d',
             'Content-Type: application/http; msgtype=response',
@@ -49,11 +48,11 @@ describe("openapi batchUtil", () => {
             '--90f26034-d914-44a0-bd16-908fc535018d--',
             ''
             ))).toEqual([
-                {status: 201, response: ["mydata", "Prop"]}
+                { status: 201, response: ['mydata', 'Prop'] },
             ]);
     });
 
-    it("parses multiple responses", () => {
+    it('parses multiple responses', () => {
         expect(batchParse(multiline(
             '--90f26034-d914-44a0-bd16-908fc535018d',
             'Content-Type: application/http; msgtype=response',
@@ -82,23 +81,25 @@ describe("openapi batchUtil", () => {
             '--90f26034-d914-44a0-bd16-908fc535018d--',
             ''
             ))).toEqual([
-                {status: 201, response: {"mydata": {"Prop": 1}}},
-                {status: 200, response: {"second": 2}}
+                { status: 201, response: { 'mydata': { 'Prop': 1 } } },
+                { status: 200, response: { 'second': 2 } },
             ]);
-        });
+    });
+});
+
+describe('batch building', () => {
+
+    const testAuth = { token: 'XYZ', expiry: new Date() };
+
+    it('handles no requests', () => {
+        expect(batchBuild([], 'X', testAuth, 'iitbank.com'))
+            .toEqual(multiline('--X--', ''));
     });
 
-    describe("batch building", () => {
-
-    it("handles no requests", () => {
-        expect(batchBuild([], "X", testAuth, "iitbank.com"))
-            .toEqual(multiline("--X--", ""));
-    });
-
-    it("handles one request", () => {
+    it('handles one request', () => {
         expect(batchBuild(
-                [{method: "GET", url: 'openapi/sub'}],
-                "ABC", testAuth.token, "iitbank.com"))
+                [{ method: 'GET', url: 'openapi/sub' }],
+                'ABC', testAuth.token, 'iitbank.com'))
             .toEqual(multiline(
                 '--ABC',
                 'Content-Type: application/http; msgtype=request',
@@ -113,10 +114,10 @@ describe("openapi batchUtil", () => {
                 ''));
     });
 
-    it("puts headers into the batch", () => {
+    it('puts headers into the batch', () => {
         expect(batchBuild(
-                [{method: "GET", url: 'openapi/sub', headers: {"X-Auth-Request": "Me"}}],
-                "ABC", testAuth.token, "iitbank.com"))
+                [{ method: 'GET', url: 'openapi/sub', headers: { 'X-Auth-Request': 'Me' } }],
+                'ABC', testAuth.token, 'iitbank.com'))
             .toEqual(multiline(
                 '--ABC',
                 'Content-Type: application/http; msgtype=request',
@@ -132,10 +133,10 @@ describe("openapi batchUtil", () => {
                 ''));
     });
 
-    it("adds content-type for POST/PUT", () => {
+    it('adds content-type for POST/PUT', () => {
         expect(batchBuild(
-                [{method: "POST", data: "data", url: 'openapi/sub'}],
-                "ABC", testAuth.token, "iitbank.com"))
+                [{ method: 'POST', data: 'data', url: 'openapi/sub' }],
+                'ABC', testAuth.token, 'iitbank.com'))
             .toEqual(multiline(
                 '--ABC',
                 'Content-Type: application/http; msgtype=request',
@@ -151,8 +152,8 @@ describe("openapi batchUtil", () => {
                 ''));
 
         expect(batchBuild(
-                [{method: "PUT", data: "data", url: 'openapi/sub'}],
-                "ABC", testAuth.token, "iitbank.com"))
+                [{ method: 'PUT', data: 'data', url: 'openapi/sub' }],
+                'ABC', testAuth.token, 'iitbank.com'))
             .toEqual(multiline(
                 '--ABC',
                 'Content-Type: application/http; msgtype=request',
@@ -168,12 +169,12 @@ describe("openapi batchUtil", () => {
                 ''));
     });
 
-    it("handles multiple requests", () => {
+    it('handles multiple requests', () => {
         expect(batchBuild(
-                [{method: "POST", data: "postdata", url: 'openapi/sub'},
-                {method: "PUT", data: "putdata", url: 'openapi/bus'},
-                {method: "GET", url: 'openapi/usb'}],
-                "ABC", testAuth.token, "iitbank.com"))
+            [{ method: 'POST', data: 'postdata', url: 'openapi/sub' },
+                { method: 'PUT', data: 'putdata', url: 'openapi/bus' },
+                { method: 'GET', url: 'openapi/usb' }],
+                'ABC', testAuth.token, 'iitbank.com'))
             .toEqual(multiline(
                 '--ABC',
                 'Content-Type: application/http; msgtype=request',

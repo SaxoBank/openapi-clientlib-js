@@ -1,12 +1,15 @@
-var transport;
-var transportQueue, transportAuth;
 import { tick, installClock, uninstallClock } from '../../utils';
 import mockTransport from '../../mocks/transport';
 import mockTransportAuth from '../../mocks/transport-auth';
 
 const TransportQueue = saxo.openapi.TransportQueue;
 
-describe("openapi TransportQueue", () => {
+describe('openapi TransportQueue', () => {
+
+    let transport;
+    let transportQueue;
+    let transportAuth;
+
     beforeEach(() => {
         transport = mockTransport();
         transportAuth = mockTransportAuth();
@@ -16,13 +19,13 @@ describe("openapi TransportQueue", () => {
         uninstallClock();
     });
 
-    it("does not require options", () => {
+    it('does not require options', () => {
         expect(function() {
             transportQueue = new TransportQueue(transport);
         }).not.toThrow();
     });
 
-    it("defaults to not queuing", (done) => {
+    it('defaults to not queuing', (done) => {
         transportQueue = new TransportQueue(transport);
         expect(transportQueue.isQueueing).toEqual(false);
         expect(transport.get.calls.count()).toEqual(0);
@@ -34,46 +37,46 @@ describe("openapi TransportQueue", () => {
         });
     });
 
-    it("waits for a promise that is fullfilled", (done) => {
+    it('waits for a promise that is fullfilled', (done) => {
         transportQueue = new TransportQueue(transport);
         expect(transportQueue.isQueueing).toEqual(false);
 
-        var waitingForPromiseResolve;
+        let waitingForPromiseResolve;
         transportQueue.waitFor(new Promise(function(resolve, reject) {
             waitingForPromiseResolve = resolve;
         }));
 
-        var getPromise = transportQueue.get();
+        const getPromise = transportQueue.get();
         tick(function() {
             expect(transport.get.calls.count()).toEqual(0);
             waitingForPromiseResolve();
             tick(function() {
                 expect(transport.get.calls.count()).toEqual(1);
-                transport.getResolve({ status: 204, response: "test"});
+                transport.getResolve({ status: 204, response: 'test' });
 
-                var getSpy = jasmine.createSpy("getSpy");
-                getPromise.then(getSpy)
+                const getSpy = jasmine.createSpy('getSpy');
+                getPromise.then(getSpy);
 
                 tick(function() {
                     expect(getSpy.calls.count()).toEqual(1);
-                    expect(getSpy.calls.argsFor(0)).toEqual([{ status: 204, response: "test"}]);
+                    expect(getSpy.calls.argsFor(0)).toEqual([{ status: 204, response: 'test' }]);
 
                     done();
                 });
             });
-        })
+        });
     });
 
-    it("waits for a promise that is rejected", (done) => {
+    it('waits for a promise that is rejected', (done) => {
         transportQueue = new TransportQueue(transport);
         expect(transportQueue.isQueueing).toEqual(false);
 
-        var waitingForPromiseResolve;
+        let waitingForPromiseResolve;
         transportQueue.waitFor(new Promise(function(resolve, reject) {
             waitingForPromiseResolve = resolve;
         }));
 
-        var getPromise = transportQueue.get();
+        const getPromise = transportQueue.get();
         tick(function() {
             expect(transport.get.calls.count()).toEqual(0);
             waitingForPromiseResolve();
@@ -81,8 +84,8 @@ describe("openapi TransportQueue", () => {
                 expect(transport.get.calls.count()).toEqual(1);
                 transport.getReject();
 
-                var getSpy = jasmine.createSpy("getSpy");
-                getPromise.catch(getSpy)
+                const getSpy = jasmine.createSpy('getSpy');
+                getPromise.catch(getSpy);
 
                 tick(function() {
                     expect(getSpy.calls.count()).toEqual(1);
@@ -90,10 +93,10 @@ describe("openapi TransportQueue", () => {
                     done();
                 });
             });
-        })
+        });
     });
 
-    it("waits for a auth that isn't ready when constructed", (done) => {
+    it('waits for a auth that isn\'t ready when constructed', (done) => {
         transportQueue = new TransportQueue(transport, transportAuth);
         expect(transportQueue.isQueueing).toEqual(true);
 
@@ -108,10 +111,10 @@ describe("openapi TransportQueue", () => {
                 expect(transport.get.calls.count()).toEqual(1);
                 done();
             });
-        })
+        });
     });
 
-    it("doesn't wait if the expiry is in the future", (done) => {
+    it('doesn\'t wait if the expiry is in the future', (done) => {
         transportAuth.auth.setExpiry(Date.now() + 10000);
         transportQueue = new TransportQueue(transport, transportAuth);
         expect(transportQueue.isQueueing).toEqual(false);
@@ -120,10 +123,10 @@ describe("openapi TransportQueue", () => {
         tick(function() {
             expect(transport.get.calls.count()).toEqual(1);
             done();
-        })
+        });
     });
 
-    it("starts queuing if the expiry goes into the past", (done) => {
+    it('starts queuing if the expiry goes into the past', (done) => {
         transportAuth.auth.setExpiry(Date.now() + 10000);
         transportQueue = new TransportQueue(transport, transportAuth);
         expect(transportQueue.isQueueing).toEqual(false);
@@ -134,15 +137,15 @@ describe("openapi TransportQueue", () => {
         tick(function() {
             expect(transport.get.calls.count()).toEqual(0);
             done();
-        })
+        });
     });
 
-    it("doesn't resolve if a promise resolves but the expiry is still in the past", (done) => {
+    it('doesn\'t resolve if a promise resolves but the expiry is still in the past', (done) => {
         transportAuth.auth.setExpiry(Date.now() + 10000);
         transportQueue = new TransportQueue(transport, transportAuth);
         expect(transportQueue.isQueueing).toEqual(false);
 
-        var waitingForPromiseResolve;
+        let waitingForPromiseResolve;
         transportQueue.waitFor(new Promise(function(resolve, reject) {
             waitingForPromiseResolve = resolve;
         }));
@@ -157,22 +160,22 @@ describe("openapi TransportQueue", () => {
         tick(function() {
             expect(transport.get.calls.count()).toEqual(0);
             done();
-        })
+        });
     });
 
-    it("if a call comes back with a 401, then queue it up till auth comes in", (done) => {
+    it('if a call comes back with a 401, then queue it up till auth comes in', (done) => {
         transportAuth.auth.setExpiry(Date.now() + 1);
         transportQueue = new TransportQueue(transport, transportAuth);
         expect(transportQueue.isQueueing).toEqual(false);
 
-        var getPromise1 = transportQueue.get();
-        var getReject1 = transport.getReject;
-        var getPromise2 = transportQueue.get();
-        var getReject2 = transport.getReject;
+        const getPromise1 = transportQueue.get();
+        const getReject1 = transport.getReject;
+        const getPromise2 = transportQueue.get();
+        const getReject2 = transport.getReject;
 
-        var getSpy1 = jasmine.createSpy("get1");
+        const getSpy1 = jasmine.createSpy('get1');
         getPromise1.then(getSpy1);
-        var getSpy2 = jasmine.createSpy("get2");
+        const getSpy2 = jasmine.createSpy('get2');
         getPromise2.then(getSpy2);
 
         jasmine.clock().tick(2);
@@ -192,10 +195,10 @@ describe("openapi TransportQueue", () => {
             expect(transport.get.calls.count()).toEqual(2);
 
             done();
-        })
+        });
     });
 
-    it("disposes okay", () => {
+    it('disposes okay', () => {
         transportQueue = new TransportQueue(transport);
         transportQueue.get();
         transportQueue.get();
