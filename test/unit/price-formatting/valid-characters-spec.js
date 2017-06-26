@@ -1,15 +1,14 @@
-﻿import {de_ch, da_dk, fr_fr, ar_eg, hi_in, en_us} from '../locales';
+﻿import { de_ch, da_dk, fr_fr } from '../locales';
 
-const PriceFormatting = saxo.PriceFormatting,
-    priceFormatOptions = saxo.priceFormatOptions;
+const PriceFormatting = saxo.PriceFormatting;
+const priceFormatOptions = saxo.priceFormatOptions;
 
 function testHasCharacters(price, decimals, formatFlags, options, includeScenarios) {
-    var prices = new PriceFormatting(options);
-    var formattedPrice = prices.format(price, decimals, formatFlags),
-        validChars = prices.getValidPriceCharacters(includeScenarios),
-        i;
+    const prices = new PriceFormatting(options);
+    const formattedPrice = prices.format(price, decimals, formatFlags);
+    const validChars = prices.getValidPriceCharacters(includeScenarios);
 
-    for (i = 0; i < formattedPrice.length; i++) {
+    for (let i = 0; i < formattedPrice.length; i++) {
         if (validChars.indexOf(formattedPrice.charAt(i)) < 0) {
             return false;
         }
@@ -18,15 +17,15 @@ function testHasCharacters(price, decimals, formatFlags, options, includeScenari
 }
 
 function testRegex(price, decimals, formatFlags, options, includeScenarios) {
-    var prices = new PriceFormatting(options);
-    var formattedPrice = prices.format(price, decimals, formatFlags),
-        validRegex = prices.getValidPriceRegex(includeScenarios);
+    const prices = new PriceFormatting(options);
+    const formattedPrice = prices.format(price, decimals, formatFlags);
+    const validRegex = prices.getValidPriceRegex(includeScenarios);
 
     return Boolean(formattedPrice.match(validRegex));
 }
 
-describe("price-formatting valid-characters", () => {
-    it("support the daDk locale", () => {
+describe('price-formatting valid-characters', () => {
+    it('support the daDk locale', () => {
         expect(testHasCharacters(1.23451, 2, null, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
         expect(testRegex(1.23451, 2, null, da_dk, { integer: false, negative: false, price: true })).toEqual(true);
 
@@ -51,7 +50,7 @@ describe("price-formatting valid-characters", () => {
         expect(testHasCharacters(42.0625, 4, priceFormatOptions.Fractions, da_dk, { integer: false, negative: false, price: false })).toEqual(false);
         expect(testRegex(42.0625, 4, priceFormatOptions.Fractions, da_dk, { integer: false, negative: false, price: false })).toEqual(false);
     });
-    it("supports the frFR locale", () => {
+    it('supports the frFR locale', () => {
         expect(testHasCharacters(1.23451, 2, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
         expect(testRegex(1.23451, 2, null, fr_fr, { integer: false, negative: false, price: true })).toEqual(true);
 
@@ -76,7 +75,7 @@ describe("price-formatting valid-characters", () => {
         expect(testHasCharacters(42.0625, 4, priceFormatOptions.Fractions, fr_fr, { integer: false, negative: false, price: false })).toEqual(false);
         expect(testRegex(42.0625, 4, priceFormatOptions.Fractions, fr_fr, { integer: false, negative: false, price: false })).toEqual(false);
     });
-    it("supports the deCh locale", () => {
+    it('supports the deCh locale', () => {
         expect(testHasCharacters(2567.90625, 7, priceFormatOptions.ModernFractions, de_ch, { integer: false, negative: false, price: true })).toEqual(true);
         expect(testRegex(2567.90625, 7, priceFormatOptions.ModernFractions, de_ch, { integer: false, negative: false, price: true })).toEqual(true);
 

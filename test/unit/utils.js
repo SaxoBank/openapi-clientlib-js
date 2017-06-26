@@ -1,3 +1,4 @@
+/* globals ES6Promise */
 /* the promise polyfill requires running before it polyfills...*/
 ES6Promise.polyfill();
 
@@ -9,19 +10,20 @@ ES6Promise.polyfill();
  *  to fire the results of promises when Promise *is not* in the browser,
  *  then run our code in a setTimeout for when Promise *is* in the browser
  */
-var realSetTimeout = setTimeout;
-var tick = function(func) {
+const realSetTimeout = setTimeout;
+function tick(func) {
     jasmine.clock().tick(1); // for phantomjs
     realSetTimeout(func, 1); // for when running in a modern browser (that doesn't fallback to nextTick=setTimeout)
-};
+}
 
-var global = (0, eval)('this');
+// eslint-disable-next-line no-eval
+const global = (0, eval)('this');
 
-var mockDate = new Date(2015, 3, 27);
+const mockDate = new Date(2015, 3, 27);
 
 function multiline() {
-    var lines = Array.prototype.slice.call(arguments);
-    return lines.join("\r\n");
+    const lines = Array.prototype.slice.call(arguments);
+    return lines.join('\r\n');
 }
 
 function installClock() {

@@ -5,7 +5,9 @@
     "node": ">=4"
   },
   "scripts": {
-    "test": "grunt test"
+    "test": "npm run lint && grunt test",
+    "lint": "eslint src test",
+    "lint:fix": "eslint src test --fix"
   },
   "main": "dist/release/openapi-client.js",
   "files": [
@@ -33,7 +35,6 @@
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-jasmine": "1.0.3",
     "grunt-contrib-watch": "1.0.0",
-    "grunt-eslint": "19.0.0",
     "grunt-rollup": "1.0.1",
     "grunt-template-jasmine-istanbul": "0.4.0",
     "jquery": "2.1.4",
