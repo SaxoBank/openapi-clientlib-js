@@ -385,12 +385,12 @@ describe('openapi TransportAuth', () => {
             expect(fetch.calls.count()).toEqual(0);
             transportAuth.get('service_group', 'url');
             expect(fetch.calls.count()).toEqual(1);
-            expect(fetch).toHaveBeenCalledWith(jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN' } }));
+            expect(fetch).toHaveBeenCalledWith(jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': jasmine.any(Number) } }));
             fetch.calls.reset();
 
             transportAuth.get('service_group', 'url', {}, {});
             expect(fetch.calls.count()).toEqual(1);
-            expect(fetch).toHaveBeenCalledWith(jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN' } }));
+            expect(fetch).toHaveBeenCalledWith(jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': jasmine.any(Number) } }));
         });
 
         it('supports all the http verbs', function() {
@@ -403,11 +403,11 @@ describe('openapi TransportAuth', () => {
             transportAuth.patch('service_group', 'url');
             transportAuth.delete('service_group', 'url');
             expect(fetch.calls.count()).toEqual(5);
-            expect(fetch.calls.argsFor(0)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN' } })]);
-            expect(fetch.calls.argsFor(1)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN' } })]);
-            expect(fetch.calls.argsFor(2)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN' } })]);
-            expect(fetch.calls.argsFor(3)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN' } })]);
-            expect(fetch.calls.argsFor(4)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN' } })]);
+            expect(fetch.calls.argsFor(0)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': jasmine.any(Number) } })]);
+            expect(fetch.calls.argsFor(1)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': jasmine.any(Number) } })]);
+            expect(fetch.calls.argsFor(2)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': jasmine.any(Number) } })]);
+            expect(fetch.calls.argsFor(3)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': jasmine.any(Number) } })]);
+            expect(fetch.calls.argsFor(4)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': jasmine.any(Number) } })]);
         });
 
         it('overrides an auth header if one exists', function() {
@@ -417,7 +417,7 @@ describe('openapi TransportAuth', () => {
             expect(fetch.calls.count()).toEqual(0);
             transportAuth.get('service_group', 'url', {}, { headers: { Authorization: 'MYTOKEN' } });
             expect(fetch.calls.count()).toEqual(1);
-            expect(fetch.calls.argsFor(0)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN' } })]);
+            expect(fetch.calls.argsFor(0)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': jasmine.any(Number) } })]);
         });
     });
 });
