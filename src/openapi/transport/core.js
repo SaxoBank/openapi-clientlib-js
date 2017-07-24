@@ -9,7 +9,7 @@ import fetch from '../../utils/fetch';
 // -- Local variables section --
 
 const DEFAULT_CACHE = true;
-
+let requestCounter = 0; // counter used for identifying unique request and it will share among all transports
 // -- Local methods section --
 
 /**
@@ -47,6 +47,11 @@ function generateTransportCall(method) {
                 headers['Accept-Language'] = this.language + ', *;q=0.5';
             }
         }
+
+        if (!headers['X-Request-Id']) {
+            headers['X-Request-Id'] = ++requestCounter;
+        }
+
         return this.fetch(method, this.baseUrl + '/' + serviceGroup + '/' + url, {
             body,
             headers,

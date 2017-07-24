@@ -139,7 +139,7 @@ describe('openapi TransportCore', () => {
             expect(fetch.calls.argsFor(0)).toEqual(['localhost/openapi/service_group/account/info/te/st',
                 { body: '{"Test":true}',
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+                    headers: { 'Content-Type': 'application/json; charset=UTF-8', 'X-Request-Id': jasmine.any(Number) },
                 // credentials: 'include' adds cookies.
                 // Cookies used by some open api operations. if we don't default here make sure it is sent through with subscription requests.
                     credentials: 'include' }]);
@@ -149,7 +149,12 @@ describe('openapi TransportCore', () => {
             transport.post('service_group', 'account/info/{user}/{account}', { user: 'te', account: 'st' }, { body: '{"Test":true}' });
 
             expect(fetch.calls.count()).toEqual(1);
-            expect(fetch.calls.argsFor(0)).toEqual(['localhost/openapi/service_group/account/info/te/st', { body: '{"Test":true}', method: 'POST', headers: {}, credentials: 'include' }]);
+            expect(fetch.calls.argsFor(0)).toEqual(['localhost/openapi/service_group/account/info/te/st',
+                { body: '{"Test":true}',
+                    method: 'POST',
+                    headers: { 'X-Request-Id': jasmine.any(Number) },
+                    credentials: 'include',
+                }]);
         });
     });
 
@@ -424,7 +429,7 @@ describe('openapi TransportCore', () => {
                 .toEqual([jasmine.anything(),
                     jasmine.objectContaining({
                         method: 'GET',
-                        headers: {} })]);
+                        headers: { 'X-Request-Id': jasmine.any(Number) } })]);
             fetch.calls.reset();
 
             transport.put('service_group', 'url', null, null);
@@ -435,6 +440,7 @@ describe('openapi TransportCore', () => {
                         method: 'POST',
                         headers: {
                             'X-HTTP-Method-Override': 'PUT',
+                            'X-Request-Id': jasmine.any(Number),
                         } })]);
             fetch.calls.reset();
 
@@ -444,7 +450,7 @@ describe('openapi TransportCore', () => {
                 .toEqual([jasmine.anything(),
                     jasmine.objectContaining({
                         method: 'POST',
-                        headers: {} })]);
+                        headers: { 'X-Request-Id': jasmine.any(Number) } })]);
             fetch.calls.reset();
 
             transport.delete('service_group', 'url', null, { headers: {} });
@@ -455,6 +461,7 @@ describe('openapi TransportCore', () => {
                         method: 'POST',
                         headers: {
                             'X-HTTP-Method-Override': 'DELETE',
+                            'X-Request-Id': jasmine.any(Number),
                         } })]);
             fetch.calls.reset();
 
@@ -466,6 +473,7 @@ describe('openapi TransportCore', () => {
                         method: 'POST',
                         headers: {
                             'X-HTTP-Method-Override': 'PATCH',
+                            'X-Request-Id': jasmine.any(Number),
                         } })]);
             fetch.calls.reset();
         });
