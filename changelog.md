@@ -1,3 +1,7 @@
+#### v1.4.0
+
++ Add requestCounter to identify unique request for every open api rest request
+
 #### v1.3.3
 
 + Fix transport retry to send on reject objects correctly
