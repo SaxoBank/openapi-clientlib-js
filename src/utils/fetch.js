@@ -9,6 +9,12 @@ import log from '../log';
 
 const LOG_AREA = 'Fetch';
 
+const binaryContentTypes = {
+    'application/pdf': true,
+    'application/vnd.ms-excel': true,
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': true,
+};
+
 /**
  * Follows the jQuery way of cache breaking - start with the current time and add 1 per request,
  * meaning you would have to do more than 1000 per second
@@ -106,7 +112,7 @@ function convertFetchResponse(url, body, result, isRejected) {
                 url,
             };
         });
-    } else if (contentType && contentType.indexOf('application/') > -1) {
+    } else if (contentType && binaryContentTypes[contentType] > -1) {
         convertedPromise = result.blob().then(function(blob) {
             return {
                 response: blob,
