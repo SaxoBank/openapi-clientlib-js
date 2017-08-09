@@ -106,6 +106,16 @@ function convertFetchResponse(url, body, result, isRejected) {
                 url,
             };
         });
+    } else if (contentType && contentType.indexOf('application/') > -1) {
+        convertedPromise = result.blob().then(function(blob) {
+            return {
+                response: blob,
+                status: result.status,
+                headers: result.headers,
+                size: blob.size,
+                url,
+            };
+        });
     } else {
         convertedPromise = result.text().then(function(text) {
             return {
