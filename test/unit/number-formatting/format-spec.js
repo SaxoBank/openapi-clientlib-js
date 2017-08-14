@@ -45,7 +45,6 @@ describe('NumberFormatting format', () => {
 
     describe('short format', () => {
         it('basically works', () => {
-            expect(shortFormat(1.45)).toEqual('1');
             expect(shortFormat(1000)).toEqual('1,000');
             expect(shortFormat(9999)).toEqual('9,999');
             expect(shortFormat(10000)).toEqual('10.0k');
@@ -56,7 +55,6 @@ describe('NumberFormatting format', () => {
             expect(shortFormat(20049)).toEqual('20.0k');
             expect(shortFormat(99949)).toEqual('99.9k');
             expect(shortFormat(99950)).toEqual('100k');
-
             expect(shortFormat(999499)).toEqual('999k');
             expect(shortFormat(999500)).toEqual('1.00m');
             expect(shortFormat(1000000)).toEqual('1.00m');
@@ -65,6 +63,16 @@ describe('NumberFormatting format', () => {
             expect(shortFormat(10500000)).toEqual('10.5m');
             expect(shortFormat(105000000)).toEqual('105m');
             expect(shortFormat(1050000000)).toEqual('1,050m');
+        });
+
+        it('works with decimals', () => {
+            expect(shortFormat(1.45)).toEqual('1');
+            expect(shortFormat(99.4)).toEqual('99');
+            expect(shortFormat(99.5)).toEqual('100');
+            expect(shortFormat(100.11)).toEqual('100');
+            expect(shortFormat(1000.11)).toEqual('1,000');
+            expect(shortFormat(99949.11)).toEqual('99.9k');
+            expect(shortFormat(100000000.11)).toEqual('100m');
         });
     });
 
