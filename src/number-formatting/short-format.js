@@ -18,23 +18,23 @@ import formatNumber from './format';
  * @returns {string} Returns 0 when dates are equal. -1 when date1 less than date2. 1 when date1 greater than date2.
  */
 function shortFormat(num, options) {
-
-    let numberSize = String(num).length; // Unfortunately Logs are too inaccurate - Math.round(Math.log(num) / Math.LN10)
+    const [digits] = String(num).split('.');
+    let digitSize = digits.length;
     let boundary;
 
-    if (numberSize >= 5) { // bigger than 10,000
-        boundary = Math.pow(10, numberSize) - (Math.pow(10, numberSize - 3) / 2); // e.g. 100,000 -> 9,9950 - closer to 100k than 99.9k
+    if (digitSize >= 5) { // bigger than 10,000
+        boundary = Math.pow(10, digitSize) - (Math.pow(10, digitSize - 3) / 2); // e.g. 100,000 -> 9,9950 - closer to 100k than 99.9k
         if (num >= boundary) {
-            numberSize++;
+            digitSize++;
         }
     }
 
-    if (numberSize >= 7) { // > 999500
-        return formatNumber(num / 1000000, 2 - (numberSize - 7), options) + 'm';
+    if (digitSize >= 7) { // > 999500
+        return formatNumber(num / 1000000, 2 - (digitSize - 7), options) + 'm';
     }
 
-    if (numberSize >= 5) { // > 9995 => 10.2k
-        return formatNumber(num / 1000, 2 - (numberSize - 4), options) + 'k';
+    if (digitSize >= 5) { // > 9995 => 10.2k
+        return formatNumber(num / 1000, 2 - (digitSize - 4), options) + 'k';
     }
 
     return formatNumber(num, 0, options);
