@@ -1,6 +1,6 @@
 ﻿import { global } from '../utils';
 
-function FetchResponse(status, response, contentType) {
+export function FetchResponse(status, response, contentType) {
     this.status = status;
     this.response = response;
 
@@ -24,6 +24,12 @@ function FetchResponse(status, response, contentType) {
             } else {
                 resolve(response);
             }
+        });
+    };
+
+    this.blob = function() {
+        return new Promise(function(resolve) {
+            resolve(response);
         });
     };
 }

@@ -9,6 +9,7 @@ import log from '../log';
 
 const LOG_AREA = 'Fetch';
 
+// list of content-types that will be treated as binary blobs
 const binaryContentTypes = {
     'application/pdf': true,
     'application/vnd.ms-excel': true,
@@ -49,7 +50,7 @@ function convertFetchSuccess(url, body, result) {
  * @param result
  * @returns {Promise}
  */
-function convertFetchResponse(url, body, result, isRejected) {
+export function convertFetchResponse(url, body, result, isRejected) {
 
     // if this ia an exception rather than a result, reject immediately without
     // trying to parse
@@ -74,6 +75,7 @@ function convertFetchResponse(url, body, result, isRejected) {
                         headers: result.headers,
                         size: text.length,
                         url,
+                        responseType: 'json',
                     };
                 } catch (e) {
                     log.error(LOG_AREA, 'Received a JSON response from OpenApi that could not be parsed', {
@@ -88,6 +90,7 @@ function convertFetchResponse(url, body, result, isRejected) {
                         headers: result.headers,
                         size: text.length,
                         url,
+                        responseType: 'text',
                     };
                 }
             });
@@ -100,9 +103,10 @@ function convertFetchResponse(url, body, result, isRejected) {
                     headers: result.headers,
                     size: text.length,
                     url,
+                    responseType: 'text',
                 };
             });
-    } else if (contentType && contentType.indexOf('image/') > -1) {
+    } else if (contentType && (contentType.indexOf('image/') > -1 || binaryContentTypes[contentType])) {
         convertedPromise = result.blob().then(function(blob) {
             return {
                 response: blob,
@@ -110,16 +114,7 @@ function convertFetchResponse(url, body, result, isRejected) {
                 headers: result.headers,
                 size: blob.size,
                 url,
-            };
-        });
-    } else if (contentType && binaryContentTypes[contentType] > -1) {
-        convertedPromise = result.blob().then(function(blob) {
-            return {
-                response: blob,
-                status: result.status,
-                headers: result.headers,
-                size: blob.size,
-                url,
+                responseType: 'blob',
             };
         });
     } else {
@@ -130,6 +125,7 @@ function convertFetchResponse(url, body, result, isRejected) {
                 headers: result.headers,
                 size: text ? text.length : 0,
                 url,
+                responseType: 'text',
             };
         }).catch(() => {
             // since we guess that it can be interpreted as text, do not fail the promise
