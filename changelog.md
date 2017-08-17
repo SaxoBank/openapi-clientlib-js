@@ -1,3 +1,10 @@
+#### v1.5.0
+
++ Allow fetchRequest to handle binary responses when content-type is a pdf or an excel
++ Add support for decimal values to NumberFormatting.shortFormat
++ Increased MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED to 10000 to avoid warning after unsubscribing on slower connections
+
+
 #### v1.4.0
 
 + Add requestCounter to identify unique request for every open api rest request
