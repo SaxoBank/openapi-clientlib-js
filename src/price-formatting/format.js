@@ -184,8 +184,7 @@ function formatPriceParts(numberFormatting, value, decimals, formatFlags, numera
 
     const parts = { Pre: '', Post: '', First: '', Pips: '', DeciPips: '' };
 
-    if (isNaN(value)) {
-        parts.First = '-';
+    if (isNaN(value) || value === null || value === '') {
         return parts;
     }
 
