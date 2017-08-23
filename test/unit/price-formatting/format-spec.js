@@ -662,27 +662,21 @@ describe('price-formatting format', () => {
         expect(parts.Post).toEqual('');
     });
 
-    it('formats NaN', () => {
-        let text = priceFormatting.format(NaN, 3);
-        expect(text).toEqual('-');
+    it('handles non numbers', () => {
+        expect(priceFormatting.format(undefined, 3)).toEqual('');
+        expect(priceFormatting.format(NaN, 3)).toEqual('');
+        expect(priceFormatting.format(null, 3)).toEqual('');
+        expect(priceFormatting.format('', 3)).toEqual('');
 
-        text = priceFormatting.format(NaN, 3, priceFormatOptions.Fractions);
-        expect(text).toEqual('-');
+        expect(priceFormatting.format(undefined, 3, priceFormatOptions.Fractions)).toEqual('');
+        expect(priceFormatting.format(NaN, 3, priceFormatOptions.Fractions)).toEqual('');
+        expect(priceFormatting.format(null, 3, priceFormatOptions.Fractions)).toEqual('');
+        expect(priceFormatting.format('', 3, priceFormatOptions.Fractions)).toEqual('');
 
-        let parts = priceFormatting.formatPriceParts(NaN, 3, priceFormatOptions.Fractions);
-        expect(parts.Pre).toEqual('');
-        expect(parts.First).toEqual('-');
-        expect(parts.Pips).toEqual('');
-        expect(parts.DeciPips).toEqual('');
-        expect(parts.Post).toEqual('');
-
-        parts = priceFormatting.formatPriceParts(NaN, 6, priceFormatOptions.ModernFractions);
-
-        expect(parts.Pre).toEqual('');
-        expect(parts.First).toEqual('-');
-        expect(parts.Pips).toEqual('');
-        expect(parts.DeciPips).toEqual('');
-        expect(parts.Post).toEqual('');
+        expect(priceFormatting.format(undefined, 3, priceFormatOptions.ModernFractions)).toEqual('');
+        expect(priceFormatting.format(NaN, 3, priceFormatOptions.ModernFractions)).toEqual('');
+        expect(priceFormatting.format(null, 3, priceFormatOptions.ModernFractions)).toEqual('');
+        expect(priceFormatting.format('', 3, priceFormatOptions.ModernFractions)).toEqual('');
     });
 
     it('supports no rounding options', () => {
