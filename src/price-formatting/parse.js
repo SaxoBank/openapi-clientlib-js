@@ -121,7 +121,7 @@ function parseFractionalPrice(numberFormatting, s, formatFlags, decimals) {
                 if (pipPart < denominator) {
                     result = result += (pipPart / denominator);
                 } else {
-                    result = 0;
+                    result = NaN;
                 }
             }
         } else {
@@ -212,7 +212,7 @@ function parsePrice(numberFormatting, str, decimals, formatFlags) {
     }
 
     if (!s) { // null, undefined, ""
-        return 0;
+        return NaN;
     }
 
     try {
@@ -222,7 +222,7 @@ function parsePrice(numberFormatting, str, decimals, formatFlags) {
         return parseDecimalprice(numberFormatting, s, formatFlags);
 
     } catch (e) {
-        return 0;
+        return NaN;
     }
 }
 
