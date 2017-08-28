@@ -1,3 +1,7 @@
+#### v1.5.1
+
++ Align price and number formatting of non-numbers
+
 #### v1.5.0
 
 + Allow fetchRequest to handle binary responses when content-type is a pdf or an excel
