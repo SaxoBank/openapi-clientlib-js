@@ -1,3 +1,7 @@
+#### v1.5.2
+
++ Align price and number parsing of invalid special futures format values
+
 #### v1.5.1
 
 + Align price and number formatting of non-numbers
