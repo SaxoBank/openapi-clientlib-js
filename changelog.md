@@ -1,3 +1,7 @@
+#### v1.6.0
+
++ No longer send /active as part of the subscribe url
+
 #### v1.5.2
 
 + Align price and number parsing of invalid special futures format values
