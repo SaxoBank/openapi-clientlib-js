@@ -39,14 +39,14 @@ describe('openapi StreamingSubscription', () => {
             subscription.onSubscribe();
 
             expect(transport.post.calls.count()).toEqual(1);
-            expect(transport.post.calls.argsFor(0)).toEqual(['serviceGroup', 'test/resource/active', null, jasmine.objectContaining({ body: jasmine.objectContaining({ RefreshRate: 120 }) })]);
+            expect(transport.post.calls.argsFor(0)).toEqual(['serviceGroup', 'test/resource', null, jasmine.objectContaining({ body: jasmine.objectContaining({ RefreshRate: 120 }) })]);
         });
         it('has a minimum refresh rate', () => {
             const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', { RefreshRate: 1 });
             subscription.onSubscribe();
 
             expect(transport.post.calls.count()).toEqual(1);
-            expect(transport.post.calls.argsFor(0)).toEqual(['serviceGroup', 'test/resource/active', null, jasmine.objectContaining({ body: jasmine.objectContaining({ RefreshRate: 100 }) })]);
+            expect(transport.post.calls.argsFor(0)).toEqual(['serviceGroup', 'test/resource', null, jasmine.objectContaining({ body: jasmine.objectContaining({ RefreshRate: 100 }) })]);
         });
     });
 
