@@ -7,7 +7,7 @@
 
 import TransportQueue from './queue';
 import { nextTick } from '../../utils/function';
-import { formatUrl, createGUID } from '../../utils/string';
+import { formatUrl } from '../../utils/string';
 import { parse as parseBatch, build as buildBatch } from '../batch-util';
 import log from '../../log';
 
@@ -97,7 +97,7 @@ function runBatchCall(serviceGroup, callList) {
         authToken = this.authProvider.getToken();
     }
 
-    const boundary = createGUID();
+    const boundary = '~';
     const content = buildBatch(subRequests, boundary, authToken, this.host);
 
     this.transport.post(serviceGroup, 'batch', null, {

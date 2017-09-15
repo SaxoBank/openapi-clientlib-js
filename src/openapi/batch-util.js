@@ -87,7 +87,7 @@ function parse(responseText) {
  * Builds up a string of the data for a batch request.
  * @name saxo.openapi.batchUtil.build
  * @param {Array.<{method: string, headers: ?Object.<string, string>, url: string, data: ?string}>} subRequests - The sub requests of the batch.
- * @param {string} boundary - The boundary identifier. This should be a GUID.
+ * @param {string} boundary - The boundary identifier.
  * @param {string} authToken - The authentication token.
  * @param {string} host - The host of the sender.
  */

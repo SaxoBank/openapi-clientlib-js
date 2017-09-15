@@ -96,40 +96,6 @@ function padLeft(value, length, padChar) {
     return multiply(padChar, length - value.length) + value;
 }
 
-function s4(num) {
-    let ret = num.toString(16);
-    while (ret.length < 4) {
-        ret = '0' + ret;
-    }
-    return ret;
-}
-
-/**
- * Creates a new GUID.
- * @alias saxo.utils.string.createGUID
- * @returns {string} A GUID.
- */
-function createGUID() {
-    if (typeof crypto !== 'undefined' &&
-        typeof crypto.getRandomValues !== 'undefined') {
-
-        // If we have a cryptographically secure PRNG, use that
-        // http://stackoverflow.com/questions/6906916/collisions-when-generating-uuids-in-javascript
-        const buf = new Uint16Array(8);
-        crypto.getRandomValues(buf);
-        return (s4(buf[0]) + s4(buf[1]) + '-' + s4(buf[2]) + '-' + s4(buf[3]) + '-' + s4(buf[4]) + '-' + s4(buf[5]) + s4(buf[6]) + s4(buf[7]));
-    }
-
-    // Otherwise, just use Math.random
-    // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/2117523#2117523
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-
-}
-
 /**
  * Formats text with arguments for a URL. All data arguments are uri encoded.
  * @alias saxo.utils.string.formatUrl
@@ -176,5 +142,4 @@ export {
     endsWith,
     multiply,
     padLeft,
-    createGUID,
 };
