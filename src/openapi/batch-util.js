@@ -104,26 +104,26 @@ function build(subRequests, boundary, authToken, host) {
         const method = request.method.toUpperCase();
 
         body.push('--' + boundary);
-        body.push('Content-Type: application/http; msgtype=request', '');
+        body.push('Content-Type:application/http; msgtype=request', '');
 
         body.push(method + ' ' + request.url + ' HTTP/1.1');
-        body.push('X-Request-Id: ' + i);
+        body.push('X-Request-Id:' + i);
         if (request.headers) {
             for (const header in request.headers) {
                 if (request.headers.hasOwnProperty(header)) {
-                    body.push(header + ': ' + request.headers[header]);
+                    body.push(header + ':' + request.headers[header]);
                 }
             }
         }
 
-        body.push('Authorization: ' + authToken);
+        body.push('Authorization:' + authToken);
 
         /* Don't care about content type for requests that have no body. */
         if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
-            body.push('Content-Type: application/json; charset=utf-8');
+            body.push('Content-Type:application/json; charset=utf-8');
         }
 
-        body.push('Host: ' + host, '');
+        body.push('Host:' + host, '');
         body.push(request.data || '');
     }
 
