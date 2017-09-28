@@ -8,13 +8,9 @@ describe('openapi TransportBatch', () => {
     const validBaseUrl = 'localhost/openapi/';
     let transport;
     let transportBatch;
-    let auth;
-    const currentToken = 'TOKEN';
 
     beforeEach(() => {
         transport = mockTransport();
-        auth = jasmine.createSpyObj('auth', ['getToken']);
-        auth.getToken.and.callFake(() => currentToken);
         installClock();
 
         spyOn(Math, 'random').and.returnValue(0.1);
@@ -26,16 +22,16 @@ describe('openapi TransportBatch', () => {
 
     it('requires baseUrl', () => {
         expect(function() {
-            transportBatch = new TransportBatch(transport, null, auth, { timeoutMs: 0 });
+            transportBatch = new TransportBatch(transport, null, { timeoutMs: 0 });
         }).toThrow();
         expect(function() {
-            transportBatch = new TransportBatch(null, validBaseUrl, auth, {});
+            transportBatch = new TransportBatch(null, validBaseUrl, {});
         }).toThrow();
         expect(function() {
-            transportBatch = new TransportBatch(transport, validBaseUrl, null, {});
+            transportBatch = new TransportBatch(transport, validBaseUrl, {});
         }).not.toThrow();
         expect(function() {
-            transportBatch = new TransportBatch(transport, validBaseUrl, auth, null);
+            transportBatch = new TransportBatch(transport, validBaseUrl, null);
         }).not.toThrow();
         expect(function() {
             transportBatch = new TransportBatch(transport, validBaseUrl);
@@ -45,35 +41,35 @@ describe('openapi TransportBatch', () => {
     it('handles different base url\'s', function() {
         // for this to be valid, open api would have to be hosted at the same level or above on the current server
         expect(() => {
-            transportBatch = new TransportBatch(transport, '/', auth);
+            transportBatch = new TransportBatch(transport, '/');
             expect(transportBatch.timeoutMs).toEqual(0);
         }).toThrow();
 
-        transportBatch = new TransportBatch(transport, 'localhost', auth);
+        transportBatch = new TransportBatch(transport, 'localhost');
         expect(transportBatch.basePath).toEqual('/');
 
-        transportBatch = new TransportBatch(transport, 'localhost/openapi', auth);
+        transportBatch = new TransportBatch(transport, 'localhost/openapi');
         expect(transportBatch.basePath).toEqual('/openapi/');
 
-        transportBatch = new TransportBatch(transport, 'localhost/openapi/', auth);
+        transportBatch = new TransportBatch(transport, 'localhost/openapi/');
         expect(transportBatch.basePath).toEqual('/openapi/');
 
-        transportBatch = new TransportBatch(transport, 'http://localhost/openapi/', auth);
+        transportBatch = new TransportBatch(transport, 'http://localhost/openapi/');
         expect(transportBatch.basePath).toEqual('/openapi/');
     });
 
     it('defaults to timeout 0', function() {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth);
+        transportBatch = new TransportBatch(transport, validBaseUrl);
         expect(transportBatch.timeoutMs).toEqual(0);
     });
 
     it('overrides timeout', function() {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth, { timeoutMs: 9999 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 9999 });
         expect(transportBatch.timeoutMs).toEqual(9999);
     });
 
     it('does not batch if only a single call is to be made', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth, { timeoutMs: 0 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
 
         expect(transport.get.calls.count()).toEqual(0);
@@ -87,7 +83,7 @@ describe('openapi TransportBatch', () => {
     });
 
     it('queues up calls immediately if timeout is 0', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth, { timeoutMs: 0 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
@@ -109,7 +105,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:0',
-                'Authorization:TOKEN',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -118,7 +113,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:1',
-                'Authorization:TOKEN',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -128,7 +122,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:2',
-                'Authorization:TOKEN',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -138,7 +131,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:3',
-                'Authorization:TOKEN',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -147,7 +139,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'PATCH /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:4',
-                'Authorization:TOKEN',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -165,7 +156,7 @@ describe('openapi TransportBatch', () => {
     });
 
     it('queues up calls and executes after the timeout if the timeout is not 0', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth, { timeoutMs: 10 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 10 });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
 
@@ -190,7 +181,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:0',
-                'Authorization:TOKEN',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -199,7 +189,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:1',
-                'Authorization:TOKEN',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -209,7 +198,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:2',
-                'Authorization:TOKEN',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -219,7 +207,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:3',
-                'Authorization:TOKEN',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -235,7 +222,7 @@ describe('openapi TransportBatch', () => {
     });
 
     it('accepts an object or a string in the body argument', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth, { timeoutMs: 0 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' }, { body: { test: true, str: 'str' } });
         transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518825, Type: 'CfdOnFutures' }, { body: '{ "test": true, "str": "str" }' });
 
@@ -251,7 +238,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:0',
-                'Authorization:TOKEN',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -261,7 +247,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:1',
-                'Authorization:TOKEN',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -292,8 +277,8 @@ describe('openapi TransportBatch', () => {
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
                 'X-Request-Id:0',
+                'Authorization:TOKEN1',
                 'MyHeader:true',
-                'Authorization:TOKEN2',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -316,7 +301,7 @@ describe('openapi TransportBatch', () => {
     });
 
     it('processes the batch response', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth, { timeoutMs: 0 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
@@ -426,7 +411,7 @@ describe('openapi TransportBatch', () => {
     });
 
     it('passes on failures', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth, { timeoutMs: 0 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
@@ -475,7 +460,7 @@ describe('openapi TransportBatch', () => {
     });
 
     it('detects a non 2xx status code as a rejection', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth, { timeoutMs: 0 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         const get304Promise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
@@ -594,7 +579,7 @@ describe('openapi TransportBatch', () => {
     });
 
     it('uri-encodes arguments', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth, { timeoutMs: 0 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: '&=' });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518825, Type: '&=' });
 
@@ -607,7 +592,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/%26%3D HTTP/1.1',
                 'X-Request-Id:0',
-                'Authorization:TOKEN',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -616,7 +600,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518825/%26%3D HTTP/1.1',
                 'X-Request-Id:1',
-                'Authorization:TOKEN',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -628,7 +611,7 @@ describe('openapi TransportBatch', () => {
     });
 
     it('supports queryParams', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, auth, { timeoutMs: 0 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}', { InstrumentId: 1518824 }, { queryParams: { a: 1, b: 2 } });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}', { InstrumentId: 1518825 }, { queryParams: { a: '&=' } });
 
@@ -641,7 +624,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824?a=1&b=2 HTTP/1.1',
                 'X-Request-Id:0',
-                'Authorization:TOKEN',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -650,7 +632,6 @@ describe('openapi TransportBatch', () => {
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518825?a=%26%3D HTTP/1.1',
                 'X-Request-Id:1',
-                'Authorization:TOKEN',
                 'Host:localhost:8081',
                 '',
                 '',

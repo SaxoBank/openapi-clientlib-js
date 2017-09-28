@@ -89,24 +89,21 @@ describe('openapi batchUtil', () => {
 
 describe('batch building', () => {
 
-    const testAuth = { token: 'XYZ', expiry: new Date() };
-
     it('handles no requests', () => {
-        expect(batchBuild([], 'X', testAuth, 'iitbank.com'))
+        expect(batchBuild([], 'X', 'iitbank.com'))
             .toEqual(multiline('--X--', ''));
     });
 
     it('handles one request', () => {
         expect(batchBuild(
                 [{ method: 'GET', url: 'openapi/sub' }],
-                'ABC', testAuth.token, 'iitbank.com'))
+                'ABC', 'iitbank.com'))
             .toEqual(multiline(
                 '--ABC',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET openapi/sub HTTP/1.1',
                 'X-Request-Id:0',
-                'Authorization:XYZ',
                 'Host:iitbank.com',
                 '',
                 '', // extra new line is important
@@ -117,7 +114,7 @@ describe('batch building', () => {
     it('puts headers into the batch', () => {
         expect(batchBuild(
                 [{ method: 'GET', url: 'openapi/sub', headers: { 'X-Auth-Request': 'Me' } }],
-                'ABC', testAuth.token, 'iitbank.com'))
+                'ABC', 'iitbank.com'))
             .toEqual(multiline(
                 '--ABC',
                 'Content-Type:application/http; msgtype=request',
@@ -125,7 +122,6 @@ describe('batch building', () => {
                 'GET openapi/sub HTTP/1.1',
                 'X-Request-Id:0',
                 'X-Auth-Request:Me',
-                'Authorization:XYZ',
                 'Host:iitbank.com',
                 '',
                 '',
@@ -136,14 +132,13 @@ describe('batch building', () => {
     it('adds content-type for POST/PUT', () => {
         expect(batchBuild(
                 [{ method: 'POST', data: 'data', url: 'openapi/sub' }],
-                'ABC', testAuth.token, 'iitbank.com'))
+                'ABC', 'iitbank.com'))
             .toEqual(multiline(
                 '--ABC',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'POST openapi/sub HTTP/1.1',
                 'X-Request-Id:0',
-                'Authorization:XYZ',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:iitbank.com',
                 '',
@@ -153,14 +148,13 @@ describe('batch building', () => {
 
         expect(batchBuild(
                 [{ method: 'PUT', data: 'data', url: 'openapi/sub' }],
-                'ABC', testAuth.token, 'iitbank.com'))
+                'ABC', 'iitbank.com'))
             .toEqual(multiline(
                 '--ABC',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT openapi/sub HTTP/1.1',
                 'X-Request-Id:0',
-                'Authorization:XYZ',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:iitbank.com',
                 '',
@@ -174,14 +168,13 @@ describe('batch building', () => {
             [{ method: 'POST', data: 'postdata', url: 'openapi/sub' },
                 { method: 'PUT', data: 'putdata', url: 'openapi/bus' },
                 { method: 'GET', url: 'openapi/usb' }],
-                'ABC', testAuth.token, 'iitbank.com'))
+                'ABC', 'iitbank.com'))
             .toEqual(multiline(
                 '--ABC',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'POST openapi/sub HTTP/1.1',
                 'X-Request-Id:0',
-                'Authorization:XYZ',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:iitbank.com',
                 '',
@@ -191,7 +184,6 @@ describe('batch building', () => {
                 '',
                 'PUT openapi/bus HTTP/1.1',
                 'X-Request-Id:1',
-                'Authorization:XYZ',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:iitbank.com',
                 '',
@@ -201,7 +193,6 @@ describe('batch building', () => {
                 '',
                 'GET openapi/usb HTTP/1.1',
                 'X-Request-Id:2',
-                'Authorization:XYZ',
                 'Host:iitbank.com',
                 '',
                 '',

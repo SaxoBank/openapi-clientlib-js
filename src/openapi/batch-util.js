@@ -88,13 +88,12 @@ function parse(responseText) {
  * @name saxo.openapi.batchUtil.build
  * @param {Array.<{method: string, headers: ?Object.<string, string>, url: string, data: ?string}>} subRequests - The sub requests of the batch.
  * @param {string} boundary - The boundary identifier.
- * @param {string} authToken - The authentication token.
  * @param {string} host - The host of the sender.
  */
-function build(subRequests, boundary, authToken, host) {
+function build(subRequests, boundary, host) {
 
-    if (!subRequests || !boundary || !authToken || !host) {
-        throw new Error('Missing required parameters: batch build requires all 4 parameters');
+    if (!subRequests || !boundary || !host) {
+        throw new Error('Missing required parameters: batch build requires all 3 parameters');
     }
 
     const body = [];
@@ -115,8 +114,6 @@ function build(subRequests, boundary, authToken, host) {
                 }
             }
         }
-
-        body.push('Authorization:' + authToken);
 
         /* Don't care about content type for requests that have no body. */
         if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
