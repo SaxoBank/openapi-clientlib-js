@@ -1,6 +1,7 @@
 #### v2.0.0
 
 + Breaking Change - TransportBatch no longer has an auth argument. It requires that either individual calls have auth headers or that the underlying transport is authenticated
++ Breaking change to the batch building utils - it now returns the boundary it will use
 + Much smaller batch requests
 
 #### v1.9.3

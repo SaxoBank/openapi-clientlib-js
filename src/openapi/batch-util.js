@@ -87,22 +87,31 @@ function parse(responseText) {
  * Builds up a string of the data for a batch request.
  * @name saxo.openapi.batchUtil.build
  * @param {Array.<{method: string, headers: ?Object.<string, string>, url: string, data: ?string}>} subRequests - The sub requests of the batch.
- * @param {string} boundary - The boundary identifier.
  * @param {string} host - The host of the sender.
+ * @returns { body: string, boundary: string }
  */
-function build(subRequests, boundary, host) {
+function build(subRequests, host) {
 
-    if (!subRequests || !boundary || !host) {
-        throw new Error('Missing required parameters: batch build requires all 3 parameters');
+    if (!subRequests || !host) {
+        throw new Error('Missing required parameters: batch build requires sub requests and host');
     }
 
     const body = [];
+    let boundary = '--+';
+
+    for (let i = 0, l = subRequests.length; i < l; i++) {
+        const request = subRequests[i];
+        if (request.data && request.data.substr(0, boundary.length) === boundary) {
+            const nextCharacter = request.data.substr(boundary.length, 1) === '+' ? '-' : '+';
+            boundary += nextCharacter;
+        }
+    }
 
     for (let i = 0, l = subRequests.length; i < l; i++) {
         const request = subRequests[i];
         const method = request.method.toUpperCase();
 
-        body.push('--' + boundary);
+        body.push(boundary);
         body.push('Content-Type:application/http; msgtype=request', '');
 
         body.push(method + ' ' + request.url + ' HTTP/1.1');
@@ -124,8 +133,11 @@ function build(subRequests, boundary, host) {
         body.push(request.data || '');
     }
 
-    body.push('--' + boundary + '--', '');
-    return body.join('\r\n');
+    body.push(boundary + '--', '');
+    return {
+        body: body.join('\r\n'),
+        boundary: boundary.substr(2),
+    };
 }
 
 // -- Export section --

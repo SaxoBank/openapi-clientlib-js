@@ -81,12 +81,11 @@ function runBatchCall(serviceGroup, callList) {
         });
     }
 
-    const boundary = '~';
-    const content = buildBatch(subRequests, boundary, this.host);
+    const { body, boundary } = buildBatch(subRequests, this.host);
 
     this.transport.post(serviceGroup, 'batch', null, {
         headers: { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
-        body: content,
+        body,
         cache: false,
     })
         .then(batchCallSuccess.bind(this, callList))

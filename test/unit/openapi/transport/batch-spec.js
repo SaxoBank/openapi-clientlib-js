@@ -99,8 +99,8 @@ describe('openapi TransportBatch', () => {
         tick(function() {
 
             expect(transport.post.calls.count()).toEqual(1);
-            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="~"' },
-                body: multiline('--~',
+            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline('--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -108,7 +108,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -117,7 +117,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -126,7 +126,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -134,7 +134,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PATCH /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -143,7 +143,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~--',
+                '--+--',
                 ''),
                 cache: false }]);
 
@@ -175,8 +175,8 @@ describe('openapi TransportBatch', () => {
         tick(function() {
 
             expect(transport.post.calls.count()).toEqual(1);
-            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="~"' },
-                body: multiline('--~',
+            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline('--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -184,7 +184,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -193,7 +193,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -202,7 +202,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -210,7 +210,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~--',
+                '--+--',
                 ''),
                 cache: false }]);
 
@@ -232,8 +232,8 @@ describe('openapi TransportBatch', () => {
         tick(function() {
 
             expect(transport.post.calls.count()).toEqual(1);
-            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="~"' },
-                body: multiline('--~',
+            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline('--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -242,7 +242,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '{"test":true,"str":"str"}',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
@@ -251,7 +251,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '{ "test": true, "str": "str" }',
-                '--~--',
+                '--+--',
                 ''),
                 cache: false }]);
 
@@ -271,8 +271,8 @@ describe('openapi TransportBatch', () => {
         tick(function() {
 
             expect(transport.post.calls.count()).toEqual(1);
-            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="~"' },
-                body: multiline('--~',
+            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline('--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
@@ -282,7 +282,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
@@ -291,7 +291,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~--',
+                '--+--',
                 ''),
                 cache: false }]);
 
@@ -313,7 +313,7 @@ describe('openapi TransportBatch', () => {
 
             transport.postResolve({ status: 200,
                 response: multiline(
-                    '--~',
+                    '--+',
                     'Content-Type:application/http; msgtype=response',
                     '',
                     'HTTP/1.1 200 OK',
@@ -325,7 +325,7 @@ describe('openapi TransportBatch', () => {
                     'Content-Type:application/json; charset=utf-8',
                     '',
                     '{ "mydata": "get"}',
-                    '--~',
+                    '--+',
                     'Content-Type:application/http; msgtype=response',
                     '',
                     'HTTP/1.1 200 Okay',
@@ -337,7 +337,7 @@ describe('openapi TransportBatch', () => {
                     'Content-Type:application/json; charset=utf-8',
                     '',
                     '{ "mydata": "put"}',
-                    '--~',
+                    '--+',
                     'Content-Type:application/http; msgtype=response',
                     '',
                     'HTTP/1.1 201 Created',
@@ -349,7 +349,7 @@ describe('openapi TransportBatch', () => {
                     'Content-Type:application/json; charset=utf-8',
                     '',
                     '{ "mydata": "post"}',
-                    '--~',
+                    '--+',
                     'Content-Type:application/http; msgtype=response',
                     '',
                     'HTTP/1.1 200 Okay',
@@ -361,7 +361,7 @@ describe('openapi TransportBatch', () => {
                     'Content-Type:application/json; charset=utf-8',
                     '',
                     '{ "mydata": "delete"}',
-                    '--~',
+                    '--+',
                     'Content-Type:application/http; msgtype=response',
                     '',
                     'HTTP/1.1 200 Okay',
@@ -373,7 +373,7 @@ describe('openapi TransportBatch', () => {
                     'Content-Type:application/json; charset=utf-8',
                     '',
                     '{ "mydata": "patch"}',
-                    '--~--',
+                    '--+--',
                     ''
             ) });
 
@@ -473,7 +473,7 @@ describe('openapi TransportBatch', () => {
 
             transport.postResolve({ status: 200,
                 response: multiline(
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=response',
                 '',
                 'HTTP/1.1 199 Some Error',
@@ -485,7 +485,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/text; charset=utf-8',
                 '',
                 'Some error',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=response',
                 '',
                 'HTTP/1.1 304 Not Modified',
@@ -496,7 +496,7 @@ describe('openapi TransportBatch', () => {
                 'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=response',
                 '',
                 'HTTP/1.1 300 Multiple Choices',
@@ -508,7 +508,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/json; charset=utf-8',
                 '',
                 '{ "mydata": "put"}',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=response',
                 '',
                 'HTTP/1.1 299 Edge Case',
@@ -520,7 +520,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/json; charset=utf-8',
                 '',
                 '{ "mydata": "post"}',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=response',
                 '',
                 'HTTP/1.1 400 Error',
@@ -532,7 +532,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/json; charset=utf-8',
                 '',
                 '{ "mydata": "delete"}',
-                '--~--',
+                '--+--',
                 ''
             ) });
 
@@ -586,8 +586,8 @@ describe('openapi TransportBatch', () => {
         tick(function() {
 
             expect(transport.post.calls.count()).toEqual(1);
-            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="~"' },
-                body: multiline('--~',
+            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline('--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/%26%3D HTTP/1.1',
@@ -595,7 +595,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518825/%26%3D HTTP/1.1',
@@ -603,7 +603,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~--',
+                '--+--',
                 ''),
                 cache: false }]);
             done();
@@ -618,8 +618,8 @@ describe('openapi TransportBatch', () => {
         tick(function() {
 
             expect(transport.post.calls.count()).toEqual(1);
-            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="~"' },
-                body: multiline('--~',
+            expect(transport.post.calls.argsFor(0)).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline('--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824?a=1&b=2 HTTP/1.1',
@@ -627,7 +627,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~',
+                '--+',
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518825?a=%26%3D HTTP/1.1',
@@ -635,7 +635,7 @@ describe('openapi TransportBatch', () => {
                 'Host:localhost:8081',
                 '',
                 '',
-                '--~--',
+                '--+--',
                 ''),
                 cache: false }]);
             done();
