@@ -48,6 +48,14 @@ describe('openapi StreamingSubscription', () => {
             expect(transport.post.calls.count()).toEqual(1);
             expect(transport.post.calls.argsFor(0)).toEqual(['serviceGroup', 'test/resource', null, jasmine.objectContaining({ body: jasmine.objectContaining({ RefreshRate: 100 }) })]);
         });
+
+        it('accepts a top', () => {
+            const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', { RefreshRate: 120, Top: 10 });
+            subscription.onSubscribe();
+
+            expect(transport.post.calls.count()).toEqual(1);
+            expect(transport.post.calls.argsFor(0)).toEqual(['serviceGroup', 'test/resource?$top={Top}', jasmine.objectContaining({ Top: 10 }), jasmine.objectContaining({ body: jasmine.objectContaining({ RefreshRate: 120 }) })]);
+        });
     });
 
     describe('initial snapshot', () => {

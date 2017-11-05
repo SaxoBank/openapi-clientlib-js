@@ -1,4 +1,4 @@
-/* eslint max-lines: ["error", 600] */
+/* eslint max-lines: ["error", 620] */
 /**
  * @module saxo/openapi/streaming/subscription
  * @ignore
@@ -35,6 +35,22 @@ const LOG_AREA = 'Subscription';
 
 // -- Local methods section --
 
+function getUrlTemplate(url, subscriptionData) {
+    if (!subscriptionData.Top) {
+        return url;
+    }
+
+    return url + '?$top={Top}';
+}
+
+function getTemplateArgs(subscriptionData) {
+    if (!subscriptionData.Top) {
+        return null;
+    }
+
+    return { Top: subscriptionData.Top };
+}
+
 /**
  * Call to actually do a subscribe.
  */
@@ -55,7 +71,11 @@ function subscribe() {
 
     log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: this.url });
     this.currentState = STATE_SUBSCRIBE_REQUESTED;
-    this.transport.post(this.serviceGroup, this.url, null, { body: data })
+
+    const urlTemplate = getUrlTemplate(this.url, this.subscriptionData);
+    const templateArgs = getTemplateArgs(this.subscriptionData);
+
+    this.transport.post(this.serviceGroup, urlTemplate, templateArgs, { body: data })
         .then(onSubscribeSuccess.bind(this, referenceId))
         .catch(onSubscribeError.bind(this, referenceId));
 }
