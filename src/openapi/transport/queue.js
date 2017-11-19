@@ -160,9 +160,8 @@ TransportQueue.prototype.waitFor = function(promise) {
  * @protected
  */
 TransportQueue.prototype.emptyQueue = function() {
-    let item;
-    for (let i = 0; item = this.queue[i]; i++) {
-        this.runQueueItem(item);
+    for (let i = 0; i < this.queue.length; i++) {
+        this.runQueueItem(this.queue[i]);
     }
     this.queue.length = 0;
 };

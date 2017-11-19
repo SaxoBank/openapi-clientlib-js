@@ -107,9 +107,10 @@ function mixinEmitter(target) {
         if (eventType) {
             const eventSubscribers = subscribers[eventType];
             if (eventSubscribers) {
-                for (let i = eventSubscribers.length - 1, subscriber; subscriber = eventSubscribers[i]; i--) {
+                for (let i = eventSubscribers.length - 1; i >= 0; i--) {
+                    const subscriber = eventSubscribers[i];
                     if ((!onFunction || subscriber.onFunction === onFunction) &&
-                    (!subscriber.that || subscriber.that === that)) {
+                        (!subscriber.that || subscriber.that === that)) {
                         eventSubscribers.splice(i, 1);
                     }
                 }
@@ -131,7 +132,8 @@ function mixinEmitter(target) {
         const eventSubscribers = subscribers[eventType];
         if (eventSubscribers) {
             const args = Array.prototype.slice.call(arguments, 1);
-            for (let i = eventSubscribers.length - 1, subscriber; subscriber = eventSubscribers[i]; i--) {
+            for (let i = eventSubscribers.length - 1; i >= 0; i--) {
+                const subscriber = eventSubscribers[i];
                 if (subscriber.isOne) {
                     target.off(eventType, subscriber.onFunction, subscriber.that);
                 }

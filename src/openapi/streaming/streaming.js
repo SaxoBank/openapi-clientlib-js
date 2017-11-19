@@ -80,8 +80,8 @@ function setNewContextId() {
 
     const contextId = padLeft(String(msSinceMidnight), 8, '0') + padLeft(String(randomNumber), 2, '0');
     this.contextId = contextId;
-    for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
-        subscription.streamingContextId = contextId;
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        this.subscriptions[i].streamingContextId = contextId;
     }
 }
 
@@ -142,8 +142,8 @@ function onConnectionStateChanged(change) {
             // tell all subscriptions not to do anything
             // it doesn't matter if they do (they will be reset and either forget the unsubscribe or start a new subscribe),
             // but it is a waste of network
-            for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
-                subscription.onConnectionUnavailable();
+            for (let i = 0; i < this.subscriptions.length; i++) {
+                this.subscriptions[i].onConnectionUnavailable();
             }
 
             retryConnection.call(this);
@@ -164,8 +164,8 @@ function onConnectionStateChanged(change) {
                 this.reconnecting = false;
             }
 
-            for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
-                subscription.onConnectionAvailable();
+            for (let i = 0; i < this.subscriptions.length; i++) {
+                this.subscriptions[i].onConnectionAvailable();
             }
 
             this.orphanFinder.start();
@@ -198,7 +198,8 @@ function onReceived(updates) {
         return;
     }
 
-    for (let i = 0, update; update = updates[i]; i++) {
+    for (let i = 0; i < updates.length; i++) {
+        const update = updates[i];
         try {
             if (update.ReferenceId[0] === OPENAPI_CONTROL_MESSAGE_PREFIX) {
                 handleControlMessage.call(this, update);
@@ -216,9 +217,9 @@ function onReceived(updates) {
  * @param {string} referenceId
  */
 function findSubscriptionByReferenceId(referenceId) {
-    for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
-        if (subscription.referenceId === referenceId) {
-            return subscription;
+    for (let i = 0; i , this.subscriptions.length; i++) {
+        if (this.subscriptions[i].referenceId === referenceId) {
+            return this.subscriptions[i];
         }
     }
 }
@@ -262,7 +263,8 @@ function handleControlMessage(message) {
 function fireHeartbeats(heartbeatList) {
 
     log.debug(LOG_AREA, 'heartbeats received', heartbeatList);
-    for (let i = 0, heartbeat; heartbeat = heartbeatList[i]; i++) {
+    for (let i = 0; i < heartbeatList.length; i++) {
+        const heartbeat = heartbeatList[i];
         const subscription = findSubscriptionByReferenceId.call(this, heartbeat.OriginatingReferenceId);
         if (subscription) {
             subscription.onHeartbeat();
@@ -278,8 +280,8 @@ function fireHeartbeats(heartbeatList) {
  */
 function resetAllSubscriptions() {
     log.warn(LOG_AREA, 'Resetting all subscriptions');
-    for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
-        subscription.reset();
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        this.subscriptions[i].reset();
     }
 }
 
@@ -296,7 +298,8 @@ function resetSubscriptions(referenceIdList) {
 
     log.debug(LOG_AREA, 'Resetting subscriptions', referenceIdList);
 
-    for (let i = 0, referenceId; referenceId = referenceIdList[i]; i++) {
+    for (let i = 0; i < referenceIdList.length; i++) {
+        const referenceId = referenceIdList[i];
         const subscription = findSubscriptionByReferenceId.call(this, referenceId);
         if (subscription) {
             subscription.reset();
@@ -672,7 +675,8 @@ Streaming.prototype.dispose = function() {
 
     this.orphanFinder.stop();
 
-    for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        const subscription = this.subscriptions[i];
         // disconnecting *should* shut down all subscriptions. We also delete all below.
         // So mark the subscription as not having a connection and reset it so its state becomes unsubscribed
         subscription.onConnectionUnavailable();
