@@ -1,3 +1,7 @@
+#### v3.0.2
+
++ Fix for-style to be more normal and better performant
+
 #### v3.0.1
 
 + Support negative numbers in short format

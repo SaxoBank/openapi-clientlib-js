@@ -217,7 +217,7 @@ function onReceived(updates) {
  * @param {string} referenceId
  */
 function findSubscriptionByReferenceId(referenceId) {
-    for (let i = 0; i , this.subscriptions.length; i++) {
+    for (let i = 0; i < this.subscriptions.length; i++) {
         if (this.subscriptions[i].referenceId === referenceId) {
             return this.subscriptions[i];
         }
