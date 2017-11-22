@@ -406,7 +406,7 @@ function getSubscriptionsReadyPromise(subscriptionsToRemove, shouldDisposeSubscr
 
         setTimeout(() => {
             for (let i = 0; i < subscriptionsToRemove.length; i++) {
-                delete ignoreSubscriptions[subscriptionsToRemove[i].referenceId]
+                delete ignoreSubscriptions[subscriptionsToRemove[i].referenceId];
             }
         }, MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
     })
