@@ -180,6 +180,13 @@ describe('openapi SubscriptionQueue', () => {
             expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_MODIFY_SUBSCRIBE);
             expect(queue.isEmpty()).toBe(true);
         });
+
+        it('should remove unsubscribe if action is unsubscribe by tag', () => {
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE_BY_TAG_PENDING });
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE_BY_TAG_PENDING);
+            expect(queue.isEmpty()).toBe(true);
+        });
     });
 
     describe('dequeue', () => {
@@ -224,6 +231,16 @@ describe('openapi SubscriptionQueue', () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
 
             expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE);
+            expect(queue.isEmpty()).toBe(true);
+        });
+
+        it('should remove all actions before last unsubscribe by tag', () => {
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_MODIFY_SUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
+            queue.enqueue({ action: SubscriptionActions.ACTION_UNSUBSCRIBE_BY_TAG_PENDING });
+
+            expect(queue.dequeue().action).toBe(SubscriptionActions.ACTION_UNSUBSCRIBE_BY_TAG_PENDING);
             expect(queue.isEmpty()).toBe(true);
         });
 

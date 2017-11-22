@@ -12,6 +12,7 @@ import {
     ACTION_UNSUBSCRIBE,
     ACTION_MODIFY_SUBSCRIBE,
     ACTION_MODIFY_PATCH,
+    ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
 } from './subscription-actions';
 
 function getLastItem() {
@@ -23,10 +24,9 @@ function getLastItem() {
 
 /**
  * Queue (FIFO) for storing pending subscription actions.
- * @param maxSize {Number} - Maximum queue size. Defaults to 2, which works best for current needs.
  * @constructor
  */
-function SubscriptionQueue(maxSize) {
+function SubscriptionQueue() {
     this.items = [];
 }
 
@@ -71,7 +71,8 @@ SubscriptionQueue.prototype.enqueue = function(queuedItem) {
     // US => S
     // SU => U
     if (prevAction === ACTION_UNSUBSCRIBE && action === ACTION_SUBSCRIBE ||
-        prevAction === ACTION_SUBSCRIBE && action === ACTION_UNSUBSCRIBE) {
+        prevAction === ACTION_SUBSCRIBE && action === ACTION_UNSUBSCRIBE ||
+        prevAction === ACTION_UNSUBSCRIBE && action === ACTION_UNSUBSCRIBE_BY_TAG_PENDING) {
         this.items.splice(-1);
     }
 
@@ -116,7 +117,7 @@ SubscriptionQueue.prototype.dequeue = function() {
         return nextItem;
     }
 
-    if (lastAction === ACTION_UNSUBSCRIBE) {
+    if (lastAction === ACTION_UNSUBSCRIBE || lastAction === ACTION_UNSUBSCRIBE_BY_TAG_PENDING) {
         // M, U, S, U => U
         // S, U => U
         // S, U, S, U => U

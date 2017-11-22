@@ -1,4 +1,4 @@
-import { global, installClock, uninstallClock } from '../../utils';
+import { global, installClock, uninstallClock, tick } from '../../utils';
 import mockTransport from '../../mocks/transport';
 import '../../mocks/math-random';
 
@@ -527,6 +527,221 @@ describe('openapi Streaming', () => {
             new Streaming(transport, 'testUrl', authProvider, { transportTypes: ['webSockets'] });
             expect(mockConnection.start.calls.count()).toEqual(1);
             expect(mockConnection.start.calls.argsFor(0)[0]).toEqual({ waitForPageLoad: false, transport: ['webSockets'] });
+        });
+    });
+
+    describe('unsubscribeByTag', () => {
+        let streaming;
+
+        beforeEach(() => {
+            streaming = new Streaming(transport, 'testUrl', authProvider);
+        });
+
+        it('calls onUnsubscribeByTagPending on subscriptions matching endpoint and tag', (done) => {
+            streaming.subscriptions.push(
+                {
+                    onUnsubscribeByTagPending: jasmine.createSpy('onUnsubscribeByTagPending'),
+                    url: 'url',
+                    serviceGroup: 'serviceGroup',
+                    subscriptionData: {
+                        Tag: 'tag',
+                    },
+                    addStateChangedCallback: () => {},
+                }
+            );
+
+            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+
+            tick(() => {
+                expect(streaming.subscriptions[0].onUnsubscribeByTagPending).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it('does not call onSubscribeByTagPending on subscriptions not matching endpoint and tag', (done) => {
+            streaming.subscriptions.push(
+                {
+                    onUnsubscribeByTagPending: jasmine.createSpy('onUnsubscribeByTagPending'),
+                    url: 'url',
+                    serviceGroup: 'serviceGroup',
+                    subscriptionData: {
+                        Tag: 'tag',
+                    },
+                    addStateChangedCallback: () => {},
+                }
+            );
+
+            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag2');
+            tick(() => {
+                expect(streaming.subscriptions[0].onUnsubscribeByTagPending).not.toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it('does not call to unsubscribe immediately', (done) => {
+            streaming.subscriptions.push(
+                {
+                    onUnsubscribeByTagPending: jasmine.createSpy('onUnsubscribeByTagPending'),
+                    url: 'url',
+                    serviceGroup: 'serviceGroup',
+                    subscriptionData: {
+                        Tag: 'tag',
+                    },
+                    addStateChangedCallback: () => {},
+                }
+            );
+
+            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+
+            tick(() => {
+                expect(transport.delete).not.toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it('does not call to unsubscribe when all subscriptions are not ready', (done) => {
+            let subscriptionStateChangedCallback;
+
+            streaming.subscriptions.push(
+                {
+                    onUnsubscribeByTagPending: jasmine.createSpy('onUnsubscribeByTagPending'),
+                    url: 'url',
+                    serviceGroup: 'serviceGroup',
+                    subscriptionData: {
+                        Tag: 'tag',
+                    },
+                    addStateChangedCallback: (callback) => {
+                        subscriptionStateChangedCallback = callback;
+                    },
+                    isReadyForUnsubscribeByTag: () => true,
+                },
+                {
+                    onUnsubscribeByTagPending: jasmine.createSpy('onUnsubscribeByTagPending'),
+                    url: 'url',
+                    serviceGroup: 'serviceGroup',
+                    subscriptionData: {
+                        Tag: 'tag',
+                    },
+                    addStateChangedCallback: () => {},
+                    isReadyForUnsubscribeByTag: () => false,
+                }
+            );
+
+            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+            subscriptionStateChangedCallback();
+
+            tick(() => {
+                expect(transport.delete).not.toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it('calls to unsubscribe when all subscriptions are ready', (done) => {
+            let subscriptionStateChangedCallback;
+
+            streaming.subscriptions.push(
+                {
+                    onUnsubscribeByTagPending: jasmine.createSpy('onUnsubscribeByTagPending'),
+                    url: 'url',
+                    serviceGroup: 'serviceGroup',
+                    subscriptionData: {
+                        Tag: 'tag',
+                    },
+                    addStateChangedCallback: (callback) => {
+                        subscriptionStateChangedCallback = callback;
+                    },
+                    removeStateChangedCallback: () => {},
+                    isReadyForUnsubscribeByTag: () => true,
+                    onUnsubscribeByTagComplete: jasmine.createSpy('onUnsubscribeByTagComplete'),
+                },
+                {
+                    onUnsubscribeByTagPending: jasmine.createSpy('onUnsubscribeByTagPending'),
+                    url: 'url',
+                    serviceGroup: 'serviceGroup',
+                    subscriptionData: {
+                        Tag: 'tag',
+                    },
+                    addStateChangedCallback: () => {},
+                    removeStateChangedCallback: () => {},
+                    isReadyForUnsubscribeByTag: () => true,
+                    onUnsubscribeByTagComplete: jasmine.createSpy('onUnsubscribeByTagComplete'),
+                }
+            );
+
+            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+            subscriptionStateChangedCallback();
+
+            tick(() => {
+                expect(transport.delete).toHaveBeenCalled();
+                expect(streaming.subscriptions[0].onUnsubscribeByTagComplete).not.toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it('calls onUnsubscribeByTagComplete when unsubscribe is complete', (done) => {
+            let subscriptionStateChangedCallback;
+
+            streaming.subscriptions.push(
+                {
+                    onUnsubscribeByTagPending: jasmine.createSpy('onUnsubscribeByTagPending'),
+                    url: 'url',
+                    serviceGroup: 'serviceGroup',
+                    subscriptionData: {
+                        Tag: 'tag',
+                    },
+                    addStateChangedCallback: (callback) => {
+                        subscriptionStateChangedCallback = callback;
+                    },
+                    removeStateChangedCallback: jasmine.createSpy('removeStateChangedCallback'),
+                    isReadyForUnsubscribeByTag: () => true,
+                    onUnsubscribeByTagComplete: jasmine.createSpy('onUnsubscribeByTagComplete'),
+                }
+            );
+
+            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+            subscriptionStateChangedCallback();
+
+            tick(() => {
+                expect(transport.delete).toHaveBeenCalled();
+                transport.deleteResolve();
+                tick(() => {
+                    expect(streaming.subscriptions[0].onUnsubscribeByTagComplete).toHaveBeenCalled();
+                    done();
+                });
+            });
+        });
+
+        it('removes state change handler when unsubscribe is complete', (done) => {
+            let subscriptionStateChangedCallback;
+
+            streaming.subscriptions.push(
+                {
+                    onUnsubscribeByTagPending: jasmine.createSpy('onUnsubscribeByTagPending'),
+                    url: 'url',
+                    serviceGroup: 'serviceGroup',
+                    subscriptionData: {
+                        Tag: 'tag',
+                    },
+                    addStateChangedCallback: (callback) => {
+                        subscriptionStateChangedCallback = callback;
+                    },
+                    removeStateChangedCallback: jasmine.createSpy('removeStateChangedCallback'),
+                    isReadyForUnsubscribeByTag: () => true,
+                    onUnsubscribeByTagComplete: jasmine.createSpy('onUnsubscribeByTagComplete'),
+                }
+            );
+
+            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+            subscriptionStateChangedCallback();
+
+            tick(() => {
+                expect(transport.delete).toHaveBeenCalled();
+                transport.deleteResolve();
+                tick(() => {
+                    expect(streaming.subscriptions[0].removeStateChangedCallback).toHaveBeenCalled();
+                    done();
+                });
+            });
         });
     });
 });
