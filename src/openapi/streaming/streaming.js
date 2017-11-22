@@ -395,7 +395,6 @@ function getSubscriptionsReadyPromise(subscriptionsToRemove, shouldDisposeSubscr
             const subscription = subscriptionsToRemove[i];
 
             ignoreSubscriptions[subscription.referenceId] = true;
-            setTimeout(() => delete ignoreSubscriptions[subscription.referenceId], MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
 
             subscription.addStateChangedCallback(onStateChanged);
             subscription.onUnsubscribeByTagPending();
@@ -404,6 +403,12 @@ function getSubscriptionsReadyPromise(subscriptionsToRemove, shouldDisposeSubscr
                 removeSubscription.call(this, subscription);
             }
         }
+
+        setTimeout(() => {
+            for (let i = 0; i < subscriptionsToRemove.length; i++) {
+                delete ignoreSubscriptions[subscriptionsToRemove[i].referenceId]
+            }
+        }, MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
     })
     .then(() => {
         for (let i = 0; i < subscriptionsToRemove.length; i++) {
