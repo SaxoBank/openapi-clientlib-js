@@ -861,7 +861,7 @@ describe('openapi StreamingSubscription', () => {
                 expect(
                     JSON.parse(JSON.stringify(lastMessageArgument.Data))
                 ).toEqual(
-                    jasmine.objectContaining(mockProtoPrice.objectMessage)
+                    jasmine.objectContaining(mockProtoPrice.decodedObjectMessage)
                 );
 
                 done();

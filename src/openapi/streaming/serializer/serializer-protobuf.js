@@ -114,18 +114,13 @@ SerializerProtobuf.prototype.parse = function(data, schemaName) {
     }
 
     const jsonData = message ? message.toJSON() : null;
-
-    console.log('[debug][protobuf][parse]',
-        '\nschemaName: ', schemaName,
-        '\njsonData: ', jsonData,
-        '\nmessage: ', message
-    );
-
     return this.metaProcessor.process(message, jsonData);
 };
 
 SerializerProtobuf.prototype.stringify = function(data, schemaName) {
-    const bytes = this.encode(data, schemaName);
+    const rootTypeName = this.schemas.root.getOption('saxobank_root') || schemaName;
+
+    const bytes = this.encode(data, rootTypeName);
     if (!bytes) {
         return null;
     }

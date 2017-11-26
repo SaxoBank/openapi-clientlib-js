@@ -171,7 +171,8 @@ describe('Serializer Protobuf', () => {
 
         it('should skip adding invalid schema', () => {
             const serializer = new SerializerProtobuf();
-            const done = serializer.addSchema('invlaid schema: 123', 'InvalidSchema', 'trade', 'v1/prices');
+            const done = serializer.addSchema('invalid schema: 123', 'InvalidSchema', 'trade', 'v1/prices');
+
             expect(done).toBe(false);
             expect(serializer.getUrlSchemaName('trade', 'v1/prices')).toBeFalsy();
             expect(serializer.getSchema('InvalidSchema')).toBeFalsy();
@@ -181,29 +182,27 @@ describe('Serializer Protobuf', () => {
     describe('parse', () => {
         it('should parse encoded base64 price response', () => {
             const serializer = new SerializerProtobuf();
-            serializer.addSchema(mockProtoPrice.schema, 'PriceResponse', 'trade', 'v1/prices');
-            const price = serializer.parse(mockProtoPrice.encodedMessage, 'PriceResponse');
-            const jsonPrice = JSON.parse(JSON.stringify(price));
+            serializer.addSchema(mockProtoPrice.schema, 'Price', 'trade', 'v1/prices');
+            const price = serializer.parse(mockProtoPrice.encodedMessage);
 
-            expect(jsonPrice).toEqual(jasmine.objectContaining(mockProtoPrice.objectMessage));
+            expect(price).toEqual(jasmine.objectContaining(mockProtoPrice.decodedObjectMessage));
         });
 
         it('should parse encoded base64 order response', () => {
             const serializer = new SerializerProtobuf();
             serializer.addSchema(mockProtoPrice.orderSchema, 'Order', 'portfolio', 'v1/orders');
-            const order = serializer.parse(mockProtoPrice.encodedMessageOrder, 'Order');
-            const jsonOrder = JSON.parse(JSON.stringify(order));
+            const objectMessage = serializer.parse(mockProtoPrice.encodedMessageOrder);
 
-            expect(jsonOrder).toBeTruthy();
+            expect(objectMessage).toBeTruthy();
         });
     });
 
     describe('stringify', () => {
         it('should stringify price response', () => {
             const serializer = new SerializerProtobuf();
-            serializer.addSchema(mockProtoPrice.schema, 'PriceResponse', 'trade', 'v1/prices');
+            serializer.addSchema(mockProtoPrice.schema, 'Price', 'trade', 'v1/prices');
+            const encoded = serializer.stringify(mockProtoPrice.objectMessage);
 
-            const encoded = serializer.stringify(mockProtoPrice.objectMessage, 'PriceResponse');
             expect(encoded).toBe(mockProtoPrice.encodedMessage);
         });
     });
