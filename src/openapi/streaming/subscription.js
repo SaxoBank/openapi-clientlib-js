@@ -463,7 +463,7 @@ Subscription.prototype.processUpdate = function(message, type) {
 Subscription.prototype.processSnapshot = function(response) {
     if (response.Schema && response.SchemaName) {
         this.SchemaName = response.SchemaName;
-        this.serializer.addSchema(response.Schema, response.SchemaName, this.serviceGroup, this.url);
+        this.serializer.addSchema(response.Schema, response.SchemaName);
     }
 
     // Snapshot protobuf serialization is currently 'nice to have' on openapi side. So, for now, always using JSON.

@@ -800,7 +800,7 @@ describe('openapi StreamingSubscription', () => {
             sendInitialResponse({
                 InactivityTimeout: 100,
                 Schema: mockProtoPrice.schema,
-                SchemaName: 'PriceResponse',
+                SchemaName: 'Price',
                 Snapshot: mockProtoPrice.objectMessage,
             });
 
@@ -814,13 +814,11 @@ describe('openapi StreamingSubscription', () => {
 
                 const serializer = subscription.serializer;
 
-                const schemaObject = serializer.getSchema('PriceResponse');
+                const schemaObject = serializer.getSchemaType('Price', 'PriceResponse');
                 expect(schemaObject).toBeTruthy();
 
                 const plainFields = JSON.parse(JSON.stringify(schemaObject.fields));
                 expect(plainFields).toEqual(jasmine.objectContaining(mockProtoPrice.fields));
-
-                expect(serializer.getUrlSchemaName('serviceGroup', 'test/resource')).toBe('PriceResponse');
 
                 done();
             });

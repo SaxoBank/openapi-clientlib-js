@@ -10,11 +10,15 @@ SerializerJson.prototype.getSchemaNames = function() {
     return null;
 };
 
+SerializerJson.prototype.getSchemaType = function(schemaName, schemaType) {
+    return null;
+};
+
 SerializerJson.prototype.getSchema = function(name) {
     return null;
 };
 
-SerializerJson.prototype.addSchema = function(schema, name, serviceGroup, url) {
+SerializerJson.prototype.addSchema = function(schema, name) {
     // Not supported
 };
 

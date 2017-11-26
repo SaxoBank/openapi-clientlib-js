@@ -8,24 +8,24 @@ const LOG_AREA = 'SerializerProtobuf';
 // Register custom wrappers to support JS types. ie. casting Google.Timestamp to JS Date.
 wrappers.register(protobuf.wrappers);
 
+function createRootSchema() {
+    let schemas = protobuf.Root.fromJSON(protobuf.common['google/protobuf/wrappers.proto'], protobuf.root);
+    schemas = protobuf.Root.fromJSON(protobuf.common['google/protobuf/timestamp.proto'], schemas);
+    return schemas;
+}
+
 /**
- * Protobuf Serialization
+ * Protobuf Serialization.
+ * Constructor name parameter has no other purpose then identification.
  * @constructor
  */
 function SerializerProtobuf(name) {
     this.name = name;
 
-    try {
-        this.schemas = protobuf.Root.fromJSON(protobuf.common['google/protobuf/wrappers.proto'], protobuf.root);
-        this.schemas = protobuf.Root.fromJSON(protobuf.common['google/protobuf/timestamp.proto'], this.schemas);
-    } catch (e) {
-        log.error(LOG_AREA, 'Parsing of global schemas failed.', e.message);
-    }
-
     /**
      * Url to schema name map.
      */
-    this.schemasUrlMap = {};
+    this.schemasMap = {};
 
     /**
      * Processed all meta fields of decoded message type.
@@ -34,33 +34,34 @@ function SerializerProtobuf(name) {
     this.metaProcessor = new MetaProcessor();
 }
 
+SerializerProtobuf.prototype.getSchemaType = function(schemaName, typeName) {
+    const schemas = this.schemasMap[schemaName];
+    return schemas && schemas.root.lookup(typeName);
+};
+
 SerializerProtobuf.prototype.getSchema = function(name) {
-    return this.schemas.root.lookup(name);
-};
-
-SerializerProtobuf.prototype.getSchemas = function() {
-    return this.schemas;
-};
-
-SerializerProtobuf.prototype.getUrlSchemaName = function(serviceGroup, url) {
-    return this.schemasUrlMap[`${serviceGroup}/${url}`];
+    return this.schemasMap[name];
 };
 
 SerializerProtobuf.prototype.getSchemaNames = function() {
-    const values = [];
-    for (const key in this.schemasUrlMap) {
-        if (this.schemasUrlMap.hasOwnProperty(key)) {
-            values.push(this.schemasUrlMap[key]);
-        }
-    }
-    return values;
+    return Object.keys(this.schemasMap);
 };
 
-SerializerProtobuf.prototype.addSchema = function(schema, name, serviceGroup, url) {
-    let nextSchemas;
+/**
+ * Parses and adds schema to local schema map.
+ * @param {String} schemaData - The schema data, not parsed, in raw, string format.
+ * @param {String} name - The schema name, under witch it will be saved in schema map.
+ * @return {boolean} - Returns true if there were no issues, false otherwise.
+ */
+SerializerProtobuf.prototype.addSchema = function(schemaData, name) {
+    if (this.schemasMap[name]) {
+        // Schemas for this name already exist.
+        return true;
+    }
 
+    let schema = createRootSchema();
     try {
-        nextSchemas = protobuf.parse(schema, this.schemas.root, { keepCase: true });
+        schema = protobuf.parse(schemaData, schema.root, { keepCase: true });
     } catch (e) {
         log.error(LOG_AREA, 'Schema parsing failed', {
             error: e.message,
@@ -70,28 +71,34 @@ SerializerProtobuf.prototype.addSchema = function(schema, name, serviceGroup, ur
         return false;
     }
 
-    this.schemasUrlMap[`${serviceGroup}/${url}`] = name;
-    this.schemas = nextSchemas;
-
+    this.schemasMap[name] = schema;
     return true;
 };
 
+/**
+ * Parse data using given schema. Data should be in base64 format.
+ * @param {String} data - The data to parse. Data should be in base64 format.
+ * @param {String} schemaName - The name of a schema to be used for parsing.
+ * @return {*} - Result of parsing, if successful. Returns null if parsing fails or there is no data.
+ */
 SerializerProtobuf.prototype.parse = function(data, schemaName) {
-    const rootTypeName = this.schemas.root.getOption('saxobank_root');
+    const schemas = this.getSchema(schemaName);
 
-    if (!data) {
+    if (!schemas || !data) {
         return null;
     }
+
+    const rootTypeName = schemas.root.getOption('saxobank_root');
 
     if (!rootTypeName) {
         log.error('Parsing failed. Missing root message name', rootTypeName);
         return null;
     }
 
-    const rootType = this.schemas.root.lookupType(rootTypeName);
+    const rootType = this.getSchemaType(schemaName, rootTypeName);
 
     if (!rootType) {
-        log.error('Parsing failed. Missing root type name', rootTypeName);
+        log.error('Parsing failed. Root type not found. Name: ', rootTypeName);
         return null;
     }
 
@@ -118,22 +125,23 @@ SerializerProtobuf.prototype.parse = function(data, schemaName) {
 };
 
 SerializerProtobuf.prototype.stringify = function(data, schemaName) {
-    const rootTypeName = this.schemas.root.getOption('saxobank_root') || schemaName;
+    const schema = this.getSchema(schemaName);
+    const rootTypeName = schema.root.getOption('saxobank_root') || schemaName;
 
-    const bytes = this.encode(data, rootTypeName);
+    const bytes = this.encode(data, schemaName, rootTypeName);
     if (!bytes) {
         return null;
     }
     return protobuf.util.base64.encode(bytes, 0, bytes.length);
 };
 
-SerializerProtobuf.prototype.encode = function(data, schemaName) {
-    const schema = this.getSchema(schemaName);
-    if (!schema) {
+SerializerProtobuf.prototype.encode = function(data, schemaName, typeName) {
+    const schemaType = this.getSchemaType(schemaName, typeName);
+    if (!schemaType) {
         return null;
     }
 
-    return schema.encode(data).finish();
+    return schemaType.encode(data).finish();
 };
 
 SerializerProtobuf.prototype.getFormatName = function() {

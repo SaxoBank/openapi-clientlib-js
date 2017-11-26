@@ -49,4 +49,5 @@ SerializerFacade.getSerializer = function(format, serviceGroup, url) {
     return SerializerFacade.serializersMap[id];
 };
 
+window.$serializerFacade = SerializerFacade;
 export default SerializerFacade;
