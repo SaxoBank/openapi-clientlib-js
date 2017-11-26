@@ -1,6 +1,6 @@
 {
   "name": "openapi-clientlib",
-  "version": "1.7.0",
+  "version": "1.8.0-protobuf",
   "engines": {
     "node": ">=4"
   },
@@ -20,6 +20,7 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
+    "babel-core": "^6.26.0",
     "babel-preset-es2015-rollup": "3.0.0",
     "es6-promise": "2.1.1",
     "eslint": "3.17.1",
@@ -35,12 +36,15 @@
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-jasmine": "1.0.3",
     "grunt-contrib-watch": "1.0.0",
-    "grunt-rollup": "1.0.1",
+    "grunt-rollup": "^6.0.0",
     "grunt-template-jasmine-istanbul": "0.4.0",
     "jquery": "2.1.4",
+    "protobufjs": "^6.8.0",
     "remap-istanbul": "0.9.1",
-    "requirejs": "2.3.3",
-    "rollup-plugin-babel": "2.7.1",
+    "requirejs": "^2.3.5",
+    "rollup-plugin-babel": "^3.0.2",
+    "rollup-plugin-commonjs": "^8.2.6",
+    "rollup-plugin-node-resolve": "^3.0.0",
     "taffydb": "2.7.3",
     "whatwg-fetch": "2.0.3"
   }

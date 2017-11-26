@@ -1,4 +1,4 @@
-/* eslint max-lines: ["error", 700] */
+/* eslint max-lines: ["error", 750] */
 /**
  * @module saxo/openapi/streaming/subscription
  * @ignore
@@ -13,6 +13,7 @@ import {
     ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
 } from './subscription-actions';
 import SubscriptionQueue from './subscription-queue';
+import SerializerFacade from './serializer-facade';
 
 // -- Local variables section --
 
@@ -53,6 +54,7 @@ function subscribe() {
     const data = extend({}, this.subscriptionData, {
         ContextId: this.streamingContextId,
         ReferenceId: referenceId,
+        KnownSchemas: this.serializer.getSchemaNames(),
     });
 
     log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: this.url });
@@ -238,7 +240,7 @@ function onSubscribeSuccess(referenceId, result) {
     // do not fire events if we are waiting to unsubscribe
     if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
         try {
-            this.onUpdate(responseData.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
+            this.processSnapshot(responseData);
         } catch (ex) {
             log.error(LOG_AREA, 'exception occurred in streaming snapshot update callback');
         }
@@ -372,22 +374,33 @@ function setState(state) {
 function Subscription(streamingContextId, transport, serviceGroup, url, subscriptionArgs, onSubscriptionCreated, onUpdate, onError) {
 
     /**
-     * The streaming context id identifies the particular streaming connection that this subscription will use
+     * The streaming context id identifies the particular streaming connection that this subscription will use.
      * @type {string}
      */
     this.streamingContextId = streamingContextId;
 
     /**
-     * The reference id is used to identify this subscription
+     * The reference id is used to identify this subscription.
      * @type {string}
      */
     this.referenceId = null;
 
     /**
-     * The action queue
+     * The action queue.
      * @type {SubscriptionQueue}
      */
     this.queue = new SubscriptionQueue();
+
+    /**
+     * The subscription format. Used to derive serialization method for incoming subscription messages.
+     * @type {String}
+     */
+    this.subscriptionFormat = subscriptionArgs.Format;
+
+    /**
+     * The serializer, chosen based on provided format.
+     */
+    this.serializer = SerializerFacade.getSerializer(this.subscriptionFormat, serviceGroup, url);
 
     this.onStateChangedCallbacks = [];
 
@@ -397,7 +410,7 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     this.onUpdate = onUpdate;
     this.onError = onError;
     this.onSubscriptionCreated = onSubscriptionCreated;
-    this.subscriptionData = extend({}, subscriptionArgs);
+    this.subscriptionData = extend({ Format: this.subscriptionFormat }, subscriptionArgs);
 
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
@@ -440,6 +453,21 @@ Subscription.prototype.removeStateChangedCallback = function(callback) {
     if (index > -1) {
         this.onStateChangedCallbacks.splice(index, 1);
     }
+};
+
+Subscription.prototype.processUpdate = function(message, type) {
+    message.Data = this.serializer.parse(message.Data, this.SchemaName);
+    this.onUpdate(message, type);
+};
+
+Subscription.prototype.processSnapshot = function(response) {
+    if (response.Schema && response.SchemaName) {
+        this.SchemaName = response.SchemaName;
+        this.serializer.addSchema(response.Schema, response.SchemaName, this.serviceGroup, this.url);
+    }
+
+    // Snapshot protobuf serialization is currently 'nice to have' on openapi side. So, for now, always using JSON.
+    this.onUpdate(response.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
 };
 
 /**
@@ -577,7 +605,6 @@ Subscription.prototype.onConnectionAvailable = function() {
  * @returns {boolean} false if the update is not for this subscription
  */
 Subscription.prototype.onStreamingData = function(message) {
-
     onActivity.call(this);
 
     switch (this.currentState) {
@@ -604,7 +631,7 @@ Subscription.prototype.onStreamingData = function(message) {
     }
 
     try {
-        this.onUpdate(message, this.UPDATE_TYPE_DELTA);
+        this.processUpdate(message, this.UPDATE_TYPE_DELTA);
     } catch (error) {
         log.error(LOG_AREA, 'exception occurred in streaming delta update callback', error);
     }

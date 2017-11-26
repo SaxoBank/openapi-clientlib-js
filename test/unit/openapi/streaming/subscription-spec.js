@@ -1,5 +1,6 @@
 import { tick, installClock, uninstallClock } from '../../utils';
 import mockTransport from '../../mocks/transport';
+import * as mockProtoPrice from '../../mocks/proto-price';
 
 const Subscription = saxo.openapi._StreamingSubscription;
 
@@ -778,6 +779,179 @@ describe('openapi StreamingSubscription', () => {
                 // sent off another new request for a subscription
                 expect(transport.post.calls.count()).toEqual(1);
                 transport.post.calls.reset();
+
+                done();
+            });
+        });
+    });
+
+    describe('protobuf serialization', () => {
+
+        it('should parse schema from snapshot and pass JSON data', (done) => {
+            const args = {
+                Format: 'application/x-protobuf',
+                Arguments: {
+                    ClientKey: '1234',
+                },
+            };
+            const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', args, createdSpy, updateSpy);
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Schema: mockProtoPrice.schema,
+                SchemaName: 'PriceResponse',
+                Snapshot: mockProtoPrice.objectMessage,
+            });
+
+            tick(() => {
+                expect(transport.post.calls.count()).toEqual(1);
+                expect(
+                    updateSpy.calls.first().args[0]
+                ).toEqual(
+                    jasmine.objectContaining(mockProtoPrice.objectMessage)
+                );
+
+                const serializer = subscription.serializer;
+
+                const schemaObject = serializer.getSchema('PriceResponse');
+                expect(schemaObject).toBeTruthy();
+
+                const plainFields = JSON.parse(JSON.stringify(schemaObject.fields));
+                expect(plainFields).toEqual(jasmine.objectContaining(mockProtoPrice.fields));
+
+                expect(serializer.getUrlSchemaName('serviceGroup', 'test/resource')).toBe('PriceResponse');
+
+                done();
+            });
+        });
+
+        it('should parse streaming update', (done) => {
+            const args = {
+                Format: 'application/x-protobuf',
+                Arguments: {
+                    ClientKey: '1234',
+                },
+            };
+            const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', args, createdSpy, updateSpy);
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Schema: mockProtoPrice.schema,
+                SchemaName: 'PriceResponse',
+                Snapshot: mockProtoPrice.objectMessage,
+            });
+
+            tick(() => {
+                expect(transport.post.calls.count()).toEqual(1);
+
+                const streamingData = {
+                    ReferenceId: subscription.referenceId,
+                    Data: mockProtoPrice.encodedMessage,
+                    SchemaName: 'PriceResponse',
+                };
+
+                subscription.onStreamingData(streamingData);
+
+                const lastMessageArgument = updateSpy.calls.mostRecent().args[0];
+                const lastTypeArgument = updateSpy.calls.mostRecent().args[1];
+
+                expect(lastTypeArgument).toEqual(subscription.UPDATE_TYPE_DELTA);
+                expect(
+                    JSON.parse(JSON.stringify(lastMessageArgument.Data))
+                ).toEqual(
+                    jasmine.objectContaining(mockProtoPrice.objectMessage)
+                );
+
+                done();
+            });
+        });
+    });
+
+    describe('json serialization', () => {
+
+        it('should parse data without schema', (done) => {
+            const args = {
+                Format: 'application/json',
+                Arguments: {
+                    ClientKey: '1234',
+                },
+            };
+            const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', args, createdSpy, updateSpy);
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: mockProtoPrice.objectMessage,
+            });
+
+            tick(() => {
+                expect(transport.post.calls.count()).toEqual(1);
+                expect(
+                    updateSpy.calls.first().args[0]
+                ).toEqual(
+                    jasmine.objectContaining(mockProtoPrice.objectMessage)
+                );
+                done();
+            });
+        });
+
+        it('should default to json if format is not provided', (done) => {
+            const args = {
+                Arguments: {
+                    ClientKey: '1234',
+                },
+            };
+            const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', args, createdSpy, updateSpy);
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: mockProtoPrice.objectMessage,
+            });
+
+            tick(() => {
+                expect(transport.post.calls.count()).toEqual(1);
+                expect(
+                    updateSpy.calls.first().args[0]
+                ).toEqual(
+                    jasmine.objectContaining(mockProtoPrice.objectMessage)
+                );
+                done();
+            });
+        });
+
+        it('should parse streaming update', (done) => {
+            const args = {
+                Format: 'application/json',
+                Arguments: {
+                    ClientKey: '1234',
+                },
+            };
+            const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', args, createdSpy, updateSpy);
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: mockProtoPrice.objectMessage,
+            });
+
+            tick(() => {
+                expect(transport.post.calls.count()).toEqual(1);
+
+                const streamingData = {
+                    ReferenceId: subscription.referenceId,
+                    Data: mockProtoPrice.objectMessage,
+                };
+
+                subscription.onStreamingData(streamingData);
+
+                const lastMessageArgument = updateSpy.calls.mostRecent().args[0];
+                const lastTypeArgument = updateSpy.calls.mostRecent().args[1];
+
+                expect(lastTypeArgument).toEqual(subscription.UPDATE_TYPE_DELTA);
+                expect(lastMessageArgument.Data).toEqual(jasmine.objectContaining(mockProtoPrice.objectMessage));
 
                 done();
             });
