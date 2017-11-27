@@ -395,12 +395,12 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
      * The subscription format. Used to derive serialization method for incoming subscription messages.
      * @type {String}
      */
-    this.subscriptionFormat = subscriptionArgs.Format;
+    this.format = subscriptionArgs.Format;
 
     /**
      * The serializer, chosen based on provided format.
      */
-    this.serializer = SerializerFacade.getSerializer(this.subscriptionFormat, serviceGroup, url);
+    this.serializer = SerializerFacade.getSerializer(this.format, serviceGroup, url);
 
     this.onStateChangedCallbacks = [];
 
@@ -410,7 +410,7 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     this.onUpdate = onUpdate;
     this.onError = onError;
     this.onSubscriptionCreated = onSubscriptionCreated;
-    this.subscriptionData = extend({ Format: this.subscriptionFormat }, subscriptionArgs);
+    this.subscriptionData = extend({ Format: this.format }, subscriptionArgs);
 
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;

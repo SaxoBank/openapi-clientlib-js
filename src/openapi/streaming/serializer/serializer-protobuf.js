@@ -5,6 +5,8 @@ import log from '../../../log';
 
 const LOG_AREA = 'SerializerProtobuf';
 
+const ROOT_OPTION_NAME = 'saxobank_root';
+
 // Register custom wrappers to support JS types. ie. casting Google.Timestamp to JS Date.
 wrappers.register(protobuf.wrappers);
 
@@ -88,7 +90,7 @@ SerializerProtobuf.prototype.parse = function(data, schemaName) {
         return null;
     }
 
-    const rootTypeName = schemas.root.getOption('saxobank_root');
+    const rootTypeName = schemas.root.getOption(ROOT_OPTION_NAME);
 
     if (!rootTypeName) {
         log.error('Parsing failed. Missing root message name', rootTypeName);
@@ -126,7 +128,7 @@ SerializerProtobuf.prototype.parse = function(data, schemaName) {
 
 SerializerProtobuf.prototype.stringify = function(data, schemaName) {
     const schema = this.getSchema(schemaName);
-    const rootTypeName = schema.root.getOption('saxobank_root') || schemaName;
+    const rootTypeName = schema.root.getOption(ROOT_OPTION_NAME) || schemaName;
 
     const bytes = this.encode(data, schemaName, rootTypeName);
     if (!bytes) {
