@@ -95,7 +95,7 @@ SerializerProtobuf.prototype.addSchema = function(schemaData, name) {
  * Parse data using given schema. Data should be in base64 format.
  * @param {String} data - The data to parse. Data should be in base64 format.
  * @param {String} schemaName - The name of a schema to be used for parsing.
- * @return {*} - Result of parsing, if successful. Returns null if parsing fails or there is no data.
+ * @return {Object} - Result of parsing, if successful. Returns null if parsing fails or there is no data.
  */
 SerializerProtobuf.prototype.parse = function(data, schemaName) {
     const schemas = this.getSchema(schemaName);
