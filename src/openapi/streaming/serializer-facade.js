@@ -1,22 +1,25 @@
 import SerializeJson from './serializer/serializer-json';
-import SerializeProtobuf from './serializer/serializer-protobuf';
+import { extend } from '../../utils/object';
 
-/**
- * Serialization facade for multiple serialization solution.
- * @constructor
- */
-function SerializerFacade() {}
-
-SerializerFacade.serializerCreators = {
+const serializerCreators = {
     [SerializeJson.FORMAT_NAME]: SerializeJson,
-    [SerializeProtobuf.FORMAT_NAME]: SerializeProtobuf,
 };
 
-SerializerFacade.serializersMap = {};
+/**
+ * Map of engines per format. ie
+ * { 'application/x-protobuf: protobuf }
+ */
+const enginesMap = {};
 
-SerializerFacade.defaultSerializer = SerializeJson;
+/**
+ * Map of serializers per format. ie.
+ * { 'application/x-protobuf: SerializerProtobuf }
+ */
+const serializersMap = {};
 
-SerializerFacade.getId = (format, serviceGroup, url) => {
+const defaultSerializer = SerializeJson;
+
+const getId = (format, serviceGroup, url) => {
     if (format === SerializeJson.FORMAT_NAME || !format) {
         // Makes sure that all JSON formats share serializer.
         return SerializeJson.FORMAT_NAME;
@@ -24,6 +27,46 @@ SerializerFacade.getId = (format, serviceGroup, url) => {
 
     // Ensures that other formats ie. protobuf, have serializer per endpoint.
     return `${format}.${serviceGroup}.${url}`;
+};
+
+/**
+ * Serialization facade for multiple serialization solution.
+ */
+const SerializerFacade = {};
+
+/**
+ * Add serialization engine for given endpoint.
+ * Use case:
+ *     Protobuf serialization, where protobufjs library is imported in userspace and provided as configuration to openapi-clientlib.
+ *     Allows for keeping openapi-library size low, and configuring only 'what we need' for given platform.
+ *     For example, omitting protobuf from phone platform.
+ *
+ * @param {Object} map - The engine map, where key is format name and value is engine object/constructor.
+ *     Example: { 'applications/x-protobuf': protobuf }
+ */
+SerializerFacade.addEngines = function(map) {
+    extend(enginesMap, map);
+};
+
+/**
+ * Add serialization methods.
+ * @param {Object} map - The serialization map, where key is format name and value is factory for serializer.
+ */
+SerializerFacade.addSerializers = function(map) {
+    extend(serializerCreators, map);
+};
+
+SerializerFacade.getDefaultFormat = function() {
+    return defaultSerializer.FORMAT_NAME;
+};
+
+/**
+ * Check if given format is supported by available serializers.
+ * @param {String} format - Data format ie. application/json
+ * @return {Boolean} - Returns true if format is supported. Returns false if format is not supported by available serialization methods.
+ */
+SerializerFacade.isFormatSupported = function(format) {
+    return Boolean(serializerCreators[format]);
 };
 
 /**
@@ -38,16 +81,17 @@ SerializerFacade.getId = (format, serviceGroup, url) => {
  * @return {Object} Serializer
  */
 SerializerFacade.getSerializer = function(format, serviceGroup, url) {
-    const id = SerializerFacade.getId(format, serviceGroup, url);
+    const id = getId.call(this, format, serviceGroup, url);
 
-    if (SerializerFacade.serializersMap[id]) {
-        return SerializerFacade.serializersMap[id];
+    if (serializersMap[id]) {
+        return serializersMap[id];
     }
-    const Serializer = SerializerFacade.serializerCreators[format] || SerializerFacade.defaultSerializer;
-    SerializerFacade.serializersMap[id] = new Serializer(id);
+    const Serializer = serializerCreators[format] || defaultSerializer;
+    const engine = enginesMap[format];
 
-    return SerializerFacade.serializersMap[id];
+    serializersMap[id] = new Serializer(id, engine);
+
+    return serializersMap[id];
 };
 
-window.$serializerFacade = SerializerFacade;
 export default SerializerFacade;

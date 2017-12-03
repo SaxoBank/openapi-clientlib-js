@@ -5,7 +5,9 @@
  */
 
 import emitter from '../../micro-emitter';
+import { extend } from '../../utils/object';
 import Subscription from './subscription';
+import SerializerFacade from './serializer-facade';
 import StreamingOrphanFinder from './orphan-finder';
 import log from '../../log';
 import { padLeft } from '../../utils/string';
@@ -461,6 +463,9 @@ function removeSubscription(subscription) {
  * @param {number} [options.connectRetryDelay=1000] - The delay in milliseconds to wait before attempting a new connect after
  *          signal-r has disconnected
  * @param {Boolean} [options.waitForPageLoad=true] - Whether the signal-r streaming connection waits for page load before starting
+ * @param {Object} [options.serializers={}] - The map of subscription serializers where key is format name and value is an serializer constructor.
+ * @param {Object} [options.serializerEngines={}] - The map of subscription serializer engines where key is format name and
+ *          value is an engine implementation.
  * @param {Array.<string>} [options.transportTypes=['webSockets', 'longPolling']] - The transports to be used in order by signal-r.
  */
 function Streaming(transport, baseUrl, authProvider, options) {
@@ -478,10 +483,20 @@ function Streaming(transport, baseUrl, authProvider, options) {
         transport: (options && options.transportTypes) || ['webSockets', ' longPolling'],    // SignalR has a bug in SSE and forever frame is slow
     };
 
-    if (options && typeof options.connectRetryDelay === 'number') {
-        this.retryDelay = options.connectRetryDelay;
-    } else {
-        this.retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
+    if (options) {
+        if (typeof options.connectRetryDelay === 'number') {
+            this.retryDelay = options.connectRetryDelay;
+        } else {
+            this.retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
+        }
+
+        if (options.serializerEngines) {
+            SerializerFacade.addEngines(options.serializerEngines);
+        }
+
+        if (options.serializers) {
+            SerializerFacade.addSerializers(options.serializers);
+        }
     }
 
     this.orphanFinder = new StreamingOrphanFinder(this.subscriptions, onOrphanFound.bind(this));
@@ -551,7 +566,14 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP = {
  */
 Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptionArgs, onUpdate, onError) {
 
-    const subscription = new Subscription(this.contextId, this.transport, serviceGroup, url, subscriptionArgs,
+    const normalizedSubscriptionArgs = extend({}, subscriptionArgs);
+
+    if (!SerializerFacade.isFormatSupported(normalizedSubscriptionArgs.Format)) {
+        // Set default format, if target format is not supported.
+        normalizedSubscriptionArgs.Format = SerializerFacade.getDefaultFormat();
+    }
+
+    const subscription = new Subscription(this.contextId, this.transport, serviceGroup, url, normalizedSubscriptionArgs,
         onSubscriptionCreated.bind(this), onUpdate, onError);
 
     this.subscriptions.push(subscription);

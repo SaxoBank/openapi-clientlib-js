@@ -1,26 +1,18 @@
+import SerializerInterface from './serializer-interface';
+
 /**
  * JSON Serialization
  * @constructor
  */
-function SerializerJson(name) {
+function SerializerJson(name, engine = null) {
     this.name = name;
+    this.engine = engine;
 }
 
-SerializerJson.prototype.getSchemaNames = function() {
-    return null;
-};
-
-SerializerJson.prototype.getSchemaType = function(schemaName, schemaType) {
-    return null;
-};
-
-SerializerJson.prototype.getSchema = function(name) {
-    return null;
-};
-
-SerializerJson.prototype.addSchema = function(schema, name) {
-    // Not supported
-};
+SerializerJson.prototype = Object.create(
+    SerializerInterface.prototype,
+    { constructor: { value: SerializerJson, enumerable: false, writable: true, configurable: true } }
+);
 
 SerializerJson.prototype.parse = function(data, schemaName) {
     return data;

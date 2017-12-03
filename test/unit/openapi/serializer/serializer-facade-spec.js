@@ -1,4 +1,15 @@
+import protobuf from 'protobufjs/dist/protobuf.min';
+
 const SerializerFacade = saxo.openapi._SerializerFacade;
+const SerializerProtobuf = saxo.openapi._SerializerProtobuf;
+
+SerializerFacade.addEngines({
+    'application/x-protobuf': protobuf,
+});
+
+SerializerFacade.addSerializers({
+    'application/x-protobuf': SerializerProtobuf,
+});
 
 describe('Serializer Facade', () => {
     describe('getSerializer', () => {

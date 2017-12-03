@@ -1,8 +1,19 @@
 import { tick, installClock, uninstallClock } from '../../utils';
 import mockTransport from '../../mocks/transport';
 import * as mockProtoPrice from '../../mocks/proto-price';
+import protobuf from 'protobufjs/dist/protobuf';
 
 const Subscription = saxo.openapi._StreamingSubscription;
+const SerializerProtobuf = saxo.openapi._SerializerProtobuf;
+const SerializerFacade = saxo.openapi._SerializerFacade;
+
+SerializerFacade.addEngines({
+    'application/x-protobuf': protobuf,
+});
+
+SerializerFacade.addSerializers({
+    'application/x-protobuf': SerializerProtobuf,
+});
 
 describe('openapi StreamingSubscription', () => {
 

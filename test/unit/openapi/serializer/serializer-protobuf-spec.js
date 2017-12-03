@@ -1,5 +1,6 @@
 import * as mockProtoPrice from './../../mocks/proto-price';
 import * as mockProtoMeta from './../../mocks/proto-meta';
+import protobuf from 'protobufjs/dist/protobuf.min';
 
 const SerializerProtobuf = saxo.openapi._SerializerProtobuf;
 
@@ -7,7 +8,7 @@ describe('Serializer Protobuf', () => {
 
     describe('metadata', () => {
         it('should return json object with explicit null and empty', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             const mock = mockProtoMeta.metaNulls();
 
             serializer.addSchema(mock.schema, 'Main');
@@ -28,7 +29,7 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should return json object with collection envelope', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             const mock = mockProtoMeta.metaCollectionEnvelope();
 
             serializer.addSchema(mock.schema, 'Main');
@@ -57,7 +58,7 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should return json object with collection envelope with null message', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             const mock = mockProtoMeta.metaCollectionEnvelope();
 
             serializer.addSchema(mock.schema, 'Main');
@@ -85,7 +86,7 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should return json object with collection envelope with empty logs', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             const mock = mockProtoMeta.metaCollectionEnvelope();
 
             serializer.addSchema(mock.schema, 'Main');
@@ -113,7 +114,7 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should return json object with collection envelope with deleted row', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             const mock = mockProtoMeta.metaCollectionEnvelope();
 
             serializer.addSchema(mock.schema, 'Main');
@@ -143,7 +144,7 @@ describe('Serializer Protobuf', () => {
 
     describe('addSchemas', () => {
         it('should check option tag for root message', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             serializer.addSchema(mockProtoPrice.schemaOption, 'InstrumentPriceDetails');
             const schemas = serializer.getSchema('InstrumentPriceDetails');
             const rootMessage = schemas.root.getOption('saxobank_root');
@@ -155,7 +156,7 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should add new price schema', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             serializer.addSchema(mockProtoPrice.schema, 'Price');
             const schemaObject = serializer.getSchemaType('Price', 'PriceResponse');
 
@@ -169,7 +170,7 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should skip adding invalid schema', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             const done = serializer.addSchema('invalid schema: 123', 'InvalidSchema');
 
             expect(done).toBe(false);
@@ -179,7 +180,7 @@ describe('Serializer Protobuf', () => {
 
     describe('parse', () => {
         it('should parse encoded base64 price response', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             serializer.addSchema(mockProtoPrice.schema, 'Price');
             const price = serializer.parse(mockProtoPrice.encodedMessage, 'Price');
 
@@ -187,7 +188,7 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should parse encoded base64 order response', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             serializer.addSchema(mockProtoPrice.orderSchema, 'Order');
             const objectMessage = serializer.parse(mockProtoPrice.encodedMessageOrder, 'Order');
 
@@ -197,7 +198,7 @@ describe('Serializer Protobuf', () => {
 
     describe('stringify', () => {
         it('should stringify price response', () => {
-            const serializer = new SerializerProtobuf();
+            const serializer = new SerializerProtobuf('default', protobuf);
             serializer.addSchema(mockProtoPrice.schema, 'Price');
             const encoded = serializer.stringify(mockProtoPrice.objectMessage, 'Price');
 

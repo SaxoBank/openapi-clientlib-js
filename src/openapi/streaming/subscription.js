@@ -392,15 +392,9 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     this.queue = new SubscriptionQueue();
 
     /**
-     * The subscription format. Used to derive serialization method for incoming subscription messages.
-     * @type {String}
-     */
-    this.format = subscriptionArgs.Format;
-
-    /**
      * The serializer, chosen based on provided format.
      */
-    this.serializer = SerializerFacade.getSerializer(this.format, serviceGroup, url);
+    this.serializer = SerializerFacade.getSerializer(subscriptionArgs.Format, serviceGroup, url);
 
     this.onStateChangedCallbacks = [];
 
@@ -410,7 +404,7 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     this.onUpdate = onUpdate;
     this.onError = onError;
     this.onSubscriptionCreated = onSubscriptionCreated;
-    this.subscriptionData = extend({ Format: this.format }, subscriptionArgs);
+    this.subscriptionData = subscriptionArgs;
 
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
@@ -456,8 +450,11 @@ Subscription.prototype.removeStateChangedCallback = function(callback) {
 };
 
 Subscription.prototype.processUpdate = function(message, type) {
-    message.Data = this.serializer.parse(message.Data, this.SchemaName);
-    this.onUpdate(message, type);
+    const nextMessage = extend({}, message, {
+        Data: this.serializer.parse(message.Data, this.SchemaName),
+    });
+
+    this.onUpdate(nextMessage, type);
 };
 
 Subscription.prototype.processSnapshot = function(response) {
@@ -466,7 +463,12 @@ Subscription.prototype.processSnapshot = function(response) {
         this.serializer.addSchema(response.Schema, response.SchemaName);
     }
 
-    // Snapshot protobuf serialization is currently 'nice to have' on openapi side. So, for now, always using JSON.
+    if (!response.SchemaName) {
+        // If not provided by response, try to use last valid schema name from serializer as an fallback.
+        this.SchemaName = this.serializer.getSchemaName();
+    }
+
+    // Serialization of Snapshot is not yet supported.
     this.onUpdate(response.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
 };
 

@@ -13,46 +13,23 @@ const META_TYPES = {
     [META_EMPTY]: true,
 };
 
-function iterateTree(message, data, process) {
-    for (const key in data) {
-        if (data.hasOwnProperty(key) && !META_TYPES[key]) {
-            const nextData = data[key];
-            if (typeof nextData === 'object') {
-                process(message[key], data[key]);
-                iterateTree.call(this, message[key], nextData, process);
-            }
-        }
-    }
-    return data;
+function nullAccessor() {
+    return null;
 }
 
-function processNull(message, data, ids) {
+function emptyAccessor() {
+    return [];
+}
+
+function processData(message, data, ids, accessor) {
     for (let i = 0; i < ids.length; i++) {
         const id = ids[i];
         const field = message.$type.fieldsById[id];
         if (!field) {
             continue;
         }
-        data[field.name] = null;
+        data[field.name] = accessor();
     }
-
-    // Remove deleting as soon as we move metadata to extensions.
-    delete data[META_NULLS];
-
-}
-
-function processEmpty(message, data, ids) {
-    for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        const field = message.$type.fieldsById[id];
-        if (!field) {
-            continue;
-        }
-        data[field.name] = [];
-    }
-
-    // Remove deleting as soon as we move metadata to extensions.
-    delete data[META_EMPTY];
 }
 
 function processChild(message, data) {
@@ -61,12 +38,31 @@ function processChild(message, data) {
     }
 
     if (message[META_NULLS] && message[META_NULLS].length) {
-        processNull(message, data, message[META_NULLS]);
+        processData(message, data, message[META_NULLS], nullAccessor);
+
+        // Remove deleting as soon as we move metadata to extensions.
+        delete data[META_NULLS];
     }
     if (message[META_EMPTY] && message[META_EMPTY].length) {
-        processEmpty(message, data, message[META_EMPTY]);
+        processData(message, data, message[META_EMPTY], emptyAccessor);
+
+        // Remove deleting as soon as we move metadata to extensions.
+        delete data[META_EMPTY];
     }
 
+    return data;
+}
+
+function iterateTree(message, data) {
+    for (const key in data) {
+        if (data.hasOwnProperty(key) && !META_TYPES[key]) {
+            const nextData = data[key];
+            if (typeof nextData === 'object') {
+                processChild.call(this, message[key], data[key]);
+                iterateTree.call(this, message[key], nextData);
+            }
+        }
+    }
     return data;
 }
 
@@ -82,14 +78,14 @@ function MetaProtobuf() {}
  *
  * @param {Object} message - Protobuf Message Type object.
  * @param {Object} data - JSON object. Object get's mutated.
- * @return {*}
+ * @return {Object} The result of meta processing.
  */
 MetaProtobuf.prototype.process = function(message, data) {
     if (!message || !data) {
         return data;
     }
 
-    iterateTree.call(this, [message], [data], processChild.bind(this));
+    iterateTree.call(this, [message], [data]);
 
     for (const key in CUSTOM_ENVELOPES) {
         if (message.$type.name === key) {
