@@ -1,4 +1,3 @@
-/* eslint max-lines: ["error", 700] */
 /**
  * @module saxo/openapi/streaming/streaming
  * @ignore
