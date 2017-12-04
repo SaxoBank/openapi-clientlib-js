@@ -1,4 +1,4 @@
-import SerializerInterface from './serializer-interface';
+import SerializerBase from './serializer-base';
 
 /**
  * JSON Serialization
@@ -10,7 +10,7 @@ function SerializerJson(name, engine = null) {
 }
 
 SerializerJson.prototype = Object.create(
-    SerializerInterface.prototype,
+    SerializerBase.prototype,
     { constructor: { value: SerializerJson, enumerable: false, writable: true, configurable: true } }
 );
 
