@@ -33,6 +33,38 @@ describe('openapi StreamingSubscription', () => {
         uninstallClock();
     });
 
+    describe('unsubscribe by tag behaviour', () => {
+        let subscription;
+
+        beforeEach(() => {
+            subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', { RefreshRate: 120 });
+        });
+
+        it('is ready for unsubscribe immediately if not yet subscribed', () => {
+            subscription.onUnsubscribeByTagPending();
+            expect(subscription.isReadyForUnsubscribeByTag()).toBe(true);
+        });
+
+        it('is ready for unsubscribe ready immediately if no actions pending', (done) => {
+            subscription.onSubscribe();
+            transport.postResolve();
+            tick(() => {
+                subscription.onUnsubscribeByTagPending();
+                expect(subscription.isReadyForUnsubscribeByTag()).toBe(true);
+                done();
+            });
+        });
+
+        it('is not ready for unsubscribe if subscription is pending', (done) => {
+            subscription.onSubscribe();
+            tick(() => {
+                subscription.onUnsubscribeByTagPending();
+                expect(subscription.isReadyForUnsubscribeByTag()).toBe(false);
+                done();
+            });
+        });
+    });
+
     describe('options', () => {
         it('accepts a refresh rate', () => {
             const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', { RefreshRate: 120 });

@@ -1,3 +1,4 @@
+/* eslint max-lines: ["error", 700] */
 /**
  * @module saxo/openapi/streaming/streaming
  * @ignore
@@ -354,6 +355,96 @@ function onOrphanFound(subscription) {
     subscription.reset();
 }
 
+function handleSubscriptionReadyForUnsubscribe(subscriptions, resolve) {
+    let allSubscriptionsReady = true;
+    for (let i = 0; i < subscriptions.length && allSubscriptionsReady; i++) {
+        if (!subscriptions[i].isReadyForUnsubscribeByTag()) {
+            allSubscriptionsReady = false;
+        }
+    }
+
+    if (allSubscriptionsReady) {
+        resolve();
+    }
+}
+
+function getSubscriptionsByTag(serviceGroup, url, tag) {
+    const subscriptionsToRemove = [];
+
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        const subscription = this.subscriptions[i];
+
+        if (subscription.serviceGroup === serviceGroup &&
+                subscription.url === url &&
+                subscription.subscriptionData.Tag === tag) {
+
+            subscriptionsToRemove.push(subscription);
+        }
+    }
+
+    return subscriptionsToRemove;
+}
+
+function getSubscriptionsReadyPromise(subscriptionsToRemove, shouldDisposeSubscription) {
+    let onStateChanged;
+
+    return new Promise((resolve) => {
+        onStateChanged = handleSubscriptionReadyForUnsubscribe.bind(this, subscriptionsToRemove, resolve);
+
+        for (let i = 0; i < subscriptionsToRemove.length; i++) {
+            const subscription = subscriptionsToRemove[i];
+
+            ignoreSubscriptions[subscription.referenceId] = true;
+
+            subscription.addStateChangedCallback(onStateChanged);
+            subscription.onUnsubscribeByTagPending();
+
+            if (shouldDisposeSubscription) {
+                removeSubscription.call(this, subscription);
+            }
+        }
+
+        setTimeout(() => {
+            for (let i = 0; i < subscriptionsToRemove.length; i++) {
+                delete ignoreSubscriptions[subscriptionsToRemove[i].referenceId];
+            }
+        }, MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
+    })
+    .then(() => {
+        for (let i = 0; i < subscriptionsToRemove.length; i++) {
+            const subscription = subscriptionsToRemove[i];
+            subscription.removeStateChangedCallback(onStateChanged);
+        }
+    });
+}
+
+function unsubscribeSubscriptionByTag(serviceGroup, url, tag, shouldDisposeSubscription) {
+    const subscriptionsToRemove = getSubscriptionsByTag.call(this, serviceGroup, url, tag);
+    const allSubscriptionsReady = getSubscriptionsReadyPromise.call(this, subscriptionsToRemove, shouldDisposeSubscription);
+
+    allSubscriptionsReady.then(() => {
+        this.transport.delete(serviceGroup, url + '/{contextId}/?Tag={tag}', {
+            contextId: this.contextId,
+            tag,
+        })
+        .catch((response) => log.error(LOG_AREA, 'An error occurred unsubscribing by tag', { response, serviceGroup, url, tag }))
+        .then(() => {
+            for (let i = 0; i < subscriptionsToRemove.length; i++) {
+                const subscription = subscriptionsToRemove[i];
+                subscription.onUnsubscribeByTagComplete();
+            }
+        });
+    });
+}
+
+function removeSubscription(subscription) {
+    subscription.dispose();
+    const indexOfSubscription = this.subscriptions.indexOf(subscription);
+    if (indexOfSubscription >= 0) {
+        this.subscriptions.splice(indexOfSubscription, 1);
+    }
+}
+
 // -- Exported methods section --
 
 /**
@@ -451,6 +542,7 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP = {
  * @param {number} [subscriptionArgs.RefreshRate=1000] - The data refresh rate (passed to OpenAPI).
  * @param {string} [subscriptionArgs.Format] - The format for the subscription (passed to OpenAPI).
  * @param {object} [subscriptionArgs.Arguments] - The subscription arguments (passed to OpenAPI).
+ * @param {string} [subscriptionArgs.Tag] - The tag for the subscription (passed to OpenAPI).
  * @param {function} onUpdate - A callback function that is invoked when an initial snapshot or update is received.
  *                              The first argument will be the data received and the second argument will either be
  *                              subscription.UPDATE_TYPE_DELTA or subscription.UPDATE_TYPE_SNAPSHOT
@@ -516,11 +608,30 @@ Streaming.prototype.unsubscribe = function(subscription) {
 Streaming.prototype.disposeSubscription = function(subscription) {
 
     this.unsubscribe(subscription);
-    subscription.dispose();
-    const indexOfSubscription = this.subscriptions.indexOf(subscription);
-    if (indexOfSubscription >= 0) {
-        this.subscriptions.splice(indexOfSubscription, 1);
-    }
+    removeSubscription.call(this, subscription);
+};
+
+/**
+ * Makes all subscriptions stop at the given serviceGroup and url with the given tag (can be restarted)
+ * See {@link saxo.openapi.Streaming#disposeSubscriptionByTag} for permanently stopping subscriptions by tag.
+ *
+ * @param {string} serviceGroup - the serviceGroup of the subscriptions to unsubscribe
+ * @param {string} url - the url of the subscriptions to unsubscribe
+ * @param {string} tag - the tag of the subscriptions to unsubscribe
+ */
+Streaming.prototype.unsubscribeByTag = function(serviceGroup, url, tag) {
+    unsubscribeSubscriptionByTag.call(this, serviceGroup, url, tag, false);
+};
+
+/**
+ * Disposes all subscriptions at the given serviceGroup and url by tag permanently. They will be stopped and not be able to be started.
+ *
+ * @param {string} serviceGroup - the serviceGroup of the subscriptions to unsubscribe
+ * @param {string} url - the url of the subscriptions to unsubscribe
+ * @param {string} tag - the tag of the subscriptions to unsubscribe
+ */
+Streaming.prototype.disposeSubscriptionByTag = function(serviceGroup, url, tag) {
+    unsubscribeSubscriptionByTag.call(this, serviceGroup, url, tag, true);
 };
 
 /**
