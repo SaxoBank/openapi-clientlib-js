@@ -54,7 +54,7 @@ describe('openapi StreamingSubscription', () => {
             subscription.onSubscribe();
 
             expect(transport.post.calls.count()).toEqual(1);
-            expect(transport.post.calls.argsFor(0)).toEqual(['serviceGroup', 'test/resource?$top={Top}', jasmine.objectContaining({ Top: 10 }), jasmine.objectContaining({ body: jasmine.objectContaining({ RefreshRate: 120 }) })]);
+            expect(transport.post.calls.argsFor(0)).toEqual(['serviceGroup', 'test/resource?$top=10', null, jasmine.objectContaining({ body: jasmine.objectContaining({ RefreshRate: 120 }) })]);
         });
     });
 
