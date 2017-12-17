@@ -1,4 +1,4 @@
-/* eslint max-lines: ["error", 620] */
+/* eslint max-lines: ["error", 700] */
 /**
  * @module saxo/openapi/streaming/subscription
  * @ignore
@@ -35,20 +35,26 @@ const LOG_AREA = 'Subscription';
 
 // -- Local methods section --
 
-function getUrlTemplate(url, subscriptionData) {
+/**
+ * Returns url used in subscribe post request.
+ * Supports pagination (includes Top property in url request).
+ */
+function getSubscribeUrl(url, subscriptionData) {
     if (!subscriptionData.Top) {
         return url;
     }
 
-    return url + '?$top={Top}';
+    return url + '?$top=' + subscriptionData.Top;
 }
 
-function getTemplateArgs(subscriptionData) {
-    if (!subscriptionData.Top) {
-        return null;
+/**
+ * Normalize subscription data, by removing
+ * unsupported properties.
+ */
+function normalizeSubscribeData(data) {
+    if (data.hasOwnProperty('Top')) {
+        delete data.Top;
     }
-
-    return { Top: subscriptionData.Top };
 }
 
 /**
@@ -64,18 +70,19 @@ function subscribe() {
     // reset any updates before subscribed
     this.updatesBeforeSubscribed = null;
 
+    const subscribeUrl = getSubscribeUrl(this.url, this.subscriptionData);
+
     const data = extend({}, this.subscriptionData, {
         ContextId: this.streamingContextId,
         ReferenceId: referenceId,
     });
 
-    log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: this.url });
+    normalizeSubscribeData(data);
+
+    log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: subscribeUrl });
     this.currentState = STATE_SUBSCRIBE_REQUESTED;
 
-    const urlTemplate = getUrlTemplate(this.url, this.subscriptionData);
-    const templateArgs = getTemplateArgs(this.subscriptionData);
-
-    this.transport.post(this.serviceGroup, urlTemplate, templateArgs, { body: data })
+    this.transport.post(this.serviceGroup, subscribeUrl, null, { body: data })
         .then(onSubscribeSuccess.bind(this, referenceId))
         .catch(onSubscribeError.bind(this, referenceId));
 }
