@@ -1,4 +1,4 @@
-import protobuf from 'protobufjs/dist/protobuf.min';
+import protobuf from 'protobufjs/dist/protobuf';
 
 const SerializerFacade = saxo.openapi._SerializerFacade;
 const SerializerProtobuf = saxo.openapi._SerializerProtobuf;

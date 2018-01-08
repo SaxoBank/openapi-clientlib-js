@@ -1,6 +1,6 @@
 import * as mockProtoPrice from './../../mocks/proto-price';
 import * as mockProtoMeta from './../../mocks/proto-meta';
-import protobuf from 'protobufjs/dist/protobuf.min';
+import protobuf from 'protobufjs/dist/protobuf';
 
 const SerializerProtobuf = saxo.openapi._SerializerProtobuf;
 

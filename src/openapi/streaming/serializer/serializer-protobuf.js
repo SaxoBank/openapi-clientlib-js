@@ -21,7 +21,7 @@ function createRootSchema() {
 function SerializerProtobuf(name, engine) {
     this.name = name;
 
-    // Serialization engine, currently only supported implementation: https://github.com/dcodeIO/ProtoBuf.js
+    // Serialization engine, currently only supported implementation is: https://github.com/dcodeIO/ProtoBuf.js
     this.protobuf = engine;
 
     wrappers.register(this.protobuf.wrappers);

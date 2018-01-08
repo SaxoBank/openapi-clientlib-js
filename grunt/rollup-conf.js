@@ -34,8 +34,6 @@ module.exports = {
             banner: outputParts[0],
             footer: outputParts[1],
             plugins: [
-                resolve(),
-                commonJs(),
                 babel()
             ]
         },
@@ -50,6 +48,7 @@ module.exports = {
         options: {
             format: "iife",
             plugins: [
+                // Resolve and commonjs are required for importing of protobufjs for testing
                 resolve(),
                 commonJs(),
                 babel()
