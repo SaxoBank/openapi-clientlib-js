@@ -33,6 +33,8 @@ const TRANSITIONING_STATES = STATE_SUBSCRIBE_REQUESTED | STATE_UNSUBSCRIBE_REQUE
 const DEFAULT_REFRESH_RATE_MS = 1000;
 const MIN_REFRESH_RATE_MS = 100;
 
+const FORMAT_PROTOBUF = 'application/x-protobuf';
+
 const LOG_AREA = 'Subscription';
 
 // -- Local methods section --
@@ -463,8 +465,14 @@ Subscription.prototype.processSnapshot = function(response) {
     }
 
     if (!response.SchemaName) {
-        // If not provided by response, try to use last valid schema name from serializer as an fallback.
+        // If SchemaName is missing, trying to use last valid schema name from serializer as an fallback.
         this.SchemaName = this.serializer.getSchemaName();
+
+        if (this.subscriptionData.Format === FORMAT_PROTOBUF && !this.SchemaName) {
+            // If SchemaName is missing both in response and serializer cache, it means that openapi doesn't support protobuf fot this endpoint.
+            // In such scenario, falling back to default serializer.
+            this.serializer = SerializerFacade.getSerializer(SerializerFacade.getDefaultFormat(), this.serviceGroup, this.url);
+        }
     }
 
     // Serialization of Snapshot is not yet supported.
