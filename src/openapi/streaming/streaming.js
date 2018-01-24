@@ -15,6 +15,7 @@ import { padLeft } from '../../utils/string';
 const OPENAPI_CONTROL_MESSAGE_PREFIX = '_';
 const OPENAPI_CONTROL_MESSAGE_HEARTBEAT = '_heartbeat';
 const OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS = '_resetsubscriptions';
+const OPENAPI_CONTROL_MESSAGE_DISCONNECT = '_disconnect';
 
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
 const MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED = 10000;
@@ -248,6 +249,10 @@ function handleControlMessage(message) {
             resetSubscriptions.call(this, message.TargetReferenceIds);
             break;
 
+        case OPENAPI_CONTROL_MESSAGE_DISCONNECT:
+            handleDisconnect.call(this);
+            break;
+
         default:
             log.warn(LOG_AREA, 'Unrecognised control message', message);
             break;
@@ -303,6 +308,15 @@ function resetSubscriptions(referenceIdList) {
             const logFunction = ignoreSubscriptions[referenceId] ? log.debug : log.warn;
             logFunction.call(log, LOG_AREA, 'couldn\'t find subscription to reset', referenceId);
         }
+    }
+}
+
+/**
+ * on disconnect control message, throw error in all subscriptions
+ */
+function handleDisconnect() {
+    for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
+        subscription.onError(OPENAPI_CONTROL_MESSAGE_DISCONNECT);
     }
 }
 
