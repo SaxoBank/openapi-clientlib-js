@@ -8,6 +8,8 @@ var packageConfig = require("../package.json");
 var sharedConfig = require("./_shared-config");
 var fs = require("fs");
 var babel = require("rollup-plugin-babel");
+var resolve = require("rollup-plugin-node-resolve");
+var commonJs = require("rollup-plugin-commonjs");
 
 // prepare the template. This will provide the banner and footer allowing us greater control
 // we could use the format: "umd" but we wouldn't be able to merge the namespaces when used
@@ -46,6 +48,9 @@ module.exports = {
         options: {
             format: "iife",
             plugins: [
+                // Resolve and commonjs are required for importing of protobufjs for testing
+                resolve(),
+                commonJs(),
                 babel()
             ]
         },

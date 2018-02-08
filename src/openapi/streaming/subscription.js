@@ -1,4 +1,3 @@
-/* eslint max-lines: ["error", 700] */
 /**
  * @module saxo/openapi/streaming/subscription
  * @ignore
@@ -13,6 +12,7 @@ import {
     ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
 } from './subscription-actions';
 import SubscriptionQueue from './subscription-queue';
+import SerializerFacade from './serializer-facade';
 
 // -- Local variables section --
 
@@ -32,6 +32,8 @@ const TRANSITIONING_STATES = STATE_SUBSCRIBE_REQUESTED | STATE_UNSUBSCRIBE_REQUE
 
 const DEFAULT_REFRESH_RATE_MS = 1000;
 const MIN_REFRESH_RATE_MS = 100;
+
+const FORMAT_PROTOBUF = 'application/x-protobuf';
 
 const LOG_AREA = 'Subscription';
 
@@ -53,6 +55,7 @@ function subscribe() {
     const data = extend({}, this.subscriptionData, {
         ContextId: this.streamingContextId,
         ReferenceId: referenceId,
+        KnownSchemas: this.serializer.getSchemaNames(),
     });
 
     log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: this.url });
@@ -238,7 +241,7 @@ function onSubscribeSuccess(referenceId, result) {
     // do not fire events if we are waiting to unsubscribe
     if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
         try {
-            this.onUpdate(responseData.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
+            this.processSnapshot(responseData);
         } catch (ex) {
             log.error(LOG_AREA, 'exception occurred in streaming snapshot update callback');
         }
@@ -372,22 +375,27 @@ function setState(state) {
 function Subscription(streamingContextId, transport, serviceGroup, url, subscriptionArgs, onSubscriptionCreated, onUpdate, onError) {
 
     /**
-     * The streaming context id identifies the particular streaming connection that this subscription will use
+     * The streaming context id identifies the particular streaming connection that this subscription will use.
      * @type {string}
      */
     this.streamingContextId = streamingContextId;
 
     /**
-     * The reference id is used to identify this subscription
+     * The reference id is used to identify this subscription.
      * @type {string}
      */
     this.referenceId = null;
 
     /**
-     * The action queue
+     * The action queue.
      * @type {SubscriptionQueue}
      */
     this.queue = new SubscriptionQueue();
+
+    /**
+     * The serializer, chosen based on provided format.
+     */
+    this.serializer = SerializerFacade.getSerializer(subscriptionArgs.Format, serviceGroup, url);
 
     this.onStateChangedCallbacks = [];
 
@@ -397,7 +405,7 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     this.onUpdate = onUpdate;
     this.onError = onError;
     this.onSubscriptionCreated = onSubscriptionCreated;
-    this.subscriptionData = extend({}, subscriptionArgs);
+    this.subscriptionData = subscriptionArgs;
 
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
@@ -440,6 +448,35 @@ Subscription.prototype.removeStateChangedCallback = function(callback) {
     if (index > -1) {
         this.onStateChangedCallbacks.splice(index, 1);
     }
+};
+
+Subscription.prototype.processUpdate = function(message, type) {
+    const nextMessage = extend({}, message, {
+        Data: this.serializer.parse(message.Data, this.SchemaName),
+    });
+
+    this.onUpdate(nextMessage, type);
+};
+
+Subscription.prototype.processSnapshot = function(response) {
+    if (response.Schema && response.SchemaName) {
+        this.SchemaName = response.SchemaName;
+        this.serializer.addSchema(response.Schema, response.SchemaName);
+    }
+
+    if (!response.SchemaName) {
+        // If SchemaName is missing, trying to use last valid schema name from serializer as an fallback.
+        this.SchemaName = this.serializer.getSchemaName();
+
+        if (this.subscriptionData.Format === FORMAT_PROTOBUF && !this.SchemaName) {
+            // If SchemaName is missing both in response and serializer cache, it means that openapi doesn't support protobuf fot this endpoint.
+            // In such scenario, falling back to default serializer.
+            this.serializer = SerializerFacade.getSerializer(SerializerFacade.getDefaultFormat(), this.serviceGroup, this.url);
+        }
+    }
+
+    // Serialization of Snapshot is not yet supported.
+    this.onUpdate(response.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
 };
 
 /**
@@ -577,7 +614,6 @@ Subscription.prototype.onConnectionAvailable = function() {
  * @returns {boolean} false if the update is not for this subscription
  */
 Subscription.prototype.onStreamingData = function(message) {
-
     onActivity.call(this);
 
     switch (this.currentState) {
@@ -604,7 +640,7 @@ Subscription.prototype.onStreamingData = function(message) {
     }
 
     try {
-        this.onUpdate(message, this.UPDATE_TYPE_DELTA);
+        this.processUpdate(message, this.UPDATE_TYPE_DELTA);
     } catch (error) {
         log.error(LOG_AREA, 'exception occurred in streaming delta update callback', error);
     }
