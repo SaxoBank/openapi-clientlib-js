@@ -1,6 +1,6 @@
 {
   "name": "openapi-clientlib",
-  "version": "1.8.0-protobuf",
+  "version": "1.8.0",
   "engines": {
     "node": ">=4"
   },
