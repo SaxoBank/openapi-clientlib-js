@@ -199,7 +199,10 @@ function formatPriceParts(numberFormatting, value, decimals, formatFlags, numera
 
     if (isNegative) {
         parts.Post = numberFormatting.negativePost;
-        parts.Pre = numberFormatting.negativePre;
+
+        // Infinitesimally small negative value is rounded to 0, in which case Pre should not be '-'
+        // as '-0' makes no sense, hence the below check
+        parts.Pre = (parts.First === '0' && !parts.Pips) ? '' : numberFormatting.negativePre;
     }
 
     return parts;

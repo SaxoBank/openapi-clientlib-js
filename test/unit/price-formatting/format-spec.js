@@ -660,6 +660,14 @@ describe('price-formatting format', () => {
         expect(parts.Pips).toEqual(_multiply('\u00a0', 8));
         expect(parts.DeciPips).toEqual('');
         expect(parts.Post).toEqual('');
+
+        // Infinitesimally small negative value check
+        parts = priceFormatting.formatPriceParts(-0.00972999999999047, 5, priceFormatOptions.Fractions);
+        expect(parts.Pre).toEqual('');
+        expect(parts.First).toEqual('0');
+        expect(parts.Pips).toEqual('');
+        expect(parts.DeciPips).toEqual('');
+        expect(parts.Post).toEqual('');
     });
 
     it('handles non numbers', () => {
