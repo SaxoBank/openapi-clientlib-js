@@ -17,7 +17,7 @@ import formatNumber from './format';
  * @param options
  * @returns {string} Returns 0 when dates are equal. -1 when date1 less than date2. 1 when date1 greater than date2.
  */
-function shortFormat(num, options) {
+function shortFormat(num, precision, options) {
     const [digits] = String(num).split('.');
     let digitSize = digits.length;
     let boundary;
@@ -30,11 +30,13 @@ function shortFormat(num, options) {
     }
 
     if (digitSize >= 7) { // > 999500
-        return formatNumber(num / 1000000, 2 - (digitSize - 7), options) + 'm';
+        const digitPrecision = !isNaN(precision) ? precision : (2 - (digitSize - 7));
+        return formatNumber(num / 1000000, digitPrecision, options) + 'm';
     }
 
     if (digitSize >= 5) { // > 9995 => 10.2k
-        return formatNumber(num / 1000, 2 - (digitSize - 4), options) + 'k';
+        const digitPrecision = !isNaN(precision) ? precision : (2 - (digitSize - 4));
+        return formatNumber(num / 1000, digitPrecision, options) + 'k';
     }
 
     return formatNumber(num, 0, options);

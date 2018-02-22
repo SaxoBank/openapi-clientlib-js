@@ -90,8 +90,8 @@ NumberFormatting.prototype.formatNoRounding = function(num, minDecimals, maxDeci
  * @param {number} number
  * @returns {string}
  */
-NumberFormatting.prototype.shortFormat = function(number) {
-    return shortFormat(number, this);
+NumberFormatting.prototype.shortFormat = function(number, precision) {
+    return shortFormat(number, precision, this);
 };
 
 /**
