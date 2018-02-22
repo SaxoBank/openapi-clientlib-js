@@ -1,3 +1,7 @@
+#### v1.9.0
+
++ Add precision parameter to short formatter
+
 #### v1.8.0
 
 + Support for Protobuf deserialization
