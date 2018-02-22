@@ -7,9 +7,9 @@ function formatNumberNoRounding(number, minDecimals, maxDecimals) {
     return numbers.formatNoRounding(number, minDecimals, maxDecimals);
 }
 
-function shortFormat(number) {
+function shortFormat(number, precision) {
     const numbers = new NumberFormatting();
-    return numbers.shortFormat(number);
+    return numbers.shortFormat(number, precision);
 }
 
 function formatNumber(number, decimals, options) {
@@ -73,6 +73,23 @@ describe('NumberFormatting format', () => {
             expect(shortFormat(1000.11)).toEqual('1,000');
             expect(shortFormat(99949.11)).toEqual('99.9k');
             expect(shortFormat(100000000.11)).toEqual('100m');
+        });
+
+        it('works with customized precision', () => {
+            expect(shortFormat(1000.55, 0)).toEqual('1,001');
+            expect(shortFormat(1000, 0)).toEqual('1,000');
+            expect(shortFormat(1000, 2)).toEqual('1,000.00');
+            expect(shortFormat(50000, 0)).toEqual('50k');
+            expect(shortFormat(50000, 1)).toEqual('50.0k');
+            expect(shortFormat(999499, 0)).toEqual('999k');
+            expect(shortFormat(999499, 1)).toEqual('999.5k');
+            expect(shortFormat(999500, 0)).toEqual('1m');
+            expect(shortFormat(999500, 3)).toEqual('1.000m');
+            expect(shortFormat(10490000, 0)).toEqual('10m');
+            expect(shortFormat(10500000, 0)).toEqual('11m');
+            expect(shortFormat(10500000, 1)).toEqual('10.5m');
+            expect(shortFormat(105000000, 0)).toEqual('105m');
+            expect(shortFormat(1050000000, 2)).toEqual('1,050.00m');
         });
     });
 

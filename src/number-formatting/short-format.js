@@ -40,7 +40,8 @@ function shortFormat(num, precision, options) {
         return formatNumber(num / 1000, numberPrecision, options) + 'k';
     }
 
-    return formatNumber(num, 0, options);
+    const numberPrecision = !isNaN(precision) ? precision : 0;
+    return formatNumber(num, numberPrecision, options);
 }
 
 // -- Export section --
