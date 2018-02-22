@@ -14,10 +14,11 @@ import formatNumber from './format';
 /**
  * Converts from a number to a string like "1k" or "100m".
  * @param num
+ * @param precision
  * @param options
  * @returns {string} Returns 0 when dates are equal. -1 when date1 less than date2. 1 when date1 greater than date2.
  */
-function shortFormat(num, options) {
+function shortFormat(num, precision, options) {
     const [digits] = String(num).split('.');
     let digitSize = digits.length;
     let boundary;
@@ -30,14 +31,17 @@ function shortFormat(num, options) {
     }
 
     if (digitSize >= 7) { // > 999500
-        return formatNumber(num / 1000000, 2 - (digitSize - 7), options) + 'm';
+        const numberPrecision = !isNaN(precision) ? precision : (2 - (digitSize - 7));
+        return formatNumber(num / 1000000, numberPrecision, options) + 'm';
     }
 
     if (digitSize >= 5) { // > 9995 => 10.2k
-        return formatNumber(num / 1000, 2 - (digitSize - 4), options) + 'k';
+        const numberPrecision = !isNaN(precision) ? precision : (2 - (digitSize - 4));
+        return formatNumber(num / 1000, numberPrecision, options) + 'k';
     }
 
-    return formatNumber(num, 0, options);
+    const numberPrecision = !isNaN(precision) ? precision : 0;
+    return formatNumber(num, numberPrecision, options);
 }
 
 // -- Export section --
