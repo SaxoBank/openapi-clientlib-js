@@ -14,6 +14,7 @@ import formatNumber from './format';
 /**
  * Converts from a number to a string like "1k" or "100m".
  * @param num
+ * @param precision
  * @param options
  * @returns {string} Returns 0 when dates are equal. -1 when date1 less than date2. 1 when date1 greater than date2.
  */
@@ -30,13 +31,13 @@ function shortFormat(num, precision, options) {
     }
 
     if (digitSize >= 7) { // > 999500
-        const digitPrecision = !isNaN(precision) ? precision : (2 - (digitSize - 7));
-        return formatNumber(num / 1000000, digitPrecision, options) + 'm';
+        const numberPrecision = !isNaN(precision) ? precision : (2 - (digitSize - 7));
+        return formatNumber(num / 1000000, numberPrecision, options) + 'm';
     }
 
     if (digitSize >= 5) { // > 9995 => 10.2k
-        const digitPrecision = !isNaN(precision) ? precision : (2 - (digitSize - 4));
-        return formatNumber(num / 1000, digitPrecision, options) + 'k';
+        const numberPrecision = !isNaN(precision) ? precision : (2 - (digitSize - 4));
+        return formatNumber(num / 1000, numberPrecision, options) + 'k';
     }
 
     return formatNumber(num, 0, options);
