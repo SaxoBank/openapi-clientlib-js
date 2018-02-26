@@ -444,7 +444,7 @@ export const schemaOption = `syntax = "proto3";
 // 872 bytes
 export const encodedMessage = 'CghGeE9wdGlvbhI/CUw3iUFgpSRAEfgZFw6EpCZAGQAAAAAAQI9AIdeGinH+JlQ/KSUGgZVDi9Q/MXsUrkfhetQ/OSlcj8L1KLw/GkgJAAAAAAAA8D8RAAAAAACYn0AZAAAAAAAACEAhAAAAAABwn0ApAAAAAAAAFEAxAAAAAACMn0A5AAAAAAAAHEBBAAAAAAAAIEAi1QEJAAAAAAAA8D8RAAAAAAAAAEAZAAAAAAAACEAhAAAAAAAAEEApAAAAAAAAFEAwATgBQQAAAAAAACBASQAAAAAAACJAUgYI+NqL0AVYAWHcRgN4CyT1P2nrc7UV+8vxP3HPZtXnaiv1P3nWxW00gLfzP4IBBgj42ovQBYkBsHJoke18vz+RASUGgZVDi9Q/mQEYeO49XHK8P6ABAakBw/UoXI/C8T+xAR+F61G4HvU/ugEGCPjai9AFwQFrmnecoiP1P8kB+MJkqmBU9T/SAQYI+NqL0AUqBgj42ovQBTIkCR+F61G4HvU/EQrXo3A9CgFAGcP1KFyPwvE/IYlBYOXQIvU/OnIKEIlBYOXQIvU/w/UoXI/C8T8SEPYoXI/C9QhA4XoUrkfhCEAaEAAAAAAAQI9AAAAAAABAn0AiECPb+X5qvPY/iUFg5dAi9T8qELx0kxgEVvg/nu+nxks39z8yEAAAAAAAQJ9AAAAAAADAkkA4IEBISAFCJAmuR+F6FK7zPxHsUbgehevxPxkAAAAAAAAmQCG4HoXrUbi+P0oGTkFTREFRUksIzgkRrkfhehSu8z8Zw/UoXI/C8T8gFyoEMTIzNTFmZmZmZmbyPzoHYXNrdHlwZUIHYmlkdHlwZUoLMTIzMTNjZGFkYWRSBGlkbGVYrGA=';
 
-export const encodedMessageOrder = 'GisiCEFMR08tVVNEUgNidXn6AQZhYmMxMjOKAgYI+NqL0AWRApm7lpAPevU/GiciA0VVUlIEc2VsbPoBBnh3YzQ1NooCBgj42ovQBZEC5dAi2/k+IkA=';
+export const encodedMessageOrder = 'Gi0iCEFMR08tVVNEUgNidXn6AQZhYmMxMjOKAggI+NqL0AUQAJECmbuWkA969T8aLSIDRVVSUgRzZWxs+gEGeHdjNDU2igIMCPjai9AFEMDDrvUCkQLl0CLb+T4iQA==';
 
 export const orderObjectMessage = {
     Collection: [
@@ -455,6 +455,7 @@ export const orderObjectMessage = {
             'Price': 1.3423,
             'OrderTime': {
                 'seconds': '1510141304',
+                'nanos': '0',
             },
         },
         {
@@ -464,6 +465,7 @@ export const orderObjectMessage = {
             'Price': 9.123,
             'OrderTime': {
                 'seconds': '1510141304',
+                'nanos': '783000000',
             },
         },
     ],
