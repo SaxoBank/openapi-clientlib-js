@@ -205,4 +205,29 @@ describe('Serializer Protobuf', () => {
             expect(encoded).toBe(mockProtoPrice.encodedMessage);
         });
     });
+
+    describe('.google.protobuf.Timestamp wrapper', () => {
+        it('should return date with support for nano precision', () => {
+            const serializer = new SerializerProtobuf('default', protobuf);
+            serializer.addSchema(mockProtoPrice.orderSchema, 'Order');
+            const objectMessage = serializer.parse(mockProtoPrice.encodedMessageOrder, 'Order');
+
+            expect(objectMessage).toEqual(jasmine.arrayContaining([
+                {
+                    'OrderId': 'abc123',
+                    'BuySell': 'buy',
+                    'AccountId': 'ALGO-USD',
+                    'Price': 1.3423,
+                    'OrderTime': '2017-11-08T11:41:44.000Z',
+                },
+                {
+                    'OrderId': 'xwc456',
+                    'BuySell': 'sell',
+                    'AccountId': 'EUR',
+                    'Price': 9.123,
+                    'OrderTime': '2017-11-08T11:41:44.783Z',
+                },
+            ]));
+        });
+    });
 });
