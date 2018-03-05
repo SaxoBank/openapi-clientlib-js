@@ -1,3 +1,7 @@
+#### v1.9.1
+
++ Add nano-precision to protobuf deserialization
+
 #### v1.9.0
 
 + Add precision parameter to short formatter
