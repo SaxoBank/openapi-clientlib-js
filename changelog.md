@@ -1,3 +1,19 @@
+#### v1.9.1
+
++ Add nano-precision to protobuf deserialization
+
+#### v1.9.0
+
++ Add precision parameter to short formatter
+
+#### v1.8.0
+
++ Support for Protobuf deserialization
+
+#### v1.7.0
+
++ Add ability to unsubscribe by tag
+
 #### v1.6.0
 
 + No longer send /active as part of the subscribe url
