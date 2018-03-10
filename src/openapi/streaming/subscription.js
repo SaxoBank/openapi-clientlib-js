@@ -40,6 +40,28 @@ const LOG_AREA = 'Subscription';
 // -- Local methods section --
 
 /**
+ * Returns url used in subscribe post request.
+ * Supports pagination (includes Top property in url request).
+ */
+function getSubscribeUrl(url, subscriptionData) {
+    if (!subscriptionData.Top) {
+        return url;
+    }
+
+    return url + '?$top=' + subscriptionData.Top;
+}
+
+/**
+ * Normalize subscription data, by removing
+ * unsupported properties.
+ */
+function normalizeSubscribeData(data) {
+    if (data.hasOwnProperty('Top')) {
+        delete data.Top;
+    }
+}
+
+/**
  * Call to actually do a subscribe.
  */
 function subscribe() {
@@ -52,15 +74,20 @@ function subscribe() {
     // reset any updates before subscribed
     this.updatesBeforeSubscribed = null;
 
+    const subscribeUrl = getSubscribeUrl(this.url, this.subscriptionData);
+
     const data = extend({}, this.subscriptionData, {
         ContextId: this.streamingContextId,
         ReferenceId: referenceId,
         KnownSchemas: this.serializer.getSchemaNames(),
     });
 
-    log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: this.url });
+    normalizeSubscribeData(data);
+
+    log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: subscribeUrl });
     setState.call(this, STATE_SUBSCRIBE_REQUESTED);
-    this.transport.post(this.serviceGroup, this.url, null, { body: data })
+
+    this.transport.post(this.serviceGroup, subscribeUrl, null, { body: data })
         .then(onSubscribeSuccess.bind(this, referenceId))
         .catch(onSubscribeError.bind(this, referenceId));
 }
