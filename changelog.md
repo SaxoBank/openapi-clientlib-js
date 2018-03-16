@@ -1,3 +1,11 @@
+#### v1.9.3
+
++ Do not format and create "-0" for small negative numbers
+
+#### v1.9.2
+
++ Allow pagination top arguments in subscriptions
+
 #### v1.9.1
 
 + Add nano-precision to protobuf deserialization
