@@ -88,11 +88,10 @@ NumberFormatting.prototype.formatNoRounding = function(num, minDecimals, maxDeci
 /**
  * Formats a number into a short format, e.g. 10.000 becomes 10k.
  * @param {number} number
- * @param {number} precision
  * @returns {string}
  */
-NumberFormatting.prototype.shortFormat = function(number, precision) {
-    return shortFormat(number, precision, this);
+NumberFormatting.prototype.shortFormat = function(number) {
+    return shortFormat(number, this);
 };
 
 /**

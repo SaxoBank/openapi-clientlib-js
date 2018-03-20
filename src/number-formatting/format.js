@@ -30,11 +30,10 @@ function convertNumbertToString(number, precision) {
  * expands the number of decimals and introduces decimal groups.
  * @param number
  * @param precision
- * @param groupSizes
- * @param sep
- * @param decimalChar
+ * @param { groupSizes, sep, decimalChar, isHideZeroTail } options
  */
-function expandNumber(number, precision, groupSizes, sep, decimalChar) {
+function expandNumber(number, precision, options) {
+    const { groupSizes, sep, decimalChar, isHideZeroTail } = options;
     let curSize = groupSizes[0];
     let curGroupIndex = 1;
     let numberString = convertNumbertToString(number, precision);
@@ -47,7 +46,10 @@ function expandNumber(number, precision, groupSizes, sep, decimalChar) {
         numberString = numberString.slice(0, decimalIndex);
     }
 
-    if (precision > 0) {
+    const isTailOnlyZeroDigit = Number(right) === 0;
+    const isAllowZeroTail = !(isHideZeroTail && isTailOnlyZeroDigit);
+
+    if (precision > 0 && isAllowZeroTail) {
         const rightDifference = right.length - precision;
         if (rightDifference > 0) {
             right = right.slice(0, precision);
@@ -105,10 +107,12 @@ function formatNumber(inputNumber, decimals, options) {
     absoluteNumber = Math.round(absoluteNumber * factor) / factor;
 
     let formattedNumber = expandNumber(Math.abs(absoluteNumber),
-                                decimals,
-                                options.groupSizes,
-                                options.groupSeparator,
-                                options.decimalSeparator);
+                                decimals, {
+                                    groupSizes: options.groupSizes,
+                                    sep: options.groupSeparator,
+                                    decimalChar: options.decimalSeparator,
+                                    isHideZeroTail: options.isHideZeroTail,
+                                });
 
     // if the original is negative and it hasn't been rounded to 0
     if (inputNumber < 0 && absoluteNumber !== 0) {
