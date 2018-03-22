@@ -106,13 +106,14 @@ function formatNumber(inputNumber, decimals, options) {
     let absoluteNumber = Math.abs(inputNumber);
     absoluteNumber = Math.round(absoluteNumber * factor) / factor;
 
-    let formattedNumber = expandNumber(Math.abs(absoluteNumber),
-                                decimals, {
-                                    groupSizes: options.groupSizes,
-                                    sep: options.groupSeparator,
-                                    decimalChar: options.decimalSeparator,
-                                    isHideZeroTail: options.isHideZeroTail,
-                                });
+    const opts = {
+        groupSizes: options.groupSizes,
+        sep: options.groupSeparator,
+        decimalChar: options.decimalSeparator,
+        isHideZeroTail: options.isHideZeroTail,
+    };
+
+    let formattedNumber = expandNumber(Math.abs(absoluteNumber), decimals, opts);
 
     // if the original is negative and it hasn't been rounded to 0
     if (inputNumber < 0 && absoluteNumber !== 0) {

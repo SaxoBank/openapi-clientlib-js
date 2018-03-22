@@ -3,6 +3,7 @@
  * @ignore
  */
 
+import { extend } from '../utils/object';
 import formatNumber from './format';
 
 // -- Local variables section --
@@ -19,7 +20,7 @@ import formatNumber from './format';
  * @returns {string} Returns 0 when dates are equal. -1 when date1 less than date2. 1 when date1 greater than date2.
  */
 function shortFormat(num, options) {
-    const shortFormatOptions = $.extend({}, options, { isHideZeroTail: true });
+    const shortFormatOptions = extend({}, options, { isHideZeroTail: true });
     const [digits] = String(num).split('.');
     let digitSize = digits.length;
     let boundary;
