@@ -89,84 +89,141 @@ describe('openapi batchUtil', () => {
 
 describe('batch building', () => {
 
-    const testAuth = { token: 'XYZ', expiry: new Date() };
-
     it('handles no requests', () => {
-        expect(batchBuild([], 'X', testAuth, 'iitbank.com'))
-            .toEqual(multiline('--X--', ''));
+        expect(batchBuild([], 'iitbank.com'))
+            .toEqual({
+                body: multiline('--+--', ''),
+                boundary: '+',
+            });
     });
 
     it('handles one request', () => {
         expect(batchBuild(
                 [{ method: 'GET', url: 'openapi/sub' }],
-                'ABC', testAuth.token, 'iitbank.com'))
-            .toEqual(multiline(
-                '--ABC',
-                'Content-Type: application/http; msgtype=request',
-                '',
-                'GET openapi/sub HTTP/1.1',
-                'X-Request-Id: 0',
-                'Authorization: XYZ',
-                'Host: iitbank.com',
-                '',
-                '', // extra new line is important
-                '--ABC--',
-                ''));
+                'iitbank.com'))
+            .toEqual({
+                body: multiline(
+                        '--+',
+                        'Content-Type:application/http; msgtype=request',
+                        '',
+                        'GET openapi/sub HTTP/1.1',
+                        'X-Request-Id:0',
+                        'Host:iitbank.com',
+                        '',
+                        '', // extra new line is important
+                        '--+--',
+                        ''),
+                boundary: '+',
+            }
+            );
+    });
+
+    it('increases the boundary when it matches data', () => {
+        expect(batchBuild(
+            [{ method: 'POST', url: 'openapi/sub', data: '--+' }],
+            'iitbank.com'))
+            .toEqual({
+                body: multiline(
+                        '--++',
+                        'Content-Type:application/http; msgtype=request',
+                        '',
+                        'POST openapi/sub HTTP/1.1',
+                        'X-Request-Id:0',
+                        'Content-Type:application/json; charset=utf-8',
+                        'Host:iitbank.com',
+                        '',
+                        '--+',
+                        '--++--',
+                        ''),
+                boundary: '++',
+            }
+            );
+    });
+
+    it('increases the boundary when it matches data and the next character matches', () => {
+        expect(batchBuild(
+            [{ method: 'POST', url: 'openapi/sub', data: '--++' }],
+            'iitbank.com'))
+            .toEqual({
+                body: multiline(
+                        '--+-',
+                        'Content-Type:application/http; msgtype=request',
+                        '',
+                        'POST openapi/sub HTTP/1.1',
+                        'X-Request-Id:0',
+                        'Content-Type:application/json; charset=utf-8',
+                        'Host:iitbank.com',
+                        '',
+                        '--++',
+                        '--+---',
+                        ''),
+                boundary: '+-',
+            }
+            );
     });
 
     it('puts headers into the batch', () => {
         expect(batchBuild(
                 [{ method: 'GET', url: 'openapi/sub', headers: { 'X-Auth-Request': 'Me' } }],
-                'ABC', testAuth.token, 'iitbank.com'))
-            .toEqual(multiline(
-                '--ABC',
-                'Content-Type: application/http; msgtype=request',
+                'iitbank.com'))
+            .toEqual({
+                body: multiline(
+                '--+',
+                'Content-Type:application/http; msgtype=request',
                 '',
                 'GET openapi/sub HTTP/1.1',
-                'X-Request-Id: 0',
-                'X-Auth-Request: Me',
-                'Authorization: XYZ',
-                'Host: iitbank.com',
+                'X-Request-Id:0',
+                'X-Auth-Request:Me',
+                'Host:iitbank.com',
                 '',
                 '',
-                '--ABC--',
-                ''));
+                '--+--',
+                ''),
+                boundary: '+',
+            }
+            );
     });
 
     it('adds content-type for POST/PUT', () => {
         expect(batchBuild(
                 [{ method: 'POST', data: 'data', url: 'openapi/sub' }],
-                'ABC', testAuth.token, 'iitbank.com'))
-            .toEqual(multiline(
-                '--ABC',
-                'Content-Type: application/http; msgtype=request',
+                'iitbank.com'))
+            .toEqual({
+                body: multiline(
+                '--+',
+                'Content-Type:application/http; msgtype=request',
                 '',
                 'POST openapi/sub HTTP/1.1',
-                'X-Request-Id: 0',
-                'Authorization: XYZ',
-                'Content-Type: application/json; charset=utf-8',
-                'Host: iitbank.com',
+                'X-Request-Id:0',
+                'Content-Type:application/json; charset=utf-8',
+                'Host:iitbank.com',
                 '',
                 'data',
-                '--ABC--',
-                ''));
+                '--+--',
+                ''),
+                boundary: '+',
+            }
+            );
 
         expect(batchBuild(
                 [{ method: 'PUT', data: 'data', url: 'openapi/sub' }],
-                'ABC', testAuth.token, 'iitbank.com'))
-            .toEqual(multiline(
-                '--ABC',
-                'Content-Type: application/http; msgtype=request',
+                'iitbank.com'))
+            .toEqual({
+                body: multiline(
+                '--+',
+                'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT openapi/sub HTTP/1.1',
-                'X-Request-Id: 0',
-                'Authorization: XYZ',
-                'Content-Type: application/json; charset=utf-8',
-                'Host: iitbank.com',
+                'X-Request-Id:0',
+                'Content-Type:application/json; charset=utf-8',
+                'Host:iitbank.com',
                 '',
                 'data',
-                '--ABC--',
-                ''));
+                '--+--',
+                ''),
+                boundary: '+',
+            }
+            );
     });
 
     it('handles multiple requests', () => {
@@ -174,38 +231,39 @@ describe('batch building', () => {
             [{ method: 'POST', data: 'postdata', url: 'openapi/sub' },
                 { method: 'PUT', data: 'putdata', url: 'openapi/bus' },
                 { method: 'GET', url: 'openapi/usb' }],
-                'ABC', testAuth.token, 'iitbank.com'))
-            .toEqual(multiline(
-                '--ABC',
-                'Content-Type: application/http; msgtype=request',
+                'iitbank.com'))
+            .toEqual({
+                body: multiline(
+                '--+',
+                'Content-Type:application/http; msgtype=request',
                 '',
                 'POST openapi/sub HTTP/1.1',
-                'X-Request-Id: 0',
-                'Authorization: XYZ',
-                'Content-Type: application/json; charset=utf-8',
-                'Host: iitbank.com',
+                'X-Request-Id:0',
+                'Content-Type:application/json; charset=utf-8',
+                'Host:iitbank.com',
                 '',
                 'postdata',
-                '--ABC',
-                'Content-Type: application/http; msgtype=request',
+                '--+',
+                'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT openapi/bus HTTP/1.1',
-                'X-Request-Id: 1',
-                'Authorization: XYZ',
-                'Content-Type: application/json; charset=utf-8',
-                'Host: iitbank.com',
+                'X-Request-Id:1',
+                'Content-Type:application/json; charset=utf-8',
+                'Host:iitbank.com',
                 '',
                 'putdata',
-                '--ABC',
-                'Content-Type: application/http; msgtype=request',
+                '--+',
+                'Content-Type:application/http; msgtype=request',
                 '',
                 'GET openapi/usb HTTP/1.1',
-                'X-Request-Id: 2',
-                'Authorization: XYZ',
-                'Host: iitbank.com',
+                'X-Request-Id:2',
+                'Host:iitbank.com',
                 '',
                 '',
-                '--ABC--',
-                ''));
+                '--+--',
+                ''),
+                boundary: '+',
+            }
+            );
     });
 });
