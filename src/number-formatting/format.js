@@ -30,10 +30,10 @@ function convertNumbertToString(number, precision) {
  * expands the number of decimals and introduces decimal groups.
  * @param number
  * @param precision
- * @param { groupSizes, sep, decimalChar, isHideZeroTail } options
+ * @param { groupSizes, groupSeparator, decimalSeparator, isHideZeroTail } options
  */
 function expandNumber(number, precision, options) {
-    const { groupSizes, sep, decimalChar, isHideZeroTail } = options;
+    const { groupSizes, groupSeparator, decimalSeparator, isHideZeroTail } = options;
     let curSize = groupSizes[0];
     let curGroupIndex = 1;
     let numberString = convertNumbertToString(number, precision);
@@ -60,7 +60,7 @@ function expandNumber(number, precision, options) {
             }
         }
 
-        right = decimalChar + right;
+        right = decimalSeparator + right;
     } else {
         right = '';
     }
@@ -70,14 +70,14 @@ function expandNumber(number, precision, options) {
     while (stringIndex >= 0) {
         if (curSize === 0 || curSize > stringIndex) {
             if (ret.length > 0) {
-                return numberString.slice(0, stringIndex + 1) + sep + ret + right;
+                return numberString.slice(0, stringIndex + 1) + groupSeparator + ret + right;
             }
 
             return numberString.slice(0, stringIndex + 1) + right;
         }
 
         if (ret.length > 0) {
-            ret = numberString.slice(stringIndex - curSize + 1, stringIndex + 1) + sep + ret;
+            ret = numberString.slice(stringIndex - curSize + 1, stringIndex + 1) + groupSeparator + ret;
         } else {
             ret = numberString.slice(stringIndex - curSize + 1, stringIndex + 1);
         }
@@ -89,7 +89,7 @@ function expandNumber(number, precision, options) {
             curGroupIndex++;
         }
     }
-    return numberString.slice(0, stringIndex + 1) + sep + ret + right;
+    return numberString.slice(0, stringIndex + 1) + groupSeparator + ret + right;
 }
 
 // -- Exported methods section --
@@ -106,14 +106,7 @@ function formatNumber(inputNumber, decimals, options) {
     let absoluteNumber = Math.abs(inputNumber);
     absoluteNumber = Math.round(absoluteNumber * factor) / factor;
 
-    const opts = {
-        groupSizes: options.groupSizes,
-        sep: options.groupSeparator,
-        decimalChar: options.decimalSeparator,
-        isHideZeroTail: options.isHideZeroTail,
-    };
-
-    let formattedNumber = expandNumber(Math.abs(absoluteNumber), decimals, opts);
+    let formattedNumber = expandNumber(Math.abs(absoluteNumber), decimals, options);
 
     // if the original is negative and it hasn't been rounded to 0
     if (inputNumber < 0 && absoluteNumber !== 0) {
