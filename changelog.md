@@ -1,3 +1,7 @@
+#### v3.0.0
+
++ Breaking Change - The signature of the short format function has been changed (breaks if using the precision parameter added in 1.9.0)
+
 #### v2.0.0
 
 + Breaking Change - TransportBatch no longer has an auth argument. It requires that either individual calls have auth headers or that the underlying transport is authenticated
