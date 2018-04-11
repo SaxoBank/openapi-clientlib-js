@@ -3,6 +3,7 @@
  * @ignore
  */
 
+import { extend } from '../utils/object';
 import formatNumber from './format';
 
 // -- Local variables section --
@@ -18,7 +19,8 @@ import formatNumber from './format';
  * @param options
  * @returns {string} Returns 0 when dates are equal. -1 when date1 less than date2. 1 when date1 greater than date2.
  */
-function shortFormat(num, precision, options) {
+function shortFormat(num, options) {
+    const shortFormatOptions = extend({}, options, { isHideZeroTail: true });
     const [digits] = String(num).split('.');
     let digitSize = digits.length;
     let boundary;
@@ -31,17 +33,17 @@ function shortFormat(num, precision, options) {
     }
 
     if (digitSize >= 7) { // > 999500
-        const numberPrecision = !isNaN(precision) ? precision : (2 - (digitSize - 7));
-        return formatNumber(num / 1000000, numberPrecision, options) + 'm';
+        const numberPrecision = (2 - (digitSize - 7));
+        return formatNumber(num / 1000000, numberPrecision, shortFormatOptions) + 'm';
     }
 
     if (digitSize >= 5) { // > 9995 => 10.2k
-        const numberPrecision = !isNaN(precision) ? precision : (2 - (digitSize - 4));
-        return formatNumber(num / 1000, numberPrecision, options) + 'k';
+        const numberPrecision = (2 - (digitSize - 4));
+        return formatNumber(num / 1000, numberPrecision, shortFormatOptions) + 'k';
     }
 
-    const numberPrecision = !isNaN(precision) ? precision : 0;
-    return formatNumber(num, numberPrecision, options);
+    const numberPrecision = 0;
+    return formatNumber(num, numberPrecision, shortFormatOptions);
 }
 
 // -- Export section --
