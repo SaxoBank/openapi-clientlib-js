@@ -20,6 +20,12 @@ import formatNumber from './format';
  * @returns {string} Returns 0 when dates are equal. -1 when date1 less than date2. 1 when date1 greater than date2.
  */
 function shortFormat(num, options) {
+    let minusSign = '';
+    if (num < 0) {
+        minusSign = '-';
+        num = Math.abs(num);
+    }
+
     const shortFormatOptions = extend({}, options, { isHideZeroTail: true });
     const [digits] = String(num).split('.');
     let digitSize = digits.length;
@@ -34,16 +40,16 @@ function shortFormat(num, options) {
 
     if (digitSize >= 7) { // > 999500
         const numberPrecision = (2 - (digitSize - 7));
-        return formatNumber(num / 1000000, numberPrecision, shortFormatOptions) + 'm';
+        return `${minusSign}${formatNumber(num / 1000000, numberPrecision, shortFormatOptions)}m`;
     }
 
     if (digitSize >= 5) { // > 9995 => 10.2k
         const numberPrecision = (2 - (digitSize - 4));
-        return formatNumber(num / 1000, numberPrecision, shortFormatOptions) + 'k';
+        return `${minusSign}${formatNumber(num / 1000, numberPrecision, shortFormatOptions)}k`;
     }
 
     const numberPrecision = 0;
-    return formatNumber(num, numberPrecision, shortFormatOptions);
+    return `${minusSign}${formatNumber(num, numberPrecision, shortFormatOptions)}`;
 }
 
 // -- Export section --
