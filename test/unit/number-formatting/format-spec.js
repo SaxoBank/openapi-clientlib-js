@@ -1,4 +1,4 @@
-import { en_us } from '../locales';
+import { en_us, ar_eg } from '../locales';
 
 const NumberFormatting = saxo.NumberFormatting;
 
@@ -7,9 +7,9 @@ function formatNumberNoRounding(number, minDecimals, maxDecimals) {
     return numbers.formatNoRounding(number, minDecimals, maxDecimals);
 }
 
-function shortFormat(number, precision) {
-    const numbers = new NumberFormatting();
-    return numbers.shortFormat(number, precision);
+function shortFormat(number, options) {
+    const numbers = new NumberFormatting(options);
+    return numbers.shortFormat(number);
 }
 
 function formatNumber(number, decimals, options) {
@@ -47,10 +47,13 @@ describe('NumberFormatting format', () => {
         it('basically works', () => {
             expect(shortFormat(1000)).toEqual('1,000');
             expect(shortFormat(-1000)).toEqual('-1,000');
+            expect(shortFormat(-1000, ar_eg)).toEqual('1,000-');
             expect(shortFormat(9999)).toEqual('9,999');
             expect(shortFormat(-9999)).toEqual('-9,999');
+            expect(shortFormat(-9999, ar_eg)).toEqual('9,999-');
             expect(shortFormat(10000)).toEqual('10k');
             expect(shortFormat(-10000)).toEqual('-10k');
+            expect(shortFormat(-10000, ar_eg)).toEqual('10-k');
             expect(shortFormat(10049)).toEqual('10k');
             expect(shortFormat(10050)).toEqual('10.1k');
             expect(shortFormat(10940)).toEqual('10.9k');
@@ -59,12 +62,15 @@ describe('NumberFormatting format', () => {
             expect(shortFormat(99949)).toEqual('99.9k');
             expect(shortFormat(99950)).toEqual('100k');
             expect(shortFormat(-99950)).toEqual('-100k');
+            expect(shortFormat(-99950, ar_eg)).toEqual('100-k');
             expect(shortFormat(-100000)).toEqual('-100k');
             expect(shortFormat(999499)).toEqual('999k');
             expect(shortFormat(999500)).toEqual('1m');
             expect(shortFormat(-999500)).toEqual('-1m');
+            expect(shortFormat(-999500, ar_eg)).toEqual('1-m');
             expect(shortFormat(1000000)).toEqual('1m');
             expect(shortFormat(-1000000)).toEqual('-1m');
+            expect(shortFormat(-1000000, ar_eg)).toEqual('1-m');
             expect(shortFormat(1000100)).toEqual('1m');
             expect(shortFormat(1050000)).toEqual('1.05m');
             expect(shortFormat(10500000)).toEqual('10.5m');
