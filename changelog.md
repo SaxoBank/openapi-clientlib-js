@@ -1,3 +1,7 @@
+#### v3.0.1
+
++ Support negative numbers in short format
+
 #### v3.0.0
 
 + Breaking Change - The signature of the short format function has been changed (breaks if using the precision parameter added in 1.9.0)
