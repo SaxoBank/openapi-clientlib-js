@@ -19,7 +19,8 @@ const LOG_AREA = 'TransportBatch';
 
 function emptyQueueIntoServiceGroups() {
     const serviceGroupMap = {};
-    for (let i = 0, item; item = this.queue[i]; i++) {
+    for (let i = 0; i < this.queue.length; i++) {
+        const item = this.queue[i];
         const serviceGroup = item.serviceGroup;
         let serviceGroupList = serviceGroupMap[serviceGroup];
         if (!serviceGroupList) {
@@ -34,16 +35,17 @@ function emptyQueueIntoServiceGroups() {
 function batchCallFailure(callList, batchResponse) {
     log.error(LOG_AREA, 'Batch request failed', batchResponse);
 
-    for (let i = 0, call; call = callList[i]; i++) {
+    for (let i = 0; i < callList.length; i++) {
         // pass on the batch response so that if a batch responds with a 401,
         // and queue is before batch, queue will auto retry
-        call.reject(batchResponse);
+        callList[i].reject(batchResponse);
     }
 }
 
 function batchCallSuccess(callList, batchResult) {
     const results = parseBatch(batchResult.response);
-    for (let i = 0, call; call = callList[i]; i++) {
+    for (let i = 0; i < callList.length; i++) {
+        const call = callList[i];
         const result = results[i];
         if (result) {
             // decide in the same way as transport whether the call succeeded
@@ -67,7 +69,8 @@ function batchCallSuccess(callList, batchResult) {
 function runBatchCall(serviceGroup, callList) {
 
     const subRequests = [];
-    for (let i = 0, call; call = callList[i]; i++) {
+    for (let i = 0; i < callList.length; i++) {
+        const call = callList[i];
         const headers = call.options && call.options.headers;
         let body = call.options && call.options.body;
         if (typeof body !== 'string') {

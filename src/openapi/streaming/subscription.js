@@ -273,8 +273,8 @@ function onSubscribeSuccess(referenceId, result) {
         }
 
         if (this.updatesBeforeSubscribed) {
-            for (let i = 0, updateMsg; updateMsg = this.updatesBeforeSubscribed[i]; i++) {
-                this.onStreamingData(updateMsg);
+            for (let i = 0; i < this.updatesBeforeSubscribed.length; i++) {
+                this.onStreamingData(this.updatesBeforeSubscribed[i]);
             }
         }
     }
