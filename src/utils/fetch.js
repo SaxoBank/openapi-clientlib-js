@@ -61,7 +61,12 @@ export function convertFetchResponse(url, body, result, isRejected) {
             result,
         });
 
-        throw result;
+        const networkError = {
+            message: result && result.message ? result.message : result,
+            isNetworkError: true,
+        };
+
+        throw networkError;
     }
     const contentType = result.headers.get('content-type');
     let convertedPromise;
