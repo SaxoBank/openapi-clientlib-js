@@ -75,7 +75,7 @@ describe('NumberFormatting format', () => {
             expect(shortFormat(1050000)).toEqual('1.05m');
             expect(shortFormat(10500000)).toEqual('10.5m');
             expect(shortFormat(105000000)).toEqual('105m');
-            expect(shortFormat(1050000000)).toEqual('1,050m');
+            expect(shortFormat(1050000000)).toEqual('1.05bn');
         });
 
         it('works with decimals', () => {
