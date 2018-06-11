@@ -40,6 +40,11 @@ function shortFormat(num, options) {
         }
     }
 
+    if (digitSize >= 10) { // > 999,999,500
+        const numberPrecision = (2 - (digitSize - 10));
+        return `${prefix}${formatNumber(num / 1000000000, numberPrecision, shortFormatOptions)}${suffix}bn`;
+    }
+
     if (digitSize >= 7) { // > 999500
         const numberPrecision = (2 - (digitSize - 7));
         return `${prefix}${formatNumber(num / 1000000, numberPrecision, shortFormatOptions)}${suffix}m`;
