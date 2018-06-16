@@ -1,3 +1,7 @@
+#### v4.0.0
+
++ The retry transport used to retry network errors, but this is now configurable and defaults to not retrying them.
+
 #### v3.0.2
 
 + Fix for-style to be more normal and better performant
