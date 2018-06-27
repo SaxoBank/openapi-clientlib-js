@@ -288,6 +288,10 @@ function onSubscribeSuccess(referenceId, result) {
  * @param response
  */
 function onSubscribeError(referenceId, response) {
+    if (response.isNetworkError) {
+        this.onUnsubscribe();
+    }
+
     if (referenceId !== this.referenceId) {
         log.debug(LOG_AREA, 'Received an error response for subscribing a subscription that has afterwards been reset - ignoring');
         return;
