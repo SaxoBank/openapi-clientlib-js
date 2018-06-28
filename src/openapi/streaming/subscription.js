@@ -288,22 +288,11 @@ function onSubscribeSuccess(referenceId, result) {
  * @param response
  */
 function onSubscribeError(referenceId, response) {
-    if (response.isNetworkError) {
-        this.onUnsubscribe();
-
-        if (this.onError) {
-            this.onError(response);
-        }
-
-        return;
-    }
-
     if (referenceId !== this.referenceId) {
         log.debug(LOG_AREA, 'Received an error response for subscribing a subscription that has afterwards been reset - ignoring');
         return;
     }
 
-    setState.call(this, STATE_UNSUBSCRIBED);
     log.error(LOG_AREA, 'An error occurred subscribing', {
         response,
         url: this.url,
@@ -318,7 +307,13 @@ function onSubscribeError(referenceId, response) {
             this.onError(response);
         }
     }
-    onReadyToPerformNextAction.call(this);
+    
+    if (response.isNetworkError) {
+        this.onUnsubscribe();
+    } else {
+        setState.call(this, STATE_UNSUBSCRIBED);
+        onReadyToPerformNextAction.call(this);
+    }
 }
 
 /**
