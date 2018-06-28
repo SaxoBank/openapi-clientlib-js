@@ -307,7 +307,7 @@ function onSubscribeError(referenceId, response) {
             this.onError(response);
         }
     }
-    
+
     if (response.isNetworkError) {
         this.onUnsubscribe();
     } else {
