@@ -290,6 +290,12 @@ function onSubscribeSuccess(referenceId, result) {
 function onSubscribeError(referenceId, response) {
     if (response.isNetworkError) {
         this.onUnsubscribe();
+
+        if (this.onError) {
+            this.onError(response);
+        }
+
+        return;
     }
 
     if (referenceId !== this.referenceId) {
