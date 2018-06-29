@@ -1,3 +1,7 @@
+#### v4.0.1
+
++ If a network error occurs subscribing, we need to unsubscribe - it may have got through
+
 #### v4.0.0
 
 + The retry transport used to retry network errors, but this is now configurable and defaults to not retrying them.
