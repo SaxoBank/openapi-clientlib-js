@@ -2,6 +2,10 @@ import { tick, installClock, uninstallClock } from '../../utils';
 import mockTransport from '../../mocks/transport';
 import * as mockProtoPrice from '../../mocks/proto-price';
 import protobuf from 'protobufjs/dist/protobuf';
+import {
+    ACTION_SUBSCRIBE,
+    ACTION_UNSUBSCRIBE,
+} from '../../../../src/openapi/streaming/subscription-actions';
 
 const Subscription = saxo.openapi._StreamingSubscription;
 const SerializerProtobuf = saxo.openapi._SerializerProtobuf;
@@ -142,6 +146,27 @@ describe('openapi StreamingSubscription', () => {
                 expect(errorSpy.calls.count()).toEqual(1);
                 expect(errorSpy.calls.argsFor(0)).toEqual([{ status: '401', response: { message: 'An error has occurred' } }]);
                 done();
+            });
+        });
+
+        it('un-subscribe if network error, retry succeeds', (done) => {
+            const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, null, errorSpy);
+            subscription.onSubscribe();
+            transport.postReject({ isNetworkError: true });
+
+            tick(() => {
+                expect(subscription.queue.items[0].action).toEqual(ACTION_UNSUBSCRIBE);
+                expect(errorSpy.calls.count()).toEqual(1);
+                expect(errorSpy.calls.argsFor(0)).toEqual([{ isNetworkError: true }]);
+
+                subscription.onSubscribe();
+                sendInitialResponse();
+
+                tick(() => {
+                    expect(subscription.queue.items[0].action).toEqual(ACTION_SUBSCRIBE);
+                    expect(subscription.currentState).toEqual(1);
+                    done();
+                });
             });
         });
 

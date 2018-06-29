@@ -293,7 +293,6 @@ function onSubscribeError(referenceId, response) {
         return;
     }
 
-    setState.call(this, STATE_UNSUBSCRIBED);
     log.error(LOG_AREA, 'An error occurred subscribing', {
         response,
         url: this.url,
@@ -308,7 +307,13 @@ function onSubscribeError(referenceId, response) {
             this.onError(response);
         }
     }
-    onReadyToPerformNextAction.call(this);
+
+    if (response.isNetworkError) {
+        this.onUnsubscribe();
+    } else {
+        setState.call(this, STATE_UNSUBSCRIBED);
+        onReadyToPerformNextAction.call(this);
+    }
 }
 
 /**
