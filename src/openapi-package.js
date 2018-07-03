@@ -12,6 +12,7 @@ import log from './log';
 import microEmitter from './micro-emitter';
 
 import * as batch from './openapi/batch-util';
+import * as requestUtils from './utils/request';
 import TransportCore from './openapi/transport/core';
 import TransportAuth from './openapi/transport/auth';
 import TransportBatch from './openapi/transport/batch';
@@ -48,6 +49,7 @@ export default {
         _SerializerProtobuf: SerializerProtobuf,
         _SerializerJson: SerializerJson,
         _SerializerFacade: SerializerFacade,
+        _RequestUtils: requestUtils,
     },
     utils: {
         'enum': utilsEnum,

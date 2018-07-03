@@ -43,7 +43,10 @@ function batchCallFailure(callList, batchResponse) {
 }
 
 function batchCallSuccess(callList, batchResult) {
-    const results = parseBatch(batchResult.response);
+    let parentRequestId = parseInt(batchResult.headers.get('x-request-id'), 10);
+    parentRequestId = isNaN(parentRequestId) ? 0 : parentRequestId;
+
+    const results = parseBatch(batchResult.response, parentRequestId);
     for (let i = 0; i < callList.length; i++) {
         const call = callList[i];
         const result = results[i];

@@ -5,6 +5,7 @@
 
 import { formatUrl } from '../../utils/string';
 import fetch from '../../utils/fetch';
+import { getRequestId } from '../../utils/request';
 
 // -- Local variables section --
 
@@ -49,7 +50,7 @@ function generateTransportCall(method) {
         }
 
         if (!headers['X-Request-Id']) {
-            headers['X-Request-Id'] = ++requestCounter;
+            headers['X-Request-Id'] = getRequestId();
         }
 
         return this.fetch(method, this.baseUrl + '/' + serviceGroup + '/' + url, {

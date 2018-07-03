@@ -4,6 +4,7 @@
  */
 
 import log from '../log';
+import { getRequestId, globalToLocalRequestId } from '../utils/request';
 
 // -- Local variables section --
 
@@ -27,8 +28,7 @@ const LOG_AREA = 'batch';
  * @param {string} responseText
  * @returns {Array.<{status:string, response: Object}>} An array of responses, in the position of the response id's.
  */
-function parse(responseText) {
-
+function parse(responseText, parentRequestId = 0) {
     if (!responseText) {
         throw new Error('Required Parameter: responseText in batch parse');
     }
@@ -38,7 +38,6 @@ function parse(responseText) {
     let currentData = null;
     let requestId = null;
     const responseData = [];
-
     for (let i = 0, l = lines.length; i < l; i++) {
         const line = lines[i];
         if (line.length) {
@@ -47,6 +46,7 @@ function parse(responseText) {
                 requestId = line.match(requestRx);
                 if (requestId) {
                     requestId = parseInt(requestId[1], 10);
+                    requestId = globalToLocalRequestId(requestId, parentRequestId);
                     responseData[requestId] = {};
                 }
             }
@@ -115,7 +115,7 @@ function build(subRequests, host) {
         body.push('Content-Type:application/http; msgtype=request', '');
 
         body.push(method + ' ' + request.url + ' HTTP/1.1');
-        body.push('X-Request-Id:' + i);
+        body.push('X-Request-Id:' + getRequestId());
         if (request.headers) {
             for (const header in request.headers) {
                 if (request.headers.hasOwnProperty(header)) {
