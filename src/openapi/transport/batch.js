@@ -80,6 +80,9 @@ function batchCallSuccess(callList, batchResult) {
  * @param {Array.<{method: string, args:Array}>} callList
  */
 function runBatchCall(serviceGroup, callList) {
+    // Request id for container request that contains all child batched requests.
+    // It's required to request it before all child requests are built to preserve correct x-request-id order.
+    // Correct x-request-id order is important when parsing batch response.
     const parentRequestId = getRequestId();
 
     const subRequests = [];
