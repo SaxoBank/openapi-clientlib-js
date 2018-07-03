@@ -26,6 +26,7 @@ const LOG_AREA = 'batch';
  * Parses the response from a batch call.
  * @name saxo.openapi.batchUtil.parse
  * @param {string} responseText
+ * @param {Number} parentRequestId - The parent request id. Used as a base for calculating batch items request ids.
  * @returns {Array.<{status:string, response: Object}>} An array of responses, in the position of the response id's.
  */
 function parse(responseText, parentRequestId = 0) {

@@ -5,7 +5,6 @@ const RequestUtils = saxo.openapi._RequestUtils;
 const batchBuild = batch.build;
 const batchParse = batch.parse;
 
-
 describe('openapi batchUtil', () => {
 
     it('parses an empty response', () => {
@@ -87,7 +86,6 @@ describe('openapi batchUtil', () => {
                 { status: 200, response: { 'second': 2 } },
             ]);
     });
-
 
     it('parses multiple responses with explicit parent request id', () => {
         const content = batchParse(multiline(
@@ -226,7 +224,6 @@ describe('batch building', () => {
             }
             );
     });
-
 
     it('adds content-type for POST/PUT', () => {
         expect(batchBuild(

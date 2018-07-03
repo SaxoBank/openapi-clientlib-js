@@ -42,9 +42,18 @@ function batchCallFailure(callList, batchResponse) {
     }
 }
 
+function getParentRequestId(batchResult) {
+    let parentRequestId = 0;
+
+    if (batchResult.headers) {
+        parentRequestId = parseInt(batchResult.headers.get('x-request-id'), 10);
+        parentRequestId = isNaN(parentRequestId) ? 0 : parentRequestId;
+    }
+    return parentRequestId;
+}
+
 function batchCallSuccess(callList, batchResult) {
-    let parentRequestId = parseInt(batchResult.headers.get('x-request-id'), 10);
-    parentRequestId = isNaN(parentRequestId) ? 0 : parentRequestId;
+    const parentRequestId = getParentRequestId(batchResult);
 
     const results = parseBatch(batchResult.response, parentRequestId);
     for (let i = 0; i < callList.length; i++) {

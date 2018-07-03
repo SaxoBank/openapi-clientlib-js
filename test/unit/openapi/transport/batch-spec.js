@@ -304,11 +304,11 @@ describe('openapi TransportBatch', () => {
 
     it('processes the batch response', function(done) {
         transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const patchPromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 33, Type: 'CfdOnFutures' });
+        const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 44, Type: 'CfdOnFutures' });
+        const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 55, Type: 'CfdOnFutures' });
+        const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 66, Type: 'CfdOnFutures' });
+        const patchPromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 77, Type: 'CfdOnFutures' });
 
         tick(function() {
             expect(transport.post.calls.count()).toEqual(1);

@@ -13,4 +13,4 @@ function globalToLocalRequestId(globalRequestId, parentRequestId) {
     return Math.max(globalRequestId - parentRequestId - 1, 0);
 }
 
-export { getRequestId, globalToLocalRequestId, resetCounter }
+export { getRequestId, globalToLocalRequestId, resetCounter };

@@ -10,7 +10,7 @@ import { getRequestId } from '../../utils/request';
 // -- Local variables section --
 
 const DEFAULT_CACHE = true;
-let requestCounter = 0; // counter used for identifying unique request and it will share among all transports
+
 // -- Local methods section --
 
 /**
