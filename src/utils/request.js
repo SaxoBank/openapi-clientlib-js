@@ -10,7 +10,7 @@ function getRequestId() {
 }
 
 function globalToLocalRequestId(globalRequestId, parentRequestId) {
-    return Math.max(globalRequestId - parentRequestId - 1, 0);
+    return Math.max(parentRequestId - globalRequestId - 1, 0);
 }
 
 export { getRequestId, globalToLocalRequestId, resetCounter };
