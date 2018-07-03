@@ -7,6 +7,7 @@
 
 import TransportQueue from './queue';
 import { nextTick } from '../../utils/function';
+import { getRequestId } from '../../utils/request';
 import { formatUrl } from '../../utils/string';
 import { parse as parseBatch, build as buildBatch } from '../batch-util';
 import log from '../../log';
@@ -79,6 +80,7 @@ function batchCallSuccess(callList, batchResult) {
  * @param {Array.<{method: string, args:Array}>} callList
  */
 function runBatchCall(serviceGroup, callList) {
+    const parentRequestId = getRequestId();
 
     const subRequests = [];
     for (let i = 0; i < callList.length; i++) {
@@ -102,6 +104,7 @@ function runBatchCall(serviceGroup, callList) {
         headers: { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
         body,
         cache: false,
+        requestId: parentRequestId,
     })
         .then(batchCallSuccess.bind(this, callList))
         .catch(batchCallFailure.bind(this, callList));

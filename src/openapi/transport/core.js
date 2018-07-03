@@ -50,7 +50,7 @@ function generateTransportCall(method) {
         }
 
         if (!headers['X-Request-Id']) {
-            headers['X-Request-Id'] = getRequestId();
+            headers['X-Request-Id'] = (options && options.requestId) || getRequestId();
         }
 
         return this.fetch(method, this.baseUrl + '/' + serviceGroup + '/' + url, {
