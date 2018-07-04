@@ -1,3 +1,72 @@
+#### v4.0.0
+
++ The retry transport used to retry network errors, but this is now configurable and defaults to not retrying them.
+
+#### v3.0.2
+
++ Fix for-style to be more normal and better performant
+
+#### v3.0.1
+
++ Support negative numbers in short format
+
+#### v3.0.0
+
++ Breaking Change - The signature of the short format function has been changed (breaks if using the precision parameter added in 1.9.0)
+
+#### v2.0.0
+
++ Breaking Change - TransportBatch no longer has an auth argument. It requires that either individual calls have auth headers or that the underlying transport is authenticated
++ Breaking change to the batch building utils - it now returns the boundary it will use
++ Much smaller batch requests
+
+#### v1.9.3
+
++ Do not format and create "-0" for small negative numbers
+
+#### v1.9.2
+
++ Allow pagination top arguments in subscriptions
+
+#### v1.9.1
+
++ Add nano-precision to protobuf deserialization
+
+#### v1.9.0
+
++ Add precision parameter to short formatter
+
+#### v1.8.0
+
++ Support for Protobuf deserialization
+
+#### v1.7.0
+
++ Add ability to unsubscribe by tag
+
+#### v1.6.0
+
++ No longer send /active as part of the subscribe url
+
+#### v1.5.2
+
++ Align price and number parsing of invalid special futures format values
+
+#### v1.5.1
+
++ Align price and number formatting of non-numbers
+
+#### v1.5.0
+
++ Allow fetchRequest to handle binary responses when content-type is a pdf or an excel
++ Add support for decimal values to NumberFormatting.shortFormat
++ Increased MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED to 10000 to avoid warning after unsubscribing on slower connections
+
+
+#### v1.4.0
+
++ Add requestCounter to identify unique request for every open api rest request
+
 #### v1.3.3
 
 + Fix transport retry to send on reject objects correctly

@@ -20,6 +20,9 @@ import TransportRetry from './openapi/transport/retry';
 import Streaming from './openapi/streaming/streaming';
 import StreamingOrphanFinder from './openapi/streaming/orphan-finder';
 import StreamingSubscription from './openapi/streaming/subscription';
+import SerializerProtobuf from './openapi/streaming/serializer/serializer-protobuf';
+import SerializerJson from './openapi/streaming/serializer/serializer-json';
+import SerializerFacade from './openapi/streaming/serializer-facade';
 import StreamingSubscriptionQueue from './openapi/streaming/subscription-queue';
 import * as StreamingSubscriptionActions from './openapi/streaming/subscription-actions';
 
@@ -42,6 +45,9 @@ export default {
         _StreamingSubscription: StreamingSubscription,
         _StreamingSubscriptionQueue: StreamingSubscriptionQueue,
         _StreamingSubscriptionActions: StreamingSubscriptionActions,
+        _SerializerProtobuf: SerializerProtobuf,
+        _SerializerJson: SerializerJson,
+        _SerializerFacade: SerializerFacade,
     },
     utils: {
         'enum': utilsEnum,

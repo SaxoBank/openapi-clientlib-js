@@ -85,7 +85,8 @@ StreamingOrphanFinder.prototype.update = function() {
         return;
     }
 
-    for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        const subscription = this.subscriptions[i];
         const timeTillOrphaned = subscription.timeTillOrphaned(now);
         if (timeTillOrphaned <= 0) {
             orphanedSubscriptions.push(subscription);
@@ -115,8 +116,8 @@ StreamingOrphanFinder.prototype.update = function() {
         }
     }
 
-    for (let i = 0, subscription; subscription = orphanedSubscriptions[i]; i++) {
-        this.onOrphanFound(subscription);
+    for (let i = 0; i < orphanedSubscriptions.length; i++) {
+        this.onOrphanFound(orphanedSubscriptions[i]);
     }
 
     if (oldNextUpdateIn === newNextUpdateIn) {

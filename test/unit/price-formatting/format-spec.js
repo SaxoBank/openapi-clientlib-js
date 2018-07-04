@@ -660,29 +660,39 @@ describe('price-formatting format', () => {
         expect(parts.Pips).toEqual(_multiply('\u00a0', 8));
         expect(parts.DeciPips).toEqual('');
         expect(parts.Post).toEqual('');
+
+        // Infinitesimally small negative value check for left to right indented languages, ex: english.
+        parts = priceFormatting.formatPriceParts(-0.00972999999999047, 5, priceFormatOptions.Fractions);
+        expect(parts.Pre).toEqual('');
+        expect(parts.First).toEqual('0');
+        expect(parts.Pips).toEqual('');
+        expect(parts.DeciPips).toEqual('');
+        expect(parts.Post).toEqual('');
+
+        // Infinitesimally small negative value check for right to left indented languages, ex: arabic.
+        parts = priceFormatting_ar_eg.formatPriceParts(-0.00972999999999047, 5, priceFormatOptions.Fractions);
+        expect(parts.Pre).toEqual('');
+        expect(parts.First).toEqual('0');
+        expect(parts.Pips).toEqual('');
+        expect(parts.DeciPips).toEqual('');
+        expect(parts.Post).toEqual('');
     });
 
-    it('formats NaN', () => {
-        let text = priceFormatting.format(NaN, 3);
-        expect(text).toEqual('-');
+    it('handles non numbers', () => {
+        expect(priceFormatting.format(undefined, 3)).toEqual('');
+        expect(priceFormatting.format(NaN, 3)).toEqual('');
+        expect(priceFormatting.format(null, 3)).toEqual('');
+        expect(priceFormatting.format('', 3)).toEqual('');
 
-        text = priceFormatting.format(NaN, 3, priceFormatOptions.Fractions);
-        expect(text).toEqual('-');
+        expect(priceFormatting.format(undefined, 3, priceFormatOptions.Fractions)).toEqual('');
+        expect(priceFormatting.format(NaN, 3, priceFormatOptions.Fractions)).toEqual('');
+        expect(priceFormatting.format(null, 3, priceFormatOptions.Fractions)).toEqual('');
+        expect(priceFormatting.format('', 3, priceFormatOptions.Fractions)).toEqual('');
 
-        let parts = priceFormatting.formatPriceParts(NaN, 3, priceFormatOptions.Fractions);
-        expect(parts.Pre).toEqual('');
-        expect(parts.First).toEqual('-');
-        expect(parts.Pips).toEqual('');
-        expect(parts.DeciPips).toEqual('');
-        expect(parts.Post).toEqual('');
-
-        parts = priceFormatting.formatPriceParts(NaN, 6, priceFormatOptions.ModernFractions);
-
-        expect(parts.Pre).toEqual('');
-        expect(parts.First).toEqual('-');
-        expect(parts.Pips).toEqual('');
-        expect(parts.DeciPips).toEqual('');
-        expect(parts.Post).toEqual('');
+        expect(priceFormatting.format(undefined, 3, priceFormatOptions.ModernFractions)).toEqual('');
+        expect(priceFormatting.format(NaN, 3, priceFormatOptions.ModernFractions)).toEqual('');
+        expect(priceFormatting.format(null, 3, priceFormatOptions.ModernFractions)).toEqual('');
+        expect(priceFormatting.format('', 3, priceFormatOptions.ModernFractions)).toEqual('');
     });
 
     it('supports no rounding options', () => {

@@ -4,7 +4,9 @@
  */
 
 import emitter from '../../micro-emitter';
+import { extend } from '../../utils/object';
 import Subscription from './subscription';
+import SerializerFacade from './serializer-facade';
 import StreamingOrphanFinder from './orphan-finder';
 import log from '../../log';
 import { padLeft } from '../../utils/string';
@@ -16,7 +18,7 @@ const OPENAPI_CONTROL_MESSAGE_HEARTBEAT = '_heartbeat';
 const OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS = '_resetsubscriptions';
 
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
-const MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED = 3000;
+const MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED = 10000;
 
 const LOG_AREA = 'Streaming';
 
@@ -79,8 +81,8 @@ function setNewContextId() {
 
     const contextId = padLeft(String(msSinceMidnight), 8, '0') + padLeft(String(randomNumber), 2, '0');
     this.contextId = contextId;
-    for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
-        subscription.streamingContextId = contextId;
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        this.subscriptions[i].streamingContextId = contextId;
     }
 }
 
@@ -152,8 +154,8 @@ function onConnectionStateChanged(change) {
             // tell all subscriptions not to do anything
             // it doesn't matter if they do (they will be reset and either forget the unsubscribe or start a new subscribe),
             // but it is a waste of network
-            for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
-                subscription.onConnectionUnavailable();
+            for (let i = 0; i < this.subscriptions.length; i++) {
+                this.subscriptions[i].onConnectionUnavailable();
             }
 
             retryConnection.call(this);
@@ -175,8 +177,8 @@ function onConnectionStateChanged(change) {
                 this.reconnecting = false;
             }
 
-            for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
-                subscription.onConnectionAvailable();
+            for (let i = 0; i < this.subscriptions.length; i++) {
+                this.subscriptions[i].onConnectionAvailable();
             }
 
             this.orphanFinder.start();
@@ -209,7 +211,8 @@ function onReceived(updates) {
         return;
     }
 
-    for (let i = 0, update; update = updates[i]; i++) {
+    for (let i = 0; i < updates.length; i++) {
+        const update = updates[i];
         try {
             if (update.ReferenceId[0] === OPENAPI_CONTROL_MESSAGE_PREFIX) {
                 handleControlMessage.call(this, update);
@@ -227,9 +230,9 @@ function onReceived(updates) {
  * @param {string} referenceId
  */
 function findSubscriptionByReferenceId(referenceId) {
-    for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
-        if (subscription.referenceId === referenceId) {
-            return subscription;
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        if (this.subscriptions[i].referenceId === referenceId) {
+            return this.subscriptions[i];
         }
     }
 }
@@ -273,7 +276,8 @@ function handleControlMessage(message) {
 function fireHeartbeats(heartbeatList) {
 
     log.debug(LOG_AREA, 'heartbeats received', heartbeatList);
-    for (let i = 0, heartbeat; heartbeat = heartbeatList[i]; i++) {
+    for (let i = 0; i < heartbeatList.length; i++) {
+        const heartbeat = heartbeatList[i];
         const subscription = findSubscriptionByReferenceId.call(this, heartbeat.OriginatingReferenceId);
         if (subscription) {
             subscription.onHeartbeat();
@@ -289,8 +293,8 @@ function fireHeartbeats(heartbeatList) {
  */
 function resetAllSubscriptions() {
     log.warn(LOG_AREA, 'Resetting all subscriptions');
-    for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
-        subscription.reset();
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        this.subscriptions[i].reset();
     }
 }
 
@@ -307,7 +311,8 @@ function resetSubscriptions(referenceIdList) {
 
     log.debug(LOG_AREA, 'Resetting subscriptions', referenceIdList);
 
-    for (let i = 0, referenceId; referenceId = referenceIdList[i]; i++) {
+    for (let i = 0; i < referenceIdList.length; i++) {
+        const referenceId = referenceIdList[i];
         const subscription = findSubscriptionByReferenceId.call(this, referenceId);
         if (subscription) {
             subscription.reset();
@@ -367,6 +372,96 @@ function onOrphanFound(subscription) {
     subscription.reset();
 }
 
+function handleSubscriptionReadyForUnsubscribe(subscriptions, resolve) {
+    let allSubscriptionsReady = true;
+    for (let i = 0; i < subscriptions.length && allSubscriptionsReady; i++) {
+        if (!subscriptions[i].isReadyForUnsubscribeByTag()) {
+            allSubscriptionsReady = false;
+        }
+    }
+
+    if (allSubscriptionsReady) {
+        resolve();
+    }
+}
+
+function getSubscriptionsByTag(serviceGroup, url, tag) {
+    const subscriptionsToRemove = [];
+
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        const subscription = this.subscriptions[i];
+
+        if (subscription.serviceGroup === serviceGroup &&
+                subscription.url === url &&
+                subscription.subscriptionData.Tag === tag) {
+
+            subscriptionsToRemove.push(subscription);
+        }
+    }
+
+    return subscriptionsToRemove;
+}
+
+function getSubscriptionsReadyPromise(subscriptionsToRemove, shouldDisposeSubscription) {
+    let onStateChanged;
+
+    return new Promise((resolve) => {
+        onStateChanged = handleSubscriptionReadyForUnsubscribe.bind(this, subscriptionsToRemove, resolve);
+
+        for (let i = 0; i < subscriptionsToRemove.length; i++) {
+            const subscription = subscriptionsToRemove[i];
+
+            ignoreSubscriptions[subscription.referenceId] = true;
+
+            subscription.addStateChangedCallback(onStateChanged);
+            subscription.onUnsubscribeByTagPending();
+
+            if (shouldDisposeSubscription) {
+                removeSubscription.call(this, subscription);
+            }
+        }
+
+        setTimeout(() => {
+            for (let i = 0; i < subscriptionsToRemove.length; i++) {
+                delete ignoreSubscriptions[subscriptionsToRemove[i].referenceId];
+            }
+        }, MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
+    })
+    .then(() => {
+        for (let i = 0; i < subscriptionsToRemove.length; i++) {
+            const subscription = subscriptionsToRemove[i];
+            subscription.removeStateChangedCallback(onStateChanged);
+        }
+    });
+}
+
+function unsubscribeSubscriptionByTag(serviceGroup, url, tag, shouldDisposeSubscription) {
+    const subscriptionsToRemove = getSubscriptionsByTag.call(this, serviceGroup, url, tag);
+    const allSubscriptionsReady = getSubscriptionsReadyPromise.call(this, subscriptionsToRemove, shouldDisposeSubscription);
+
+    allSubscriptionsReady.then(() => {
+        this.transport.delete(serviceGroup, url + '/{contextId}/?Tag={tag}', {
+            contextId: this.contextId,
+            tag,
+        })
+        .catch((response) => log.error(LOG_AREA, 'An error occurred unsubscribing by tag', { response, serviceGroup, url, tag }))
+        .then(() => {
+            for (let i = 0; i < subscriptionsToRemove.length; i++) {
+                const subscription = subscriptionsToRemove[i];
+                subscription.onUnsubscribeByTagComplete();
+            }
+        });
+    });
+}
+
+function removeSubscription(subscription) {
+    subscription.dispose();
+    const indexOfSubscription = this.subscriptions.indexOf(subscription);
+    if (indexOfSubscription >= 0) {
+        this.subscriptions.splice(indexOfSubscription, 1);
+    }
+}
+
 // -- Exported methods section --
 
 /**
@@ -383,6 +478,9 @@ function onOrphanFound(subscription) {
  * @param {number} [options.connectRetryDelay=1000] - The delay in milliseconds to wait before attempting a new connect after
  *          signal-r has disconnected
  * @param {Boolean} [options.waitForPageLoad=true] - Whether the signal-r streaming connection waits for page load before starting
+ * @param {Object} [options.serializers={}] - The map of subscription serializers where key is format name and value is an serializer constructor.
+ * @param {Object} [options.serializerEngines={}] - The map of subscription serializer engines where key is format name and
+ *          value is an engine implementation.
  * @param {Array.<string>} [options.transportTypes=['webSockets', 'longPolling']] - The transports to be used in order by signal-r.
  */
 function Streaming(transport, baseUrl, authProvider, options) {
@@ -400,10 +498,20 @@ function Streaming(transport, baseUrl, authProvider, options) {
         transport: (options && options.transportTypes) || ['webSockets', ' longPolling'],    // SignalR has a bug in SSE and forever frame is slow
     };
 
-    if (options && typeof options.connectRetryDelay === 'number') {
-        this.retryDelay = options.connectRetryDelay;
-    } else {
-        this.retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
+    if (options) {
+        if (typeof options.connectRetryDelay === 'number') {
+            this.retryDelay = options.connectRetryDelay;
+        } else {
+            this.retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
+        }
+
+        if (options.serializerEngines) {
+            SerializerFacade.addEngines(options.serializerEngines);
+        }
+
+        if (options.serializers) {
+            SerializerFacade.addSerializers(options.serializers);
+        }
     }
 
     this.orphanFinder = new StreamingOrphanFinder(this.subscriptions, onOrphanFound.bind(this));
@@ -464,6 +572,7 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP = {
  * @param {number} [subscriptionArgs.RefreshRate=1000] - The data refresh rate (passed to OpenAPI).
  * @param {string} [subscriptionArgs.Format] - The format for the subscription (passed to OpenAPI).
  * @param {object} [subscriptionArgs.Arguments] - The subscription arguments (passed to OpenAPI).
+ * @param {string} [subscriptionArgs.Tag] - The tag for the subscription (passed to OpenAPI).
  * @param {function} onUpdate - A callback function that is invoked when an initial snapshot or update is received.
  *                              The first argument will be the data received and the second argument will either be
  *                              subscription.UPDATE_TYPE_DELTA or subscription.UPDATE_TYPE_SNAPSHOT
@@ -472,7 +581,14 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP = {
  */
 Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptionArgs, onUpdate, onError) {
 
-    const subscription = new Subscription(this.contextId, this.transport, serviceGroup, url, subscriptionArgs,
+    const normalizedSubscriptionArgs = extend({}, subscriptionArgs);
+
+    if (!SerializerFacade.isFormatSupported(normalizedSubscriptionArgs.Format)) {
+        // Set default format, if target format is not supported.
+        normalizedSubscriptionArgs.Format = SerializerFacade.getDefaultFormat();
+    }
+
+    const subscription = new Subscription(this.contextId, this.transport, serviceGroup, url, normalizedSubscriptionArgs,
         onSubscriptionCreated.bind(this), onUpdate, onError);
 
     this.subscriptions.push(subscription);
@@ -529,11 +645,30 @@ Streaming.prototype.unsubscribe = function(subscription) {
 Streaming.prototype.disposeSubscription = function(subscription) {
 
     this.unsubscribe(subscription);
-    subscription.dispose();
-    const indexOfSubscription = this.subscriptions.indexOf(subscription);
-    if (indexOfSubscription >= 0) {
-        this.subscriptions.splice(indexOfSubscription, 1);
-    }
+    removeSubscription.call(this, subscription);
+};
+
+/**
+ * Makes all subscriptions stop at the given serviceGroup and url with the given tag (can be restarted)
+ * See {@link saxo.openapi.Streaming#disposeSubscriptionByTag} for permanently stopping subscriptions by tag.
+ *
+ * @param {string} serviceGroup - the serviceGroup of the subscriptions to unsubscribe
+ * @param {string} url - the url of the subscriptions to unsubscribe
+ * @param {string} tag - the tag of the subscriptions to unsubscribe
+ */
+Streaming.prototype.unsubscribeByTag = function(serviceGroup, url, tag) {
+    unsubscribeSubscriptionByTag.call(this, serviceGroup, url, tag, false);
+};
+
+/**
+ * Disposes all subscriptions at the given serviceGroup and url by tag permanently. They will be stopped and not be able to be started.
+ *
+ * @param {string} serviceGroup - the serviceGroup of the subscriptions to unsubscribe
+ * @param {string} url - the url of the subscriptions to unsubscribe
+ * @param {string} tag - the tag of the subscriptions to unsubscribe
+ */
+Streaming.prototype.disposeSubscriptionByTag = function(serviceGroup, url, tag) {
+    unsubscribeSubscriptionByTag.call(this, serviceGroup, url, tag, true);
 };
 
 /**
@@ -553,7 +688,8 @@ Streaming.prototype.dispose = function() {
 
     this.orphanFinder.stop();
 
-    for (let i = 0, subscription; subscription = this.subscriptions[i]; i++) {
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        const subscription = this.subscriptions[i];
         // disconnecting *should* shut down all subscriptions. We also delete all below.
         // So mark the subscription as not having a connection and reset it so its state becomes unsubscribed
         subscription.onConnectionUnavailable();

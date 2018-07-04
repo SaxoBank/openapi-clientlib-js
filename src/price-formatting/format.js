@@ -184,8 +184,7 @@ function formatPriceParts(numberFormatting, value, decimals, formatFlags, numera
 
     const parts = { Pre: '', Post: '', First: '', Pips: '', DeciPips: '' };
 
-    if (isNaN(value)) {
-        parts.First = '-';
+    if (isNaN(value) || value === null || value === '') {
         return parts;
     }
 
@@ -199,8 +198,11 @@ function formatPriceParts(numberFormatting, value, decimals, formatFlags, numera
     }
 
     if (isNegative) {
-        parts.Post = numberFormatting.negativePost;
-        parts.Pre = numberFormatting.negativePre;
+
+        // Infinitesimally small negative value is rounded to 0 in which case Pre/Post (for some languages) should not be '-',
+        // as '-0'/'0-' makes no sense, hence the below check.
+        parts.Post = (parts.First === '0' && !parts.Pips && !parts.DeciPips) ? '' : numberFormatting.negativePost;
+        parts.Pre = (parts.First === '0' && !parts.Pips && !parts.DeciPips) ? '' : numberFormatting.negativePre;
     }
 
     return parts;

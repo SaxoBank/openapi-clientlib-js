@@ -265,7 +265,7 @@
             {
                 "skipBlankLines": true,
                 "skipComments": true,
-                "max": 300
+                "max": 900
             }
         ],
         "max-nested-callbacks": ["error", 3],

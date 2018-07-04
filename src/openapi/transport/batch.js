@@ -7,7 +7,7 @@
 
 import TransportQueue from './queue';
 import { nextTick } from '../../utils/function';
-import { formatUrl, createGUID } from '../../utils/string';
+import { formatUrl } from '../../utils/string';
 import { parse as parseBatch, build as buildBatch } from '../batch-util';
 import log from '../../log';
 
@@ -19,7 +19,8 @@ const LOG_AREA = 'TransportBatch';
 
 function emptyQueueIntoServiceGroups() {
     const serviceGroupMap = {};
-    for (let i = 0, item; item = this.queue[i]; i++) {
+    for (let i = 0; i < this.queue.length; i++) {
+        const item = this.queue[i];
         const serviceGroup = item.serviceGroup;
         let serviceGroupList = serviceGroupMap[serviceGroup];
         if (!serviceGroupList) {
@@ -34,16 +35,17 @@ function emptyQueueIntoServiceGroups() {
 function batchCallFailure(callList, batchResponse) {
     log.error(LOG_AREA, 'Batch request failed', batchResponse);
 
-    for (let i = 0, call; call = callList[i]; i++) {
+    for (let i = 0; i < callList.length; i++) {
         // pass on the batch response so that if a batch responds with a 401,
         // and queue is before batch, queue will auto retry
-        call.reject(batchResponse);
+        callList[i].reject(batchResponse);
     }
 }
 
 function batchCallSuccess(callList, batchResult) {
     const results = parseBatch(batchResult.response);
-    for (let i = 0, call; call = callList[i]; i++) {
+    for (let i = 0; i < callList.length; i++) {
+        const call = callList[i];
         const result = results[i];
         if (result) {
             // decide in the same way as transport whether the call succeeded
@@ -67,20 +69,9 @@ function batchCallSuccess(callList, batchResult) {
 function runBatchCall(serviceGroup, callList) {
 
     const subRequests = [];
-    let authToken;
-    for (let i = 0, call; call = callList[i]; i++) {
-        let headers = call.options && call.options.headers;
-        if (headers && headers.Authorization) {
-            authToken = headers.Authorization;
-
-            const newHeaders = {};
-            for (const header in headers) {
-                if (header !== 'Authorization') {
-                    newHeaders[header] = headers[header];
-                }
-            }
-            headers = newHeaders;
-        }
+    for (let i = 0; i < callList.length; i++) {
+        const call = callList[i];
+        const headers = call.options && call.options.headers;
         let body = call.options && call.options.body;
         if (typeof body !== 'string') {
             body = JSON.stringify(body);
@@ -93,16 +84,11 @@ function runBatchCall(serviceGroup, callList) {
         });
     }
 
-    if (!authToken) {
-        authToken = this.authProvider.getToken();
-    }
-
-    const boundary = createGUID();
-    const content = buildBatch(subRequests, boundary, authToken, this.host);
+    const { body, boundary } = buildBatch(subRequests, this.host);
 
     this.transport.post(serviceGroup, 'batch', null, {
         headers: { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
-        body: content,
+        body,
         cache: false,
     })
         .then(batchCallSuccess.bind(this, callList))
@@ -118,13 +104,11 @@ function runBatchCall(serviceGroup, callList) {
  * @alias saxo.openapi.TransportBatch
  * @param {Transport} transport - Instance of the transport class to wrap.
  * @param {string} baseUrl - Base URL for batch requests. This should be an absolute URL.
- * @param {{getToken:function}} [authProvider] - Optional instance of an auth provider, such as TransportAuth.auth, used to add
- *      authentication to each batch item.
  * @param {Object} [options]
  * @param {number} [options.timeoutMs=0] - Timeout after starting to que items before sending a batch request.
  * @param {string} [options.host=global.location.host] - The host to use in the batch request. If not set defaults to global.location.host.
  */
-function TransportBatch(transport, baseUrl, authProvider, options) {
+function TransportBatch(transport, baseUrl, options) {
     TransportQueue.call(this, transport);
 
     if (!baseUrl) {
@@ -152,7 +136,6 @@ function TransportBatch(transport, baseUrl, authProvider, options) {
         this.host = location.host;
     }
 
-    this.authProvider = authProvider;
     this.timeoutMs = options && options.timeoutMs || 0;
     this.isQueueing = true;
 }

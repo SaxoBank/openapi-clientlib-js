@@ -1,4 +1,4 @@
-import { en_us } from '../locales';
+import { en_us, ar_eg } from '../locales';
 
 const NumberFormatting = saxo.NumberFormatting;
 
@@ -7,8 +7,8 @@ function formatNumberNoRounding(number, minDecimals, maxDecimals) {
     return numbers.formatNoRounding(number, minDecimals, maxDecimals);
 }
 
-function shortFormat(number) {
-    const numbers = new NumberFormatting();
+function shortFormat(number, options) {
+    const numbers = new NumberFormatting(options);
     return numbers.shortFormat(number);
 }
 
@@ -45,26 +45,47 @@ describe('NumberFormatting format', () => {
 
     describe('short format', () => {
         it('basically works', () => {
-            expect(shortFormat(1.45)).toEqual('1');
             expect(shortFormat(1000)).toEqual('1,000');
+            expect(shortFormat(-1000)).toEqual('-1,000');
+            expect(shortFormat(-1000, ar_eg)).toEqual('1,000-');
             expect(shortFormat(9999)).toEqual('9,999');
-            expect(shortFormat(10000)).toEqual('10.0k');
-            expect(shortFormat(10049)).toEqual('10.0k');
+            expect(shortFormat(-9999)).toEqual('-9,999');
+            expect(shortFormat(-9999, ar_eg)).toEqual('9,999-');
+            expect(shortFormat(10000)).toEqual('10k');
+            expect(shortFormat(-10000)).toEqual('-10k');
+            expect(shortFormat(-10000, ar_eg)).toEqual('10-k');
+            expect(shortFormat(10049)).toEqual('10k');
             expect(shortFormat(10050)).toEqual('10.1k');
             expect(shortFormat(10940)).toEqual('10.9k');
-            expect(shortFormat(19950)).toEqual('20.0k');
-            expect(shortFormat(20049)).toEqual('20.0k');
+            expect(shortFormat(19950)).toEqual('20k');
+            expect(shortFormat(20049)).toEqual('20k');
             expect(shortFormat(99949)).toEqual('99.9k');
             expect(shortFormat(99950)).toEqual('100k');
-
+            expect(shortFormat(-99950)).toEqual('-100k');
+            expect(shortFormat(-99950, ar_eg)).toEqual('100-k');
+            expect(shortFormat(-100000)).toEqual('-100k');
             expect(shortFormat(999499)).toEqual('999k');
-            expect(shortFormat(999500)).toEqual('1.00m');
-            expect(shortFormat(1000000)).toEqual('1.00m');
-            expect(shortFormat(1000100)).toEqual('1.00m');
+            expect(shortFormat(999500)).toEqual('1m');
+            expect(shortFormat(-999500)).toEqual('-1m');
+            expect(shortFormat(-999500, ar_eg)).toEqual('1-m');
+            expect(shortFormat(1000000)).toEqual('1m');
+            expect(shortFormat(-1000000)).toEqual('-1m');
+            expect(shortFormat(-1000000, ar_eg)).toEqual('1-m');
+            expect(shortFormat(1000100)).toEqual('1m');
             expect(shortFormat(1050000)).toEqual('1.05m');
             expect(shortFormat(10500000)).toEqual('10.5m');
             expect(shortFormat(105000000)).toEqual('105m');
             expect(shortFormat(1050000000)).toEqual('1,050m');
+        });
+
+        it('works with decimals', () => {
+            expect(shortFormat(1.45)).toEqual('1');
+            expect(shortFormat(99.4)).toEqual('99');
+            expect(shortFormat(99.5)).toEqual('100');
+            expect(shortFormat(100.11)).toEqual('100');
+            expect(shortFormat(1000.11)).toEqual('1,000');
+            expect(shortFormat(99949.11)).toEqual('99.9k');
+            expect(shortFormat(100000000.11)).toEqual('100m');
         });
     });
 

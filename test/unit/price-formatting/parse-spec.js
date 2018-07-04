@@ -93,6 +93,21 @@ describe('price-formatting parse', () => {
         testConversion(0, 6, priceFormatOptions.ModernFractions, 2);
     });
 
+    it('handles invalid Special Futures Format values', function() {
+        const prices = new PriceFormatting();
+
+        expect(prices.parse('0\'', 6, priceFormatOptions.ModernFractions)).toEqual(0);
+        expect(prices.parse('\'', 6, priceFormatOptions.ModernFractions)).toEqual(0);
+        expect(prices.parse('\'0', 6, priceFormatOptions.ModernFractions)).toEqual(0);
+        expect(prices.parse('abc', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+        expect(prices.parse('abc\'', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+        expect(prices.parse('abc\'0', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+        expect(prices.parse('0\'abc', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+        expect(prices.parse('\'abc', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+        expect(prices.parse('abc\'abc', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+        expect(prices.parse('0\'99', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+    });
+
     it('handles misc scenarios', function() {
         // Percentage
         testConversion(0.1233, 2, priceFormatOptions.Percentage);
@@ -157,8 +172,21 @@ describe('price-formatting parse', () => {
 
     it('handles bad input', () => {
         const prices = new PriceFormatting();
+
         expect(prices.parse(null)).toEqual(NaN);
         expect(prices.parse(undefined)).toEqual(NaN);
+        expect(prices.parse('')).toEqual(NaN);
+        expect(prices.parse('abc')).toEqual(NaN);
+
+        expect(prices.parse(null, 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+        expect(prices.parse(undefined), 6, priceFormatOptions.ModernFractions).toEqual(NaN);
+        expect(prices.parse('', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+        expect(prices.parse('abc', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+
+        expect(prices.parse(null, 6, priceFormatOptions.Fractions)).toEqual(NaN);
+        expect(prices.parse(undefined), 6, priceFormatOptions.Fractions).toEqual(NaN);
+        expect(prices.parse('', 6, priceFormatOptions.Fractions)).toEqual(NaN);
+        expect(prices.parse('abc', 6, priceFormatOptions.Fractions)).toEqual(NaN);
     });
 
 /*
