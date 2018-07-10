@@ -34,13 +34,12 @@ const ignoreSubscriptions = {};
  * then follows the SignalR state model.
  */
 function init() {
-    clearReconnect.call(this);
+
     setNewContextId.call(this);
 
     const connection = $.connection(this.connectionUrl);
     connection.log = onSignalRLog;
     this.connection = connection;
-    this.reconnecting = false;
     updateConnectionQuery.call(this);
 
     connection.stateChanged(onConnectionStateChanged.bind(this));
@@ -87,21 +86,10 @@ function setNewContextId() {
 }
 
 /**
- * Clear existing reconnect timeout
- */
-function clearReconnect() {
-    if (this.reconnectTimeout) {
-        clearTimeout(this.reconnectTimeout);
-        this.reconnectTimeout = null;
-    }
-}
-
-/**
  * Retries the connection after a time
  */
 function retryConnection() {
-    clearReconnect.call(this);
-    this.reconnectTimeout = setTimeout(reconnect.bind(this), this.retryDelay);
+    setTimeout(reconnect.bind(this), this.retryDelay);
 }
 
 /**
@@ -173,7 +161,6 @@ function onConnectionStateChanged(change) {
             // if *we* are reconnecting (as opposed to signal-r reconnecting, which we do not need to handle specially)
             if (this.reconnecting) {
                 resetAllSubscriptions.call(this);
-                clearReconnect.call(this);
                 this.reconnecting = false;
             }
 
