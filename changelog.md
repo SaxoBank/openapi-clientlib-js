@@ -1,3 +1,7 @@
+#### v4.0.2
+
++ Make sure that request ids are unique across requests and batch requests so open api doesnt incorrectly reject them
+
 #### v4.0.1
 
 + If a network error occurs subscribing, we need to unsubscribe - it may have got through
