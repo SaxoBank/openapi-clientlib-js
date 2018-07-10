@@ -1,6 +1,7 @@
 import { tick, multiline, installClock, uninstallClock } from '../../utils';
 import mockTransport from '../../mocks/transport';
 
+const RequestUtils = saxo.openapi._RequestUtils;
 const TransportBatch = saxo.openapi.TransportBatch;
 
 describe('openapi TransportBatch', () => {
@@ -10,6 +11,7 @@ describe('openapi TransportBatch', () => {
     let transportBatch;
 
     beforeEach(() => {
+        RequestUtils.resetCounter();
         transport = mockTransport();
         installClock();
 
@@ -104,7 +106,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:0',
+                'X-Request-Id:2',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -112,7 +114,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:1',
+                'X-Request-Id:3',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -121,7 +123,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:2',
+                'X-Request-Id:4',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -130,7 +132,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:3',
+                'X-Request-Id:5',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -138,14 +140,15 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PATCH /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:4',
+                'X-Request-Id:6',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
                 '',
                 '--+--',
                 ''),
-                cache: false }]);
+                cache: false,
+                requestId: 1 }]);
 
             expect(transport.get.calls.count()).toEqual(0);
             expect(transport.put.calls.count()).toEqual(0);
@@ -180,7 +183,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:0',
+                'X-Request-Id:2',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -188,7 +191,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:1',
+                'X-Request-Id:3',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -197,7 +200,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:2',
+                'X-Request-Id:4',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -206,13 +209,14 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:3',
+                'X-Request-Id:5',
                 'Host:localhost:8081',
                 '',
                 '',
                 '--+--',
                 ''),
-                cache: false }]);
+                cache: false,
+                requestId: 1 }]);
 
             expect(transport.get.calls.count()).toEqual(0);
             expect(transport.put.calls.count()).toEqual(0);
@@ -237,7 +241,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:0',
+                'X-Request-Id:2',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
@@ -246,14 +250,15 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'PUT /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:1',
+                'X-Request-Id:3',
                 'Content-Type:application/json; charset=utf-8',
                 'Host:localhost:8081',
                 '',
                 '{ "test": true, "str": "str" }',
                 '--+--',
                 ''),
-                cache: false }]);
+                cache: false,
+                requestId: 1 }]);
 
             expect(transport.put.calls.count()).toEqual(0);
             done();
@@ -276,7 +281,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:0',
+                'X-Request-Id:2',
                 'Authorization:TOKEN1',
                 'MyHeader:true',
                 'Host:localhost:8081',
@@ -286,14 +291,15 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:1',
+                'X-Request-Id:3',
                 'Authorization:TOKEN2',
                 'Host:localhost:8081',
                 '',
                 '',
                 '--+--',
                 ''),
-                cache: false }]);
+                cache: false,
+                requestId: 1 }]);
 
             expect(transport.get.calls.count()).toEqual(0);
             done();
@@ -302,11 +308,11 @@ describe('openapi TransportBatch', () => {
 
     it('processes the batch response', function(done) {
         transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const patchPromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 33, Type: 'CfdOnFutures' });
+        const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 44, Type: 'CfdOnFutures' });
+        const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 55, Type: 'CfdOnFutures' });
+        const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 66, Type: 'CfdOnFutures' });
+        const patchPromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 77, Type: 'CfdOnFutures' });
 
         tick(function() {
             expect(transport.post.calls.count()).toEqual(1);
@@ -318,7 +324,7 @@ describe('openapi TransportBatch', () => {
                     '',
                     'HTTP/1.1 200 OK',
                     'Location: ',
-                    'X-Request-Id:0',
+                    'X-Request-Id:2',
                     'Access-Control-Allow-Origin: http://computor.sys.dom',
                     'Access-Control-Allow-Credentials: true',
                     'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
@@ -330,7 +336,7 @@ describe('openapi TransportBatch', () => {
                     '',
                     'HTTP/1.1 200 Okay',
                     'Location: ',
-                    'X-Request-Id:1',
+                    'X-Request-Id:3',
                     'Access-Control-Allow-Origin: http://computor.sys.dom',
                     'Access-Control-Allow-Credentials: true',
                     'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
@@ -342,7 +348,7 @@ describe('openapi TransportBatch', () => {
                     '',
                     'HTTP/1.1 201 Created',
                     'Location: ',
-                    'X-Request-Id:2',
+                    'X-Request-Id:4',
                     'Access-Control-Allow-Origin: http://computor.sys.dom',
                     'Access-Control-Allow-Credentials: true',
                     'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
@@ -354,7 +360,7 @@ describe('openapi TransportBatch', () => {
                     '',
                     'HTTP/1.1 200 Okay',
                     'Location: ',
-                    'X-Request-Id:3',
+                    'X-Request-Id:5',
                     'Access-Control-Allow-Origin: http://computor.sys.dom',
                     'Access-Control-Allow-Credentials: true',
                     'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
@@ -366,7 +372,7 @@ describe('openapi TransportBatch', () => {
                     '',
                     'HTTP/1.1 200 Okay',
                     'Location: ',
-                    'X-Request-Id:4',
+                    'X-Request-Id:6',
                     'Access-Control-Allow-Origin: http://computor.sys.dom',
                     'Access-Control-Allow-Credentials: true',
                     'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
@@ -478,7 +484,7 @@ describe('openapi TransportBatch', () => {
                 '',
                 'HTTP/1.1 199 Some Error',
                 'Location: ',
-                'X-Request-Id:0',
+                'X-Request-Id:2',
                 'Access-Control-Allow-Origin: http://computor.sys.dom',
                 'Access-Control-Allow-Credentials: true',
                 'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
@@ -490,7 +496,7 @@ describe('openapi TransportBatch', () => {
                 '',
                 'HTTP/1.1 304 Not Modified',
                 'Location: ',
-                'X-Request-Id:1',
+                'X-Request-Id:3',
                 'Access-Control-Allow-Origin: http://computor.sys.dom',
                 'Access-Control-Allow-Credentials: true',
                 'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
@@ -501,7 +507,7 @@ describe('openapi TransportBatch', () => {
                 '',
                 'HTTP/1.1 300 Multiple Choices',
                 'Location: ',
-                'X-Request-Id:2',
+                'X-Request-Id:4',
                 'Access-Control-Allow-Origin: http://computor.sys.dom',
                 'Access-Control-Allow-Credentials: true',
                 'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
@@ -513,7 +519,7 @@ describe('openapi TransportBatch', () => {
                 '',
                 'HTTP/1.1 299 Edge Case',
                 'Location: ',
-                'X-Request-Id:3',
+                'X-Request-Id:5',
                 'Access-Control-Allow-Origin: http://computor.sys.dom',
                 'Access-Control-Allow-Credentials: true',
                 'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
@@ -525,7 +531,7 @@ describe('openapi TransportBatch', () => {
                 '',
                 'HTTP/1.1 400 Error',
                 'Location: ',
-                'X-Request-Id:4',
+                'X-Request-Id:6',
                 'Access-Control-Allow-Origin: http://computor.sys.dom',
                 'Access-Control-Allow-Credentials: true',
                 'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
@@ -591,7 +597,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824/%26%3D HTTP/1.1',
-                'X-Request-Id:0',
+                'X-Request-Id:2',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -599,13 +605,15 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518825/%26%3D HTTP/1.1',
-                'X-Request-Id:1',
+                'X-Request-Id:3',
                 'Host:localhost:8081',
                 '',
                 '',
                 '--+--',
                 ''),
-                cache: false }]);
+                cache: false,
+                requestId: 1 }]);
+
             done();
         });
     });
@@ -623,7 +631,7 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518824?a=1&b=2 HTTP/1.1',
-                'X-Request-Id:0',
+                'X-Request-Id:2',
                 'Host:localhost:8081',
                 '',
                 '',
@@ -631,13 +639,15 @@ describe('openapi TransportBatch', () => {
                 'Content-Type:application/http; msgtype=request',
                 '',
                 'GET /openapi/port/ref/v1/instruments/details/1518825?a=%26%3D HTTP/1.1',
-                'X-Request-Id:1',
+                'X-Request-Id:3',
                 'Host:localhost:8081',
                 '',
                 '',
                 '--+--',
                 ''),
-                cache: false }]);
+                cache: false,
+                requestId: 1 }]);
+
             done();
         });
     });

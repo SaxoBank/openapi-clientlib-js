@@ -7,6 +7,7 @@
 
 import TransportQueue from './queue';
 import { nextTick } from '../../utils/function';
+import { getRequestId } from '../../utils/request';
 import { formatUrl } from '../../utils/string';
 import { parse as parseBatch, build as buildBatch } from '../batch-util';
 import log from '../../log';
@@ -42,8 +43,20 @@ function batchCallFailure(callList, batchResponse) {
     }
 }
 
+function getParentRequestId(batchResult) {
+    let parentRequestId = 0;
+
+    if (batchResult.headers) {
+        parentRequestId = parseInt(batchResult.headers.get('x-request-id'), 10);
+        parentRequestId = isNaN(parentRequestId) ? 0 : parentRequestId;
+    }
+    return parentRequestId;
+}
+
 function batchCallSuccess(callList, batchResult) {
-    const results = parseBatch(batchResult.response);
+    const parentRequestId = getParentRequestId(batchResult);
+
+    const results = parseBatch(batchResult.response, parentRequestId);
     for (let i = 0; i < callList.length; i++) {
         const call = callList[i];
         const result = results[i];
@@ -67,6 +80,10 @@ function batchCallSuccess(callList, batchResult) {
  * @param {Array.<{method: string, args:Array}>} callList
  */
 function runBatchCall(serviceGroup, callList) {
+    // Request id for container request that contains all child batched requests.
+    // It's required to request it before all child requests are built to preserve correct x-request-id order.
+    // Correct x-request-id order is important when parsing batch response.
+    const parentRequestId = getRequestId();
 
     const subRequests = [];
     for (let i = 0; i < callList.length; i++) {
@@ -90,6 +107,7 @@ function runBatchCall(serviceGroup, callList) {
         headers: { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
         body,
         cache: false,
+        requestId: parentRequestId,
     })
         .then(batchCallSuccess.bind(this, callList))
         .catch(batchCallFailure.bind(this, callList));

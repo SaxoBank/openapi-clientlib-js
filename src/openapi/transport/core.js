@@ -5,11 +5,12 @@
 
 import { formatUrl } from '../../utils/string';
 import fetch from '../../utils/fetch';
+import { getRequestId } from '../../utils/request';
 
 // -- Local variables section --
 
 const DEFAULT_CACHE = true;
-let requestCounter = 0; // counter used for identifying unique request and it will share among all transports
+
 // -- Local methods section --
 
 /**
@@ -49,7 +50,7 @@ function generateTransportCall(method) {
         }
 
         if (!headers['X-Request-Id']) {
-            headers['X-Request-Id'] = ++requestCounter;
+            headers['X-Request-Id'] = (options && options.requestId) || getRequestId();
         }
 
         return this.fetch(method, this.baseUrl + '/' + serviceGroup + '/' + url, {
