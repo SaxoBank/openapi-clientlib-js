@@ -52,22 +52,22 @@ function shortFormat(num, options) {
     const shortFormatOptions = extend({}, options, { isHideZeroTail: true });
     const [digits] = String(num).split('.');
 
-    let numberPrecision = 0
+    let numberPrecision = 0;
     let shortHandNotation = '';
 
-    let digitSize = roundOffNumber(num, digits.length);
+    const digitSize = roundOffNumber(num, digits.length);
 
-    for(let i = 0; i < notations.length; i++) {
+    for (let i = 0; i < notations.length; i++) {
         const notation = notations[i];
-        if(digitSize >= notation.digitSize) {
+        if (digitSize >= notation.digitSize) {
             const {
                 precisionDigits,
                 numDigits,
-                shortNotation
+                shortNotation,
             } = notation;
 
             numberPrecision = (2 - (digitSize - precisionDigits));
-            num = num / Math.pow(10, numDigits);
+            num /= Math.pow(10, numDigits);
             shortHandNotation = shortNotation;
             break;
         }
@@ -78,7 +78,7 @@ function shortFormat(num, options) {
 
 function roundOffNumber(num, digitSize) {
 
-    // If number is greater than 10,000 round off to closest number and increase digitSize accordingly. 
+    // If number is greater than 10,000 round off to closest number and increase digitSize accordingly.
     // Eg   99,950 is closer to 100,000 than 99.9k, so new digitSize will be increased to 6
     if (digitSize >= 5) { // bigger than 10,000
         const boundary = Math.pow(10, digitSize) - (Math.pow(10, digitSize - 3) / 2); // e.g.  99,950 - closer to 100k than 99.9k
