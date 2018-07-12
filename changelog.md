@@ -1,3 +1,7 @@
+#### v4.1.0
+
++ Add billion to the list of shorthands for the short format function.
+
 #### v4.0.2
 
 + Make sure that request ids are unique across requests and batch requests so open api doesnt incorrectly reject them
