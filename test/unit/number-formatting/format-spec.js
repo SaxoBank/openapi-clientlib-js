@@ -75,7 +75,17 @@ describe('NumberFormatting format', () => {
             expect(shortFormat(1050000)).toEqual('1.05m');
             expect(shortFormat(10500000)).toEqual('10.5m');
             expect(shortFormat(105000000)).toEqual('105m');
-            expect(shortFormat(1050000000)).toEqual('1,050m');
+            expect(shortFormat(999500000)).toEqual('1bn');
+            expect(shortFormat(-999500000)).toEqual('-1bn');
+            expect(shortFormat(-999500000, ar_eg)).toEqual('1-bn');
+            expect(shortFormat(1000000000)).toEqual('1bn');
+            expect(shortFormat(-1000000000)).toEqual('-1bn');
+            expect(shortFormat(-1000000000, ar_eg)).toEqual('1-bn');
+            expect(shortFormat(1000100000)).toEqual('1bn');
+            expect(shortFormat(1050000000)).toEqual('1.05bn');
+            expect(shortFormat(10500000000)).toEqual('10.5bn');
+            expect(shortFormat(105000000000)).toEqual('105bn');
+            expect(shortFormat(1050000000)).toEqual('1.05bn');
         });
 
         it('works with decimals', () => {
