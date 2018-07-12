@@ -19,7 +19,6 @@ import formatNumber from './format';
  * @param options
  * @returns {string} Returns 0 when dates are equal. -1 when date1 less than date2. 1 when date1 greater than date2.
  */
-
 function shortFormat(num, options) {
     let prefix = '';
     let suffix = '';
@@ -79,12 +78,10 @@ function shortFormat(num, options) {
 
 function roundOffNumber(num, digitSize) {
 
-    let boundary;
-
     // If number is greater than 10,000 round off to closest number and increase digitSize accordingly. 
     // Eg   99,950 is closer to 100,000 than 99.9k, so new digitSize will be increased to 6
     if (digitSize >= 5) { // bigger than 10,000
-        boundary = Math.pow(10, digitSize) - (Math.pow(10, digitSize - 3) / 2); // e.g.  99,950 - closer to 100k than 99.9k
+        const boundary = Math.pow(10, digitSize) - (Math.pow(10, digitSize - 3) / 2); // e.g.  99,950 - closer to 100k than 99.9k
         if (num >= boundary) {
             digitSize++;
         }
