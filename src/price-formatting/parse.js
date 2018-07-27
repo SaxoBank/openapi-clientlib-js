@@ -115,12 +115,10 @@ function parseModernFractionalPrice(numberFormatting, s, decimals) {
 
             if (pipPart < denominator) {
                 // checking of "-0" in integerPart
-                if (integerPart.length === 2 &&
-                    integerPart.substr(0, 1) === '-' &&
-                    integerPart.substring(1) === '0') {
+                if (integerPart && integerPart === '-0') {
                     result = -1 * (pipPart / denominator);
                 } else {
-                    result = result += (pipPart / denominator);
+                    result += (pipPart / denominator);
                 }
             } else {
                 result = NaN;
