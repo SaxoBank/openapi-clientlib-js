@@ -104,8 +104,10 @@ function parseModernFractionalPrice(numberFormatting, s, decimals) {
     const pipIndex = s.indexOf(separator);
     if (pipIndex !== -1) {
         const integerPart = s.substring(0, pipIndex).trim();
+        let isNegative = false;
         if (integerPart.length > 0) {
             result = numberFormatting.parse(integerPart);
+            isNegative = integerPart.indexOf('-') === 0;
         } else {
             result = 0;
         }
@@ -114,9 +116,8 @@ function parseModernFractionalPrice(numberFormatting, s, decimals) {
             const pipPart = numberFormatting.parse(s.substring(pipIndex + 1).trim());
 
             if (pipPart < denominator) {
-                // checking of "-0" in integerPart
-                if (integerPart && integerPart === '-0') {
-                    result = -1 * (pipPart / denominator);
+                if (isNegative) {
+                    result -= (pipPart / denominator);
                 } else {
                     result += (pipPart / denominator);
                 }

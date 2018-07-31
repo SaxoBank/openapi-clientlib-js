@@ -71,6 +71,8 @@ describe('price-formatting parse', () => {
         testConversion(0, 5, priceFormatOptions.ModernFractions, 2);
 
         testConversion(-0.5625, 5, priceFormatOptions.ModernFractions);
+
+        testConversion(-17.25, 5, priceFormatOptions.ModernFractions);
     });
 
     it('handles Special Futures Format - 64', function() {
