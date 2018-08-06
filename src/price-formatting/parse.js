@@ -102,6 +102,10 @@ function parseModernFractionalPrice(numberFormatting, s, decimals) {
     const separator = getModernFractionsSeparator(numberFormatting);
     const denominator = 1 << decimals;
 
+    const signInfo = parseNumberNegativePattern(s, numberFormatting);
+    const isNegative = signInfo[0] === '-';
+    s = signInfo[1]; // override the value without sign
+
     const pipIndex = s.indexOf(separator);
     if (pipIndex !== -1) {
         const integerPart = s.substring(0, pipIndex).trim();
@@ -111,24 +115,21 @@ function parseModernFractionalPrice(numberFormatting, s, decimals) {
             result = 0;
         }
 
-        const signInfo = parseNumberNegativePattern(integerPart, numberFormatting);
-        const isNegative = signInfo[0] === '-';
-
         if (pipIndex + 1 < s.length) {
             const pipPart = numberFormatting.parse(s.substring(pipIndex + 1).trim());
 
             if (pipPart < denominator) {
-                if (isNegative) {
-                    result -= (pipPart / denominator);
-                } else {
-                    result += (pipPart / denominator);
-                }
+                result += (pipPart / denominator);
             } else {
                 result = NaN;
             }
         }
     } else {
         result = numberFormatting.parse(s);
+    }
+
+    if (!isNaN(result) && isNegative) {
+        result *= -1;
     }
 
     return result;
