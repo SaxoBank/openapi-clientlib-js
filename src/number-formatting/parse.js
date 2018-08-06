@@ -9,9 +9,9 @@ import { endsWith, startsWith } from '../utils/string';
 
 const NO_BREAK_SPACE_REGEX = /\u00A0/g;
 
-// -- Local methods section --
+// -- Exported methods section --
 
-function parseNumberNegativePattern(value, options, tryFallback) {
+export function parseNumberNegativePattern(value, options, tryFallback) {
 
     const pre = options.negativePre.replace(NO_BREAK_SPACE_REGEX, ' ');
     const post = options.negativePost.replace(NO_BREAK_SPACE_REGEX, ' ');
@@ -27,8 +27,6 @@ function parseNumberNegativePattern(value, options, tryFallback) {
 
     return ['', value];
 }
-
-// -- Exported methods section --
 
 function parseNumber(value, options) {
 

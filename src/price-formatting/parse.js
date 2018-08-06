@@ -5,6 +5,7 @@
 
 import * as enumUtils from '../utils/enum';
 import { getModernFractionsSeparator } from './modern-fractions-character';
+import { parseNumberNegativePattern } from '../number-formatting/parse';
 
 // -- Local variables section --
 
@@ -104,13 +105,14 @@ function parseModernFractionalPrice(numberFormatting, s, decimals) {
     const pipIndex = s.indexOf(separator);
     if (pipIndex !== -1) {
         const integerPart = s.substring(0, pipIndex).trim();
-        let isNegative = false;
         if (integerPart.length > 0) {
             result = numberFormatting.parse(integerPart);
-            isNegative = integerPart.indexOf('-') === 0;
         } else {
             result = 0;
         }
+
+        const signInfo = parseNumberNegativePattern(integerPart, numberFormatting);
+        const isNegative = signInfo[0] === '-';
 
         if (pipIndex + 1 < s.length) {
             const pipPart = numberFormatting.parse(s.substring(pipIndex + 1).trim());
