@@ -73,6 +73,18 @@ describe('price-formatting parse', () => {
         testConversion(-0.5625, 5, priceFormatOptions.ModernFractions);
 
         testConversion(-17.25, 5, priceFormatOptions.ModernFractions);
+
+        testConversion(-2567.21875, 5, priceFormatOptions.ModernFractions);
+
+        testConversion(-2567.21875, 5, priceFormatOptions.ModernFractions, 1);
+
+        testConversion(-2567.21875, 5, priceFormatOptions.ModernFractions, 2);
+
+        testConversion(-2567.90625, 5, priceFormatOptions.ModernFractions, 1);
+
+        testConversion(-2567.90625, 5, priceFormatOptions.ModernFractions, 2);
+
+        testConversion(-2567.9921875, 5, priceFormatOptions.ModernFractions, 2);
     });
 
     it('handles Special Futures Format - 64', function() {
