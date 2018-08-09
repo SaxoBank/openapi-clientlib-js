@@ -58,7 +58,7 @@ export function convertFetchResponse(url, body, result, isRejected) {
         log.error(LOG_AREA, 'rejected non-response', {
             url,
             body,
-            result,
+            error: result,  // "error" is processed by the logger in a special way
         });
 
         const networkError = {
