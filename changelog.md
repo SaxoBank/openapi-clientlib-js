@@ -1,3 +1,7 @@
+#### v4.1.1
+
++ Fix parsing of negative modern fractions
+
 #### v4.1.0
 
 + Add billion to the list of shorthands for the short format function.
