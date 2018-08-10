@@ -5,6 +5,7 @@
 
 import * as enumUtils from '../utils/enum';
 import { getModernFractionsSeparator } from './modern-fractions-character';
+import { parseNumberNegativePattern } from '../number-formatting/parse';
 
 // -- Local variables section --
 
@@ -96,82 +97,99 @@ function parseDecimalprice(numberFormatting, s, formatFlags) {
     return 0;
 }
 
-function parseFractionalPrice(numberFormatting, s, formatFlags, decimals) {
-
+function parseModernFractionalPrice(numberFormatting, s, decimals) {
     let result;
+    const separator = getModernFractionsSeparator(numberFormatting);
+    const denominator = 1 << decimals;
 
-    if (formatFlags.ModernFractions) {
-        // special futures
+    const signInfo = parseNumberNegativePattern(s, numberFormatting);
+    const isNegative = signInfo[0] === '-';
+    s = signInfo[1]; // override the value without sign
 
-        const separator = getModernFractionsSeparator(numberFormatting);
-        const denominator = 1 << decimals;
-
-        const pipIndex = s.indexOf(separator);
-        if (pipIndex !== -1) {
-            const integerPart = s.substring(0, pipIndex).trim();
-            if (integerPart.length > 0) {
-                result = numberFormatting.parse(integerPart);
-            } else {
-                result = 0;
-            }
-
-            if (pipIndex + 1 < s.length) {
-                const pipPart = numberFormatting.parse(s.substring(pipIndex + 1).trim());
-
-                if (pipPart < denominator) {
-                    result = result += (pipPart / denominator);
-                } else {
-                    result = NaN;
-                }
-            }
+    const pipIndex = s.indexOf(separator);
+    if (pipIndex !== -1) {
+        const integerPart = s.substring(0, pipIndex).trim();
+        if (integerPart.length > 0) {
+            result = numberFormatting.parse(integerPart);
         } else {
-            result = numberFormatting.parse(s);
+            result = 0;
+        }
+
+        if (pipIndex + 1 < s.length) {
+            const pipPart = numberFormatting.parse(s.substring(pipIndex + 1).trim());
+
+            if (pipPart < denominator) {
+                result += (pipPart / denominator);
+            } else {
+                result = NaN;
+            }
         }
     } else {
-        const fracIndex = findFractionalPart(s);
+        result = numberFormatting.parse(s);
+    }
 
-        if (fracIndex !== -1 && fracIndex < s.length) {
-            const integerPart = s.substring(0, fracIndex).trim();
-            result = (integerPart.length > 0 ? numberFormatting.parse(integerPart) : 0.0);
+    if (!isNaN(result) && isNegative) {
+        result *= -1;
+    }
 
-            const fractionalPart = s.substring(fracIndex).trim();
-            let isVulgarFraction = false;
+    return result;
+}
 
-            if (fractionalPart.length === 1) {
-                const vulgarIndex = fractionChars.indexOf(fractionalPart);
-                if (vulgarIndex >= 0) {
-                    result += fractionCharsValues[vulgarIndex];
-                    isVulgarFraction = true;
-                }
+function parseNonModernFractionalPrice(numberFormatting, s, decimals) {
+    let result;
+    const fracIndex = findFractionalPart(s);
+
+    if (fracIndex !== -1 && fracIndex < s.length) {
+        const integerPart = s.substring(0, fracIndex).trim();
+        result = (integerPart.length > 0 ? numberFormatting.parse(integerPart) : 0.0);
+
+        const fractionalPart = s.substring(fracIndex).trim();
+        let isVulgarFraction = false;
+
+        if (fractionalPart.length === 1) {
+            const vulgarIndex = fractionChars.indexOf(fractionalPart);
+            if (vulgarIndex >= 0) {
+                result += fractionCharsValues[vulgarIndex];
+                isVulgarFraction = true;
             }
+        }
 
-            if (!isVulgarFraction) {
-                const divIndex = indexOfArray(fractionalPart, divisionChars);
-                if (divIndex !== -1 && divIndex < fractionalPart.length) {
-                    const numeratorPart = fractionalPart.substring(0, divIndex).trim();
-                    const denominatorPart = fractionalPart.substring(divIndex + 1).trim();
+        if (!isVulgarFraction) {
+            const divIndex = indexOfArray(fractionalPart, divisionChars);
+            if (divIndex !== -1 && divIndex < fractionalPart.length) {
+                const numeratorPart = fractionalPart.substring(0, divIndex).trim();
+                const denominatorPart = fractionalPart.substring(divIndex + 1).trim();
 
-                    const numeratorParsed = parseFloat(numeratorPart);
-                    const denominatorParsed = parseFloat(denominatorPart);
-                    if (numeratorParsed < denominatorParsed) {
-                        const frac = numeratorParsed / denominatorParsed;
-                        if (result >= 0) {
-                            result += frac;
-                        } else {
-                            result -= frac;
-                        }
+                const numeratorParsed = parseFloat(numeratorPart);
+                const denominatorParsed = parseFloat(denominatorPart);
+                if (numeratorParsed < denominatorParsed) {
+                    const frac = numeratorParsed / denominatorParsed;
+                    if (result >= 0) {
+                        result += frac;
                     } else {
-                        result = 0;
+                        result -= frac;
                     }
                 } else {
                     result = 0;
                 }
+            } else {
+                result = 0;
             }
-        } else {
-            result = parseInt(s, 10);
         }
+    } else {
+        result = parseInt(s, 10);
     }
+
     return result;
+}
+
+function parseFractionalPrice(numberFormatting, s, formatFlags, decimals) {
+
+    if (formatFlags.ModernFractions) {
+        // special futures
+        return parseModernFractionalPrice(numberFormatting, s, decimals);
+    }
+    return parseNonModernFractionalPrice(numberFormatting, s, decimals);
 }
 
 // -- Exported methods section --
