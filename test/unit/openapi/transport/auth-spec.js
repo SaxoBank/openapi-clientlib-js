@@ -113,17 +113,16 @@ describe('openapi TransportAuth', () => {
                 const tokenReceivedSpy = jasmine.createSpy('tokenReceived listener');
                 transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
                 transportAuth.on(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+
                 transportAuth.auth.set('TOK2', relativeDate(0));
                 fetch.resolve(401, { error: 'not authorised' });
                 tick(function() {
-                    transportAuth.off(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-                    transportAuth.off(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
                     expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
 
                     transportAuth.auth.set('TOK4', relativeDate(0));
-                    fetch.resolve(401, { error: 'not authorised' });
+                    fetch.resolve(403, { error: 'not authorised' });
                     tick(function() {
-                        expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
+                        expect(tokenRefreshFailSpy.calls.count()).toEqual(2);
                         expect(tokenReceivedSpy.calls.count()).toEqual(0);
                         done();
                     });
@@ -301,7 +300,7 @@ describe('openapi TransportAuth', () => {
             jasmine.clock().tick(10000);
 
             expect(fetch.calls.count()).toEqual(1);
-            fetch.reject(400);
+            fetch.resolve(400);
 
             tick(() => {
                 expect(fetch.calls.count()).toEqual(1);
@@ -309,7 +308,7 @@ describe('openapi TransportAuth', () => {
                 jasmine.clock().tick(598);
                 tick(() => {
                     expect(fetch.calls.count()).toEqual(2);
-                    fetch.reject(400);
+                    fetch.resolve(400);
 
                     jasmine.clock().tick(10000);
                     tick(() => {
@@ -390,6 +389,24 @@ describe('openapi TransportAuth', () => {
             });
         });
 
+        it('does a refresh if the timer should have fired but didnt (dropping timeouts while sleeping)', (done) => {
+            const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh' };
+            transportAuth = new TransportAuth('localhost/openapi', initialOptions);
+
+            clearTimeout(transportAuth.tokenRefreshTimer);
+            jasmine.clock().tick(15000);
+            expect(fetch.calls.count()).toEqual(0);
+            transportAuth.get('service_group', 'url');
+            expect(fetch.calls.count()).toEqual(1);
+
+            fetch.resolve(401); // should notice the timer hasnt fired like it should
+
+            tick(() => {
+                expect(fetch.calls.count()).toEqual(2);
+                done();
+            });
+        });
+
         it('does nothing when a transport call returns a 401 and it is refresh retrying', (done) => {
             const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh' };
             transportAuth = new TransportAuth('localhost/openapi', initialOptions);
@@ -400,6 +417,7 @@ describe('openapi TransportAuth', () => {
 
             jasmine.clock().tick(10000);
             expect(fetch.calls.count()).toEqual(1);
+            // reject the refresh request so it will retry
             fetch.reject();
 
             tick(() => {
