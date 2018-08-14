@@ -208,7 +208,7 @@ describe('openapi TransportCore', () => {
             transport = new TransportCore('localhost/openapi');
             const getPromise = transport.get('service_group', 'account/info', null);
 
-            fetch.reject(200, { Test: true });
+            fetch.resolve(404, { Test: true });
 
             const getSpy = jasmine.createSpy('getSpy');
             getPromise.catch(getSpy);
@@ -217,7 +217,7 @@ describe('openapi TransportCore', () => {
                 expect(getSpy.calls.count()).toEqual(1);
 
                 const res = getSpy.calls.argsFor(0)[0];
-                expect(res).toEqual(jasmine.objectContaining({ status: 200, response: { Test: true } }));
+                expect(res).toEqual(jasmine.objectContaining({ status: 404, response: { Test: true } }));
                 expect(res.headers.get('content-type')).toEqual('application/json; utf-8');
                 done();
             });

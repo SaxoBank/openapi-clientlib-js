@@ -114,14 +114,14 @@ describe('openapi TransportAuth', () => {
                 transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
                 transportAuth.on(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
                 transportAuth.auth.set('TOK2', relativeDate(0));
-                fetch.reject(401, { error: 'not authorised' });
+                fetch.resolve(401, { error: 'not authorised' });
                 tick(function() {
                     transportAuth.off(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
                     transportAuth.off(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
                     expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
 
                     transportAuth.auth.set('TOK4', relativeDate(0));
-                    fetch.reject(401, { error: 'not authorised' });
+                    fetch.resolve(401, { error: 'not authorised' });
                     tick(function() {
                         expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
                         expect(tokenReceivedSpy.calls.count()).toEqual(0);
@@ -138,14 +138,14 @@ describe('openapi TransportAuth', () => {
                 transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
                 transportAuth.on(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
                 transportAuth.auth.set('TOK2', relativeDate(0));
-                fetch.reject(403, { error: 'forbidden' });
+                fetch.resolve(403, { error: 'forbidden' });
                 tick(function() {
                     transportAuth.off(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
                     transportAuth.off(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
                     expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
 
                     transportAuth.auth.set('TOK4', relativeDate(0));
-                    fetch.reject(403, { error: 'forbidden' });
+                    fetch.resolve(403, { error: 'forbidden' });
                     tick(function() {
                         expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
                         expect(tokenReceivedSpy.calls.count()).toEqual(0);

@@ -52,16 +52,7 @@ function convertFetchReject(url, body, error) {
  */
 export function convertFetchSuccess(url, body, result) {
     let convertedPromise;
-    if ((result.status < 200 || result.status > 299) && result.status !== 304) {
-        log.error(LOG_AREA, 'rejected server response', {
-            url,
-            body,
-            status: result.status,
-            response: result.response,
-        });
 
-        throw result;
-    }
     const contentType = result.headers.get('content-type');
     if (contentType && contentType.indexOf('application/json') > -1) {
         convertedPromise = result.text()
@@ -136,6 +127,20 @@ export function convertFetchSuccess(url, body, result) {
             };
         });
     }
+
+    if ((result.status < 200 || result.status > 299) && result.status !== 304) {
+        convertedPromise = convertedPromise.then((newResult) => {
+            log.error(LOG_AREA, 'rejected server response', {
+                url,
+                body,
+                status: newResult.status,
+                response: newResult.response,
+            });
+
+            throw newResult;
+        });
+    }
+
     return convertedPromise;
 }
 
