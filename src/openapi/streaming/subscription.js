@@ -19,7 +19,7 @@ import SerializerFacade from './serializer-facade';
 /**
  * The static counter to generate unique reference id's.
  */
-let referenceIdCounter = 0;
+let referenceIdCounter = 1;
 
 const STATE_SUBSCRIBE_REQUESTED = 0x1;
 const STATE_SUBSCRIBED = 0x2;
@@ -237,7 +237,7 @@ function onSubscribeSuccess(referenceId, result) {
     const responseData = result.response;
 
     if (referenceId !== this.referenceId) {
-        log.warn(LOG_AREA, 'Received an Ok subscribe response for subscribing a subscription that has afterwards been reset - ignoring');
+        log.error(LOG_AREA, 'Received an Ok subscribe response for subscribing a subscription that has afterwards been reset - ignoring');
         // we could send the contextId as well an attempt a unsubscribe, but its hard to guess what could lead to this.
         // - (reset by disconnect/reconnect from streaming) we started subscribing, then web sockets was disconnected, but
         //    the server doesn't know it yet
@@ -255,7 +255,7 @@ function onSubscribeSuccess(referenceId, result) {
     this.inactivityTimeout = responseData.InactivityTimeout || 0;
 
     if (this.inactivityTimeout === 0) {
-        log.warn(LOG_AREA, 'inactivity timeout is 0 - interpretting as never timeout. Remove warning if normal.', result);
+        log.warn(LOG_AREA, 'inactivity timeout is 0 - interpreting as never timeout. Remove warning if normal.', result);
     }
 
     onActivity.call(this);
