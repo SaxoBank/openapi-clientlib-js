@@ -103,6 +103,56 @@ function formatPricePartsFraction(parts, numberFormatting, value, decimals, form
     parts.DeciPips = '';
 }
 
+function getAllowDecimalPipsParts(formatFlags, basePart, deciPipsPart, numberFormatting) {
+    if (!formatFlags.DeciPipsSpaceSeparator && !formatFlags.DeciPipsDecimalSeparator) {
+        if (endsWith(basePart, numberFormatting.decimalSeparator)) {
+            basePart = basePart.substr(0, basePart.length - 1);
+            deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
+        }
+    } else if (formatFlags.DeciPipsDecimalSeparator) {
+        if (endsWith(basePart, numberFormatting.decimalSeparator)) {
+            basePart = basePart.substr(0, basePart.length - 1);
+            deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
+        } else {
+            deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
+        }
+
+        // else SpaceSeparator
+    } else if (endsWith(basePart, numberFormatting.decimalSeparator)) {
+        basePart = basePart.substr(0, basePart.length - 1);
+        deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
+    } else {
+        deciPipsPart = NO_BREAK_SPACE + deciPipsPart;
+    }
+
+    return { basePart, deciPipsPart };
+}
+
+function getFractionParts(formatFlags, basePart, deciPipsPart, numberFormatting) {
+    let deciPipsIsFractionalPart = false;
+
+    if (endsWith(basePart, numberFormatting.decimalSeparator)) {
+        basePart = basePart.substr(0, basePart.length - 1);
+        deciPipsIsFractionalPart = true;
+    }
+
+    if (deciPipsPart === '5') {
+        deciPipsPart = String.fromCharCode(0xBD);
+        deciPipsIsFractionalPart = false;
+    } else if (formatFlags.DeciPipsSpaceForZero && deciPipsPart === '0') {
+        deciPipsPart = NO_BREAK_SPACE;
+        deciPipsIsFractionalPart = false;
+    }
+
+    if (formatFlags.DeciPipsSpaceSeparator) {
+        deciPipsPart = NO_BREAK_SPACE + deciPipsPart;
+    } else if (deciPipsIsFractionalPart) {
+        deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
+    }
+
+    return { basePart, deciPipsPart };
+}
+
 function formatPricePartsDecimals(parts, numberFormatting, value, decimals, formatFlags, decimalPips, formatAsPips) {
 
     let actualDecimals;
@@ -132,47 +182,13 @@ function formatPricePartsDecimals(parts, numberFormatting, value, decimals, form
         let deciPipsPart = fullPrice.substr(fullPrice.length - decimalPipsCount, decimalPipsCount);
 
         if (formatFlags.AllowDecimalPips && !formatAsPips) {
-            if (!formatFlags.DeciPipsSpaceSeparator && !formatFlags.DeciPipsDecimalSeparator) {
-                if (endsWith(basePart, numberFormatting.decimalSeparator)) {
-                    basePart = basePart.substr(0, basePart.length - 1);
-                    deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
-                }
-            } else if (formatFlags.DeciPipsDecimalSeparator) {
-                if (endsWith(basePart, numberFormatting.decimalSeparator)) {
-                    basePart = basePart.substr(0, basePart.length - 1);
-                    deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
-                } else {
-                    deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
-                }
-
-                // else SpaceSeparator
-            } else if (endsWith(basePart, numberFormatting.decimalSeparator)) {
-                basePart = basePart.substr(0, basePart.length - 1);
-                deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
-            } else {
-                deciPipsPart = NO_BREAK_SPACE + deciPipsPart;
-            }
+            const updatedParts = getAllowDecimalPipsParts(formatFlags, basePart, deciPipsPart, numberFormatting);
+            basePart = updatedParts.basePart;
+            deciPipsPart = updatedParts.deciPipsPart;
         } else { // Fraction
-            let deciPipsIsFractionalPart = false;
-
-            if (endsWith(basePart, numberFormatting.decimalSeparator)) {
-                basePart = basePart.substr(0, basePart.length - 1);
-                deciPipsIsFractionalPart = true;
-            }
-
-            if (deciPipsPart === '5') {
-                deciPipsPart = String.fromCharCode(0xBD);
-                deciPipsIsFractionalPart = false;
-            } else if (formatFlags.DeciPipsSpaceForZero && deciPipsPart === '0') {
-                deciPipsPart = NO_BREAK_SPACE;
-                deciPipsIsFractionalPart = false;
-            }
-
-            if (formatFlags.DeciPipsSpaceSeparator) {
-                deciPipsPart = NO_BREAK_SPACE + deciPipsPart;
-            } else if (deciPipsIsFractionalPart) {
-                deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
-            }
+            const updatedParts = getFractionParts(formatFlags, basePart, deciPipsPart, numberFormatting);
+            basePart = updatedParts.basePart;
+            deciPipsPart = updatedParts.deciPipsPart;
         }
 
         parts.DeciPips = deciPipsPart;
