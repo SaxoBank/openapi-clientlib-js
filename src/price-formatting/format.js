@@ -103,7 +103,7 @@ function formatPricePartsFraction(parts, numberFormatting, value, decimals, form
     parts.DeciPips = '';
 }
 
-function formatPricePartsDecimals(parts, numberFormatting, value, decimals, formatFlags, decimalPips) {
+function formatPricePartsDecimals(parts, numberFormatting, value, decimals, formatFlags, decimalPips, formatAsPips) {
 
     let actualDecimals;
 
@@ -131,7 +131,7 @@ function formatPricePartsDecimals(parts, numberFormatting, value, decimals, form
         let basePart = fullPrice.substr(0, fullPrice.length - decimalPipsCount);
         let deciPipsPart = fullPrice.substr(fullPrice.length - decimalPipsCount, decimalPipsCount);
 
-        if (formatFlags.AllowDecimalPips && !formatFlags.FormatAsPips) {
+        if (formatFlags.AllowDecimalPips && !formatAsPips) {
             if (!formatFlags.DeciPipsSpaceSeparator && !formatFlags.DeciPipsDecimalSeparator) {
                 if (endsWith(basePart, numberFormatting.decimalSeparator)) {
                     basePart = basePart.substr(0, basePart.length - 1);
@@ -177,7 +177,7 @@ function formatPricePartsDecimals(parts, numberFormatting, value, decimals, form
 
         parts.DeciPips = deciPipsPart;
 
-        if (formatFlags.FormatAsPips) {
+        if (formatAsPips) {
             getFormatAsPipsParts(basePart, parts, decimals, numberFormatting);
         } else {
             getFirstAndPipsParts(basePart, parts, numberFormatting);
@@ -193,9 +193,10 @@ function formatPricePartsDecimals(parts, numberFormatting, value, decimals, form
  * @param formatFlags
  * @param numeratorDecimals
  * @param decimalPips
+ * @param formatAsPips
  * @returns {PriceParts}
  */
-function formatPriceParts(numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips) {
+function formatPriceParts(numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips, formatAsPips) {
 
     const parts = { Pre: '', Post: '', First: '', Pips: '', DeciPips: '' };
 
@@ -209,7 +210,7 @@ function formatPriceParts(numberFormatting, value, decimals, formatFlags, numera
     if (formatFlags.ModernFractions || formatFlags.Fractions) {
         formatPricePartsFraction(parts, numberFormatting, value, decimals, formatFlags, numeratorDecimals);
     } else {
-        formatPricePartsDecimals(parts, numberFormatting, value, decimals, formatFlags, decimalPips);
+        formatPricePartsDecimals(parts, numberFormatting, value, decimals, formatFlags, decimalPips, formatAsPips);
     }
 
     if (isNegative) {
@@ -234,9 +235,10 @@ function formatPriceParts(numberFormatting, value, decimals, formatFlags, numera
  *          half-pips (decimal pips), and which format should be used.
  * @param {number} [numeratorDecimals=0] - In the case of Fractions or ModernFractions, this is the number of decimals on the fraction numerator
  * @param {number} decimalPips - In the case of AllowDecimalPips, the number of digits to format as decimal pips. Defaults to 1.
+ * @param {boolean} formatAsPips - Whether the price should be formatted as pips rather than an absolute price.
  * @returns {PriceParts} An object containing the formatted price.
  */
-function formatPrice(numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips) {
+function formatPrice(numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips, formatAsPips) {
 
     if (formatFlags) {
         formatFlags = enumUtils.toObject(formatFlags);
@@ -253,7 +255,7 @@ function formatPrice(numberFormatting, value, decimals, formatFlags, numeratorDe
             'with positive decimals and the Fractions or ModernFractions flag');
     }
 
-    const parts = formatPriceParts(numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips);
+    const parts = formatPriceParts(numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips, formatAsPips);
 
     return parts;
 }

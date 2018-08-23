@@ -38,11 +38,12 @@ function PriceFormatting(numberOptions) {
  *          - see {@link saxo.priceFormatOptions}. If the flag is not recognised, it will be treated as if it is "Normal"
  * @param {number} [numeratorDecimals=0] - The number of decimal places of the numerator in the case of fractions and modern fractions.
  * @param {number} decimalPips - In the case of AllowDecimalPips, the number of digits to format as decimal pips. Defaults to 1.
+ * @param {boolean} formatAsPips - Whether the price should be formatted as pips rather than an absolute price.
  * @returns {string} The formatting string.
  */
-PriceFormatting.prototype.format = function(value, decimals, formatFlags, numeratorDecimals, decimalPips) {
+PriceFormatting.prototype.format = function(value, decimals, formatFlags, numeratorDecimals, decimalPips, formatAsPips) {
 
-    const parts = formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips);
+    const parts = formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips, formatAsPips);
     return parts.Pre + parts.First + parts.Pips + parts.DeciPips + parts.Post;
 };
 
@@ -65,8 +66,8 @@ PriceFormatting.prototype.format = function(value, decimals, formatFlags, numera
  * @param {number} decimalPips - In the case of AllowDecimalPips, the number of digits to format as decimal pips. Defaults to 1.
  * @returns {saxo.PriceParts} formatted price parts.
  */
-PriceFormatting.prototype.formatPriceParts = function(value, decimals, formatFlags, numeratorDecimals, decimalPips) {
-    return formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips);
+PriceFormatting.prototype.formatPriceParts = function(value, decimals, formatFlags, numeratorDecimals, decimalPips, formatAsPips) {
+    return formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips, formatAsPips);
 };
 
 /**
@@ -83,7 +84,7 @@ PriceFormatting.prototype.formatTemplated = function(value, decimals, formatFlag
     if (!templateStr) {
         templateStr = '{Pre}{First}{Pips}<small>{DeciPips}</small>{Post}';
     }
-    const parts = formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips);
+    const parts = formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals, decimalPips, formatAsPips);
     return formatTemplate(templateStr, parts);
 };
 
