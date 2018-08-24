@@ -40,6 +40,11 @@ describe('NumberFormatting format', () => {
             expect(formatNumberNoRounding(-1.126, 1, 2)).toEqual('-1.13');
             expect(formatNumberNoRounding(-1.1, 4, 5)).toEqual('-1.1000');
             expect(formatNumberNoRounding(-5e-7, 4, 8)).toEqual('-0.0000005');
+
+            expect(formatNumberNoRounding(-1.1212, 1, 0)).toEqual('-1');
+            expect(formatNumberNoRounding(-1.126, 1, 0)).toEqual('-1');
+            expect(formatNumberNoRounding(-1.1, 4, 0)).toEqual('-1');
+            expect(formatNumberNoRounding(-5e-7, 4, 0)).toEqual('0');
         });
     });
 

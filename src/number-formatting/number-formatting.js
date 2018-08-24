@@ -72,14 +72,7 @@ NumberFormatting.prototype.format = function(num, decimals) {
  * @param {number} [maxDecimals] - The maximum number of decimals to display after the decimal point.
  * @returns {string}
  */
-NumberFormatting.prototype.formatNoRounding = function(num, minDecimals, maxDecimals) {
-    if (!minDecimals) {
-        minDecimals = 0;
-    }
-    if (!maxDecimals) {
-        maxDecimals = 8;
-    }
-
+NumberFormatting.prototype.formatNoRounding = function(num, minDecimals = 0, maxDecimals = 8) {
     return formatNumber(num,
         Math.min(maxDecimals, Math.max(minDecimals, this.getActualDecimals(num))),
         this);
