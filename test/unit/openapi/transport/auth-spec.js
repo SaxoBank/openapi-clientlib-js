@@ -104,27 +104,105 @@ describe('openapi TransportAuth', () => {
                 });
             });
         });
-        it('fires an event when token refreshing failed', function(done) {
-            const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
-            transportAuth = new TransportAuth('localhost/openapi', options);
+        describe('when token refreshing fails', function() {
+            it('fires an event if unauthorized', function(done) {
+                const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+                transportAuth = new TransportAuth('localhost/openapi', options);
 
-            const tokenRefreshFailSpy = jasmine.createSpy('tokenRefreshFail listener');
-            const tokenReceivedSpy = jasmine.createSpy('tokenReceived listener');
-            transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-            transportAuth.on(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
-            transportAuth.auth.set('TOK2', relativeDate(0));
-            fetch.reject('401', { error: 'not authorised' });
-            tick(function() {
-                transportAuth.off(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-                transportAuth.off(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
-                expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
-
-                transportAuth.auth.set('TOK4', relativeDate(0));
-                fetch.reject('401', { error: 'not authorised' });
+                const tokenRefreshFailSpy = jasmine.createSpy('tokenRefreshFail listener');
+                const tokenReceivedSpy = jasmine.createSpy('tokenReceived listener');
+                transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
+                transportAuth.on(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                transportAuth.auth.set('TOK2', relativeDate(0));
+                fetch.resolve(401, { error: 'not authorised' });
                 tick(function() {
+                    transportAuth.off(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
+                    transportAuth.off(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
                     expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
-                    expect(tokenReceivedSpy.calls.count()).toEqual(0);
-                    done();
+
+                    transportAuth.auth.set('TOK4', relativeDate(0));
+                    fetch.resolve(401, { error: 'not authorised' });
+                    tick(function() {
+                        expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
+                        expect(tokenReceivedSpy.calls.count()).toEqual(0);
+                        done();
+                    });
+                });
+            });
+            it('fires an event if forbidden', function(done) {
+                const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+                transportAuth = new TransportAuth('localhost/openapi', options);
+
+                const tokenRefreshFailSpy = jasmine.createSpy('tokenRefreshFail listener');
+                const tokenReceivedSpy = jasmine.createSpy('tokenReceived listener');
+                transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
+                transportAuth.on(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                transportAuth.auth.set('TOK2', relativeDate(0));
+                fetch.resolve(403, { error: 'forbidden' });
+                tick(function() {
+                    transportAuth.off(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
+                    transportAuth.off(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                    expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
+
+                    transportAuth.auth.set('TOK4', relativeDate(0));
+                    fetch.resolve(403, { error: 'forbidden' });
+                    tick(function() {
+                        expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
+                        expect(tokenReceivedSpy.calls.count()).toEqual(0);
+                        done();
+                    });
+                });
+            });
+            it('fires an event after retrying', function(done) {
+                const options = {
+                    token: 'TOKEN',
+                    expiry: relativeDate(60),
+                    tokenRefreshUrl: 'http://refresh',
+                    maxRetryCount: 1,
+                };
+                transportAuth = new TransportAuth('localhost/openapi', options);
+
+                const tokenRefreshFailSpy = jasmine.createSpy('tokenRefreshFail listener');
+                const tokenReceivedSpy = jasmine.createSpy('tokenReceived listener');
+                transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
+                transportAuth.on(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                transportAuth.auth.set('TOK2', relativeDate(0));
+                fetch.reject(new Error('Network error'));
+                tick(function() {
+                    expect(tokenRefreshFailSpy.calls.count()).toEqual(0);
+                    transportAuth.auth.set('TOK4', relativeDate(0));
+                    fetch.reject(new Error('Network error'));
+                    tick(function() {
+                        expect(tokenRefreshFailSpy.calls.count()).toEqual(1);
+                        expect(tokenReceivedSpy.calls.count()).toEqual(0);
+                        done();
+                    });
+                });
+            });
+            it('retries and recovers after a fail', function(done) {
+                const options = {
+                    token: 'TOKEN',
+                    expiry: relativeDate(60),
+                    tokenRefreshUrl: 'http://refresh',
+                    maxRetryCount: 1,
+                };
+                transportAuth = new TransportAuth('localhost/openapi', options);
+
+                const tokenRefreshFailSpy = jasmine.createSpy('tokenRefreshFail listener');
+                const tokenReceivedSpy = jasmine.createSpy('tokenReceived listener');
+                transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
+                transportAuth.on(transportAuth.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                transportAuth.auth.set('TOK2', relativeDate(0));
+                fetch.reject(new Error('Network error'));
+                tick(function() {
+                    expect(tokenRefreshFailSpy.calls.count()).toEqual(0);
+                    transportAuth.auth.set('TOK4', relativeDate(0));
+                    fetch.resolve(200, { token: 'TOK5', expiry: 60 });
+                    tick(function() {
+                        expect(tokenRefreshFailSpy.calls.count()).toEqual(0);
+                        expect(tokenReceivedSpy.calls.count()).toEqual(1);
+                        done();
+                    });
                 });
             });
         });

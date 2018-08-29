@@ -80,12 +80,18 @@ function onApiTokenReceived(result) {
 function onApiTokenReceiveFail(result) {
     this.state = STATE_WAITING;
     log.warn(LOG_AREA, 'Token refresh failed', result);
-    this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
+
+    if (result && (result.status === 401 || result.status === 403)) {
+        this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
+        return;
+    }
 
     if (this.retries < this.maxRetryCount) {
         this.retries++;
         this.tokenRefreshTimerFireTime = Date.now() + this.retryDelayMs;
         this.tokenRefreshTimer = setTimeout(this.refreshOpenApiToken.bind(this), this.retryDelayMs);
+    } else {
+        this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
     }
 }
 
