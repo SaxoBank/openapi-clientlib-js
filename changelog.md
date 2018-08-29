@@ -1,3 +1,8 @@
+#### v4.1.2
+
++ Improvements for handling network errors
++ Tweaks to better detect subscription problems
+
 #### v4.1.1
 
 + Fix parsing of negative modern fractions
