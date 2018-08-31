@@ -828,6 +828,20 @@ describe('price-formatting format', () => {
         expect(parts.Pips).toEqual('0');
         expect(parts.DeciPips).toEqual('.01');
         expect(parts.Post).toEqual('');
+
+        parts = priceFormatting.formatPriceParts(-1.234, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2);
+        expect(parts.Pre).toEqual('-');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('12,340');
+        expect(parts.DeciPips).toEqual('.00');
+        expect(parts.Post).toEqual('');
+
+        parts = priceFormatting_ar_eg.formatPriceParts(-1.234, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2);
+        expect(parts.Pre).toEqual('');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('12,340');
+        expect(parts.DeciPips).toEqual('.00');
+        expect(parts.Post).toEqual('-');
     });
 
     it('handles non numbers', () => {
