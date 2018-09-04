@@ -292,99 +292,99 @@ describe('price-formatting format', () => {
 
         expect(priceFormatting.format(46872.51, 0, priceFormatOptions.AllowDecimalPips)).toEqual('46,872.5');
 
-        // Specifying decimal pips
-        expect(priceFormatting.format(0.00235, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('0.002350');
+        // AllowTwoDecimalPips
+        expect(priceFormatting.format(0.00235, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.002350');
 
-        expect(priceFormatting.format(0.002384, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('0.002384');
+        expect(priceFormatting.format(0.002384, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.002384');
 
-        expect(priceFormatting.format(-0.002384, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('-0.002384');
+        expect(priceFormatting.format(-0.002384, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('-0.002384');
 
-        expect(priceFormatting.format(0.00001, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('0.000010');
+        expect(priceFormatting.format(0.00001, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.000010');
 
-        expect(priceFormatting.format(0.000001, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('0.000001');
+        expect(priceFormatting.format(0.000001, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.000001');
 
-        expect(priceFormatting.format(0.0000001, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('0.000000');
+        expect(priceFormatting.format(0.0000001, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.000000');
 
-        expect(priceFormatting.format(1, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('1.000000');
+        expect(priceFormatting.format(1, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('1.000000');
 
-        expect(priceFormatting.format(-1, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('-1.000000');
+        expect(priceFormatting.format(-1, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('-1.000000');
 
-        expect(priceFormatting.format(1234.00238, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('1,234.002380');
+        expect(priceFormatting.format(1234.00238, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('1,234.002380');
 
-        expect(priceFormatting.format(1234.0023, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('1,234.002300');
+        expect(priceFormatting.format(1234.0023, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('1,234.002300');
 
-        expect(priceFormatting_fr_fr.format(1234.0023, 4, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('1\u00a0234,002300');
+        expect(priceFormatting_fr_fr.format(1234.0023, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('1\u00a0234,002300');
 
-        expect(priceFormatting.format(0.002384, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.DeciPipsDecimalSeparator], null, 2)).toEqual('0.0023.84');
+        expect(priceFormatting.format(0.002384, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.DeciPipsDecimalSeparator])).toEqual('0.0023.84');
 
-        expect(priceFormatting.format(0.002384, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.DeciPipsSpaceSeparator], null, 2)).toEqual('0.0023\u00a084');
+        expect(priceFormatting.format(0.002384, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.DeciPipsSpaceSeparator])).toEqual('0.0023\u00a084');
 
-        expect(priceFormatting.format(0.034, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('0.0340');
+        expect(priceFormatting.format(0.034, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.0340');
 
-        expect(priceFormatting.format(0.0349, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('0.0349');
+        expect(priceFormatting.format(0.0349, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.0349');
 
-        expect(priceFormatting.format(-0.0349, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('-0.0349');
+        expect(priceFormatting.format(-0.0349, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('-0.0349');
 
-        expect(priceFormatting.format(0.001, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('0.0010');
+        expect(priceFormatting.format(0.001, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.0010');
 
-        expect(priceFormatting.format(0.0001, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('0.0001');
+        expect(priceFormatting.format(0.0001, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.0001');
 
-        expect(priceFormatting.format(0.00001, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('0.0000');
+        expect(priceFormatting.format(0.00001, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.0000');
 
-        expect(priceFormatting.format(1, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('1.0000');
+        expect(priceFormatting.format(1, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('1.0000');
 
-        expect(priceFormatting.format(-1, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('-1.0000');
+        expect(priceFormatting.format(-1, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('-1.0000');
 
-        expect(priceFormatting.format(1234.002, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('1,234.0020');
+        expect(priceFormatting.format(1234.002, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('1,234.0020');
 
-        expect(priceFormatting.format(1234.0023, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('1,234.0023');
+        expect(priceFormatting.format(1234.0023, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('1,234.0023');
 
-        expect(priceFormatting_fr_fr.format(1234.0023, 2, priceFormatOptions.AllowDecimalPips, null, 2)).toBe('1\u00a0234,0023');
+        expect(priceFormatting_fr_fr.format(1234.0023, 2, priceFormatOptions.AllowTwoDecimalPips)).toBe('1\u00a0234,0023');
 
-        expect(priceFormatting.format(0.0023, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.DeciPipsDecimalSeparator], null, 2)).toEqual('0.00.23');
+        expect(priceFormatting.format(0.0023, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.DeciPipsDecimalSeparator])).toEqual('0.00.23');
 
-        expect(priceFormatting.format(0.0023, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.DeciPipsSpaceSeparator], null, 2)).toEqual('0.00\u00a023');
+        expect(priceFormatting.format(0.0023, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.DeciPipsSpaceSeparator])).toEqual('0.00\u00a023');
 
-        // Specifying decimal pips and FormatAsPips
-        expect(priceFormatting.format(0.00235, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toEqual('23.50');
+        // AllowTwoDecimalPips and FormatAsPips
+        expect(priceFormatting.format(0.00235, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toEqual('23.50');
 
-        expect(priceFormatting.format(0.002384, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('23.84');
+        expect(priceFormatting.format(0.002384, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('23.84');
 
-        expect(priceFormatting.format(-0.002384, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('-23.84');
+        expect(priceFormatting.format(-0.002384, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('-23.84');
 
-        expect(priceFormatting.format(1234.002384, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('12,340,023.84');
+        expect(priceFormatting.format(1234.002384, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('12,340,023.84');
 
-        expect(priceFormatting.format(0.00001, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('0.10');
+        expect(priceFormatting.format(0.00001, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('0.10');
 
-        expect(priceFormatting.format(0.000001, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('0.01');
+        expect(priceFormatting.format(0.000001, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('0.01');
 
-        expect(priceFormatting.format(0.0000001, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('0.00');
+        expect(priceFormatting.format(0.0000001, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('0.00');
 
-        expect(priceFormatting.format(1, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('10,000.00');
+        expect(priceFormatting.format(1, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('10,000.00');
 
-        expect(priceFormatting.format(-1, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('-10,000.00');
+        expect(priceFormatting.format(-1, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('-10,000.00');
 
-        expect(priceFormatting.format(0.235, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toEqual('23.50');
+        expect(priceFormatting.format(0.235, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toEqual('23.50');
 
-        expect(priceFormatting.format(0.2384, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('23.84');
+        expect(priceFormatting.format(0.2384, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('23.84');
 
-        expect(priceFormatting.format(-0.2384, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('-23.84');
+        expect(priceFormatting.format(-0.2384, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('-23.84');
 
-        expect(priceFormatting.format(1234.2384, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('123,423.84');
+        expect(priceFormatting.format(1234.2384, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('123,423.84');
 
-        expect(priceFormatting.format(0.001, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('0.10');
+        expect(priceFormatting.format(0.001, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('0.10');
 
-        expect(priceFormatting.format(0.0001, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('0.01');
+        expect(priceFormatting.format(0.0001, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('0.01');
 
-        expect(priceFormatting.format(0.00001, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('0.00');
+        expect(priceFormatting.format(0.00001, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('0.00');
 
-        expect(priceFormatting.format(1, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('100.00');
+        expect(priceFormatting.format(1, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('100.00');
 
-        expect(priceFormatting.format(-1, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('-100.00');
+        expect(priceFormatting.format(-1, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('-100.00');
 
-        expect(priceFormatting_fr_fr.format(1234.002384, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('12\u00a0340\u00a0023,84');
+        expect(priceFormatting_fr_fr.format(1234.002384, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('12\u00a0340\u00a0023,84');
 
-        expect(priceFormatting_fr_fr.format(1234.2384, 2, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2)).toBe('123\u00a0423,84');
+        expect(priceFormatting_fr_fr.format(1234.2384, 2, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips])).toBe('123\u00a0423,84');
 
         // Significant decimal separator
         expect(priceFormatting.format(46872.51, 0, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.DeciPipsSpaceSeparator])).toEqual('46,872.5');
@@ -771,72 +771,72 @@ describe('price-formatting format', () => {
         expect(parts.DeciPips).toEqual('');
         expect(parts.Post).toEqual('');
 
-        // When supplying DecimalPips
-        parts = priceFormatting.formatPriceParts(123.23456, 4, priceFormatOptions.AllowDecimalPips, null, 2);
+        // When AllowTwoDecimalPips
+        parts = priceFormatting.formatPriceParts(123.23456, 4, priceFormatOptions.AllowTwoDecimalPips);
         expect(parts.Pre).toEqual('');
         expect(parts.First).toEqual('123.23');
         expect(parts.Pips).toEqual('45');
         expect(parts.DeciPips).toEqual('60');
         expect(parts.Post).toEqual('');
 
-        parts = priceFormatting.formatPriceParts(1, 4, priceFormatOptions.AllowDecimalPips, null, 2);
+        parts = priceFormatting.formatPriceParts(1, 4, priceFormatOptions.AllowTwoDecimalPips);
         expect(parts.Pre).toEqual('');
         expect(parts.First).toEqual('1.00');
         expect(parts.Pips).toEqual('00');
         expect(parts.DeciPips).toEqual('00');
         expect(parts.Post).toEqual('');
 
-        parts = priceFormatting.formatPriceParts(0.008899, 4, priceFormatOptions.AllowDecimalPips, null, 2);
+        parts = priceFormatting.formatPriceParts(0.008899, 4, priceFormatOptions.AllowTwoDecimalPips);
         expect(parts.Pre).toEqual('');
         expect(parts.First).toEqual('0.00');
         expect(parts.Pips).toEqual('88');
         expect(parts.DeciPips).toEqual('99');
         expect(parts.Post).toEqual('');
 
-        parts = priceFormatting.formatPriceParts(0.000001, 4, priceFormatOptions.AllowDecimalPips, null, 2);
+        parts = priceFormatting.formatPriceParts(0.000001, 4, priceFormatOptions.AllowTwoDecimalPips);
         expect(parts.Pre).toEqual('');
         expect(parts.First).toEqual('0.00');
         expect(parts.Pips).toEqual('00');
         expect(parts.DeciPips).toEqual('01');
         expect(parts.Post).toEqual('');
 
-        // When FormatAsPips
-        parts = priceFormatting.formatPriceParts(123.23456, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2);
+        // When AllowTwoDecimalPips and FormatAsPips
+        parts = priceFormatting.formatPriceParts(123.23456, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips]);
         expect(parts.Pre).toEqual('');
         expect(parts.First).toEqual('');
         expect(parts.Pips).toEqual('1,232,345');
         expect(parts.DeciPips).toEqual('.60');
         expect(parts.Post).toEqual('');
 
-        parts = priceFormatting.formatPriceParts(1, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2);
+        parts = priceFormatting.formatPriceParts(1, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips]);
         expect(parts.Pre).toEqual('');
         expect(parts.First).toEqual('');
         expect(parts.Pips).toEqual('10,000');
         expect(parts.DeciPips).toEqual('.00');
         expect(parts.Post).toEqual('');
 
-        parts = priceFormatting.formatPriceParts(0.008899, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2);
+        parts = priceFormatting.formatPriceParts(0.008899, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips]);
         expect(parts.Pre).toEqual('');
         expect(parts.First).toEqual('');
         expect(parts.Pips).toEqual('88');
         expect(parts.DeciPips).toEqual('.99');
         expect(parts.Post).toEqual('');
 
-        parts = priceFormatting.formatPriceParts(0.000001, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2);
+        parts = priceFormatting.formatPriceParts(0.000001, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips]);
         expect(parts.Pre).toEqual('');
         expect(parts.First).toEqual('');
         expect(parts.Pips).toEqual('0');
         expect(parts.DeciPips).toEqual('.01');
         expect(parts.Post).toEqual('');
 
-        parts = priceFormatting.formatPriceParts(-1.234, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2);
+        parts = priceFormatting.formatPriceParts(-1.234, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips]);
         expect(parts.Pre).toEqual('-');
         expect(parts.First).toEqual('');
         expect(parts.Pips).toEqual('12,340');
         expect(parts.DeciPips).toEqual('.00');
         expect(parts.Post).toEqual('');
 
-        parts = priceFormatting_ar_eg.formatPriceParts(-1.234, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips], null, 2);
+        parts = priceFormatting_ar_eg.formatPriceParts(-1.234, 4, [priceFormatOptions.AllowTwoDecimalPips, priceFormatOptions.FormatAsPips]);
         expect(parts.Pre).toEqual('');
         expect(parts.First).toEqual('');
         expect(parts.Pips).toEqual('12,340');

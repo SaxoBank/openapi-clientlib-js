@@ -53,6 +53,8 @@ const PriceFormatOptions = enumUtils.makeDefinition([
 
     /** @member {string} saxo.priceFormatOptions.AllowDecimalPips - Use digits for deci/half-pips. */
     'AllowDecimalPips',
+    /** @member {string} saxo.priceFormatOptions.AllowTwoDecimalPips - Use two digits for decimal pips. */
+    'AllowTwoDecimalPips',
     /** @member {string} saxo.priceFormatOptions.DeciPipsSpaceSeparator - Use a space as separator between pips and deci-pips. */
     'DeciPipsSpaceSeparator',
     /** @member {string} saxo.priceFormatOptions.DeciPipsDecimalSeparator - Use culture specific decimal separator as separator.
