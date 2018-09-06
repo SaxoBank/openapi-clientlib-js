@@ -292,6 +292,23 @@ describe('price-formatting format', () => {
 
         expect(priceFormatting.format(46872.51, 0, priceFormatOptions.AllowDecimalPips)).toEqual('46,872.5');
 
+        // FormatAsPips
+        expect(priceFormatting.format(0.0023, 4, priceFormatOptions.FormatAsPips)).toBe('23');
+
+        expect(priceFormatting.format(0.00236, 4, priceFormatOptions.FormatAsPips)).toBe('24');
+
+        expect(priceFormatting.format(-0.0023, 4, priceFormatOptions.FormatAsPips)).toBe('-23');
+
+        expect(priceFormatting.format(-0.00236, 4, priceFormatOptions.FormatAsPips)).toBe('-24');
+
+        expect(priceFormatting.format(12.34, 4, priceFormatOptions.FormatAsPips)).toBe('123,400');
+
+        expect(priceFormatting.format(12.34, 2, priceFormatOptions.FormatAsPips)).toBe('1,234');
+
+        expect(priceFormatting.format(-12.34, 4, priceFormatOptions.FormatAsPips)).toBe('-123,400');
+
+        expect(priceFormatting.format(-12.34, 2, priceFormatOptions.FormatAsPips)).toBe('-1,234');
+
         // AllowTwoDecimalPips
         expect(priceFormatting.format(0.00235, 4, priceFormatOptions.AllowTwoDecimalPips)).toBe('0.002350');
 
@@ -768,6 +785,49 @@ describe('price-formatting format', () => {
         expect(parts.Pre).toEqual('');
         expect(parts.First).toEqual('0');
         expect(parts.Pips).toEqual('');
+        expect(parts.DeciPips).toEqual('');
+        expect(parts.Post).toEqual('');
+
+        // When FormatAsPips
+        parts = priceFormatting.formatPriceParts(12.34, 4, priceFormatOptions.FormatAsPips);
+        expect(parts.Pre).toEqual('');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('123,400');
+        expect(parts.DeciPips).toEqual('');
+        expect(parts.Post).toEqual('');
+
+        parts = priceFormatting.formatPriceParts(12.34, 2, priceFormatOptions.FormatAsPips);
+        expect(parts.Pre).toEqual('');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('1,234');
+        expect(parts.DeciPips).toEqual('');
+        expect(parts.Post).toEqual('');
+
+        parts = priceFormatting.formatPriceParts(0.00234, 4, priceFormatOptions.FormatAsPips);
+        expect(parts.Pre).toEqual('');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('23');
+        expect(parts.DeciPips).toEqual('');
+        expect(parts.Post).toEqual('');
+
+        parts = priceFormatting.formatPriceParts(-12.34, 4, priceFormatOptions.FormatAsPips);
+        expect(parts.Pre).toEqual('-');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('123,400');
+        expect(parts.DeciPips).toEqual('');
+        expect(parts.Post).toEqual('');
+
+        parts = priceFormatting.formatPriceParts(-12.34, 2, priceFormatOptions.FormatAsPips);
+        expect(parts.Pre).toEqual('-');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('1,234');
+        expect(parts.DeciPips).toEqual('');
+        expect(parts.Post).toEqual('');
+
+        parts = priceFormatting.formatPriceParts(-0.00234, 4, priceFormatOptions.FormatAsPips);
+        expect(parts.Pre).toEqual('-');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('23');
         expect(parts.DeciPips).toEqual('');
         expect(parts.Post).toEqual('');
 

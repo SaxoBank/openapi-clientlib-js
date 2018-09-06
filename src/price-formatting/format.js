@@ -34,7 +34,9 @@ function getFormatAsPipsParts(basePart, parts, decimals, numberFormatting) {
     const price = numberFormatting.parse(basePart);
     const pips = price * Math.pow(10, decimals);
     parts.First = '';
-    parts.DeciPips = numberFormatting.decimalSeparator + parts.DeciPips;
+    parts.DeciPips = parts.DeciPips ?
+        numberFormatting.decimalSeparator + parts.DeciPips :
+        '';
     parts.Pips = formatNumber(pips, 0, numberFormatting);
 }
 
@@ -181,7 +183,7 @@ function formatPricePartsDecimals(parts, numberFormatting, value, decimals, form
 
     if (formatFlags.Percentage) {
         parts.First = formatNumber(value * 100, decimals, numberFormatting) + ' %';
-    } else if (formatFlags.NoRounding || !pipDecimals) {
+    } else if (formatFlags.NoRounding || (!pipDecimals && !formatFlags.FormatAsPips)) {
         getFirstAndPipsParts(formatNumber(value, formatFlags.NoRounding ? actualDecimals : decimals, numberFormatting), parts, numberFormatting);
     } else {
         const totalDecimals = decimals + pipDecimals;
