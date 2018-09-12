@@ -902,6 +902,28 @@ describe('price-formatting format', () => {
         expect(parts.Pips).toEqual('12,340');
         expect(parts.DeciPips).toEqual('.00');
         expect(parts.Post).toEqual('-');
+
+        // When FormatAsPips and decipips is a half
+        parts = priceFormatting.formatPriceParts(0.18885, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips]);
+        expect(parts.Pre).toEqual('');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('1,888');
+        expect(parts.DeciPips).toEqual('.5');
+        expect(parts.Post).toEqual('');
+
+        parts = priceFormatting.formatPriceParts(0.18885, 4, [priceFormatOptions.AllowDecimalPips, priceFormatOptions.FormatAsPips]);
+        expect(parts.Pre).toEqual('');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('1,888');
+        expect(parts.DeciPips).toEqual('.5');
+        expect(parts.Post).toEqual('');
+
+        parts = priceFormatting.formatPriceParts(0.1885, 4, priceFormatOptions.FormatAsPips);
+        expect(parts.Pre).toEqual('');
+        expect(parts.First).toEqual('');
+        expect(parts.Pips).toEqual('1,885');
+        expect(parts.DeciPips).toEqual('');
+        expect(parts.Post).toEqual('');
     });
 
     it('handles non numbers', () => {

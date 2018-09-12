@@ -193,21 +193,21 @@ function formatPricePartsDecimals(parts, numberFormatting, value, decimals, form
         let basePart = fullPrice.substr(0, fullPrice.length - pipDecimals);
         let deciPipsPart = fullPrice.substr(fullPrice.length - pipDecimals, pipDecimals);
 
-        if ((formatFlags.AllowDecimalPips || formatFlags.AllowTwoDecimalPips) && !formatFlags.FormatAsPips) {
-            const updatedParts = getAllowDecimalPipsParts(formatFlags, basePart, deciPipsPart, numberFormatting);
-            basePart = updatedParts.basePart;
-            deciPipsPart = updatedParts.deciPipsPart;
-        } else { // Fraction
-            const updatedParts = getFractionParts(formatFlags, basePart, deciPipsPart, numberFormatting);
-            basePart = updatedParts.basePart;
-            deciPipsPart = updatedParts.deciPipsPart;
-        }
-
-        parts.DeciPips = deciPipsPart;
-
         if (formatFlags.FormatAsPips) {
+            parts.DeciPips = deciPipsPart;
             getFormatAsPipsParts(basePart, parts, decimals, numberFormatting);
         } else {
+            if (formatFlags.AllowDecimalPips || formatFlags.AllowTwoDecimalPips) {
+                const updatedParts = getAllowDecimalPipsParts(formatFlags, basePart, deciPipsPart, numberFormatting);
+                basePart = updatedParts.basePart;
+                deciPipsPart = updatedParts.deciPipsPart;
+            } else { // Fraction
+                const updatedParts = getFractionParts(formatFlags, basePart, deciPipsPart, numberFormatting);
+                basePart = updatedParts.basePart;
+                deciPipsPart = updatedParts.deciPipsPart;
+            }
+
+            parts.DeciPips = deciPipsPart;
             getFirstAndPipsParts(basePart, parts, numberFormatting);
         }
     }
