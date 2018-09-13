@@ -1,3 +1,7 @@
+#### v4.1.3
+
++ New FX Swap price formatting
+
 #### v4.1.2
 
 + Improvements for handling network errors
