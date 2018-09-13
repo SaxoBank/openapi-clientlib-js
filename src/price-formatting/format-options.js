@@ -48,8 +48,13 @@ const PriceFormatOptions = enumUtils.makeDefinition([
     // CONSIDER: Adding support for using normal spaces instead of no-break spaces
     // NormalSpaces
 
+    /** @member {string} saxo.priceFormatOptions.FormatAsPips - format the price as a number of pips rather than an absolute price */
+    'FormatAsPips',
+
     /** @member {string} saxo.priceFormatOptions.AllowDecimalPips - Use digits for deci/half-pips. */
     'AllowDecimalPips',
+    /** @member {string} saxo.priceFormatOptions.AllowTwoDecimalPips - Use two digits for decimal pips. */
+    'AllowTwoDecimalPips',
     /** @member {string} saxo.priceFormatOptions.DeciPipsSpaceSeparator - Use a space as separator between pips and deci-pips. */
     'DeciPipsSpaceSeparator',
     /** @member {string} saxo.priceFormatOptions.DeciPipsDecimalSeparator - Use culture specific decimal separator as separator.

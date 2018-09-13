@@ -30,6 +30,16 @@ function getFirstAndPipsParts(price, parts, numberFormatting) {
     }
 }
 
+function getFormatAsPipsParts(basePart, parts, decimals, numberFormatting) {
+    const price = numberFormatting.parse(basePart);
+    const pips = price * Math.pow(10, decimals);
+    parts.First = '';
+    parts.DeciPips = parts.DeciPips ?
+        numberFormatting.decimalSeparator + parts.DeciPips :
+        '';
+    parts.Pips = formatNumber(pips, 0, numberFormatting);
+}
+
 function formatPricePartsFraction(parts, numberFormatting, value, decimals, formatFlags, numeratorDecimals) {
 
     let minDecimals = 0;
@@ -95,6 +105,65 @@ function formatPricePartsFraction(parts, numberFormatting, value, decimals, form
     parts.DeciPips = '';
 }
 
+function getAllowDecimalPipsParts(formatFlags, basePart, deciPipsPart, numberFormatting) {
+    if (!formatFlags.DeciPipsSpaceSeparator && !formatFlags.DeciPipsDecimalSeparator) {
+        if (endsWith(basePart, numberFormatting.decimalSeparator)) {
+            basePart = basePart.substr(0, basePart.length - 1);
+            deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
+        }
+    } else if (formatFlags.DeciPipsDecimalSeparator) {
+        if (endsWith(basePart, numberFormatting.decimalSeparator)) {
+            basePart = basePart.substr(0, basePart.length - 1);
+            deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
+        } else {
+            deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
+        }
+
+        // else SpaceSeparator
+    } else if (endsWith(basePart, numberFormatting.decimalSeparator)) {
+        basePart = basePart.substr(0, basePart.length - 1);
+        deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
+    } else {
+        deciPipsPart = NO_BREAK_SPACE + deciPipsPart;
+    }
+
+    return { basePart, deciPipsPart };
+}
+
+function getFractionParts(formatFlags, basePart, deciPipsPart, numberFormatting) {
+    let deciPipsIsFractionalPart = false;
+
+    if (endsWith(basePart, numberFormatting.decimalSeparator)) {
+        basePart = basePart.substr(0, basePart.length - 1);
+        deciPipsIsFractionalPart = true;
+    }
+
+    if (deciPipsPart === '5') {
+        deciPipsPart = String.fromCharCode(0xBD);
+        deciPipsIsFractionalPart = false;
+    } else if (formatFlags.DeciPipsSpaceForZero && deciPipsPart === '0') {
+        deciPipsPart = NO_BREAK_SPACE;
+        deciPipsIsFractionalPart = false;
+    }
+
+    if (formatFlags.DeciPipsSpaceSeparator) {
+        deciPipsPart = NO_BREAK_SPACE + deciPipsPart;
+    } else if (deciPipsIsFractionalPart) {
+        deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
+    }
+
+    return { basePart, deciPipsPart };
+}
+
+function getPipDecimals(formatFlags) {
+    if (formatFlags.AllowTwoDecimalPips) {
+        return 2;
+    } else if (formatFlags.AllowDecimalPips || formatFlags.DeciPipsFraction) {
+        return 1;
+    }
+    return null;
+}
+
 function formatPricePartsDecimals(parts, numberFormatting, value, decimals, formatFlags) {
 
     let actualDecimals;
@@ -110,64 +179,37 @@ function formatPricePartsDecimals(parts, numberFormatting, value, decimals, form
         }
     }
 
+    const pipDecimals = getPipDecimals(formatFlags);
+
     if (formatFlags.Percentage) {
         parts.First = formatNumber(value * 100, decimals, numberFormatting) + ' %';
-    } else if (formatFlags.NoRounding || (!formatFlags.AllowDecimalPips && !formatFlags.DeciPipsFraction)) {
+    } else if (formatFlags.NoRounding || (!pipDecimals && !formatFlags.FormatAsPips)) {
         getFirstAndPipsParts(formatNumber(value, formatFlags.NoRounding ? actualDecimals : decimals, numberFormatting), parts, numberFormatting);
     } else {
-        const extra = decimals + 1;
-        const fullPrice = formatNumber(value, extra, numberFormatting);
+        const totalDecimals = decimals + pipDecimals;
+        const fullPrice = formatNumber(value, totalDecimals, numberFormatting);
 
         // basePart may contain a decimal separator that may or may not need to be removed
-        let basePart = fullPrice.substr(0, fullPrice.length - 1);
-        let deciPipsPart = fullPrice.substr(fullPrice.length - 1, 1);
+        let basePart = fullPrice.substr(0, fullPrice.length - pipDecimals);
+        let deciPipsPart = fullPrice.substr(fullPrice.length - pipDecimals, pipDecimals);
 
-        if (formatFlags.AllowDecimalPips) {
-            if (!formatFlags.DeciPipsSpaceSeparator && !formatFlags.DeciPipsDecimalSeparator) {
-                if (endsWith(basePart, numberFormatting.decimalSeparator)) {
-                    basePart = basePart.substr(0, basePart.length - 1);
-                    deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
-                }
-            } else if (formatFlags.DeciPipsDecimalSeparator) {
-                if (endsWith(basePart, numberFormatting.decimalSeparator)) {
-                    basePart = basePart.substr(0, basePart.length - 1);
-                    deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
-                } else {
-                    deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
-                }
-
-                // else SpaceSeparator
-            } else if (endsWith(basePart, numberFormatting.decimalSeparator)) {
-                basePart = basePart.substr(0, basePart.length - 1);
-                deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
-            } else {
-                deciPipsPart = NO_BREAK_SPACE + deciPipsPart;
-            }
-        } else { // Fraction
-            let deciPipsIsFractionalPart = false;
-
-            if (endsWith(basePart, numberFormatting.decimalSeparator)) {
-                basePart = basePart.substr(0, basePart.length - 1);
-                deciPipsIsFractionalPart = true;
+        if (formatFlags.FormatAsPips) {
+            parts.DeciPips = deciPipsPart;
+            getFormatAsPipsParts(basePart, parts, decimals, numberFormatting);
+        } else {
+            if (formatFlags.AllowDecimalPips || formatFlags.AllowTwoDecimalPips) {
+                const updatedParts = getAllowDecimalPipsParts(formatFlags, basePart, deciPipsPart, numberFormatting);
+                basePart = updatedParts.basePart;
+                deciPipsPart = updatedParts.deciPipsPart;
+            } else { // Fraction
+                const updatedParts = getFractionParts(formatFlags, basePart, deciPipsPart, numberFormatting);
+                basePart = updatedParts.basePart;
+                deciPipsPart = updatedParts.deciPipsPart;
             }
 
-            if (deciPipsPart === '5') {
-                deciPipsPart = String.fromCharCode(0xBD);
-                deciPipsIsFractionalPart = false;
-            } else if (formatFlags.DeciPipsSpaceForZero && deciPipsPart === '0') {
-                deciPipsPart = NO_BREAK_SPACE;
-                deciPipsIsFractionalPart = false;
-            }
-
-            if (formatFlags.DeciPipsSpaceSeparator) {
-                deciPipsPart = NO_BREAK_SPACE + deciPipsPart;
-            } else if (deciPipsIsFractionalPart) {
-                deciPipsPart = numberFormatting.decimalSeparator + deciPipsPart;
-            }
+            parts.DeciPips = deciPipsPart;
+            getFirstAndPipsParts(basePart, parts, numberFormatting);
         }
-
-        getFirstAndPipsParts(basePart, parts, numberFormatting);
-        parts.DeciPips = deciPipsPart;
     }
 }
 
