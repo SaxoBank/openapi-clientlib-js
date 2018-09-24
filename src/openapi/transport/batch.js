@@ -39,7 +39,7 @@ function batchCallFailure(callList, batchResponse) {
     for (let i = 0; i < callList.length; i++) {
         // pass on the batch response so that if a batch responds with a 401,
         // and queue is before batch, queue will auto retry
-        callList[i].reject(batchResponse);
+        callList[i].reject({ message: 'batch failed' });
     }
 }
 
@@ -54,9 +54,17 @@ function getParentRequestId(batchResult) {
 }
 
 function batchCallSuccess(callList, batchResult) {
+
+    // not sure why this occurs, but logs indicate it does
+    if (!(batchResult && batchResult.response)) {
+        batchCallFailure(callList, batchResult);
+        return;
+    }
+
     const parentRequestId = getParentRequestId(batchResult);
 
     const results = parseBatch(batchResult.response, parentRequestId);
+
     for (let i = 0; i < callList.length; i++) {
         const call = callList[i];
         const result = results[i];
