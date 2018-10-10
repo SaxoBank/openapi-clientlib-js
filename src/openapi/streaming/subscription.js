@@ -677,6 +677,9 @@ Subscription.prototype.onStreamingData = function(message) {
  * @private
  */
 Subscription.prototype.onHeartbeat = function() {
+    if (this.currentState === STATE_SUBSCRIBE_REQUESTED) {
+        log.warn(LOG_AREA, 'received heartbeat for a subscription we havent subscribed to yet', { url: this.url, serviceGroup: this.serviceGroup });
+    }
     onActivity.call(this);
 };
 

@@ -139,6 +139,7 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
 };
 
 /**
+ * Retries a failed call
  * @protected
  * @param transportCall
  */
