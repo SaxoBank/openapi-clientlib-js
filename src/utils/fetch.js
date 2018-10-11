@@ -29,7 +29,9 @@ let cacheBreakNum = Date.now();
  * Returns a rejected promise, needed to keep the promise rejected.
  * @param result
  */
-function convertFetchReject(url, body, error) {
+export function convertFetchReject(url, body, timerId, error) {
+    clearTimeout(timerId);
+
     log.error(LOG_AREA, 'rejected non-response', {
         url,
         body,
@@ -50,7 +52,9 @@ function convertFetchReject(url, body, error) {
  * @param result
  * @returns {Promise}
  */
-export function convertFetchSuccess(url, body, result) {
+export function convertFetchSuccess(url, body, timerId, result) {
+    clearTimeout(timerId);
+
     let convertedPromise;
 
     const contentType = result.headers.get('content-type');
@@ -204,8 +208,18 @@ function localFetch(method, url, options) {
         // iOS6 prevent cache
         headers['Cache-Control'] = 'no-cache';
     }
+
+    const timerId = setTimeout(() => {
+        log.warn(LOG_AREA, 'Took more than 30 seconds to get a response', {
+            url,
+        });
+    }, 30000);
+
     return fetch(url, { headers, method, body, credentials })
-        .then(convertFetchSuccess.bind(null, url, body), convertFetchReject.bind(null, url, body));
+        .then(
+            convertFetchSuccess.bind(null, url, body, timerId),
+            convertFetchReject.bind(null, url, body, timerId)
+        );
 }
 
 // -- Export section --
