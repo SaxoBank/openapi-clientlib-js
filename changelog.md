@@ -1,3 +1,7 @@
+#### v4.2.0
+
++ Add log messages when requests get stuck
+
 #### v4.1.3
 
 + New FX Swap price formatting
