@@ -24,6 +24,7 @@ const TOKEN_BEARER = 'Bearer ';
 
 const STATE_WAITING = 0x1;
 const STATE_REFRESHING = 0x2;
+const STATE_FAILED = 0x4;
 
 // -- Local methods section --
 
@@ -78,19 +79,21 @@ function onApiTokenReceived(result) {
 }
 
 function onApiTokenReceiveFail(result) {
-    this.state = STATE_WAITING;
     log.warn(LOG_AREA, 'Token refresh failed', result);
 
     if (result && (result.status === 401 || result.status === 403)) {
         this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
+        this.state = STATE_FAILED;
         return;
     }
 
     if (this.retries < this.maxRetryCount) {
+        this.state = STATE_WAITING;
         this.retries++;
         this.tokenRefreshTimerFireTime = Date.now() + this.retryDelayMs;
         this.tokenRefreshTimer = setTimeout(this.refreshOpenApiToken.bind(this), this.retryDelayMs);
     } else {
+        this.state = STATE_FAILED;
         this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
     }
 }
@@ -150,14 +153,23 @@ function onTransportError(oldTokenExpiry, result) {
         // it means the token is invalid even though its not meant to expire yet
         const isCurrentTokenInvalid = currentAuthExpiry > now && oldTokenExpiry === currentAuthExpiry;
         const isCurrentTokenExpired = currentAuthExpiry < now;
+        // if we are not in an ok waiting state
         const isFetching = !(this.state & STATE_WAITING && this.retries === 0);
 
         if (isCurrentTokenInvalid) {
-            log.error(LOG_AREA, 'Unauthorized with a valid token, will fetch a new one', {
-                currentAuthExpiry,
-                now,
-                result,
-            });
+            if (isFetching) {
+                log.debug(LOG_AREA, 'Second call failed with invalid token', {
+                    currentAuthExpiry,
+                    now,
+                    result,
+                });
+            } else {
+                log.error(LOG_AREA, 'Unauthorized with a valid token, will fetch a new one', {
+                    currentAuthExpiry,
+                    now,
+                    result,
+                });
+            }
         } else if (isCurrentTokenExpired && !isFetching) {
             const lateBy = now - this.tokenRefreshTimerFireTime;
             log.error(LOG_AREA, 'Token was not refreshed in time', {
@@ -302,6 +314,16 @@ TransportAuth.prototype.head = makeTransportMethod('head');
  * @function
  */
 TransportAuth.prototype.options = makeTransportMethod('options');
+
+/**
+ * Refresh the open api token if we are not already doing so
+ */
+TransportAuth.prototype.checkAuthExpiry = function() {
+    const isFetching = !(this.state & STATE_WAITING && this.retries === 0);
+    if (!isFetching) {
+        this.refreshOpenApiToken();
+    }
+};
 
 /**
  * Forces a refresh of the open api token

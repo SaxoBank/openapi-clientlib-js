@@ -13,7 +13,7 @@ function mockTransportAuth() {
 
     microEmitter.mixinTo(transportAuth);
 
-    transportAuth.onTokenInvalid = jasmine.createSpy('mockTransportAuth.onTokenInvalid');
+    transportAuth.checkAuthExpiry = jasmine.createSpy('mockTransportAuth.checkAuthExpiry');
 
     return transportAuth;
 }

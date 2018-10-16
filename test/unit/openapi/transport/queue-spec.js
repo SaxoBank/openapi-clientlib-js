@@ -133,7 +133,7 @@ describe('openapi TransportQueue', () => {
 
         transportAuth.auth.setExpiry(Date.now() - 1);
         transportQueue.get();
-        expect(transportAuth.onTokenInvalid.calls.count()).toEqual(1);
+        expect(transportAuth.checkAuthExpiry.calls.count()).toEqual(1);
         tick(function() {
             expect(transport.get.calls.count()).toEqual(0);
             done();
