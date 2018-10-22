@@ -16,7 +16,7 @@ function transportMethod(method) {
             // we intercept a call about to be made and then do not have to cope with the 401 responses
             if (this.transportAuth && this.transportAuth.auth.getExpiry() < Date.now()) {
                 this.isQueueing = true;
-                this.transportAuth.onTokenInvalid();
+                this.transportAuth.checkAuthExpiry();
             }
         }
 

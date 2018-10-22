@@ -24,6 +24,7 @@ const TOKEN_BEARER = 'Bearer ';
 
 const STATE_WAITING = 0x1;
 const STATE_REFRESHING = 0x2;
+const STATE_FAILED = 0x4;
 
 // -- Local methods section --
 
@@ -78,19 +79,21 @@ function onApiTokenReceived(result) {
 }
 
 function onApiTokenReceiveFail(result) {
-    this.state = STATE_WAITING;
     log.warn(LOG_AREA, 'Token refresh failed', result);
 
     if (result && (result.status === 401 || result.status === 403)) {
         this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
+        this.state = STATE_FAILED;
         return;
     }
 
     if (this.retries < this.maxRetryCount) {
+        this.state = STATE_WAITING;
         this.retries++;
         this.tokenRefreshTimerFireTime = Date.now() + this.retryDelayMs;
         this.tokenRefreshTimer = setTimeout(this.refreshOpenApiToken.bind(this), this.retryDelayMs);
     } else {
+        this.state = STATE_FAILED;
         this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
     }
 }
@@ -137,18 +140,52 @@ function makeTransportMethod(method) {
         options.headers.Authorization = this.auth.getToken();
 
         return this.transport[method](serviceGroup, urlTemplate, templateArgs, options)
-            .catch(onTransportError.bind(this));
+            .catch(onTransportError.bind(this, this.auth.getExpiry()));
     };
 }
 
-function onTransportError(result) {
+function onTransportError(oldTokenExpiry, result) {
     if (result && result.status === 401) {
-        if (this.auth.getExpiry() > Date.now()) {
-            // we received an auth failed before the expiry time
-            log.info(LOG_AREA, 'Call failed due to authentication.', result);
-            this.onTokenInvalid();
+        const currentAuthExpiry = this.auth.getExpiry();
+        const now = Date.now();
+
+        // if the current token is the same as when this was sent and its meant to be still valid
+        // it means the token is invalid even though its not meant to expire yet
+        const isCurrentTokenInvalid = currentAuthExpiry > now && oldTokenExpiry === currentAuthExpiry;
+        const isCurrentTokenExpired = currentAuthExpiry < now;
+        // if we are not in an ok waiting state
+        const isFetching = !(this.state & STATE_WAITING && this.retries === 0);
+
+        if (isCurrentTokenInvalid) {
+            if (isFetching) {
+                log.debug(LOG_AREA, 'Second call failed with invalid token', {
+                    currentAuthExpiry,
+                    now,
+                    result,
+                });
+            } else {
+                log.error(LOG_AREA, 'Unauthorized with a valid token, will fetch a new one', {
+                    currentAuthExpiry,
+                    now,
+                    result,
+                });
+            }
+        } else if (isCurrentTokenExpired && !isFetching) {
+            const lateBy = now - this.tokenRefreshTimerFireTime;
+            log.error(LOG_AREA, 'Token was not refreshed in time', {
+                currentAuthExpiry,
+                now,
+                lateBy,
+            });
         } else {
-            log.info(LOG_AREA, 'Received an auth error, auth is now expired.', result);
+            log.info(LOG_AREA, 'Received an auth error because of an old token.', {
+                oldTokenExpiry,
+                currentAuthExpiry,
+            });
+        }
+
+        if ((isCurrentTokenInvalid || isCurrentTokenExpired) && !isFetching) {
+            this.refreshOpenApiToken();
         }
     }
     throw result;
@@ -279,6 +316,16 @@ TransportAuth.prototype.head = makeTransportMethod('head');
 TransportAuth.prototype.options = makeTransportMethod('options');
 
 /**
+ * Refresh the open api token if we are not already doing so
+ */
+TransportAuth.prototype.checkAuthExpiry = function() {
+    const isFetching = !(this.state & STATE_WAITING && this.retries === 0);
+    if (!isFetching) {
+        this.refreshOpenApiToken();
+    }
+};
+
+/**
  * Forces a refresh of the open api token
  * This will refresh even if a refresh is already in progress, so only call this if you need a forced refresh.
  * See also {@link TransportAuth.onTokenInvalid}.
@@ -290,32 +337,6 @@ TransportAuth.prototype.refreshOpenApiToken = function() {
     this.trigger(this.EVENT_TOKEN_REFRESH);
     if (this.tokenRefreshUrl) {
         getToken.call(this, this.tokenRefreshUrl);
-    }
-};
-
-/**
- * Tells transport auth that the token is invalid and it should immediately try to refresh if it isn't already
- */
-TransportAuth.prototype.onTokenInvalid = function() {
-
-    if (this.state & STATE_WAITING && this.retries === 0 && this.maxRetryCount > 0) {
-
-        const lateBy = Date.now() - this.tokenRefreshTimerFireTime;
-        // if we the timeout was set but it was missed, the liklihood is we woke from sleep
-        if (this.tokenRefreshTimerFireTime && (lateBy > (1000 * 20))) {
-            log.warn(LOG_AREA, 'Token is invalid, timeout is more than 20 seconds late', {
-                retries: this.retries,
-                lateBy,
-            });
-        } else {
-            log.error(LOG_AREA, 'Token is invalid before timeout is fired', {
-                retries: this.retries,
-                lateBy,
-            });
-        }
-        this.refreshOpenApiToken();
-    } else {
-        log.info(LOG_AREA, 'Token invalid, currently trying to refresh.');
     }
 };
 
