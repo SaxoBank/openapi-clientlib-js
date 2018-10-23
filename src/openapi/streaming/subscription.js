@@ -290,7 +290,7 @@ function onSubscribeSuccess(referenceId, result) {
  * Called when a subscribe errors
  * @param response
  */
-function onSubscribeError(referenceId, body) {
+function onSubscribeError(referenceId, response) {
     if (referenceId !== this.referenceId) {
         log.debug(LOG_AREA, 'Received an error response for subscribing a subscription that has afterwards been reset - ignoring');
         return;
@@ -298,7 +298,7 @@ function onSubscribeError(referenceId, body) {
 
     setState.call(this, STATE_UNSUBSCRIBED);
     log.error(LOG_AREA, 'An error occurred subscribing', {
-        body,
+        response,
         url: this.url,
         ContextId: this.streamingContextId,
         ReferenceId: this.referenceId,
@@ -308,19 +308,17 @@ function onSubscribeError(referenceId, body) {
     // if we are unsubscribed, do not fire the error handler
     if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
         if (this.onError) {
-            this.onError(body);
+            this.onError(response);
         }
     }
 
-    const errorCode = body && body.response ? body.response.ErrorCode : null;
-    const canFallback = this.formatFallbackCount < this.maxFormatFallbacks;
+    const errorCode = response && response.response ? response.response.ErrorCode : null;
 
-    if (errorCode === ERROR_UNSUPPORTED_FORMAT && this.subscriptionData.Format === FORMAT_PROTOBUF && canFallback) {
+    if (errorCode === ERROR_UNSUPPORTED_FORMAT && this.subscriptionData.Format === FORMAT_PROTOBUF) {
         // Fallback to JSON format if specific endpoint doesn't support PROTOBUF format.
         this.subscriptionData.Format = FORMAT_JSON;
 
         tryPerformAction.call(this, ACTION_SUBSCRIBE);
-        this.formatFallbackCount++;
         return;
     }
 
@@ -456,12 +454,6 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
         this.subscriptionData.RefreshRate = MIN_REFRESH_RATE_MS;
     }
     this.connectionAvailable = true;
-
-    // Defines current number of fallback requests done due to invalid format.
-    this.formatFallbackCount = 0;
-
-    // Defines maximums fallback requests possible for invalid format.
-    this.maxFormatFallbacks = 1;
 
     setState.call(this, STATE_UNSUBSCRIBED);
 }
