@@ -314,9 +314,10 @@ function onSubscribeError(referenceId, response) {
 
     const errorCode = response && response.response ? response.response.ErrorCode : null;
 
-    if (errorCode === ERROR_UNSUPPORTED_FORMAT && this.subscriptionData.Format === FORMAT_PROTOBUF) {
+    if (errorCode === ERROR_UNSUPPORTED_FORMAT && this.subscriptionData && this.subscriptionData.Format === FORMAT_PROTOBUF) {
         // Fallback to JSON format if specific endpoint doesn't support PROTOBUF format.
         this.subscriptionData.Format = FORMAT_JSON;
+        this.serializer = SerializerFacade.getSerializer(FORMAT_JSON, this.serviceGroup, this.url);
 
         tryPerformAction.call(this, ACTION_SUBSCRIBE);
         return;
