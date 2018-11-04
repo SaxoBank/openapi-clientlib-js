@@ -34,6 +34,9 @@ const DEFAULT_REFRESH_RATE_MS = 1000;
 const MIN_REFRESH_RATE_MS = 100;
 
 const FORMAT_PROTOBUF = 'application/x-protobuf';
+const FORMAT_JSON = 'application/json';
+
+const ERROR_UNSUPPORTED_FORMAT = 'UnsupportedSubscriptionFormat';
 
 const LOG_AREA = 'Subscription';
 
@@ -308,6 +311,18 @@ function onSubscribeError(referenceId, response) {
             this.onError(response);
         }
     }
+
+    const errorCode = response && response.response ? response.response.ErrorCode : null;
+
+    if (errorCode === ERROR_UNSUPPORTED_FORMAT && this.subscriptionData && this.subscriptionData.Format === FORMAT_PROTOBUF) {
+        // Fallback to JSON format if specific endpoint doesn't support PROTOBUF format.
+        this.subscriptionData.Format = FORMAT_JSON;
+        this.serializer = SerializerFacade.getSerializer(FORMAT_JSON, this.serviceGroup, this.url);
+
+        tryPerformAction.call(this, ACTION_SUBSCRIBE);
+        return;
+    }
+
     onReadyToPerformNextAction.call(this);
 }
 

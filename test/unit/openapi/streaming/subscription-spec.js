@@ -145,6 +145,26 @@ describe('openapi StreamingSubscription', () => {
             });
         });
 
+        it('handles protobuf format errors fallback to json', (done) => {
+            const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', { Format: 'application/x-protobuf' }, createdSpy, null, errorSpy);
+            subscription.onSubscribe();
+
+            transport.postReject({ status: '404', response: { ErrorCode: 'UnsupportedSubscriptionFormat' } });
+
+            transport.post.calls.reset();
+
+            tick(() => {
+                expect(errorSpy.calls.count()).toEqual(1);
+                expect(errorSpy.calls.argsFor(0)).toEqual([{ status: '404', response: { ErrorCode: 'UnsupportedSubscriptionFormat' } }]);
+                expect(subscription.subscriptionData, 'application/json');
+
+                expect(transport.post.calls.count()).toEqual(1);
+                expect(transport.post.calls.argsFor(0)[3].body.Format, 'application/json');
+
+                done();
+            });
+        });
+
         it('catches exceptions thrown during initial update', (done) => {
             const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', {}, createdSpy, updateSpy);
             subscription.onSubscribe();
