@@ -159,23 +159,7 @@ describe('openapi StreamingSubscription', () => {
                 expect(subscription.subscriptionData, 'application/json');
 
                 expect(transport.post.calls.count()).toEqual(1);
-
-                const expectedArgs = [
-                    'serviceGroup',
-                    'test/resource',
-                    null,
-                    {
-                        body: {
-                            Format: 'application/json',
-                            RefreshRate: 1000,
-                            ContextId: '123',
-                            ReferenceId: '2',
-                            KnownSchemas: undefined,
-                        },
-                    },
-                ];
-
-                expect(transport.post.calls.argsFor(0)).toEqual(expectedArgs);
+                expect(transport.post.calls.argsFor(0)[3].body.Format, 'application/json');
 
                 done();
             });
