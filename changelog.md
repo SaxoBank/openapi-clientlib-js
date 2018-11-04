@@ -1,3 +1,8 @@
+#### v4.2.1
+
++ Add fallback mechanism for endpoints which doesn't support protobuf yet
++ Improve logging and functionality when a auth token is expired
+
 #### v4.2.0
 
 + Add log messages when requests get stuck
