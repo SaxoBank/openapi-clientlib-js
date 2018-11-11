@@ -69,14 +69,14 @@ const PriceFormatOptions = enumUtils.makeDefinition([
       *  decimals should be treated as a max decimals. */
     'NoRounding']);
 
-    // The following are currently unused, but as open api expands, they may be required in the future.
-    // They are aggregate definitions
-    /* DeciPipsFractionOrSpace Use '1/2' or ' ' (no-break Space) for half-pips. */
-    // "DeciPipsFractionOrSpace": [PriceFormatOptions.DeciPipsFraction, PriceFormatOptions.DeciPipsSpaceForZero],
-    /* AllowDecimalPipsWithSpaceSeparator Use digits for deci-pips with a (non-break) space as separator between pips and deci-pips. */
-    // "AllowDecimalPipsWithSpaceSeparator": [PriceFormatOptions.DeciPipsSpaceSeparator, PriceFormatOptions.AllowDecimalPips],
-    /* AllowDecimalPipsWithDecimalSeparator Use digits for deci-pips with a decimal separator between pips and deci-pips. */
-    // "AllowDecimalPipsWithDecimalSeparator": [PriceFormatOptions.DeciPipsDecimalSeparator, PriceFormatOptions.AllowDecimalPips]
+// The following are currently unused, but as open api expands, they may be required in the future.
+// They are aggregate definitions
+/* DeciPipsFractionOrSpace Use '1/2' or ' ' (no-break Space) for half-pips. */
+// "DeciPipsFractionOrSpace": [PriceFormatOptions.DeciPipsFraction, PriceFormatOptions.DeciPipsSpaceForZero],
+/* AllowDecimalPipsWithSpaceSeparator Use digits for deci-pips with a (non-break) space as separator between pips and deci-pips. */
+// "AllowDecimalPipsWithSpaceSeparator": [PriceFormatOptions.DeciPipsSpaceSeparator, PriceFormatOptions.AllowDecimalPips],
+/* AllowDecimalPipsWithDecimalSeparator Use digits for deci-pips with a decimal separator between pips and deci-pips. */
+// "AllowDecimalPipsWithDecimalSeparator": [PriceFormatOptions.DeciPipsDecimalSeparator, PriceFormatOptions.AllowDecimalPips]
 
 // -- Export section --
 

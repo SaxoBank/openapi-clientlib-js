@@ -26,7 +26,7 @@ function transportMethod(method) {
                 this.sendTransportCall(transportCall);
             });
         }
-            // calls underlying transport http method
+        // calls underlying transport http method
         return this.transport[method].apply(this.transport, arguments);
 
     };

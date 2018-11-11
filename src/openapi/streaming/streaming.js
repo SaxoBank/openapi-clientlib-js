@@ -6,7 +6,7 @@
 import emitter from '../../micro-emitter';
 import { extend } from '../../utils/object';
 import Subscription from './subscription';
-import SerializerFacade from './serializer-facade';
+import SerializerFacade from './serializer/serializer-facade';
 import StreamingOrphanFinder from './orphan-finder';
 import log from '../../log';
 import { padLeft } from '../../utils/string';
@@ -425,12 +425,12 @@ function getSubscriptionsReadyPromise(subscriptionsToRemove, shouldDisposeSubscr
 
         startTimerToStopIgnoringSubscriptions(subscriptionsToRemove);
     })
-    .then(() => {
-        for (let i = 0; i < subscriptionsToRemove.length; i++) {
-            const subscription = subscriptionsToRemove[i];
-            subscription.removeStateChangedCallback(onStateChanged);
-        }
-    });
+        .then(() => {
+            for (let i = 0; i < subscriptionsToRemove.length; i++) {
+                const subscription = subscriptionsToRemove[i];
+                subscription.removeStateChangedCallback(onStateChanged);
+            }
+        });
 }
 
 function unsubscribeSubscriptionByTag(serviceGroup, url, tag, shouldDisposeSubscription) {
@@ -442,13 +442,13 @@ function unsubscribeSubscriptionByTag(serviceGroup, url, tag, shouldDisposeSubsc
             contextId: this.contextId,
             tag,
         })
-        .catch((response) => log.error(LOG_AREA, 'An error occurred unsubscribing by tag', { response, serviceGroup, url, tag }))
-        .then(() => {
-            for (let i = 0; i < subscriptionsToRemove.length; i++) {
-                const subscription = subscriptionsToRemove[i];
-                subscription.onUnsubscribeByTagComplete();
-            }
-        });
+            .catch((response) => log.error(LOG_AREA, 'An error occurred unsubscribing by tag', { response, serviceGroup, url, tag }))
+            .then(() => {
+                for (let i = 0; i < subscriptionsToRemove.length; i++) {
+                    const subscription = subscriptionsToRemove[i];
+                    subscription.onUnsubscribeByTagComplete();
+                }
+            });
     });
 }
 
@@ -492,8 +492,8 @@ function Streaming(transport, baseUrl, authProvider, options) {
     this.subscriptions = [];
 
     this.signalrStartOptions = {
-        waitForPageLoad: (options && options.waitForPageLoad) || false,                 // faster and does not cause problems after IE8
-        transport: (options && options.transportTypes) || ['webSockets', ' longPolling'],    // SignalR has a bug in SSE and forever frame is slow
+        waitForPageLoad: (options && options.waitForPageLoad) || false, // faster and does not cause problems after IE8
+        transport: (options && options.transportTypes) || ['webSockets', ' longPolling'], // SignalR has a bug in SSE and forever frame is slow
     };
 
     if (options) {

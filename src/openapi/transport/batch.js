@@ -182,7 +182,7 @@ TransportBatch.prototype.addToQueue = function(item) {
             nextTick(this.runBatches.bind(this));
         } else {
             if (this.nextTickTimer) {
-                clearTimeout(this.nextTickTimer);
+                return;
             }
             this.nextTickTimer = setTimeout(this.runBatches.bind(this), this.timeoutMs);
         }
