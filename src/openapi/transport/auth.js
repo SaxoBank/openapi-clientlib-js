@@ -22,8 +22,10 @@ const DEFAULT_TOKEN_REFRESH_CREDDENTIALS = 'include';
 
 // Max request limits are used to block infinite loop of authorization requests after transport 401 errors, which my happen if given
 // endpoint for whatever reasons constantly returns 401 error status (despite correct fresh authorization token refresh).
-const DEFAULT_MAX_AUTH_ERRORS = 10;
-const DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE = 1000;
+const DEFAULT_MAX_AUTH_ERRORS = 3;
+
+// Debounce time in milliseconds.
+const DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE = 5000; // ms
 
 const TOKEN_BEARER = 'Bearer ';
 
@@ -168,7 +170,7 @@ function onTransportError(oldTokenExpiry, result) {
         const shouldRequest = (isCurrentTokenInvalid || isCurrentTokenExpired) && !isFetching;
         const urlErrorCount = this.getUrlErrorCount(result.url);
 
-        if (urlErrorCount > this.maxAuthErrors) {
+        if (urlErrorCount >= this.maxAuthErrors) {
             // Blocking infinite loop of authorization re-requests which might be caused by invalid
             // behaviour of given endpoint which constantly returns 401 error.
             log.error(LOG_AREA, 'Too many authorization errors occurred withing specified timeframe for specific endpoint.');
@@ -243,7 +245,7 @@ function onTransportError(oldTokenExpiry, result) {
  * @param {number} [options.maxRetryCount] - The maximum number of times to retry the auth url
  * @param {number} [options.maxAuthErrors] - The maximum number of authorization errors that
  *          can occur for specific endpoint within specific timeframe.
- * @param {number} [options.authErrorsCleanupDebounce] - The debounce timeout used for clearing of authorization errors count.
+ * @param {number} [options.authErrorsCleanupDebounce] - The debounce timeout (in ms) used for clearing of authorization errors count.
  */
 function TransportAuth(baseUrl, options) {
 
