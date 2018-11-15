@@ -16,6 +16,40 @@ function tick(func) {
     realSetTimeout(func, 1); // for when running in a modern browser (that doesn't fallback to nextTick=setTimeout)
 }
 
+/**
+ * Recurrent loop which asynchronously one after another, invokes list of methods wrapped with tick.
+ * @param {function} cursor - The function which will be invoked inside tick wrapper.
+ * @param {array} list - The array of methods to be invoked asynchronously through tick wrapper one after another.
+ */
+function tickRecurrentLoop(cursor, list) {
+    if (!cursor) {
+        return;
+    }
+
+    tick(() => {
+        cursor();
+        tickRecurrentLoop(list.shift(), list);
+    });
+}
+
+/**
+ * Invoke list of methods as async ticks (one after another).
+ * Useful alternative to nested callback hell.
+ * @param {array} list - The array of actions which will be invoked as a ticks, one after another (async).
+ * @param {boolean} startImmediately - The flag which causes first method to be invoked without tick wrapper.
+ */
+function tickArray(list, startImmediately = false) {
+    if (!list || list.length === 0) {
+        return;
+    }
+
+    if (startImmediately) {
+        list.shift()();
+    }
+
+    tickRecurrentLoop(list.shift(), list);
+}
+
 // eslint-disable-next-line no-eval
 const global = (0, eval)('this');
 
@@ -35,4 +69,12 @@ function uninstallClock() {
     jasmine.clock().uninstall();
 }
 
-export { tick, global, multiline, installClock, uninstallClock, mockDate };
+export {
+    tick,
+    tickArray,
+    global,
+    multiline,
+    installClock,
+    uninstallClock,
+    mockDate,
+};

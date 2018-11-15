@@ -20,6 +20,13 @@ const DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES = 'expiry';
 const DEFAULT_TOKEN_REFRESH_MARGIN_MS = 0;
 const DEFAULT_TOKEN_REFRESH_CREDDENTIALS = 'include';
 
+// Max request limits are used to block infinite loop of authorization requests after transport 401 errors, which my happen if given
+// endpoint for whatever reasons constantly returns 401 error status (despite correct fresh authorization token refresh).
+const DEFAULT_MAX_AUTH_ERRORS = 3;
+
+// Debounce time in milliseconds.
+const DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE = 5000; // ms
+
 const TOKEN_BEARER = 'Bearer ';
 
 const STATE_WAITING = 0x1;
@@ -144,6 +151,11 @@ function makeTransportMethod(method) {
     };
 }
 
+function onErrorCleanupTimeout() {
+    this.authorizationErrorCount = {};
+    this.errorCleanupTimoutId = null;
+}
+
 function onTransportError(oldTokenExpiry, result) {
     if (result && result.status === 401) {
         const currentAuthExpiry = this.auth.getExpiry();
@@ -155,6 +167,15 @@ function onTransportError(oldTokenExpiry, result) {
         const isCurrentTokenExpired = currentAuthExpiry < now;
         // if we are not in an ok waiting state
         const isFetching = !(this.state & STATE_WAITING && this.retries === 0);
+        const shouldRequest = (isCurrentTokenInvalid || isCurrentTokenExpired) && !isFetching;
+        const urlErrorCount = this.getUrlErrorCount(result.url);
+
+        if (urlErrorCount >= this.maxAuthErrors) {
+            // Blocking infinite loop of authorization re-requests which might be caused by invalid
+            // behaviour of given endpoint which constantly returns 401 error.
+            log.error(LOG_AREA, 'Too many authorization errors occurred withing specified timeframe for specific endpoint.');
+            return;
+        }
 
         if (isCurrentTokenInvalid) {
             if (isFetching) {
@@ -184,7 +205,9 @@ function onTransportError(oldTokenExpiry, result) {
             });
         }
 
-        if ((isCurrentTokenInvalid || isCurrentTokenExpired) && !isFetching) {
+        if (shouldRequest) {
+            this.incrementErrorCounter(result.url);
+            this.debounceErrorCounterCleanup();
             this.refreshOpenApiToken();
         }
     }
@@ -220,6 +243,9 @@ function onTransportError(oldTokenExpiry, result) {
  * @param {string|number} [options.expiry] - The expiry of that token, assumed to be absolute.
  * @param {number} [options.retryDelayMs] - The delay before retrying auth
  * @param {number} [options.maxRetryCount] - The maximum number of times to retry the auth url
+ * @param {number} [options.maxAuthErrors] - The maximum number of authorization errors that
+ *          can occur for specific endpoint within specific timeframe.
+ * @param {number} [options.authErrorsCleanupDebounce] - The debounce timeout (in ms) used for clearing of authorization errors count.
  */
 function TransportAuth(baseUrl, options) {
 
@@ -234,10 +260,15 @@ function TransportAuth(baseUrl, options) {
     this.tokenRefreshMarginMs = options && options.tokenRefreshMarginMs || DEFAULT_TOKEN_REFRESH_MARGIN_MS;
     this.retryDelayMs = options && options.retryDelayMs || DEFAULT_RETRY_DELAY_MS;
     this.maxRetryCount = options && options.maxRetryCount || DEFAULT_MAX_RETRY_COUNT;
+    this.maxAuthErrors = options && options.maxAuthErrors || DEFAULT_MAX_AUTH_ERRORS;
+    this.authErrorsCleanupDebounce = options && options.authErrorsCleanupDebounce || DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE;
 
     this.transport = new TransportCore(baseUrl, options);
     this.state = STATE_WAITING;
     this.retries = 0;
+
+    // Map of authorization error counts per endpoint/url.
+    this.authorizationErrorCount = {};
 
     const token = options && options.token || null;
     let expiry = options && options.expiry || 0;
@@ -341,9 +372,49 @@ TransportAuth.prototype.refreshOpenApiToken = function() {
 };
 
 /**
+ * Run debounced cleanup of error counter map
+ */
+TransportAuth.prototype.debounceErrorCounterCleanup = function() {
+    if (this.errorCleanupTimoutId) {
+        clearTimeout(this.errorCleanupTimoutId);
+    }
+
+    this.errorCleanupTimoutId = setTimeout(onErrorCleanupTimeout.bind(this), this.authErrorsCleanupDebounce);
+};
+
+/**
+ * Increment error counter for specific url/endpoint.
+ * @param {string} url - The url/endpoint for which error count is incremented.
+ */
+TransportAuth.prototype.incrementErrorCounter = function(url) {
+    if (this.authorizationErrorCount.hasOwnProperty(url)) {
+        this.authorizationErrorCount[url] = this.authorizationErrorCount[url] + 1;
+    } else {
+        this.authorizationErrorCount[url] = 1;
+    }
+};
+
+/**
+ * Get error count for specific url/endpoint
+ * @param {string} url - The url/endpoint for which error count is returned.
+ * @returns {number} The number of errors
+ */
+TransportAuth.prototype.getUrlErrorCount = function(url) {
+    if (this.authorizationErrorCount.hasOwnProperty(url)) {
+        return this.authorizationErrorCount[url];
+    }
+
+    return 0;
+};
+
+/**
  * Stops the transport from refreshing the token.
  */
 TransportAuth.prototype.dispose = function() {
+    clearTimeout(this.errorCleanupTimoutId);
+    this.errorCleanupTimoutId = null;
+    this.authorizationErrorCount = {};
+
     if (this.tokenRefreshTimer) {
         clearTimeout(this.tokenRefreshTimer);
     }

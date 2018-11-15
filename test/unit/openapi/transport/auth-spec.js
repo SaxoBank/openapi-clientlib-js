@@ -1,4 +1,4 @@
-import { tick, installClock, uninstallClock } from '../../utils';
+import { tick, tickArray, installClock, uninstallClock } from '../../utils';
 import mockFetch from '../../mocks/fetch';
 
 const TransportAuth = saxo.openapi.TransportAuth;
@@ -514,6 +514,284 @@ describe('openapi TransportAuth', () => {
             transportAuth.get('service_group', 'url', {}, { headers: { Authorization: 'MYTOKEN' } });
             expect(fetch.calls.count()).toEqual(1);
             expect(fetch.calls.argsFor(0)).toEqual([jasmine.anything(), jasmine.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': jasmine.any(Number) } })]);
+        });
+
+        it('counts transport authorization errors', function(done) {
+            const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            transportAuth = new TransportAuth('localhost/openapi', options);
+
+            expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(undefined);
+
+            transportAuth.post('service_group', 'url');
+            transportAuth.state = 1;
+            fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+
+            tick(() => {
+                expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(1);
+                done();
+            });
+        });
+
+        it('blocks re-requesting authorization token after max number of errors occurs', function(done) {
+            const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            transportAuth = new TransportAuth('localhost/openapi', options);
+
+            const tokenRefreshSpy = jasmine.createSpy('tokenRefresh listener');
+            transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH, tokenRefreshSpy);
+
+            expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(undefined);
+
+            tickArray([
+                () => {
+                    transportAuth.post('service_group', 'url');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    transportAuth.post('service_group', 'url');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+
+                    expect(tokenRefreshSpy.calls.count()).toEqual(1);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(1);
+                },
+                () => {
+                    transportAuth.post('service_group', 'url');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+
+                    expect(tokenRefreshSpy.calls.count()).toEqual(2);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(2);
+                },
+                () => {
+                    transportAuth.post('service_group', 'url');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+
+                    expect(tokenRefreshSpy.calls.count()).toEqual(3);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(3);
+                },
+                () => {
+                    // Checking if calls after hitting max limit are blocked.
+                    expect(tokenRefreshSpy.calls.count()).toEqual(3);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(3);
+
+                    done();
+                },
+            ]);
+        });
+
+        it('doesnt block re-requesting if limit not reached for separate endpoints', function(done) {
+            const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            transportAuth = new TransportAuth('localhost/openapi', options);
+
+            const tokenRefreshSpy = jasmine.createSpy('tokenRefresh listener');
+            transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH, tokenRefreshSpy);
+
+            expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(undefined);
+            expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(undefined);
+
+            tickArray([
+
+                // First group of failed request for specific endpoint url.
+                () => {
+                    transportAuth.post('service_group', 'url-2');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(1);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(1);
+
+                    transportAuth.post('service_group', 'url-2');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(2);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(2);
+
+                    transportAuth.post('service_group', 'url-2');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(3);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(3);
+                },
+
+                // Second group of failed request for different endpoint. tokenRefreshSpy should still be invoked and counter for new endpoint should start from 0.
+                () => {
+                    transportAuth.post('service_group', 'url');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(4);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(1);
+
+                    transportAuth.post('service_group', 'url');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(5);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(2);
+
+                    transportAuth.post('service_group', 'url');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(6);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(3);
+
+                    done();
+                },
+            ]);
+        });
+
+        it('resets error counters after dispose', function(done) {
+            const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            transportAuth = new TransportAuth('localhost/openapi', options);
+
+            const tokenRefreshSpy = jasmine.createSpy('tokenRefresh listener');
+            transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH, tokenRefreshSpy);
+
+            expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(undefined);
+            expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(undefined);
+
+            tickArray([
+
+                // First group of failed request for specific endpoint url.
+                () => {
+                    transportAuth.post('service_group', 'url-2');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(1);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(1);
+
+                    transportAuth.post('service_group', 'url-2');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(2);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(2);
+
+                    transportAuth.post('service_group', 'url-2');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(3);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(3);
+
+                    transportAuth.dispose();
+
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(undefined);
+                    done();
+                },
+            ]);
+        });
+
+        it('resets error counters after debounce timeout is reached', function(done) {
+            const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            transportAuth = new TransportAuth('localhost/openapi', options);
+
+            const tokenRefreshSpy = jasmine.createSpy('tokenRefresh listener');
+            transportAuth.on(transportAuth.EVENT_TOKEN_REFRESH, tokenRefreshSpy);
+
+            expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url']).toBe(undefined);
+            expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(undefined);
+
+            tickArray([
+                () => {
+                    transportAuth.post('service_group', 'url-2');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(1);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(1);
+
+                    transportAuth.post('service_group', 'url-2');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(2);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(2);
+
+                    transportAuth.post('service_group', 'url-2');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(3);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(3);
+
+                    jasmine.clock().tick(6000);
+
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(undefined);
+
+                    transportAuth.post('service_group', 'url-2');
+                    transportAuth.state = 1;
+                    fetch.resolve(401, { error: 401, message: 'Authorization exception' });
+                },
+                () => {
+                    expect(tokenRefreshSpy.calls.count()).toEqual(4);
+                    expect(transportAuth.authorizationErrorCount['localhost/openapi/service_group/url-2']).toBe(1);
+                    done();
+                },
+            ]);
+        });
+    });
+
+    describe('incrementErrorCounter', () => {
+        it('should increment error count for newly used url', () => {
+            const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh' };
+            transportAuth = new TransportAuth('localhost/openapi', initialOptions);
+
+            transportAuth.incrementErrorCounter('new-url');
+            expect(transportAuth.authorizationErrorCount['new-url']).toBe(1);
+
+            transportAuth.incrementErrorCounter('new-url');
+            expect(transportAuth.authorizationErrorCount['new-url']).toBe(2);
+
+            transportAuth.incrementErrorCounter('new-url-2');
+            expect(transportAuth.authorizationErrorCount['new-url-2']).toBe(1);
+        });
+    });
+
+    describe('getUrlErrorCount', () => {
+        it('should return error count for specific url', () => {
+            const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh' };
+            transportAuth = new TransportAuth('localhost/openapi', initialOptions);
+
+            transportAuth.authorizationErrorCount = {
+                'new-url': 5,
+                'new-url-2': 2,
+            };
+
+            expect(transportAuth.getUrlErrorCount('new-url')).toBe(5);
+            expect(transportAuth.getUrlErrorCount('new-url-2')).toBe(2);
+        });
+
+        it('should return 0 for url which is not present in error count map', () => {
+            const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh' };
+            transportAuth = new TransportAuth('localhost/openapi', initialOptions);
+
+            transportAuth.authorizationErrorCount = {
+                'new-url': 5,
+                'new-url-2': 2,
+            };
+
+            expect(transportAuth.getUrlErrorCount('new-url-2')).toBe(2);
+            expect(transportAuth.getUrlErrorCount('new-url-3')).toBe(0);
+            expect(transportAuth.getUrlErrorCount('new-random-name')).toBe(0);
         });
     });
 });
