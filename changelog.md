@@ -1,3 +1,7 @@
+#### v4.3.2
+
++ Add authorization error limits per endpoint.
+
 #### v4.2.1
 
 + Add fallback mechanism for endpoints which doesn't support protobuf yet
