@@ -25,19 +25,19 @@ function shortFormat(num, options) {
 
     // denominations should always be in sorted order
     const notations = [{
-        shortNotation: 'bn',
+        shortNotation: options.unitSuffixBillion,
         digitSize: 10,
         precisionDigits: 10,
         numDigits: 9,
     },
     {
-        shortNotation: 'm',
+        shortNotation: options.unitSuffixMillion,
         digitSize: 7,
         precisionDigits: 7,
         numDigits: 6,
     },
     {
-        shortNotation: 'k',
+        shortNotation: options.unitSuffixThousand,
         digitSize: 5,
         precisionDigits: 4,
         numDigits: 3,

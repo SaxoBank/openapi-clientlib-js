@@ -97,6 +97,12 @@ describe('NumberFormatting format', () => {
             expect(shortFormat(99949.11)).toEqual('99.9k');
             expect(shortFormat(100000000.11)).toEqual('100m');
         });
+
+        it('accepts localization options', () => {
+            expect(shortFormat(10000, { unitSuffixThousand: ' thou' })).toEqual('10 thou');
+            expect(shortFormat(100000000, { unitSuffixMillion: 'Mi' })).toEqual('100Mi');
+            expect(shortFormat(1000000000, { unitSuffixBillion: 'Bn' })).toEqual('1Bn');
+        });
     });
 
     describe('formatNumber', () => {
