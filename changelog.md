@@ -6,9 +6,12 @@
 
 + Add authorization error limits per endpoint.
 
-#### v4.2.1
+#### v4.3.1
 
-+ Add fallback mechanism for endpoints which doesn't support protobuf yet
++ Add fallback mechanism for endpoints which don't support protobuf yet
+
+#### v4.3.0
+
 + Improve logging and functionality when a auth token is expired
 
 #### v4.2.0
