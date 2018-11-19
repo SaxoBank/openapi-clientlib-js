@@ -1,3 +1,7 @@
+#### v4.4.0
+
++ Add Localization options for short format
+
 #### v4.3.2
 
 + Add authorization error limits per endpoint.
