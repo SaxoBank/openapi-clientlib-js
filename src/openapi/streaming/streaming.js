@@ -18,7 +18,7 @@ const OPENAPI_CONTROL_MESSAGE_HEARTBEAT = '_heartbeat';
 const OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS = '_resetsubscriptions';
 
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
-const MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED = 10000;
+const MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED = 20000;
 
 const LOG_AREA = 'Streaming';
 
@@ -160,7 +160,7 @@ function onConnectionStateChanged(change) {
 
             // if *we* are reconnecting (as opposed to signal-r reconnecting, which we do not need to handle specially)
             if (this.reconnecting) {
-                resetAllSubscriptions.call(this);
+                resetSubscriptions.call(this, this.subscriptions);
                 this.reconnecting = false;
             }
 
@@ -243,11 +243,11 @@ function sendDataUpdateToSubscribers(update) {
 function handleControlMessage(message) {
     switch (message.ReferenceId) {
         case OPENAPI_CONTROL_MESSAGE_HEARTBEAT:
-            fireHeartbeats.call(this, message.Heartbeats);
+            handleControlMessageFireHeartbeats.call(this, message.Heartbeats);
             break;
 
         case OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS:
-            resetSubscriptions.call(this, message.TargetReferenceIds);
+            handleControlMessageResetSubscriptions.call(this, message.TargetReferenceIds);
             break;
 
         default:
@@ -260,7 +260,7 @@ function handleControlMessage(message) {
  * fires heartbeats to relevant subscriptions
  * @param {Array.<{OriginatingReferenceId: string, Reason: string}>} heartbeatList
  */
-function fireHeartbeats(heartbeatList) {
+function handleControlMessageFireHeartbeats(heartbeatList) {
 
     log.debug(LOG_AREA, 'heartbeats received', heartbeatList);
     for (let i = 0; i < heartbeatList.length; i++) {
@@ -275,39 +275,54 @@ function fireHeartbeats(heartbeatList) {
     }
 }
 
-/**
- * Resets all subscriptions
- */
-function resetAllSubscriptions() {
-    log.warn(LOG_AREA, 'Resetting all subscriptions');
-    for (let i = 0; i < this.subscriptions.length; i++) {
-        this.subscriptions[i].reset();
-    }
+function startTimerToStopIgnoringSubscriptions(subscriptions) {
+    setTimeout(() => {
+        for (let i = 0; i < subscriptions.length; i++) {
+            delete ignoreSubscriptions[subscriptions[i].referenceId];
+        }
+    }, MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
 }
 
 /**
- * Resets a particular subscription
+ * Resets subscriptions passed
+ */
+function resetSubscriptions(subscriptions) {
+
+    for (let i = 0; i < subscriptions.length; i++) {
+        const subscription = subscriptions[i];
+        subscription.reset();
+        ignoreSubscriptions[subscription.referenceId] = true;
+    }
+    startTimerToStopIgnoringSubscriptions(subscriptions);
+}
+
+/**
+ * Handles the control message to reset subscriptions based on a id list. If no list is given,
+ * reset all subscriptions.
  * @param {Array.<string>} referenceIdList
  */
-function resetSubscriptions(referenceIdList) {
+function handleControlMessageResetSubscriptions(referenceIdList) {
 
     if (!referenceIdList || !referenceIdList.length) {
-        resetAllSubscriptions.call(this);
+        log.debug(LOG_AREA, 'Resetting all subscriptions');
+        resetSubscriptions.call(this, this.subscriptions.slice(0));
         return;
     }
 
     log.debug(LOG_AREA, 'Resetting subscriptions', referenceIdList);
 
+    const subscriptionsToReset = [];
     for (let i = 0; i < referenceIdList.length; i++) {
         const referenceId = referenceIdList[i];
         const subscription = findSubscriptionByReferenceId.call(this, referenceId);
         if (subscription) {
-            subscription.reset();
+            subscriptionsToReset.push(subscription);
         } else {
             const logFunction = ignoreSubscriptions[referenceId] ? log.debug : log.warn;
             logFunction.call(log, LOG_AREA, 'couldn\'t find subscription to reset', referenceId);
         }
     }
+    resetSubscriptions(subscriptionsToReset);
 }
 
 /**
@@ -408,11 +423,7 @@ function getSubscriptionsReadyPromise(subscriptionsToRemove, shouldDisposeSubscr
             }
         }
 
-        setTimeout(() => {
-            for (let i = 0; i < subscriptionsToRemove.length; i++) {
-                delete ignoreSubscriptions[subscriptionsToRemove[i].referenceId];
-            }
-        }, MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
+        startTimerToStopIgnoringSubscriptions(subscriptionsToRemove);
     })
     .then(() => {
         for (let i = 0; i < subscriptionsToRemove.length; i++) {
@@ -620,7 +631,7 @@ Streaming.prototype.modify = function(subscription, args, options) {
 Streaming.prototype.unsubscribe = function(subscription) {
 
     ignoreSubscriptions[subscription.referenceId] = true;
-    setTimeout(() => delete ignoreSubscriptions[subscription.referenceId], MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED);
+    startTimerToStopIgnoringSubscriptions([subscription]);
     subscription.onUnsubscribe();
 };
 

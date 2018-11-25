@@ -729,7 +729,8 @@ Subscription.prototype.timeTillOrphaned = function(now) {
 
     // this works because there are no suspended and resume states.
     // once subscribed, orphan finder will be notified.
-    if (!this.connectionAvailable || this.inactivityTimeout === 0 ||
+    if (!this.connectionAvailable ||
+        this.inactivityTimeout === 0 ||
         this.currentState === STATE_UNSUBSCRIBED ||
         this.currentState === STATE_UNSUBSCRIBE_REQUESTED ||
         this.currentState === STATE_SUBSCRIBE_REQUESTED) {
