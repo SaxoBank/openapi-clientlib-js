@@ -443,22 +443,71 @@ describe('openapi TransportBatch', () => {
 
             tick(function() {
 
-                // we reject the promise with nothing, which somes through as undefined.
-                // put in here in case it changes and we decide to reject with something
                 expect(getCatch.calls.count()).toEqual(1);
-                expect(getCatch.calls.argsFor(0)).toEqual([{ status: 400 }]);
+                expect(getCatch.calls.argsFor(0)).toEqual([{ message: 'batch failed' }]);
 
                 expect(putCatch.calls.count()).toEqual(1);
-                expect(putCatch.calls.argsFor(0)).toEqual([{ status: 400 }]);
+                expect(putCatch.calls.argsFor(0)).toEqual([{ message: 'batch failed' }]);
 
                 expect(postCatch.calls.count()).toEqual(1);
-                expect(postCatch.calls.argsFor(0)).toEqual([{ status: 400 }]);
+                expect(postCatch.calls.argsFor(0)).toEqual([{ message: 'batch failed' }]);
 
                 expect(deleteCatch.calls.count()).toEqual(1);
-                expect(deleteCatch.calls.argsFor(0)).toEqual([{ status: 400 }]);
+                expect(deleteCatch.calls.argsFor(0)).toEqual([{ message: 'batch failed' }]);
 
                 expect(patchCatch.calls.count()).toEqual(1);
-                expect(patchCatch.calls.argsFor(0)).toEqual([{ status: 400 }]);
+                expect(patchCatch.calls.argsFor(0)).toEqual([{ message: 'batch failed' }]);
+
+                done();
+            });
+        });
+    });
+
+    it('passes on a failure when the promise resolves without a batch', function(done) {
+        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
+        const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        const patchPromise = transportBatch.patch('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+
+        tick(function() {
+            expect(transport.post.calls.count()).toEqual(1);
+
+            transport.postResolve(
+                {
+                    status: 200,
+                    response: '',
+                });
+
+            const getCatch = jasmine.createSpy('getCatch');
+            const putCatch = jasmine.createSpy('putCatch');
+            const postCatch = jasmine.createSpy('postCatch');
+            const deleteCatch = jasmine.createSpy('deleteCatch');
+            const patchCatch = jasmine.createSpy('patchCatch');
+
+            getPromise.catch(getCatch);
+            putPromise.catch(putCatch);
+            postPromise.catch(postCatch);
+            deletePromise.catch(deleteCatch);
+            patchPromise.catch(patchCatch);
+
+            tick(function() {
+
+                expect(getCatch.calls.count()).toEqual(1);
+                expect(getCatch.calls.argsFor(0)).toEqual([{ message: 'batch failed' }]);
+
+                expect(putCatch.calls.count()).toEqual(1);
+                expect(putCatch.calls.argsFor(0)).toEqual([{ message: 'batch failed' }]);
+
+                expect(postCatch.calls.count()).toEqual(1);
+                expect(postCatch.calls.argsFor(0)).toEqual([{ message: 'batch failed' }]);
+
+                expect(deleteCatch.calls.count()).toEqual(1);
+                expect(deleteCatch.calls.argsFor(0)).toEqual([{ message: 'batch failed' }]);
+
+                expect(patchCatch.calls.count()).toEqual(1);
+                expect(patchCatch.calls.argsFor(0)).toEqual([{ message: 'batch failed' }]);
 
                 done();
             });
