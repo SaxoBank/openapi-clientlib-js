@@ -5,7 +5,6 @@ module.exports = function (grunt) {
 
 	grunt.initConfig({
 		clean: require("./grunt/clean-conf"),
-		rollup: require("./grunt/rollup-conf"),
 		watch: require("./grunt/watch-conf"),
 	});
 
@@ -13,7 +12,6 @@ module.exports = function (grunt) {
 
 	grunt.loadNpmTasks("grunt-contrib-clean");
 	grunt.loadNpmTasks("grunt-contrib-watch");
-	grunt.loadNpmTasks("grunt-rollup");
 
 	/* Register our own base tasks */
 
