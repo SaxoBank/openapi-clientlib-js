@@ -81,6 +81,8 @@ describe('openapi TransportBatch', () => {
         expect(transport.get.mock.calls.length).toEqual(0);
         expect(transport.post.mock.calls.length).toEqual(0);
 
+        tick(1);
+
         setTimeout(function() {
             expect(transport.get.mock.calls.length).toEqual(1);
             expect(transport.post.mock.calls.length).toEqual(0);
@@ -101,6 +103,8 @@ describe('openapi TransportBatch', () => {
         expect(transport.post.mock.calls.length).toEqual(0);
         expect(transport.delete.mock.calls.length).toEqual(0);
         expect(transport.patch.mock.calls.length).toEqual(0);
+
+        tick(1);
 
         setTimeout(function() {
 
@@ -269,6 +273,8 @@ describe('openapi TransportBatch', () => {
 
         expect(transport.put.mock.calls.length).toEqual(0);
         expect(transport.post.mock.calls.length).toEqual(0);
+
+        tick(1);
 
         setTimeout(function() {
 
