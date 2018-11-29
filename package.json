@@ -44,23 +44,20 @@
     "@babel/preset-env": "7.1.6",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "23.6.0",
-    "es6-promise": "2.1.1",
     "eslint": "5.9.0",
     "eslint-import-resolver-node": "0.3.2",
     "eslint-plugin-destructuring": "2.1.0",
     "eslint-plugin-import": "2.14.0",
-    "eslint-plugin-jest": "22.0.0",
+    "eslint-plugin-jest": "22.1.0",
     "eslint-plugin-promise": "4.0.1",
     "eslint-plugin-switch-case": "1.1.2",
     "jest": "23.6.0",
-    "jquery": "2.1.4",
     "mockdate": "2.0.2",
     "nodemon": "1.18.7",
-    "protobufjs": "^6.8.8",
-    "regenerator-runtime": "0.12.1",
+    "protobufjs": "6.8.8",
+    "regenerator-runtime": "0.13.1",
     "rimraf": "2.6.2",
     "rollup": "0.67.3",
-    "rollup-plugin-babel": "4.0.3",
-    "whatwg-fetch": "2.0.3"
+    "rollup-plugin-babel": "4.0.3"
   }
 }
