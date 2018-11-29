@@ -5,14 +5,14 @@
     "node": ">=4"
   },
   "scripts": {
-    "dist": "cross-env BABEL_ENV=build grunt dist",
-    "dist-watch": "cross-env BABEL_ENV=build grunt dist-watch",
-    "test": "npm run lint && cross-env BABEL_ENV=test npm run jest",
+    "dist": "grunt dist",
+    "dist-watch": "grunt dist-watch",
+    "test": "npm run lint && npm run jest",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "jest": "cross-env BABEL_ENV=test jest --coverage",
-    "jest:watch": "cross-env BABEL_ENV=test jest --watch",
-    "jest:debug": "cross-env BABEL_ENV=test node --debug-brk node_modules/jest/bin/jest --runInBand"
+    "jest": "jest --coverage",
+    "jest:watch": "jest --watch",
+    "jest:debug": "node --debug-brk node_modules/jest/bin/jest --runInBand"
   },
   "jest": {
     "verbose": true,
@@ -38,10 +38,10 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "babel-core": "6.26.0",
+    "@babel/core": "7.1.6",
+    "@babel/preset-env": "7.1.6",
+    "babel-core": "7.0.0-bridge.0",
     "babel-jest": "23.6.0",
-    "babel-preset-es2015-rollup": "3.0.0",
-    "cross-env": "5.2.0",
     "es6-promise": "2.1.1",
     "eslint": "5.9.0",
     "eslint-import-resolver-node": "0.3.2",
@@ -61,8 +61,8 @@
     "mockdate": "2.0.2",
     "protobufjs": "6.8.0",
     "regenerator-runtime": "0.12.1",
-    "requirejs": "2.3.5",
-    "rollup-plugin-babel": "3.0.2",
+    "rollup": "0.67.3",
+    "rollup-plugin-babel": "4.0.3",
     "whatwg-fetch": "2.0.3"
   }
 }
