@@ -23,6 +23,7 @@ function uninstallClock() {
     }
     clock = false;
     jest.clearAllTimers();
+    jest.useRealTimers();
 }
 
 const unMockedSetTimeout = global.setTimeout;

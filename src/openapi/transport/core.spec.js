@@ -9,6 +9,11 @@ describe('openapi TransportCore', () => {
 
     beforeEach(() => {
         fetch = mockFetch();
+        installClock();
+    });
+
+    afterEach(function() {
+        uninstallClock();
     });
 
     describe('parameters', () => {
@@ -79,12 +84,6 @@ describe('openapi TransportCore', () => {
     });
 
     describe('response code', () => {
-        beforeEach(() => {
-            installClock();
-        });
-        afterEach(function() {
-            uninstallClock();
-        });
         it('rejects a 400 response', (done) => {
             transport = new TransportCore('localhost/openapi');
             const getPromise = transport.get('service_group', 'account/info', null);
@@ -158,14 +157,6 @@ describe('openapi TransportCore', () => {
     });
 
     describe('response data', () => {
-        beforeEach(() => {
-            installClock();
-        });
-
-        afterEach(function() {
-            uninstallClock();
-        });
-
         it('gets text from a multipart/mixed', (done) => {
             transport = new TransportCore('localhost/openapi');
             const getPromise = transport.get('service_group', 'account/info', null);

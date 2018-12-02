@@ -12,7 +12,7 @@
     "lint:fix": "eslint src --fix",
     "jest": "cross-env BABEL_ENV=test jest --coverage",
     "jest:watch": "cross-env BABEL_ENV=test jest --watch",
-    "jest:debug": "cross-env BABEL_ENV=test node --debug-brk node_modules/jest/bin/jest --run-in-band"
+    "jest:debug": "cross-env BABEL_ENV=test node --debug-brk node_modules/jest/bin/jest --runInBand"
   },
   "jest": {
     "verbose": true,

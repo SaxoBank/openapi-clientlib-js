@@ -3,6 +3,14 @@ import mockTransport from '../../test/mocks/transport';
 import * as RequestUtils from '../../utils/request';
 import TransportBatch from './batch';
 
+jest.mock('../../utils/function', () => {
+    return {
+        nextTick(fn) {
+            global.setTimeout(fn);
+        },
+    };
+});
+
 describe('openapi TransportBatch', () => {
 
     const validBaseUrl = 'localhost/openapi/';
@@ -74,7 +82,7 @@ describe('openapi TransportBatch', () => {
         expect(transportBatch.timeoutMs).toEqual(9999);
     });
 
-    it('does not batch if only a single call is to be made', function(done) {
+    it('does not batch if only a single call is to be made', function() {
         transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
 
@@ -83,14 +91,11 @@ describe('openapi TransportBatch', () => {
 
         tick(1);
 
-        setTimeout(function() {
-            expect(transport.get.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls.length).toEqual(0);
-            done();
-        });
+        expect(transport.get.mock.calls.length).toEqual(1);
+        expect(transport.post.mock.calls.length).toEqual(0);
     });
 
-    it('queues up calls immediately if timeout is 0', function(done) {
+    it('queues up calls immediately if timeout is 0', function() {
         transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
@@ -106,64 +111,60 @@ describe('openapi TransportBatch', () => {
 
         tick(1);
 
-        setTimeout(function() {
+        expect(transport.post.mock.calls.length).toEqual(1);
+        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+            body: multiline('--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                'X-Request-Id:2',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                'X-Request-Id:3',
+                'Content-Type:application/json; charset=utf-8',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                'X-Request-Id:4',
+                'Content-Type:application/json; charset=utf-8',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                'X-Request-Id:5',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'PATCH /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                'X-Request-Id:6',
+                'Content-Type:application/json; charset=utf-8',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+--',
+                ''),
+            cache: false,
+            requestId: 1 }]);
 
-            expect(transport.post.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-                body: multiline('--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                    'X-Request-Id:2',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                    'X-Request-Id:3',
-                    'Content-Type:application/json; charset=utf-8',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                    'X-Request-Id:4',
-                    'Content-Type:application/json; charset=utf-8',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                    'X-Request-Id:5',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'PATCH /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                    'X-Request-Id:6',
-                    'Content-Type:application/json; charset=utf-8',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+--',
-                    ''),
-                cache: false,
-                requestId: 1 }]);
-
-            expect(transport.get.mock.calls.length).toEqual(0);
-            expect(transport.put.mock.calls.length).toEqual(0);
-            expect(transport.delete.mock.calls.length).toEqual(0);
-            expect(transport.patch.mock.calls.length).toEqual(0);
-            done();
-        });
+        expect(transport.get.mock.calls.length).toEqual(0);
+        expect(transport.put.mock.calls.length).toEqual(0);
+        expect(transport.delete.mock.calls.length).toEqual(0);
+        expect(transport.patch.mock.calls.length).toEqual(0);
     });
 
     it('queues up calls and executes after the timeout if the timeout is not 0', function() {
@@ -224,7 +225,7 @@ describe('openapi TransportBatch', () => {
             requestId: 1 }]);
     });
 
-    it('accepts an object or a string in the body argument', function(done) {
+    it('accepts an object or a string in the body argument', function() {
         transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' }, { body: { test: true, str: 'str' } });
         transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518825, Type: 'CfdOnFutures' }, { body: '{ "test": true, "str": "str" }' });
@@ -234,39 +235,35 @@ describe('openapi TransportBatch', () => {
 
         tick(1);
 
-        setTimeout(function() {
+        expect(transport.post.mock.calls.length).toEqual(1);
+        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+            body: multiline('--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                'X-Request-Id:2',
+                'Content-Type:application/json; charset=utf-8',
+                'Host:localhost:8081',
+                '',
+                '{"test":true,"str":"str"}',
+                '--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'PUT /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
+                'X-Request-Id:3',
+                'Content-Type:application/json; charset=utf-8',
+                'Host:localhost:8081',
+                '',
+                '{ "test": true, "str": "str" }',
+                '--+--',
+                ''),
+            cache: false,
+            requestId: 1 }]);
 
-            expect(transport.post.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-                body: multiline('--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                    'X-Request-Id:2',
-                    'Content-Type:application/json; charset=utf-8',
-                    'Host:localhost:8081',
-                    '',
-                    '{"test":true,"str":"str"}',
-                    '--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'PUT /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
-                    'X-Request-Id:3',
-                    'Content-Type:application/json; charset=utf-8',
-                    'Host:localhost:8081',
-                    '',
-                    '{ "test": true, "str": "str" }',
-                    '--+--',
-                    ''),
-                cache: false,
-                requestId: 1 }]);
-
-            expect(transport.put.mock.calls.length).toEqual(0);
-            done();
-        });
+        expect(transport.put.mock.calls.length).toEqual(0);
     });
 
-    it('allows not having any authentication passed in and picks it up off the calls', function(done) {
+    it('allows not having any authentication passed in and picks it up off the calls', function() {
         transportBatch = new TransportBatch(transport, validBaseUrl, null, { timeoutMs: 0 });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' }, { headers: { Authorization: 'TOKEN1', MyHeader: 'true' } });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518825, Type: 'CfdOnFutures' }, { headers: { Authorization: 'TOKEN2' } });
@@ -276,37 +273,33 @@ describe('openapi TransportBatch', () => {
 
         tick(1);
 
-        setTimeout(function() {
+        expect(transport.post.mock.calls.length).toEqual(1);
+        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+            body: multiline('--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                'X-Request-Id:2',
+                'Authorization:TOKEN1',
+                'MyHeader:true',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'GET /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
+                'X-Request-Id:3',
+                'Authorization:TOKEN2',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+--',
+                ''),
+            cache: false,
+            requestId: 1 }]);
 
-            expect(transport.post.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-                body: multiline('--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                    'X-Request-Id:2',
-                    'Authorization:TOKEN1',
-                    'MyHeader:true',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'GET /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
-                    'X-Request-Id:3',
-                    'Authorization:TOKEN2',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+--',
-                    ''),
-                cache: false,
-                requestId: 1 }]);
-
-            expect(transport.get.mock.calls.length).toEqual(0);
-            done();
-        });
+        expect(transport.get.mock.calls.length).toEqual(0);
     });
 
     it('processes the batch response', function(done) {
@@ -317,105 +310,107 @@ describe('openapi TransportBatch', () => {
         const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 66, Type: 'CfdOnFutures' });
         const patchPromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 77, Type: 'CfdOnFutures' });
 
-        setTimeout(function() {
-            expect(transport.post.mock.calls.length).toEqual(1);
+        tick(1);
 
-            transport.postResolve({ status: 200,
-                response: multiline(
-                    '--+',
-                    'Content-Type:application/http; msgtype=response',
-                    '',
-                    'HTTP/1.1 200 OK',
-                    'Location: ',
-                    'X-Request-Id:2',
-                    'Access-Control-Allow-Origin: http://computor.sys.dom',
-                    'Access-Control-Allow-Credentials: true',
-                    'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
-                    'Content-Type:application/json; charset=utf-8',
-                    '',
-                    '{ "mydata": "get"}',
-                    '--+',
-                    'Content-Type:application/http; msgtype=response',
-                    '',
-                    'HTTP/1.1 200 Okay',
-                    'Location: ',
-                    'X-Request-Id:3',
-                    'Access-Control-Allow-Origin: http://computor.sys.dom',
-                    'Access-Control-Allow-Credentials: true',
-                    'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
-                    'Content-Type:application/json; charset=utf-8',
-                    '',
-                    '{ "mydata": "put"}',
-                    '--+',
-                    'Content-Type:application/http; msgtype=response',
-                    '',
-                    'HTTP/1.1 201 Created',
-                    'Location: ',
-                    'X-Request-Id:4',
-                    'Access-Control-Allow-Origin: http://computor.sys.dom',
-                    'Access-Control-Allow-Credentials: true',
-                    'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
-                    'Content-Type:application/json; charset=utf-8',
-                    '',
-                    '{ "mydata": "post"}',
-                    '--+',
-                    'Content-Type:application/http; msgtype=response',
-                    '',
-                    'HTTP/1.1 200 Okay',
-                    'Location: ',
-                    'X-Request-Id:5',
-                    'Access-Control-Allow-Origin: http://computor.sys.dom',
-                    'Access-Control-Allow-Credentials: true',
-                    'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
-                    'Content-Type:application/json; charset=utf-8',
-                    '',
-                    '{ "mydata": "delete"}',
-                    '--+',
-                    'Content-Type:application/http; msgtype=response',
-                    '',
-                    'HTTP/1.1 200 Okay',
-                    'Location: ',
-                    'X-Request-Id:6',
-                    'Access-Control-Allow-Origin: http://computor.sys.dom',
-                    'Access-Control-Allow-Credentials: true',
-                    'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
-                    'Content-Type:application/json; charset=utf-8',
-                    '',
-                    '{ "mydata": "patch"}',
-                    '--+--',
-                    ''
-                ) });
+        expect(transport.post.mock.calls.length).toEqual(1);
 
-            const getThen = jest.fn().mockName('getThen');
-            const putThen = jest.fn().mockName('putThen');
-            const postThen = jest.fn().mockName('postThen');
-            const deleteThen = jest.fn().mockName('deleteThen');
-            const patchThen = jest.fn().mockName('deleteThen');
+        transport.postResolve({ status: 200,
+            response: multiline(
+                '--+',
+                'Content-Type:application/http; msgtype=response',
+                '',
+                'HTTP/1.1 200 OK',
+                'Location: ',
+                'X-Request-Id:2',
+                'Access-Control-Allow-Origin: http://computor.sys.dom',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
+                'Content-Type:application/json; charset=utf-8',
+                '',
+                '{ "mydata": "get"}',
+                '--+',
+                'Content-Type:application/http; msgtype=response',
+                '',
+                'HTTP/1.1 200 Okay',
+                'Location: ',
+                'X-Request-Id:3',
+                'Access-Control-Allow-Origin: http://computor.sys.dom',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
+                'Content-Type:application/json; charset=utf-8',
+                '',
+                '{ "mydata": "put"}',
+                '--+',
+                'Content-Type:application/http; msgtype=response',
+                '',
+                'HTTP/1.1 201 Created',
+                'Location: ',
+                'X-Request-Id:4',
+                'Access-Control-Allow-Origin: http://computor.sys.dom',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
+                'Content-Type:application/json; charset=utf-8',
+                '',
+                '{ "mydata": "post"}',
+                '--+',
+                'Content-Type:application/http; msgtype=response',
+                '',
+                'HTTP/1.1 200 Okay',
+                'Location: ',
+                'X-Request-Id:5',
+                'Access-Control-Allow-Origin: http://computor.sys.dom',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
+                'Content-Type:application/json; charset=utf-8',
+                '',
+                '{ "mydata": "delete"}',
+                '--+',
+                'Content-Type:application/http; msgtype=response',
+                '',
+                'HTTP/1.1 200 Okay',
+                'Location: ',
+                'X-Request-Id:6',
+                'Access-Control-Allow-Origin: http://computor.sys.dom',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
+                'Content-Type:application/json; charset=utf-8',
+                '',
+                '{ "mydata": "patch"}',
+                '--+--',
+                ''
+            ) });
 
-            getPromise.then(getThen);
-            putPromise.then(putThen);
-            postPromise.then(postThen);
-            deletePromise.then(deleteThen);
-            patchPromise.then(patchThen);
+        const getThen = jest.fn().mockName('getThen');
+        const putThen = jest.fn().mockName('putThen');
+        const postThen = jest.fn().mockName('postThen');
+        const deleteThen = jest.fn().mockName('deleteThen');
+        const patchThen = jest.fn().mockName('deleteThen');
 
-            setTimeout(function() {
-                expect(getThen.mock.calls.length).toEqual(1);
-                expect(getThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'get' } }]);
+        getPromise.then(getThen);
+        putPromise.then(putThen);
+        postPromise.then(postThen);
+        deletePromise.then(deleteThen);
+        patchPromise.then(patchThen);
 
-                expect(putThen.mock.calls.length).toEqual(1);
-                expect(putThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'put' } }]);
+        tick(1);
 
-                expect(postThen.mock.calls.length).toEqual(1);
-                expect(postThen.mock.calls[0]).toEqual([{ status: 201, response: { 'mydata': 'post' } }]);
+        setTimeout(() => {
+            expect(getThen.mock.calls.length).toEqual(1);
+            expect(getThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'get' } }]);
 
-                expect(deleteThen.mock.calls.length).toEqual(1);
-                expect(deleteThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'delete' } }]);
+            expect(putThen.mock.calls.length).toEqual(1);
+            expect(putThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'put' } }]);
 
-                expect(patchThen.mock.calls.length).toEqual(1);
-                expect(patchThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'patch' } }]);
+            expect(postThen.mock.calls.length).toEqual(1);
+            expect(postThen.mock.calls[0]).toEqual([{ status: 201, response: { 'mydata': 'post' } }]);
 
-                done();
-            });
+            expect(deleteThen.mock.calls.length).toEqual(1);
+            expect(deleteThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'delete' } }]);
+
+            expect(patchThen.mock.calls.length).toEqual(1);
+            expect(patchThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'patch' } }]);
+
+            done();
         });
     });
 
@@ -442,44 +437,45 @@ describe('openapi TransportBatch', () => {
             Type: 'CfdOnFutures',
         });
 
-        setTimeout(function() {
-            expect(transport.post.mock.calls.length).toEqual(1);
+        tick(1);
 
-            transport.postReject({ status: 400 });
+        expect(transport.post.mock.calls.length).toEqual(1);
 
-            const getCatch = jest.fn().mockName('getCatch');
-            const putCatch = jest.fn().mockName('putCatch');
-            const postCatch = jest.fn().mockName('postCatch');
-            const deleteCatch = jest.fn().mockName('deleteCatch');
-            const patchCatch = jest.fn().mockName('patchCatch');
+        transport.postReject({ status: 400 });
 
-            getPromise.catch(getCatch);
-            putPromise.catch(putCatch);
-            postPromise.catch(postCatch);
-            deletePromise.catch(deleteCatch);
-            patchPromise.catch(patchCatch);
+        const getCatch = jest.fn().mockName('getCatch');
+        const putCatch = jest.fn().mockName('putCatch');
+        const postCatch = jest.fn().mockName('postCatch');
+        const deleteCatch = jest.fn().mockName('deleteCatch');
+        const patchCatch = jest.fn().mockName('patchCatch');
 
-            setTimeout(function() {
+        getPromise.catch(getCatch);
+        putPromise.catch(putCatch);
+        postPromise.catch(postCatch);
+        deletePromise.catch(deleteCatch);
+        patchPromise.catch(patchCatch);
 
-                // we reject the promise with nothing, which somes through as undefined.
-                // put in here in case it changes and we decide to reject with something
-                expect(getCatch.mock.calls.length).toEqual(1);
-                expect(getCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+        tick(1);
 
-                expect(putCatch.mock.calls.length).toEqual(1);
-                expect(putCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+        setTimeout(() => {
+            // we reject the promise with nothing, which somes through as undefined.
+            // put in here in case it changes and we decide to reject with something
+            expect(getCatch.mock.calls.length).toEqual(1);
+            expect(getCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
 
-                expect(postCatch.mock.calls.length).toEqual(1);
-                expect(postCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(putCatch.mock.calls.length).toEqual(1);
+            expect(putCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
 
-                expect(deleteCatch.mock.calls.length).toEqual(1);
-                expect(deleteCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(postCatch.mock.calls.length).toEqual(1);
+            expect(postCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
 
-                expect(patchCatch.mock.calls.length).toEqual(1);
-                expect(patchCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(deleteCatch.mock.calls.length).toEqual(1);
+            expect(deleteCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
 
-                done();
-            });
+            expect(patchCatch.mock.calls.length).toEqual(1);
+            expect(patchCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+
+            done();
         });
     });
 
@@ -491,46 +487,47 @@ describe('openapi TransportBatch', () => {
         const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         const patchPromise = transportBatch.patch('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
 
-        setTimeout(function() {
-            expect(transport.post.mock.calls.length).toEqual(1);
+        tick(1);
 
-            transport.postResolve(
-                {
-                    status: 200,
-                    response: '',
-                });
+        expect(transport.post.mock.calls.length).toEqual(1);
 
-            const getCatch = jest.fn().mockName('getCatch');
-            const putCatch = jest.fn().mockName('putCatch');
-            const postCatch = jest.fn().mockName('postCatch');
-            const deleteCatch = jest.fn().mockName('deleteCatch');
-            const patchCatch = jest.fn().mockName('patchCatch');
-
-            getPromise.catch(getCatch);
-            putPromise.catch(putCatch);
-            postPromise.catch(postCatch);
-            deletePromise.catch(deleteCatch);
-            patchPromise.catch(patchCatch);
-
-            setTimeout(function() {
-
-                expect(getCatch.mock.calls.length).toEqual(1);
-                expect(getCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
-
-                expect(putCatch.mock.calls.length).toEqual(1);
-                expect(deleteCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
-
-                expect(postCatch.mock.calls.length).toEqual(1);
-                expect(postCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
-
-                expect(deleteCatch.mock.calls.length).toEqual(1);
-                expect(deleteCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
-
-                expect(patchCatch.mock.calls.length).toEqual(1);
-                expect(patchCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
-
-                done();
+        transport.postResolve(
+            {
+                status: 200,
+                response: '',
             });
+
+        const getCatch = jest.fn().mockName('getCatch');
+        const putCatch = jest.fn().mockName('putCatch');
+        const postCatch = jest.fn().mockName('postCatch');
+        const deleteCatch = jest.fn().mockName('deleteCatch');
+        const patchCatch = jest.fn().mockName('patchCatch');
+
+        getPromise.catch(getCatch);
+        putPromise.catch(putCatch);
+        postPromise.catch(postCatch);
+        deletePromise.catch(deleteCatch);
+        patchPromise.catch(patchCatch);
+
+        tick(1);
+
+        setTimeout(() => {
+            expect(getCatch.mock.calls.length).toEqual(1);
+            expect(getCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+
+            expect(putCatch.mock.calls.length).toEqual(1);
+            expect(deleteCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+
+            expect(postCatch.mock.calls.length).toEqual(1);
+            expect(postCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+
+            expect(deleteCatch.mock.calls.length).toEqual(1);
+            expect(deleteCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+
+            expect(patchCatch.mock.calls.length).toEqual(1);
+            expect(patchCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+
+            done();
         });
     });
 
@@ -543,182 +540,177 @@ describe('openapi TransportBatch', () => {
         const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
         const patchPromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
 
-        setTimeout(function() {
-            expect(transport.post.mock.calls.length).toEqual(1);
+        tick(1);
 
-            transport.postResolve({ status: 200,
-                response: multiline(
-                    '--+',
-                    'Content-Type:application/http; msgtype=response',
-                    '',
-                    'HTTP/1.1 199 Some Error',
-                    'Location: ',
-                    'X-Request-Id:2',
-                    'Access-Control-Allow-Origin: http://computor.sys.dom',
-                    'Access-Control-Allow-Credentials: true',
-                    'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
-                    'Content-Type:application/text; charset=utf-8',
-                    '',
-                    'Some error',
-                    '--+',
-                    'Content-Type:application/http; msgtype=response',
-                    '',
-                    'HTTP/1.1 304 Not Modified',
-                    'Location: ',
-                    'X-Request-Id:3',
-                    'Access-Control-Allow-Origin: http://computor.sys.dom',
-                    'Access-Control-Allow-Credentials: true',
-                    'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
-                    '',
-                    '',
-                    '--+',
-                    'Content-Type:application/http; msgtype=response',
-                    '',
-                    'HTTP/1.1 300 Multiple Choices',
-                    'Location: ',
-                    'X-Request-Id:4',
-                    'Access-Control-Allow-Origin: http://computor.sys.dom',
-                    'Access-Control-Allow-Credentials: true',
-                    'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
-                    'Content-Type:application/json; charset=utf-8',
-                    '',
-                    '{ "mydata": "put"}',
-                    '--+',
-                    'Content-Type:application/http; msgtype=response',
-                    '',
-                    'HTTP/1.1 299 Edge Case',
-                    'Location: ',
-                    'X-Request-Id:5',
-                    'Access-Control-Allow-Origin: http://computor.sys.dom',
-                    'Access-Control-Allow-Credentials: true',
-                    'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
-                    'Content-Type:application/json; charset=utf-8',
-                    '',
-                    '{ "mydata": "post"}',
-                    '--+',
-                    'Content-Type:application/http; msgtype=response',
-                    '',
-                    'HTTP/1.1 400 Error',
-                    'Location: ',
-                    'X-Request-Id:6',
-                    'Access-Control-Allow-Origin: http://computor.sys.dom',
-                    'Access-Control-Allow-Credentials: true',
-                    'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
-                    'Content-Type:application/json; charset=utf-8',
-                    '',
-                    '{ "mydata": "delete"}',
-                    '--+--',
-                    ''
-                ) });
+        expect(transport.post.mock.calls.length).toEqual(1);
 
-            const getCatch = jest.fn().mockName('getCatch');
-            const get304Then = jest.fn().mockName('get304Then');
-            const putCatch = jest.fn().mockName('putCatch');
-            const postThen = jest.fn().mockName('postThen');
-            const deleteCatch = jest.fn().mockName('deleteCatch');
-            const patchCatch = jest.fn().mockName('patchCatch');
+        transport.postResolve({ status: 200,
+            response: multiline(
+                '--+',
+                'Content-Type:application/http; msgtype=response',
+                '',
+                'HTTP/1.1 199 Some Error',
+                'Location: ',
+                'X-Request-Id:2',
+                'Access-Control-Allow-Origin: http://computor.sys.dom',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
+                'Content-Type:application/text; charset=utf-8',
+                '',
+                'Some error',
+                '--+',
+                'Content-Type:application/http; msgtype=response',
+                '',
+                'HTTP/1.1 304 Not Modified',
+                'Location: ',
+                'X-Request-Id:3',
+                'Access-Control-Allow-Origin: http://computor.sys.dom',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
+                '',
+                '',
+                '--+',
+                'Content-Type:application/http; msgtype=response',
+                '',
+                'HTTP/1.1 300 Multiple Choices',
+                'Location: ',
+                'X-Request-Id:4',
+                'Access-Control-Allow-Origin: http://computor.sys.dom',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
+                'Content-Type:application/json; charset=utf-8',
+                '',
+                '{ "mydata": "put"}',
+                '--+',
+                'Content-Type:application/http; msgtype=response',
+                '',
+                'HTTP/1.1 299 Edge Case',
+                'Location: ',
+                'X-Request-Id:5',
+                'Access-Control-Allow-Origin: http://computor.sys.dom',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
+                'Content-Type:application/json; charset=utf-8',
+                '',
+                '{ "mydata": "post"}',
+                '--+',
+                'Content-Type:application/http; msgtype=response',
+                '',
+                'HTTP/1.1 400 Error',
+                'Location: ',
+                'X-Request-Id:6',
+                'Access-Control-Allow-Origin: http://computor.sys.dom',
+                'Access-Control-Allow-Credentials: true',
+                'Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range',
+                'Content-Type:application/json; charset=utf-8',
+                '',
+                '{ "mydata": "delete"}',
+                '--+--',
+                ''
+            ) });
 
-            getPromise.catch(getCatch);
-            get304Promise.then(get304Then);
-            putPromise.catch(putCatch);
-            postPromise.then(postThen);
-            deletePromise.catch(deleteCatch);
-            patchPromise.catch(patchCatch);
+        const getCatch = jest.fn().mockName('getCatch');
+        const get304Then = jest.fn().mockName('get304Then');
+        const putCatch = jest.fn().mockName('putCatch');
+        const postThen = jest.fn().mockName('postThen');
+        const deleteCatch = jest.fn().mockName('deleteCatch');
+        const patchCatch = jest.fn().mockName('patchCatch');
 
-            setTimeout(function() {
+        getPromise.catch(getCatch);
+        get304Promise.then(get304Then);
+        putPromise.catch(putCatch);
+        postPromise.then(postThen);
+        deletePromise.catch(deleteCatch);
+        patchPromise.catch(patchCatch);
 
-                // we reject the promise with nothing, which somes through as undefined.
-                // put in here in case it changes and we decide to reject with something
-                expect(getCatch.mock.calls.length).toEqual(1);
-                expect(getCatch.mock.calls[0]).toEqual([{ status: 199 }]);
+        tick(1);
 
-                expect(get304Then.mock.calls.length).toEqual(1);
-                expect(get304Then.mock.calls[0]).toEqual([{ status: 304 }]);
+        setTimeout(() => {
+            // we reject the promise with nothing, which somes through as undefined.
+            // put in here in case it changes and we decide to reject with something
+            expect(getCatch.mock.calls.length).toEqual(1);
+            expect(getCatch.mock.calls[0]).toEqual([{ status: 199 }]);
 
-                expect(putCatch.mock.calls.length).toEqual(1);
-                expect(putCatch.mock.calls[0]).toEqual([{ status: 300, response: { mydata: 'put' } }]);
+            expect(get304Then.mock.calls.length).toEqual(1);
+            expect(get304Then.mock.calls[0]).toEqual([{ status: 304 }]);
 
-                expect(postThen.mock.calls.length).toEqual(1);
-                expect(postThen.mock.calls[0]).toEqual([{ status: 299, response: { mydata: 'post' } }]);
+            expect(putCatch.mock.calls.length).toEqual(1);
+            expect(putCatch.mock.calls[0]).toEqual([{ status: 300, response: { mydata: 'put' } }]);
 
-                expect(deleteCatch.mock.calls.length).toEqual(1);
-                expect(deleteCatch.mock.calls[0]).toEqual([{ status: 400, response: { mydata: 'delete' } }]);
+            expect(postThen.mock.calls.length).toEqual(1);
+            expect(postThen.mock.calls[0]).toEqual([{ status: 299, response: { mydata: 'post' } }]);
 
-                // patch is testing what happens when openapi doesn't include the item in the response
-                expect(patchCatch.mock.calls.length).toEqual(1);
-                expect(patchCatch.mock.calls[0]).toEqual([undefined]);
+            expect(deleteCatch.mock.calls.length).toEqual(1);
+            expect(deleteCatch.mock.calls[0]).toEqual([{ status: 400, response: { mydata: 'delete' } }]);
 
-                done();
-            });
+            // patch is testing what happens when openapi doesn't include the item in the response
+            expect(patchCatch.mock.calls.length).toEqual(1);
+            expect(patchCatch.mock.calls[0]).toEqual([undefined]);
+
+            done();
         });
     });
 
-    it('uri-encodes arguments', function(done) {
+    it('uri-encodes arguments', function() {
         transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: '&=' });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518825, Type: '&=' });
 
-        setTimeout(function() {
+        tick(1);
 
-            expect(transport.post.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-                body: multiline('--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'GET /openapi/port/ref/v1/instruments/details/1518824/%26%3D HTTP/1.1',
-                    'X-Request-Id:2',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'GET /openapi/port/ref/v1/instruments/details/1518825/%26%3D HTTP/1.1',
-                    'X-Request-Id:3',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+--',
-                    ''),
-                cache: false,
-                requestId: 1 }]);
-
-            done();
-        });
+        expect(transport.post.mock.calls.length).toEqual(1);
+        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+            body: multiline('--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'GET /openapi/port/ref/v1/instruments/details/1518824/%26%3D HTTP/1.1',
+                'X-Request-Id:2',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'GET /openapi/port/ref/v1/instruments/details/1518825/%26%3D HTTP/1.1',
+                'X-Request-Id:3',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+--',
+                ''),
+            cache: false,
+            requestId: 1 }]);
     });
 
-    it('supports queryParams', function(done) {
+    it('supports queryParams', function() {
         transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}', { InstrumentId: 1518824 }, { queryParams: { a: 1, b: 2 } });
         transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}', { InstrumentId: 1518825 }, { queryParams: { a: '&=' } });
 
-        setTimeout(function() {
+        tick(1);
 
-            expect(transport.post.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-                body: multiline('--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'GET /openapi/port/ref/v1/instruments/details/1518824?a=1&b=2 HTTP/1.1',
-                    'X-Request-Id:2',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+',
-                    'Content-Type:application/http; msgtype=request',
-                    '',
-                    'GET /openapi/port/ref/v1/instruments/details/1518825?a=%26%3D HTTP/1.1',
-                    'X-Request-Id:3',
-                    'Host:localhost:8081',
-                    '',
-                    '',
-                    '--+--',
-                    ''),
-                cache: false,
-                requestId: 1 }]);
-
-            done();
-        });
+        expect(transport.post.mock.calls.length).toEqual(1);
+        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+            body: multiline('--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'GET /openapi/port/ref/v1/instruments/details/1518824?a=1&b=2 HTTP/1.1',
+                'X-Request-Id:2',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+',
+                'Content-Type:application/http; msgtype=request',
+                '',
+                'GET /openapi/port/ref/v1/instruments/details/1518825?a=%26%3D HTTP/1.1',
+                'X-Request-Id:3',
+                'Host:localhost:8081',
+                '',
+                '',
+                '--+--',
+                ''),
+            cache: false,
+            requestId: 1 }]);
     });
 
     it('disposes okay', () => {
@@ -730,8 +722,8 @@ describe('openapi TransportBatch', () => {
         expect(transport.dispose.mock.calls.length).toEqual(1);
         transport.dispose.mockClear();
 
-        setTimeout(() => {
-            expect(transport.post.mock.calls.length).toEqual(0);
-        });
+        tick(1);
+
+        expect(transport.post.mock.calls.length).toEqual(0);
     });
 });
