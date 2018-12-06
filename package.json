@@ -10,8 +10,8 @@
     "rollup": "rollup -c",
     "dist-watch": "nodemon --watch src --watch libs -e js --exec npm run rollup",
     "test": "npm run lint && npm run jest",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "jest": "jest --coverage",
     "jest:watch": "jest --watch",
     "jest:debug": "node --debug-brk node_modules/jest/bin/jest --runInBand"

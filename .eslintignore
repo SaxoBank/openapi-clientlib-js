@@ -1,0 +1,4 @@
+node_modules
+libs
+dist
+output-template.js
