@@ -13,13 +13,9 @@ It also has hooks for custom conversion of data and mocked data as well as a bun
 `git clone https://github.com/saxobank/openapi-clientlib-js`
 2. Install Node Modules  
 `npm install`
-3. Install Grunt
-`npm install -g grunt-cli`
-4. Run grunt tasks
-`grunt` display a list of possible commands  
-`grunt jsdoc` build documentation  
-`grunt dist` build distribution  
-`grunt test` run unit tests  
+4. Run tasks
+`npm run dist` build distribution  
+`npm test` run unit tests  
 
 ## Consuming the library
 
