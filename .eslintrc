@@ -518,6 +518,19 @@
                 "max-len": "off",
                 "max-statements": "off"
             }
+        },
+        {
+            "files": ["rollup.config.js"],
+            "env": {
+                "node": true
+            },
+            "globals": {
+                "global": false
+            },
+            "rules": {
+                "import/no-commonjs": "off",
+                "import/no-nodejs-modules": "off"
+            }
         }
     ]
 }
