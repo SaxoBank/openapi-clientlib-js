@@ -83,7 +83,7 @@ function formatPricePartsFraction(parts, numberFormatting, value, decimals, form
         if (numeratorDecimals === 0) {
             padSize = 2; // two 'integer' numerator digits
         } else {
-            padSize = numeratorDecimals + 3;     // two digits + seperator + all the decimal bits
+            padSize = numeratorDecimals + 3; // two digits + seperator + all the decimal bits
         }
 
         fractionalPartText = separator + padLeft(numeratorText, padSize, '0');

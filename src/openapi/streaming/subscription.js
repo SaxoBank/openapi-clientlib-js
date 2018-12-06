@@ -12,7 +12,7 @@ import {
     ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
 } from './subscription-actions';
 import SubscriptionQueue from './subscription-queue';
-import SerializerFacade from './serializer-facade';
+import SerializerFacade from './serializer/serializer-facade';
 
 // -- Local variables section --
 

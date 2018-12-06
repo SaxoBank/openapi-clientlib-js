@@ -6,7 +6,7 @@
 // -- Local variables section --
 
 const modernFractionsSeparator = '\''; // US T-Bond/T-Note future decimal separator (104'16.5)
-const altModernFractionsSeparator = '"';  // For the people using ' as thousand separator
+const altModernFractionsSeparator = '"'; // For the people using ' as thousand separator
 
 // -- Local methods section --
 

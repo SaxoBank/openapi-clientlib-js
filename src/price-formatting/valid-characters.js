@@ -28,7 +28,7 @@ function getValidPriceCharacters(numberFormatting, includeScenarios) {
     characters = numberFormatting.groupSeparator;
 
     if (characters.charCodeAt(0) === 160) { // if non breaking space
-        characters += ' ';    // add normal space
+        characters += ' '; // add normal space
     }
 
     if (!includeScenarios.integer) {

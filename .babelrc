@@ -1,4 +1,16 @@
 {
+	"env": {
+		"test": {
+			"plugins": [
+				"transform-es2015-modules-commonjs"
+			]
+		},
+		"build": {
+			"plugins": [
+				"external-helpers"
+			]
+		}
+	},
 	"plugins": [
 	    "transform-es2015-template-literals",
 	    "transform-es2015-literals",
@@ -14,7 +26,6 @@
 	    "transform-es2015-parameters",
 	    "transform-es2015-destructuring",
 	    "transform-es2015-block-scoping",
-	    "external-helpers",
 	    "transform-es2015-for-of"
 	]
 }

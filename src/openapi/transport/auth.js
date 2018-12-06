@@ -212,7 +212,6 @@ function onTransportError(oldTokenExpiry, result) {
         }
     }
     throw result;
-
 }
 
 // -- Exported methods section --
@@ -247,7 +246,7 @@ function onTransportError(oldTokenExpiry, result) {
  *          can occur for specific endpoint within specific timeframe.
  * @param {number} [options.authErrorsCleanupDebounce] - The debounce timeout (in ms) used for clearing of authorization errors count.
  */
-function TransportAuth(baseUrl, options) {
+function TransportAuth(baseUrl, options) { // eslint-disable-line complexity
 
     emitter.mixinTo(this);
 
