@@ -18,7 +18,7 @@ sharedConfig.releaseFile = sharedConfig.release + '/' + sharedConfig.releaseFile
 // we could use the format: "umd" but we wouldn't be able to merge the namespaces when used
 // without amd
 const exportName = sharedConfig.rootNamespace;
-const outputParts = fs.readFileSync('./grunt/output-template.js', { encoding: 'utf8' })
+const outputParts = fs.readFileSync('./output-template.js', { encoding: 'utf8' })
     .replace(/'EXPORT_PLACEHOLDER'/g, exportName)
     .replace(/'NS_PLACEHOLDER'/g, sharedConfig.rootNamespace)
     .replace('\'OUTPUT_NAME\'', packageConfig.name)

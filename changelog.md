@@ -1,3 +1,10 @@
+#### v4.5.0
+
++ Improvements to logging
++ Switch to Jest
++ Remove Grunt
++ Upgrade all development packages (incl. rollup and babel)
+
 #### v4.4.0
 
 + Add Localization options for short format
