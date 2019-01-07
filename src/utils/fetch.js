@@ -134,11 +134,13 @@ export function convertFetchSuccess(url, body, timerId, result) {
 
     if ((result.status < 200 || result.status > 299) && result.status !== 304) {
         convertedPromise = convertedPromise.then((newResult) => {
+            const requestId = parseInt(result.headers.get('x-request-id'), 10);
             log.error(LOG_AREA, 'rejected server response', {
                 url,
                 body,
                 status: newResult.status,
                 response: newResult.response,
+                requestId: isNaN(requestId) ? null : requestId,
             });
 
             throw newResult;
