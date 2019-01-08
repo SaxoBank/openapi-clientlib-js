@@ -148,6 +148,9 @@ function onConnectionStateChanged(change) {
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
+            if (signalRTransport && signalRTransport.name === 'longPolling') {
+                log.warn(LOG_AREA, 'reconnecting using longPolling');
+            }
 
             updateConnectionQuery.call(this);
 
