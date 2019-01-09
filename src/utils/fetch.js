@@ -137,7 +137,7 @@ export function convertFetchSuccess(url, body, timerId, result) {
             const correlation = result.headers.get('x-correlation') || '';
             
             // Form of correlation header is: {sessionId}#{AppId}#{requestId}#{serverDigits}
-            const [,,requestId] = correlation.split('#'); 
+            const requestId = correlation.split('#')[2]; 
 
             log.error(LOG_AREA, 'rejected server response', {
                 url,
