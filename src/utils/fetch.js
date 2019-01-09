@@ -144,7 +144,7 @@ export function convertFetchSuccess(url, body, timerId, result) {
                 body,
                 status: newResult.status,
                 response: newResult.response,
-                requestId: requestId === '' ? null : requestId,
+                requestId: requestId || null,
             });
 
             throw newResult;
