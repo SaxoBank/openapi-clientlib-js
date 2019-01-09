@@ -514,13 +514,13 @@ describe('openapi Streaming', () => {
         it('has defaults', () => {
             new Streaming(transport, 'testUrl', authProvider);
             expect(mockConnection.start.calls.count()).toEqual(1);
-            expect(mockConnection.start.calls.argsFor(0)[0]).toEqual({ waitForPageLoad: false, transport: ['webSockets', ' longPolling'] });
+            expect(mockConnection.start.calls.argsFor(0)[0]).toEqual({ waitForPageLoad: false, transport: ['webSockets', 'longPolling'] });
         });
 
         it('can override waitForPageLoad', () => {
             new Streaming(transport, 'testUrl', authProvider, { waitForPageLoad: true });
             expect(mockConnection.start.calls.count()).toEqual(1);
-            expect(mockConnection.start.calls.argsFor(0)[0]).toEqual({ waitForPageLoad: true, transport: ['webSockets', ' longPolling'] });
+            expect(mockConnection.start.calls.argsFor(0)[0]).toEqual({ waitForPageLoad: true, transport: ['webSockets', 'longPolling'] });
         });
 
         it('can override transport', () => {

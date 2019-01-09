@@ -387,7 +387,7 @@ function Streaming(transport, baseUrl, authProvider, options) {
 
     this.signalrStartOptions = {
         waitForPageLoad: (options && options.waitForPageLoad) || false,                 // faster and does not cause problems after IE8
-        transport: (options && options.transportTypes) || ['webSockets', ' longPolling'],    // SignalR has a bug in SSE and forever frame is slow
+        transport: (options && options.transportTypes) || ['webSockets', 'longPolling'],    // SignalR has a bug in SSE and forever frame is slow
     };
 
     if (options && typeof options.connectRetryDelay === 'number') {
