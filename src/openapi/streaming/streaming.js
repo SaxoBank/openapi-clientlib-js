@@ -148,13 +148,16 @@ function onConnectionStateChanged(change) {
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
-            if (signalRTransport && signalRTransport.name === 'longPolling') {
-                log.warn(LOG_AREA, 'reconnecting using longPolling');
+            // logs when longPolling is enabled after trying webSockets
+            if (signalRTransport && signalRTransport.name !== this.currentTransportName && signalRTransport.name === 'longPolling') {
+                log.warn(LOG_AREA, `changing transport from '${this.currentTransportName}' to 'long polling'`);
             }
 
             updateConnectionQuery.call(this);
 
             this.orphanFinder.stop();
+
+            this.currentTransportName = signalRTransport.name;
             break;
 
         case this.CONNECTION_STATE_CONNECTED:
@@ -170,6 +173,8 @@ function onConnectionStateChanged(change) {
             }
 
             this.orphanFinder.start();
+
+            this.currentTransportName = signalRTransport.name;
             break;
     }
 }
