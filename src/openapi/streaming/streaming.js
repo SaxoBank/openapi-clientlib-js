@@ -386,8 +386,12 @@ function Streaming(transport, baseUrl, authProvider, options) {
     this.subscriptions = [];
 
     this.signalrStartOptions = {
-        waitForPageLoad: (options && options.waitForPageLoad) || false,                 // faster and does not cause problems after IE8
-        transport: (options && options.transportTypes) || ['webSockets', 'longPolling'],    // SignalR has a bug in SSE and forever frame is slow
+        // faster and does not cause problems after IE8
+        waitForPageLoad: (options && options.waitForPageLoad) || false,
+
+        // SignalR has a bug in SSE and forever frame is slow
+        // WebSockets defined twice is required to double check as initial fail might be temporary.
+        transport: (options && options.transportTypes) || ['webSockets', 'webSockets', 'longPolling'],
     };
 
     if (options && typeof options.connectRetryDelay === 'number') {
