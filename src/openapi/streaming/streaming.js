@@ -63,7 +63,7 @@ function reconnect() {
 
     this.reconnecting = true;
 
-    this.connection.start(onConnectionStarted.bind(this));
+    this.connection.start(this.signalrStartOptions, onConnectionStarted.bind(this));
 }
 
 function setNewContextId() {
