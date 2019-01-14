@@ -526,6 +526,12 @@ Subscription.prototype.processSnapshot = function(response) {
  * @private
  */
 Subscription.prototype.reset = function() {
+    log.debug(LOG_AREA, 'Subscription reset', {
+        currentState: this.currentState,
+        url: this.url,
+        serviceGroup: this.serviceGroup,
+        referenceId: this.referenceId,
+    });
 
     switch (this.currentState) {
         case STATE_UNSUBSCRIBED:
