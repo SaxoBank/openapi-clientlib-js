@@ -148,6 +148,20 @@ export function convertFetchSuccess(url, body, timerId, result) {
     return convertedPromise;
 }
 
+function getBody(method, options) {
+    if (!options) {
+        return null;
+    }
+
+    // If PATCH without body occurs, create empty payload.
+    // Reason: Some proxies and default configs for CDNs like Akamai have issues with accepting PATCH with content-length: 0.
+    if (method === 'PATCH' && !options.body && !options.useXHttpMethodOverride) {
+        return {};
+    }
+
+    return options.body;
+}
+
 // -- Exported methods section --
 
 /**
@@ -176,8 +190,7 @@ export function convertFetchSuccess(url, body, timerId, result) {
  * @return {Promise<{ status: number, response: Object|String, headers: Object },{ status: number, response: Object|String, headers: Object }|Error>}
  */
 function localFetch(method, url, options) {
-
-    let body = options && options.body;
+    let body = getBody(method, options);
     const headers = (options && options.headers) || {};
     const cache = options && options.cache;
     let credentials = options && options.credentials;
