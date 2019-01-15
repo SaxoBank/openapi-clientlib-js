@@ -1,3 +1,7 @@
+#### v4.5.1
+
++ Add x-correlation header data to error log details.
+
 #### v4.5.0
 
 + Improvements to logging
