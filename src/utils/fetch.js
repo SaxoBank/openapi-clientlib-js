@@ -134,11 +134,17 @@ export function convertFetchSuccess(url, body, timerId, result) {
 
     if ((result.status < 200 || result.status > 299) && result.status !== 304) {
         convertedPromise = convertedPromise.then((newResult) => {
+            const correlation = result.headers.get('x-correlation') || '';
+
+            // Form of correlation header is: {sessionId}#{AppId}#{requestId}#{serverDigits}
+            const requestId = correlation.split('#')[2];
+
             log.error(LOG_AREA, 'rejected server response', {
                 url,
                 body,
                 status: newResult.status,
                 response: newResult.response,
+                requestId: requestId || null,
             });
 
             throw newResult;
