@@ -150,7 +150,7 @@ function onConnectionStateChanged(change) {
         case this.CONNECTION_STATE_RECONNECTING:
             // logs when longPolling is enabled after trying webSockets
             if (signalRTransport && signalRTransport !== this.currentTransport && signalRTransport.name === 'longPolling') {
-                log.warn(LOG_AREA, `changing transport to 'long polling'`);
+                log.warn(LOG_AREA, 'changing transport to long polling', true);
             }
 
             updateConnectionQuery.call(this);
