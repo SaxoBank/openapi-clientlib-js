@@ -26,7 +26,7 @@ function transportMethod(method) {
                 this.sendTransportCall(transportCall);
             });
         }
-            // calls underlying transport http method
+        // calls underlying transport http method
         return this.transport[method].apply(this.transport, arguments);
 
     };
@@ -48,8 +48,8 @@ function transportMethod(method) {
  * var transportRetry = new TransportRetry(transport, {
  *      retryTimeout:10000,
  *      methods:{
- *          'delete':{ retryLimit:3 },
- *          'post':{ retryTimeouts: [1000, 1000, 2000, 3000, 5000], statuses: [504] },
+ *          'delete':{ retryLimit:3, retryNetworkError: true },
+ *          'post':{ retryTimeouts: [1000, 1000, 2000, 3000, 5000], statuses: [504], retryNetworkError: false },
  *      }
  * });
  */
@@ -125,9 +125,11 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
         .then(transportCall.resolve,
             (response) => {
                 const callOptions = this.methods[transportCall.method];
-                const isRetryRequest = !(response && response.status) || callOptions.statuses && callOptions.statuses.indexOf(response.status) >= 0;
+                const isRetryForStatus = !(response && response.status) || callOptions.statuses && callOptions.statuses.indexOf(response.status) >= 0;
+                const isRetryRequest = response.isNetworkError ? callOptions.retryNetworkError : isRetryForStatus;
                 const isWithinRetryLimitOption = callOptions.retryLimit > 0 && transportCall.retryCount < callOptions.retryLimit;
                 const isWithinRetryTimeoutsOption = callOptions.retryTimeouts && transportCall.retryCount < callOptions.retryTimeouts.length;
+
                 if (isRetryRequest && (isWithinRetryLimitOption || isWithinRetryTimeoutsOption) && !this.isDisposed) {
                     this.addFailedCall(transportCall);
                 } else {
@@ -137,6 +139,7 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
 };
 
 /**
+ * Retries a failed call
  * @protected
  * @param transportCall
  */

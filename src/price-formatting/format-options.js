@@ -48,8 +48,13 @@ const PriceFormatOptions = enumUtils.makeDefinition([
     // CONSIDER: Adding support for using normal spaces instead of no-break spaces
     // NormalSpaces
 
+    /** @member {string} saxo.priceFormatOptions.FormatAsPips - format the price as a number of pips rather than an absolute price */
+    'FormatAsPips',
+
     /** @member {string} saxo.priceFormatOptions.AllowDecimalPips - Use digits for deci/half-pips. */
     'AllowDecimalPips',
+    /** @member {string} saxo.priceFormatOptions.AllowTwoDecimalPips - Use two digits for decimal pips. */
+    'AllowTwoDecimalPips',
     /** @member {string} saxo.priceFormatOptions.DeciPipsSpaceSeparator - Use a space as separator between pips and deci-pips. */
     'DeciPipsSpaceSeparator',
     /** @member {string} saxo.priceFormatOptions.DeciPipsDecimalSeparator - Use culture specific decimal separator as separator.
@@ -64,14 +69,14 @@ const PriceFormatOptions = enumUtils.makeDefinition([
       *  decimals should be treated as a max decimals. */
     'NoRounding']);
 
-    // The following are currently unused, but as open api expands, they may be required in the future.
-    // They are aggregate definitions
-    /* DeciPipsFractionOrSpace Use '1/2' or ' ' (no-break Space) for half-pips. */
-    // "DeciPipsFractionOrSpace": [PriceFormatOptions.DeciPipsFraction, PriceFormatOptions.DeciPipsSpaceForZero],
-    /* AllowDecimalPipsWithSpaceSeparator Use digits for deci-pips with a (non-break) space as separator between pips and deci-pips. */
-    // "AllowDecimalPipsWithSpaceSeparator": [PriceFormatOptions.DeciPipsSpaceSeparator, PriceFormatOptions.AllowDecimalPips],
-    /* AllowDecimalPipsWithDecimalSeparator Use digits for deci-pips with a decimal separator between pips and deci-pips. */
-    // "AllowDecimalPipsWithDecimalSeparator": [PriceFormatOptions.DeciPipsDecimalSeparator, PriceFormatOptions.AllowDecimalPips]
+// The following are currently unused, but as open api expands, they may be required in the future.
+// They are aggregate definitions
+/* DeciPipsFractionOrSpace Use '1/2' or ' ' (no-break Space) for half-pips. */
+// "DeciPipsFractionOrSpace": [PriceFormatOptions.DeciPipsFraction, PriceFormatOptions.DeciPipsSpaceForZero],
+/* AllowDecimalPipsWithSpaceSeparator Use digits for deci-pips with a (non-break) space as separator between pips and deci-pips. */
+// "AllowDecimalPipsWithSpaceSeparator": [PriceFormatOptions.DeciPipsSpaceSeparator, PriceFormatOptions.AllowDecimalPips],
+/* AllowDecimalPipsWithDecimalSeparator Use digits for deci-pips with a decimal separator between pips and deci-pips. */
+// "AllowDecimalPipsWithDecimalSeparator": [PriceFormatOptions.DeciPipsDecimalSeparator, PriceFormatOptions.AllowDecimalPips]
 
 // -- Export section --
 

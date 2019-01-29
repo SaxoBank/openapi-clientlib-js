@@ -16,7 +16,7 @@ function transportMethod(method) {
             // we intercept a call about to be made and then do not have to cope with the 401 responses
             if (this.transportAuth && this.transportAuth.auth.getExpiry() < Date.now()) {
                 this.isQueueing = true;
-                this.transportAuth.onTokenInvalid();
+                this.transportAuth.checkAuthExpiry();
             }
         }
 
@@ -160,9 +160,8 @@ TransportQueue.prototype.waitFor = function(promise) {
  * @protected
  */
 TransportQueue.prototype.emptyQueue = function() {
-    let item;
-    for (let i = 0; item = this.queue[i]; i++) {
-        this.runQueueItem(item);
+    for (let i = 0; i < this.queue.length; i++) {
+        this.runQueueItem(this.queue[i]);
     }
     this.queue.length = 0;
 };

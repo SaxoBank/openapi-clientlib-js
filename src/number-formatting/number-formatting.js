@@ -15,6 +15,9 @@ const defaultOptions = {
     groupSeparator: ',',
     decimalSeparator: '.',
     negativePattern: '-{0}',
+    unitSuffixThousand: 'k',
+    unitSuffixMillion: 'm',
+    unitSuffixBillion: 'bn',
 };
 
 const numberOfZerosRx = /0+$/;

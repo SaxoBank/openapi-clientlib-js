@@ -265,7 +265,7 @@
             {
                 "skipBlankLines": true,
                 "skipComments": true,
-                "max": 300
+                "max": 900
             }
         ],
         "max-nested-callbacks": ["error", 3],
@@ -282,7 +282,7 @@
             "error",
             {
                 "newIsCap": true,
-                "capIsNew": true 
+                "capIsNew": true
             }
         ],
         "new-parens": "error",
@@ -471,7 +471,7 @@
         ],
         "import/first": "error",
         "import/order": "off",
-        "import/newline-after-import": ["error", "always"],
+        "import/newline-after-import": "error",
         "import/prefer-default-export": "off",
         "import/no-unassigned-import": "off",
         // Destructuring plugin
@@ -501,5 +501,36 @@
         "promise/no-callback-in-promise": "off",
         "promise/prefer-await-to-then": "off",
         "promise/prefer-await-to-callbacks": "off"
-    }
+    },
+    "overrides": [
+        {
+            "files": ["*.spec.js", "src/test/**/*"],
+            "env": {
+                "jest": true
+            },
+            "globals": {
+                "global": false
+            },
+            "plugins": ["jest"],
+            "rules": {
+                "max-nested-callbacks": "off",
+                "camelcase": "off",
+                "max-len": "off",
+                "max-statements": "off"
+            }
+        },
+        {
+            "files": ["rollup.config.js"],
+            "env": {
+                "node": true
+            },
+            "globals": {
+                "global": false
+            },
+            "rules": {
+                "import/no-commonjs": "off",
+                "import/no-nodejs-modules": "off"
+            }
+        }
+    ]
 }

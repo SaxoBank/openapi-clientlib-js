@@ -1,3 +1,124 @@
+#### v4.5.1
+
++ Add x-correlation header data to error log details.
+
+#### v4.5.0
+
++ Improvements to logging
++ Switch to Jest
++ Remove Grunt
++ Upgrade all development packages (incl. rollup and babel)
+
+#### v4.4.0
+
++ Add Localization options for short format
+
+#### v4.3.2
+
++ Add authorization error limits per endpoint.
+
+#### v4.3.1
+
++ Add fallback mechanism for endpoints which don't support protobuf yet
+
+#### v4.3.0
+
++ Improve logging and functionality when a auth token is expired
+
+#### v4.2.0
+
++ Add log messages when requests get stuck
+
+#### v4.1.3
+
++ New FX Swap price formatting
+
+#### v4.1.2
+
++ Improvements for handling network errors
++ Tweaks to better detect subscription problems
+
+#### v4.1.1
+
++ Fix parsing of negative modern fractions
+
+#### v4.1.0
+
++ Add billion to the list of shorthands for the short format function.
+
+#### v4.0.2
+
++ Make sure that request ids are unique across requests and batch requests so open api doesnt incorrectly reject them
+
+#### v4.0.1
+
++ If a network error occurs subscribing, we need to unsubscribe - it may have got through
+
+#### v4.0.0
+
++ The retry transport used to retry network errors, but this is now configurable and defaults to not retrying them.
+
+#### v3.0.2
+
++ Fix for-style to be more normal and better performant
+
+#### v3.0.1
+
++ Support negative numbers in short format
+
+#### v3.0.0
+
++ Breaking Change - The signature of the short format function has been changed (breaks if using the precision parameter added in 1.9.0)
+
+#### v2.0.0
+
++ Breaking Change - TransportBatch no longer has an auth argument. It requires that either individual calls have auth headers or that the underlying transport is authenticated
++ Breaking change to the batch building utils - it now returns the boundary it will use
++ Much smaller batch requests
+
+#### v1.9.3
+
++ Do not format and create "-0" for small negative numbers
+
+#### v1.9.2
+
++ Allow pagination top arguments in subscriptions
+
+#### v1.9.1
+
++ Add nano-precision to protobuf deserialization
+
+#### v1.9.0
+
++ Add precision parameter to short formatter
+
+#### v1.8.0
+
++ Support for Protobuf deserialization
+
+#### v1.7.0
+
++ Add ability to unsubscribe by tag
+
+#### v1.6.0
+
++ No longer send /active as part of the subscribe url
+
+#### v1.5.2
+
++ Align price and number parsing of invalid special futures format values
+
+#### v1.5.1
+
++ Align price and number formatting of non-numbers
+
+#### v1.5.0
+
++ Allow fetchRequest to handle binary responses when content-type is a pdf or an excel
++ Add support for decimal values to NumberFormatting.shortFormat
++ Increased MS_TO_IGNORE_DATA_ON_UNSUBSCRIBED to 10000 to avoid warning after unsubscribing on slower connections
+
+
 #### v1.4.0
 
 + Add requestCounter to identify unique request for every open api rest request

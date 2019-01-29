@@ -20,10 +20,18 @@ const DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES = 'expiry';
 const DEFAULT_TOKEN_REFRESH_MARGIN_MS = 0;
 const DEFAULT_TOKEN_REFRESH_CREDDENTIALS = 'include';
 
+// Max request limits are used to block infinite loop of authorization requests after transport 401 errors, which my happen if given
+// endpoint for whatever reasons constantly returns 401 error status (despite correct fresh authorization token refresh).
+const DEFAULT_MAX_AUTH_ERRORS = 3;
+
+// Debounce time in milliseconds.
+const DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE = 5000; // ms
+
 const TOKEN_BEARER = 'Bearer ';
 
 const STATE_WAITING = 0x1;
 const STATE_REFRESHING = 0x2;
+const STATE_FAILED = 0x4;
 
 // -- Local methods section --
 
@@ -78,14 +86,22 @@ function onApiTokenReceived(result) {
 }
 
 function onApiTokenReceiveFail(result) {
-    this.state = STATE_WAITING;
     log.warn(LOG_AREA, 'Token refresh failed', result);
-    this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
+
+    if (result && (result.status === 401 || result.status === 403)) {
+        this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
+        this.state = STATE_FAILED;
+        return;
+    }
 
     if (this.retries < this.maxRetryCount) {
+        this.state = STATE_WAITING;
         this.retries++;
         this.tokenRefreshTimerFireTime = Date.now() + this.retryDelayMs;
         this.tokenRefreshTimer = setTimeout(this.refreshOpenApiToken.bind(this), this.retryDelayMs);
+    } else {
+        this.state = STATE_FAILED;
+        this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
     }
 }
 
@@ -131,22 +147,71 @@ function makeTransportMethod(method) {
         options.headers.Authorization = this.auth.getToken();
 
         return this.transport[method](serviceGroup, urlTemplate, templateArgs, options)
-            .catch(onTransportError.bind(this));
+            .catch(onTransportError.bind(this, this.auth.getExpiry()));
     };
 }
 
-function onTransportError(result) {
+function onErrorCleanupTimeout() {
+    this.authorizationErrorCount = {};
+    this.errorCleanupTimoutId = null;
+}
+
+function onTransportError(oldTokenExpiry, result) {
     if (result && result.status === 401) {
-        if (this.auth.getExpiry() > Date.now()) {
-            // we received an auth failed before the expiry time
-            log.info(LOG_AREA, 'Call failed due to authentication.', result);
-            this.onTokenInvalid();
+        const currentAuthExpiry = this.auth.getExpiry();
+        const now = Date.now();
+
+        // if the current token is the same as when this was sent and its meant to be still valid
+        // it means the token is invalid even though its not meant to expire yet
+        const isCurrentTokenInvalid = currentAuthExpiry > now && oldTokenExpiry === currentAuthExpiry;
+        const isCurrentTokenExpired = currentAuthExpiry < now;
+        // if we are not in an ok waiting state
+        const isFetching = !(this.state & STATE_WAITING && this.retries === 0);
+        const shouldRequest = (isCurrentTokenInvalid || isCurrentTokenExpired) && !isFetching;
+        const urlErrorCount = this.getUrlErrorCount(result.url);
+
+        if (urlErrorCount >= this.maxAuthErrors) {
+            // Blocking infinite loop of authorization re-requests which might be caused by invalid
+            // behaviour of given endpoint which constantly returns 401 error.
+            log.error(LOG_AREA, 'Too many authorization errors occurred withing specified timeframe for specific endpoint.');
+            return;
+        }
+
+        if (isCurrentTokenInvalid) {
+            if (isFetching) {
+                log.debug(LOG_AREA, 'Second call failed with invalid token', {
+                    currentAuthExpiry,
+                    now,
+                    result,
+                });
+            } else {
+                log.error(LOG_AREA, 'Unauthorized with a valid token, will fetch a new one', {
+                    currentAuthExpiry,
+                    now,
+                    result,
+                });
+            }
+        } else if (isCurrentTokenExpired && !isFetching) {
+            const lateBy = now - this.tokenRefreshTimerFireTime;
+            log.error(LOG_AREA, 'Token was not refreshed in time', {
+                currentAuthExpiry,
+                now,
+                lateBy,
+            });
         } else {
-            log.info(LOG_AREA, 'Received an auth error, auth is now expired.', result);
+            log.info(LOG_AREA, 'Received an auth error because of an old token.', {
+                oldTokenExpiry,
+                currentAuthExpiry,
+            });
+        }
+
+        if (shouldRequest) {
+            this.incrementErrorCounter(result.url);
+            this.debounceErrorCounterCleanup();
+            this.refreshOpenApiToken();
         }
     }
     throw result;
-
 }
 
 // -- Exported methods section --
@@ -177,8 +242,11 @@ function onTransportError(result) {
  * @param {string|number} [options.expiry] - The expiry of that token, assumed to be absolute.
  * @param {number} [options.retryDelayMs] - The delay before retrying auth
  * @param {number} [options.maxRetryCount] - The maximum number of times to retry the auth url
+ * @param {number} [options.maxAuthErrors] - The maximum number of authorization errors that
+ *          can occur for specific endpoint within specific timeframe.
+ * @param {number} [options.authErrorsCleanupDebounce] - The debounce timeout (in ms) used for clearing of authorization errors count.
  */
-function TransportAuth(baseUrl, options) {
+function TransportAuth(baseUrl, options) { // eslint-disable-line complexity
 
     emitter.mixinTo(this);
 
@@ -191,10 +259,15 @@ function TransportAuth(baseUrl, options) {
     this.tokenRefreshMarginMs = options && options.tokenRefreshMarginMs || DEFAULT_TOKEN_REFRESH_MARGIN_MS;
     this.retryDelayMs = options && options.retryDelayMs || DEFAULT_RETRY_DELAY_MS;
     this.maxRetryCount = options && options.maxRetryCount || DEFAULT_MAX_RETRY_COUNT;
+    this.maxAuthErrors = options && options.maxAuthErrors || DEFAULT_MAX_AUTH_ERRORS;
+    this.authErrorsCleanupDebounce = options && options.authErrorsCleanupDebounce || DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE;
 
     this.transport = new TransportCore(baseUrl, options);
     this.state = STATE_WAITING;
     this.retries = 0;
+
+    // Map of authorization error counts per endpoint/url.
+    this.authorizationErrorCount = {};
 
     const token = options && options.token || null;
     let expiry = options && options.expiry || 0;
@@ -273,6 +346,16 @@ TransportAuth.prototype.head = makeTransportMethod('head');
 TransportAuth.prototype.options = makeTransportMethod('options');
 
 /**
+ * Refresh the open api token if we are not already doing so
+ */
+TransportAuth.prototype.checkAuthExpiry = function() {
+    const isFetching = !(this.state & STATE_WAITING && this.retries === 0);
+    if (!isFetching) {
+        this.refreshOpenApiToken();
+    }
+};
+
+/**
  * Forces a refresh of the open api token
  * This will refresh even if a refresh is already in progress, so only call this if you need a forced refresh.
  * See also {@link TransportAuth.onTokenInvalid}.
@@ -288,35 +371,49 @@ TransportAuth.prototype.refreshOpenApiToken = function() {
 };
 
 /**
- * Tells transport auth that the token is invalid and it should immediately try to refresh if it isn't already
+ * Run debounced cleanup of error counter map
  */
-TransportAuth.prototype.onTokenInvalid = function() {
-
-    if (this.state & STATE_WAITING && this.retries === 0 && this.maxRetryCount > 0) {
-
-        const lateBy = Date.now() - this.tokenRefreshTimerFireTime;
-        // if we the timeout was set but it was missed, the liklihood is we woke from sleep
-        if (this.tokenRefreshTimerFireTime && (lateBy > (1000 * 20))) {
-            log.warn(LOG_AREA, 'Token is invalid, timeout is more than 20 seconds late', {
-                retries: this.retries,
-                lateBy,
-            });
-        } else {
-            log.error(LOG_AREA, 'Token is invalid before timeout is fired', {
-                retries: this.retries,
-                lateBy,
-            });
-        }
-        this.refreshOpenApiToken();
-    } else {
-        log.info(LOG_AREA, 'Token invalid, currently trying to refresh.');
+TransportAuth.prototype.debounceErrorCounterCleanup = function() {
+    if (this.errorCleanupTimoutId) {
+        clearTimeout(this.errorCleanupTimoutId);
     }
+
+    this.errorCleanupTimoutId = setTimeout(onErrorCleanupTimeout.bind(this), this.authErrorsCleanupDebounce);
+};
+
+/**
+ * Increment error counter for specific url/endpoint.
+ * @param {string} url - The url/endpoint for which error count is incremented.
+ */
+TransportAuth.prototype.incrementErrorCounter = function(url) {
+    if (this.authorizationErrorCount.hasOwnProperty(url)) {
+        this.authorizationErrorCount[url] = this.authorizationErrorCount[url] + 1;
+    } else {
+        this.authorizationErrorCount[url] = 1;
+    }
+};
+
+/**
+ * Get error count for specific url/endpoint
+ * @param {string} url - The url/endpoint for which error count is returned.
+ * @returns {number} The number of errors
+ */
+TransportAuth.prototype.getUrlErrorCount = function(url) {
+    if (this.authorizationErrorCount.hasOwnProperty(url)) {
+        return this.authorizationErrorCount[url];
+    }
+
+    return 0;
 };
 
 /**
  * Stops the transport from refreshing the token.
  */
 TransportAuth.prototype.dispose = function() {
+    clearTimeout(this.errorCleanupTimoutId);
+    this.errorCleanupTimoutId = null;
+    this.authorizationErrorCount = {};
+
     if (this.tokenRefreshTimer) {
         clearTimeout(this.tokenRefreshTimer);
     }

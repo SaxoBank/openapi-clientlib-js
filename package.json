@@ -1,13 +1,33 @@
 {
   "name": "openapi-clientlib",
-  "version": "1.4.0",
+  "version": "4.5.1",
   "engines": {
     "node": ">=4"
   },
   "scripts": {
-    "test": "npm run lint && grunt test",
-    "lint": "eslint src test",
-    "lint:fix": "eslint src test --fix"
+    "dist": "npm run clean && npm run rollup",
+    "clean": "rimraf dist",
+    "rollup": "rollup -c",
+    "dist-watch": "nodemon --watch src --watch libs -e js --exec npm run rollup",
+    "test": "npm run lint && npm run jest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "jest": "jest --coverage",
+    "jest:watch": "jest --watch",
+    "jest:debug": "node --debug-brk node_modules/jest/bin/jest --runInBand"
+  },
+  "jest": {
+    "verbose": true,
+    "transform": {
+      "^.+\\.jsx?$": "babel-jest"
+    },
+    "moduleDirectories": [
+      "node_modules",
+      "<rootDir>"
+    ],
+    "testEnvironment": "node",
+    "restoreMocks": true,
+    "coverageDirectory": "dist/coverage/"
   },
   "main": "dist/release/openapi-client.js",
   "files": [
@@ -20,28 +40,24 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "babel-preset-es2015-rollup": "3.0.0",
-    "es6-promise": "2.1.1",
-    "eslint": "3.17.1",
-    "eslint-import-resolver-node": "0.2.3",
+    "@babel/core": "7.2.0",
+    "@babel/preset-env": "7.2.0",
+    "babel-core": "7.0.0-bridge.0",
+    "babel-jest": "23.6.0",
+    "eslint": "5.9.0",
+    "eslint-import-resolver-node": "0.3.2",
     "eslint-plugin-destructuring": "2.1.0",
-    "eslint-plugin-import": "2.2.0",
-    "eslint-plugin-promise": "3.5.0",
+    "eslint-plugin-import": "2.14.0",
+    "eslint-plugin-jest": "22.1.2",
+    "eslint-plugin-promise": "4.0.1",
     "eslint-plugin-switch-case": "1.1.2",
-    "grunt": "1.0.1",
-    "grunt-cli": "1.2.0",
-    "grunt-contrib-clean": "1.0.0",
-    "grunt-contrib-connect": "1.0.2",
-    "grunt-contrib-copy": "1.0.0",
-    "grunt-contrib-jasmine": "1.0.3",
-    "grunt-contrib-watch": "1.0.0",
-    "grunt-rollup": "1.0.1",
-    "grunt-template-jasmine-istanbul": "0.4.0",
-    "jquery": "2.1.4",
-    "remap-istanbul": "0.9.1",
-    "requirejs": "2.3.3",
-    "rollup-plugin-babel": "2.7.1",
-    "taffydb": "2.7.3",
-    "whatwg-fetch": "2.0.3"
+    "jest": "23.6.0",
+    "mockdate": "2.0.2",
+    "nodemon": "1.18.7",
+    "protobufjs": "6.8.8",
+    "regenerator-runtime": "0.13.1",
+    "rimraf": "2.6.2",
+    "rollup": "0.67.4",
+    "rollup-plugin-babel": "4.0.3"
   }
 }
