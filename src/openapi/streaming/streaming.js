@@ -132,6 +132,8 @@ function onConnectionStateChanged(change) {
         return;
     }
 
+    const primaryTransportName = this.signalrStartOptions && this.signalrStartOptions.transport && this.signalrStartOptions.transport[0];
+
     switch (this.connectionState) {
         case this.CONNECTION_STATE_DISCONNECTED:
 
@@ -168,6 +170,11 @@ function onConnectionStateChanged(change) {
             if (this.reconnecting) {
                 resetSubscriptions.call(this, this.subscriptions);
                 this.reconnecting = false;
+            }
+
+            // log transport fallback for first connect
+            if (!this.currentTransport && signalRTransport && signalRTransport.name !== primaryTransportName) {
+                log.warn(LOG_AREA, `Unable to stream using ${primaryTransportName}, falling back to ${signalRTransport.name}`, null, true);
             }
 
             for (let i = 0; i < this.subscriptions.length; i++) {
