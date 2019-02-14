@@ -1,3 +1,7 @@
+#### v4.5.2
+
++ Add logging for scenario when signalr fallbacks to longPolling. 
+
 #### v4.5.1
 
 + Add x-correlation header data to error log details.
