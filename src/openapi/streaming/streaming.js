@@ -65,7 +65,7 @@ function reconnect() {
 
     this.reconnecting = true;
 
-    this.connection.start(onConnectionStarted.bind(this));
+    this.connection.start(this.signalrStartOptions, onConnectionStarted.bind(this));
 }
 
 function setNewContextId() {
@@ -132,6 +132,8 @@ function onConnectionStateChanged(change) {
         return;
     }
 
+    const primaryTransportName = this.signalrStartOptions && this.signalrStartOptions.transport && this.signalrStartOptions.transport[0];
+
     switch (this.connectionState) {
         case this.CONNECTION_STATE_DISCONNECTED:
 
@@ -150,10 +152,16 @@ function onConnectionStateChanged(change) {
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
+            // logs when longPolling is enabled after trying webSockets
+            if (signalRTransport && signalRTransport !== this.currentTransport && signalRTransport.name === 'longPolling') {
+                log.warn(LOG_AREA, 'changing transport to long polling', null, true);
+            }
 
             updateConnectionQuery.call(this);
 
             this.orphanFinder.stop();
+
+            this.currentTransport = signalRTransport;
             break;
 
         case this.CONNECTION_STATE_CONNECTED:
@@ -164,11 +172,18 @@ function onConnectionStateChanged(change) {
                 this.reconnecting = false;
             }
 
+            // log transport fallback for first connect
+            if (!this.currentTransport && signalRTransport && signalRTransport.name !== primaryTransportName) {
+                log.warn(LOG_AREA, `Unable to stream using ${primaryTransportName}, falling back to ${signalRTransport.name}`, null, true);
+            }
+
             for (let i = 0; i < this.subscriptions.length; i++) {
                 this.subscriptions[i].onConnectionAvailable();
             }
 
             this.orphanFinder.start();
+
+            this.currentTransport = signalRTransport;
             break;
     }
 }
@@ -492,8 +507,12 @@ function Streaming(transport, baseUrl, authProvider, options) {
     this.subscriptions = [];
 
     this.signalrStartOptions = {
-        waitForPageLoad: (options && options.waitForPageLoad) || false, // faster and does not cause problems after IE8
-        transport: (options && options.transportTypes) || ['webSockets', ' longPolling'], // SignalR has a bug in SSE and forever frame is slow
+        // faster and does not cause problems after IE8
+        waitForPageLoad: (options && options.waitForPageLoad) || false,
+
+        // SignalR has a bug in SSE and forever frame is slow
+        // WebSockets defined twice is required to double check as initial fail might be temporary.
+        transport: (options && options.transportTypes) || ['webSockets', 'webSockets', 'longPolling'],
     };
 
     if (options) {

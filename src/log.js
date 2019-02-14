@@ -80,6 +80,7 @@ log.info = log.trigger.bind(log, log.INFO);
  * @param {string} area - The area of the code e.g. "Streaming" or "TransportBatch".
  * @param {string} message - The error message e.g. "Something has gone wrong".
  * @param {Object|string} [data] - Data associated with the event.
+ * @param {boolean} isPersist - if true then log is always persisted
  */
 log.warn = log.trigger.bind(log, log.WARN);
 
