@@ -154,8 +154,6 @@ describe('openapi StreamingSubscription', () => {
             transport.post.mockClear();
 
             setTimeout(() => {
-                expect(errorSpy.mock.calls.length).toEqual(1);
-                expect(errorSpy.mock.calls[0]).toEqual([{ status: '404', response: { ErrorCode: 'UnsupportedSubscriptionFormat' } }]);
                 expect(subscription.subscriptionData.Format).toEqual('application/json');
 
                 expect(transport.post.mock.calls.length).toEqual(1);
