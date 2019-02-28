@@ -500,7 +500,16 @@ describe('openapi TransportAuth', () => {
             expect(fetch.mock.calls[0]).toEqual([expect.anything(), expect.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': expect.any(Number) } })]);
             expect(fetch.mock.calls[1]).toEqual([expect.anything(), expect.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': expect.any(Number) } })]);
             expect(fetch.mock.calls[2]).toEqual([expect.anything(), expect.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': expect.any(Number) } })]);
-            expect(fetch.mock.calls[3]).toEqual([expect.anything(), expect.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': expect.any(Number) } })]);
+            expect(fetch.mock.calls[3]).toEqual([
+                expect.anything(),
+                expect.objectContaining({
+                    headers: {
+                        Authorization: 'Bearer TOKEN',
+                        'X-Request-Id': expect.any(Number),
+                        'Content-Type': expect.any(String),
+                    },
+                }),
+            ]);
             expect(fetch.mock.calls[4]).toEqual([expect.anything(), expect.objectContaining({ headers: { Authorization: 'Bearer TOKEN', 'X-Request-Id': expect.any(Number) } })]);
         });
 
