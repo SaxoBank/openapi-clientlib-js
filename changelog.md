@@ -1,6 +1,10 @@
+#### v4.5.3
+
++ Add body payload defaulting for PATCH request to fix issue with some proxy configurations not accepting empty PATCH requests.
+
 #### v4.5.2
 
-+ Add logging for scenario when signalr fallbacks to longPolling. 
++ Add logging for scenario when signalr fallbacks to longPolling.
 
 #### v4.5.1
 
