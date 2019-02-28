@@ -461,8 +461,34 @@ describe('openapi TransportCore', () => {
                 .toEqual([expect.anything(),
                     expect.objectContaining({
                         method: 'POST',
+                        body: '{}',
                         headers: {
+                            'Content-Type': 'application/json; charset=UTF-8',
                             'X-HTTP-Method-Override': 'PATCH',
+                            'X-Request-Id': expect.any(Number),
+                        } })]);
+            fetch.mockClear();
+        });
+    });
+
+    describe('PATCH body defaulting', () => {
+
+        beforeEach(() => {
+            transport = new TransportCore('localhost/openapi');
+        });
+
+        afterEach(() => transport.dispose());
+
+        it('works', () => {
+            transport.patch('service_group', 'url', null, { body: { exampleField: 'test' } });
+            expect(fetch.mock.calls.length).toEqual(1);
+            expect(fetch.mock.calls[0])
+                .toEqual([expect.anything(),
+                    expect.objectContaining({
+                        method: 'PATCH',
+                        body: '{"exampleField":"test"}',
+                        headers: {
+                            'Content-Type': 'application/json; charset=UTF-8',
                             'X-Request-Id': expect.any(Number),
                         } })]);
             fetch.mockClear();

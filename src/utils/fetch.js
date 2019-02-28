@@ -149,14 +149,14 @@ export function convertFetchSuccess(url, body, timerId, result) {
 }
 
 function getBody(method, options) {
-    if (!options) {
-        return null;
-    }
-
     // If PATCH without body occurs, create empty payload.
     // Reason: Some proxies and default configs for CDNs like Akamai have issues with accepting PATCH with content-length: 0.
-    if (method === 'PATCH' && !options.body && !options.useXHttpMethodOverride) {
+    if (method === 'PATCH' && (!options || !options.body)) {
         return {};
+    }
+
+    if (!options) {
+        return null;
     }
 
     return options.body;
