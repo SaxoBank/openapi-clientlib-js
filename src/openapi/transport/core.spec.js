@@ -129,7 +129,7 @@ describe('openapi TransportCore', () => {
     });
 
     describe('request body', () => {
-        it('get without body should be have undefined body', () => {
+        it('get without body should have undefined body', () => {
             // This is quite important test which ensures that we set undefined for body when it's missing for GET requests.
             // Currently EDGE browser will fail if GET requests have for example null body in the request.
 
