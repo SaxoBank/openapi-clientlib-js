@@ -161,11 +161,7 @@ function getBody(method, options) {
         return {};
     }
 
-    if (!options) {
-        return null;
-    }
-
-    return options.body;
+    return options && options.body;
 }
 
 // -- Exported methods section --
