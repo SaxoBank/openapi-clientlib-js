@@ -129,6 +129,24 @@ describe('openapi TransportCore', () => {
     });
 
     describe('request body', () => {
+        it('get without body should be have undefined body', () => {
+            // This is quite important test which ensures that we set undefined for body when it's missing for GET requests.
+            // Currently EDGE browser will fail if GET requests have for example null body in the request.
+
+            transport = new TransportCore('localhost/openapi');
+            transport.get('service_group', 'account/info/{user}/{account}', { user: 'te', account: 'st' });
+
+            expect(fetch.mock.calls.length).toEqual(1);
+            expect(fetch.mock.calls[0]).toEqual(['localhost/openapi/service_group/account/info/te/st',
+                {
+                    body: undefined,
+                    method: 'GET',
+                    headers: { 'X-Request-Id': expect.any(Number) },
+                    // credentials: 'include' adds cookies.
+                    // Cookies used by some open api operations. if we don't default here make sure it is sent through with subscription requests.
+                    credentials: 'include' }]);
+        });
+
         it('allows an object', () => {
             transport = new TransportCore('localhost/openapi');
             transport.post('service_group', 'account/info/{user}/{account}', { user: 'te', account: 'st' }, { body: { Test: true } });
