@@ -1,3 +1,7 @@
+#### v4.5.4
+
++ Use undefined for body if it's not defined in rest request. This is required to support EDGE fetch handling logic which disallows null body for GET requests. Ref: github/fetch#402
+
 #### v4.5.3
 
 + Add body payload defaulting for PATCH request to fix issue with some proxy configurations not accepting empty PATCH requests.
