@@ -244,8 +244,7 @@ function isAlreadySupported(body) {
     return body instanceof window.Blob ||
     body instanceof window.ArrayBuffer ||
     body instanceof window.FormData ||
-    (window.URLSearchParams && body instanceof window.URLSearchParams) ||
-    (window.ReadableStream && body instanceof window.ReadableStream);
+    (window.URLSearchParams && body instanceof window.URLSearchParams);
 }
 
 // -- Export section --
