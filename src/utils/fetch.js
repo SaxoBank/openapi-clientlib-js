@@ -179,8 +179,8 @@ function getBody(method, options) {
  * @param {string} method - The http method.
  * @param {string} url - The url to fetch.
  * @param {Object} [options]
- * @param {string} [options.body] - The body of the request. If this is an object it is converted to JSON and
- *                                  the appropriate content-type header added.
+ * @param {string} [options.body] - The body of the request. If this is an object, that is not already handled by the body mixin,
+                                    it is converted to JSON and the appropriate content-type header added.
  * @param {Object} [options.headers] - Object of header key to header value.
  * @param {boolean} [options.cache] - Whether or not to cache.
  * @param {string} [options.credentials="include"] - Whether cookies will be included. Will default to true unless overridden.
@@ -203,7 +203,7 @@ function localFetch(method, url, options) {
     }
 
     // encode objects. Batch calls come through as strings.
-    if (body && typeof body === 'object') {
+    if (body && (typeof body === 'object' && !isAlreadySupported(body))) {
         body = JSON.stringify(body);
         headers['Content-Type'] = 'application/json; charset=UTF-8';
     }
@@ -235,6 +235,17 @@ function localFetch(method, url, options) {
             convertFetchSuccess.bind(null, url, body, timerId),
             convertFetchReject.bind(null, url, body, timerId)
         );
+}
+
+// Check for handled type: https://fetch.spec.whatwg.org/#bodyinit
+// URLSearchParams and ReadableStream are guarded, because they are not supported in IE
+// USVString is not handled because it will be typeof "string"
+function isAlreadySupported(body) {
+    return body instanceof window.Blob ||
+    body instanceof window.ArrayBuffer ||
+    body instanceof window.FormData ||
+    (window.URLSearchParams && body instanceof window.URLSearchParams) ||
+    (window.ReadableStream && body instanceof window.ReadableStream);
 }
 
 // -- Export section --
