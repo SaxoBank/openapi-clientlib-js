@@ -154,6 +154,7 @@ describe('openapi StreamingSubscription', () => {
             transport.post.mockClear();
 
             setTimeout(() => {
+                expect(errorSpy.mock.calls.length).toEqual(0);
                 expect(subscription.subscriptionData.Format).toEqual('application/json');
 
                 expect(transport.post.mock.calls.length).toEqual(1);
