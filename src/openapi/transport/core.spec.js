@@ -129,6 +129,24 @@ describe('openapi TransportCore', () => {
     });
 
     describe('request body', () => {
+        it('get without body should have undefined body', () => {
+            // This is quite important test which ensures that we set undefined for body when it's missing for GET requests.
+            // Currently EDGE browser will fail if GET requests have for example null body in the request.
+
+            transport = new TransportCore('localhost/openapi');
+            transport.get('service_group', 'account/info/{user}/{account}', { user: 'te', account: 'st' });
+
+            expect(fetch.mock.calls.length).toEqual(1);
+            expect(fetch.mock.calls[0]).toEqual(['localhost/openapi/service_group/account/info/te/st',
+                {
+                    body: undefined,
+                    method: 'GET',
+                    headers: { 'X-Request-Id': expect.any(Number) },
+                    // credentials: 'include' adds cookies.
+                    // Cookies used by some open api operations. if we don't default here make sure it is sent through with subscription requests.
+                    credentials: 'include' }]);
+        });
+
         it('allows an object', () => {
             transport = new TransportCore('localhost/openapi');
             transport.post('service_group', 'account/info/{user}/{account}', { user: 'te', account: 'st' }, { body: { Test: true } });
@@ -461,8 +479,34 @@ describe('openapi TransportCore', () => {
                 .toEqual([expect.anything(),
                     expect.objectContaining({
                         method: 'POST',
+                        body: '{}',
                         headers: {
+                            'Content-Type': 'application/json; charset=UTF-8',
                             'X-HTTP-Method-Override': 'PATCH',
+                            'X-Request-Id': expect.any(Number),
+                        } })]);
+            fetch.mockClear();
+        });
+    });
+
+    describe('PATCH body defaulting', () => {
+
+        beforeEach(() => {
+            transport = new TransportCore('localhost/openapi');
+        });
+
+        afterEach(() => transport.dispose());
+
+        it('works', () => {
+            transport.patch('service_group', 'url', null, { body: { exampleField: 'test' } });
+            expect(fetch.mock.calls.length).toEqual(1);
+            expect(fetch.mock.calls[0])
+                .toEqual([expect.anything(),
+                    expect.objectContaining({
+                        method: 'PATCH',
+                        body: '{"exampleField":"test"}',
+                        headers: {
+                            'Content-Type': 'application/json; charset=UTF-8',
                             'X-Request-Id': expect.any(Number),
                         } })]);
             fetch.mockClear();

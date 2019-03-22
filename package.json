@@ -1,6 +1,6 @@
 {
   "name": "openapi-clientlib",
-  "version": "4.5.2-protobuf-retry",
+  "version": "4.5.4-protobuf-retry",
   "engines": {
     "node": ">=4"
   },
