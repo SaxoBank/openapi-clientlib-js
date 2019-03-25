@@ -1,3 +1,7 @@
+#### v4.5.5
+
++ Fix broken protobuf fallback logic. Making sure that onerror is not called when falling back from protobuf to json is done.
+
 #### v4.5.4
 
 + Use undefined for body if it's not defined in rest request. This is required to support EDGE fetch handling logic which disallows null body for GET requests. Ref: github/fetch#402
