@@ -305,13 +305,6 @@ function onSubscribeError(referenceId, response) {
         subscriptionData: this.subscriptionData,
     });
 
-    // if we are unsubscribed, do not fire the error handler
-    if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
-        if (this.onError) {
-            this.onError(response);
-        }
-    }
-
     const errorCode = response && response.response ? response.response.ErrorCode : null;
 
     if (errorCode === ERROR_UNSUPPORTED_FORMAT && this.subscriptionData && this.subscriptionData.Format === FORMAT_PROTOBUF) {
@@ -321,6 +314,13 @@ function onSubscribeError(referenceId, response) {
 
         tryPerformAction.call(this, ACTION_SUBSCRIBE);
         return;
+    }
+
+    // if we are unsubscribed, do not fire the error handler
+    if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
+        if (this.onError) {
+            this.onError(response);
+        }
     }
 
     onReadyToPerformNextAction.call(this);
