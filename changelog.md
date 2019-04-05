@@ -1,3 +1,7 @@
+#### v4.5.6
+
++ Fix parsing and do not attempt to stringify FormData.
+
 #### v4.5.5
 
 + Fix broken protobuf fallback logic. Making sure that onerror is not called when falling back from protobuf to json is done.
