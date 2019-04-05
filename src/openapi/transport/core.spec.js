@@ -160,7 +160,8 @@ describe('openapi TransportCore', () => {
                     // Cookies used by some open api operations. if we don't default here make sure it is sent through with subscription requests.
                     credentials: 'include' }]);
         });
-        it('allows an string', () => {
+
+        it('allows a string', () => {
             transport = new TransportCore('localhost/openapi');
             transport.post('service_group', 'account/info/{user}/{account}', { user: 'te', account: 'st' }, { body: '{"Test":true}' });
 
@@ -171,6 +172,85 @@ describe('openapi TransportCore', () => {
                     headers: { 'X-Request-Id': expect.any(Number) },
                     credentials: 'include',
                 }]);
+        });
+
+        it('allows a FormData object', () => {
+            const file = new window.File(['foo'], 'foo.txt', {
+                type: 'text/plain',
+            });
+            const formData = new window.FormData();
+            formData.append('hest', file);
+            transport = new TransportCore('localhost/openapi');
+            transport.post(
+                'platform',
+                'v1/media/{contentLibraryId}',
+                {
+                    contentLibraryId: 'fleeb',
+                },
+                { body: formData }
+            );
+
+            expect(fetch.mock.calls.length).toEqual(1);
+            expect(fetch.mock.calls[0]).toEqual([
+                'localhost/openapi/platform/v1/media/fleeb',
+                {
+                    body: expect.any(window.FormData),
+                    method: 'POST',
+                    headers: { 'X-Request-Id': expect.any(Number) },
+                    credentials: 'include',
+                },
+            ]);
+        });
+
+        it('allows a File/Blob object', () => {
+            const file = new window.File(['foo'], 'foo.txt', {
+                type: 'text/plain',
+            });
+            transport = new TransportCore('localhost/openapi');
+            transport.post(
+                'platform',
+                'v1/media/{contentLibraryId}',
+                {
+                    contentLibraryId: 'fleeb',
+                },
+                { body: file }
+            );
+
+            expect(fetch.mock.calls.length).toEqual(1);
+            expect(fetch.mock.calls[0]).toEqual([
+                'localhost/openapi/platform/v1/media/fleeb',
+                {
+                    body: expect.any(window.Blob),
+                    method: 'POST',
+                    headers: { 'X-Request-Id': expect.any(Number) },
+                    credentials: 'include',
+                },
+            ]);
+        });
+
+        it('allows a URLSearchParams object', () => {
+            const paramsString = 'q=URLUtils.searchParams&topic=api';
+            const searchParams = new window.URLSearchParams(paramsString);
+            transport = new TransportCore('localhost/openapi');
+            transport.post(
+                'platform',
+                'v1/media/{contentLibraryId}',
+                {
+                    contentLibraryId: 'fleeb',
+                },
+                { body: searchParams }
+            );
+
+            expect(fetch.mock.calls.length).toEqual(1);
+            expect(fetch.mock.calls[0]).toEqual([
+                'localhost/openapi/platform/v1/media/fleeb',
+                {
+                    body: expect.any(window.URLSearchParams),
+                    method: 'POST',
+                    headers: { 'X-Request-Id': expect.any(Number) },
+                    credentials: 'include',
+                },
+            ]);
         });
     });
 

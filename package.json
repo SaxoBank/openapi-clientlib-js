@@ -25,7 +25,7 @@
       "node_modules",
       "<rootDir>"
     ],
-    "testEnvironment": "node",
+    "testEnvironment": "jsdom",
     "restoreMocks": true,
     "coverageDirectory": "dist/coverage/"
   },
