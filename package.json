@@ -5,16 +5,20 @@
     "node": ">=4"
   },
   "scripts": {
-    "dist": "npm run clean && npm run rollup",
+    "dist": "npm-run-all -s clean rollup",
     "clean": "rimraf dist",
     "rollup": "rollup -c",
     "dist-watch": "nodemon --watch src --watch libs -e js --exec npm run rollup",
-    "test": "npm run lint && npm run jest",
+    "test": "npm-run-all -p lint jest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "jest": "jest --coverage",
     "jest:watch": "jest --watch",
-    "jest:debug": "node --debug-brk node_modules/jest/bin/jest --runInBand"
+    "jest:debug": "node --debug-brk node_modules/jest/bin/jest --runInBand",
+    "prepare": "npm run dist",
+    "preversion": "npm-run-all -s prune install test",
+    "version": "git add package-lock.json",
+    "postversion": "npm-run-all -s 'git push' 'git push --tags'"
   },
   "jest": {
     "verbose": true,
@@ -54,6 +58,7 @@
     "jest": "23.6.0",
     "mockdate": "2.0.2",
     "nodemon": "1.18.7",
+    "npm-run-all": "4.1.5",
     "protobufjs": "6.8.8",
     "regenerator-runtime": "0.13.1",
     "rimraf": "2.6.2",
