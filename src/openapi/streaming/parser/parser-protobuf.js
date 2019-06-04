@@ -1,14 +1,16 @@
-import SerializerBase from './serializer-base';
+import ParserBase from './parser-base';
 import MetaProcessor from './meta/meta-protobuf';
 import wrappers from './wrappers/protobuf-wrappers';
 import log from '../../../log';
 
-const LOG_AREA = 'SerializerProtobuf';
+const LOG_AREA = 'ParserProtobuf';
 
 const ROOT_OPTION_NAME = 'saxobank_root';
 
-// Register custom wrappers to support JS types. ie. casting Google.Timestamp to JS Date.
-
+/**
+ * Create root schema and register custom wrappers to support JS types. ie. casting Google.Timestamp to JS Date.
+ * @returns {Root}
+ */
 function createRootSchema() {
     let schemas = this.protobuf.Root.fromJSON(this.protobuf.common['google/protobuf/wrappers.proto'], this.protobuf.root);
     schemas = this.protobuf.Root.fromJSON(this.protobuf.common['google/protobuf/timestamp.proto'], schemas);
@@ -16,12 +18,12 @@ function createRootSchema() {
 }
 
 /**
- * Protobuf Serialization.
+ * Protobuf Parser.
  */
-function SerializerProtobuf(name, engine) {
+function ParserProtobuf(name, engine) {
     this.name = name;
 
-    // Serialization engine, currently only supported implementation is: https://github.com/dcodeIO/ProtoBuf.js
+    // Parsing engine, currently only supported implementation is: https://github.com/dcodeIO/ProtoBuf.js
     this.protobuf = engine;
 
     wrappers.register(this.protobuf.wrappers);
@@ -34,31 +36,31 @@ function SerializerProtobuf(name, engine) {
     this.lastSchemaName = null;
 
     /**
-     * Processed all meta fields of decoded message type.
+     * Processing of supported meta fields of decoded message type.
      * @type {MetaProtobuf}
      */
     this.metaProcessor = new MetaProcessor();
 }
 
-SerializerProtobuf.prototype = Object.create(
-    SerializerBase.prototype,
-    { constructor: { value: SerializerProtobuf, enumerable: false, writable: true, configurable: true } }
+ParserProtobuf.prototype = Object.create(
+    ParserBase.prototype,
+    { constructor: { value: ParserProtobuf, enumerable: false, writable: true, configurable: true } }
 );
 
-SerializerProtobuf.prototype.getSchemaType = function(schemaName, typeName) {
+ParserProtobuf.prototype.getSchemaType = function(schemaName, typeName) {
     const schemas = this.schemasMap[schemaName];
     return schemas && schemas.root.lookup(typeName);
 };
 
-SerializerProtobuf.prototype.getSchemaName = function() {
+ParserProtobuf.prototype.getSchemaName = function() {
     return this.lastSchemaName;
 };
 
-SerializerProtobuf.prototype.getSchema = function(name) {
+ParserProtobuf.prototype.getSchema = function(name) {
     return this.schemasMap[name];
 };
 
-SerializerProtobuf.prototype.getSchemaNames = function() {
+ParserProtobuf.prototype.getSchemaNames = function() {
     return Object.keys(this.schemasMap);
 };
 
@@ -68,7 +70,7 @@ SerializerProtobuf.prototype.getSchemaNames = function() {
  * @param {String} name - The schema name, under which it will be saved in schema map.
  * @return {boolean} - Returns true if there were no issues, false otherwise.
  */
-SerializerProtobuf.prototype.addSchema = function(schemaData, name) {
+ParserProtobuf.prototype.addSchema = function(schemaData, name) {
     if (this.schemasMap[name]) {
         // Schemas for this name already exist.
         return true;
@@ -97,7 +99,7 @@ SerializerProtobuf.prototype.addSchema = function(schemaData, name) {
  * @param {String} schemaName - The name of a schema to be used for parsing.
  * @return {Object} - Result of parsing, if successful. Returns null if parsing fails or there is no data.
  */
-SerializerProtobuf.prototype.parse = function(data, schemaName) {
+ParserProtobuf.prototype.parse = function(data, schemaName) {
     const schemas = this.getSchema(schemaName);
 
     if (!schemas || !data) {
@@ -118,10 +120,16 @@ SerializerProtobuf.prototype.parse = function(data, schemaName) {
         return null;
     }
 
-    const byteArray = new Uint8Array(this.protobuf.util.base64.length(data));
+    let byteArray;
 
-    const offset = 0;
-    this.protobuf.util.base64.decode(data, byteArray, offset);
+    // With support from raw websocket streaming, it's possible to get raw ArrayBuffer.
+    if (data instanceof Uint8Array) {
+        byteArray = data;
+    } else {
+        byteArray = new Uint8Array(this.protobuf.util.base64.length(data));
+        const offset = 0;
+        this.protobuf.util.base64.decode(data, byteArray, offset);
+    }
 
     const message = rootType.decode(byteArray);
     const jsonData = message ? message.toJSON() : null;
@@ -129,7 +137,7 @@ SerializerProtobuf.prototype.parse = function(data, schemaName) {
     return this.metaProcessor.process(message, jsonData);
 };
 
-SerializerProtobuf.prototype.stringify = function(data, schemaName) {
+ParserProtobuf.prototype.stringify = function(data, schemaName) {
     const schema = this.getSchema(schemaName);
     const rootTypeName = schema.root.getOption(ROOT_OPTION_NAME) || schemaName;
 
@@ -143,7 +151,7 @@ SerializerProtobuf.prototype.stringify = function(data, schemaName) {
     return this.protobuf.util.base64.encode(bytes, start, end);
 };
 
-SerializerProtobuf.prototype.encode = function(data, schemaName, typeName) {
+ParserProtobuf.prototype.encode = function(data, schemaName, typeName) {
     const schemaType = this.getSchemaType(schemaName, typeName);
     if (!schemaType) {
         return null;
@@ -152,10 +160,10 @@ SerializerProtobuf.prototype.encode = function(data, schemaName, typeName) {
     return schemaType.encode(data).finish();
 };
 
-SerializerProtobuf.prototype.getFormatName = function() {
-    return SerializerProtobuf.FORMAT_NAME;
+ParserProtobuf.prototype.getFormatName = function() {
+    return ParserProtobuf.FORMAT_NAME;
 };
 
-SerializerProtobuf.FORMAT_NAME = 'application/x-protobuf';
+ParserProtobuf.FORMAT_NAME = 'application/x-protobuf';
 
-export default SerializerProtobuf;
+export default ParserProtobuf;

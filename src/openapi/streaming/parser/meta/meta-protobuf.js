@@ -2,12 +2,16 @@ const META_NULLS = '__meta_nulls';
 const META_EMPTY = '__meta_empty';
 
 /**
- * Map of custom global envelopes.
+ * Map of accessors for custom global envelopes.
  */
 const CUSTOM_ENVELOPES = {
     'CollectionEnvelope': (data) => data.Collection,
 };
 
+/**
+ * Map of supported meta types that should be processed.
+ * As an example, __meta_delete doesn't require any processing in this scope.
+ */
 const META_TYPES = {
     [META_NULLS]: true,
     [META_EMPTY]: true,
@@ -74,7 +78,7 @@ function iterateTree(message, data) {
 function MetaProtobuf() {}
 
 /**
- * Process data using message metadata. Iterate through each field and process metadata, if found.
+ * Process data using message metadata. Iterate through each field and process supported metadata keys.
  *
  * @param {Object} message - Protobuf Message Type object.
  * @param {Object} data - JSON object. Object get's mutated.

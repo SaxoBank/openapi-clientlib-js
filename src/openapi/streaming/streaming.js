@@ -6,10 +6,12 @@
 import emitter from '../../micro-emitter';
 import { extend } from '../../utils/object';
 import Subscription from './subscription';
-import SerializerFacade from './serializer/serializer-facade';
+import ParserFacade from './parser/parser-facade';
 import StreamingOrphanFinder from './orphan-finder';
 import log from '../../log';
 import { padLeft } from '../../utils/string';
+import Connection from './connection/connection';
+import * as connectionConstants from './connection/constants';
 
 // -- Local variables section --
 
@@ -27,45 +29,40 @@ const ignoreSubscriptions = {};
 // -- Local methods section --
 
 /**
- * initializes the SignalR connection, and starts handling streaming events.
+ * Initializes a connection, and starts handling streaming events.
  *
- * This method initiates a SignalR connection. The Streaming connection.
- * starts in an Initialising state, transitions to Started when the SignalR connection starts
- * then follows the SignalR state model.
+ * Starts in an Initialising state, transitions to Started when the Connection starts
+ * then follows the Connection state model.
  */
 function init() {
-
     setNewContextId.call(this);
 
-    const connection = $.connection(this.connectionUrl);
-    connection.log = onSignalRLog;
-    this.connection = connection;
+    this.connection = new Connection(this.options, this.baseUrl, this.transport);
+
     updateConnectionQuery.call(this);
 
-    connection.stateChanged(onConnectionStateChanged.bind(this));
-    connection.received(onReceived.bind(this));
-    connection.error(onConnectionError.bind(this));
-    connection.connectionSlow(onConnectionSlow.bind(this));
+    this.connection.setStateChangedCallback(onConnectionStateChanged.bind(this));
+    this.connection.setReceivedCallback(onReceived.bind(this));
+    this.connection.setConnectionSlowCallback(onConnectionSlow.bind(this));
 
     // start the connection process
-    connection.start(this.signalrStartOptions, onConnectionStarted.bind(this));
+    this.connection.start(onConnectionStarted.bind(this));
 }
 
 /**
  * Reconnects the streaming socket when it is disconnected
  */
 function reconnect() {
-
     if (this.connectionState !== this.CONNECTION_STATE_DISCONNECTED) {
-        throw new Error('Only call reconnect on a disconnected streaming connection');
+        log.error(LOG_AREA, 'Only call reconnect on a disconnected streaming connection');
+        return;
     }
 
     setNewContextId.call(this);
     updateConnectionQuery.call(this);
 
     this.reconnecting = true;
-
-    this.connection.start(this.signalrStartOptions, onConnectionStarted.bind(this));
+    this.connection.start(onConnectionStarted.bind(this));
 }
 
 function setNewContextId() {
@@ -93,46 +90,21 @@ function retryConnection() {
 }
 
 /**
- * maps from the signalR connection state to the ConnectionState Enum
+ * Handles connection state change
  */
-function mapConnectionState(state) {
-    let connectionState;
-    switch (state) {
-        case $.signalR.connectionState.connecting: connectionState = this.CONNECTION_STATE_CONNECTING; break;
+function onConnectionStateChanged(nextState) {
+    this.connectionState = nextState;
 
-        case $.signalR.connectionState.connected: connectionState = this.CONNECTION_STATE_CONNECTED; break;
-
-        case $.signalR.connectionState.disconnected: connectionState = this.CONNECTION_STATE_DISCONNECTED; break;
-
-        case $.signalR.connectionState.reconnecting: connectionState = this.CONNECTION_STATE_RECONNECTING; break;
-
-        default:
-            log.warn(LOG_AREA, 'unrecognised state', state);
-            break;
-    }
-
-    return connectionState;
-}
-
-/**
- * handles connection state changed event from signalR
- */
-function onConnectionStateChanged(change) {
-
-    this.connectionState = mapConnectionState.call(this, change.newState);
-
-    const signalRTransport = this.connection.transport;
+    const connectionTransport = this.connection.getTransport();
     log.info(LOG_AREA, 'Connection state changed to ', {
         changedTo: this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
-        mechanism: signalRTransport && signalRTransport.name,
+        mechanism: connectionTransport && connectionTransport.name,
     });
     this.trigger(this.EVENT_CONNECTION_STATE_CHANGED, this.connectionState);
 
     if (this.disposed) {
         return;
     }
-
-    const primaryTransportName = this.signalrStartOptions && this.signalrStartOptions.transport && this.signalrStartOptions.transport[0];
 
     switch (this.connectionState) {
         case this.CONNECTION_STATE_DISCONNECTED:
@@ -152,29 +124,18 @@ function onConnectionStateChanged(change) {
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
-            // logs when longPolling is enabled after trying webSockets
-            if (signalRTransport && signalRTransport !== this.currentTransport && signalRTransport.name === 'longPolling') {
-                log.warn(LOG_AREA, 'changing transport to long polling', null, true);
-            }
 
             updateConnectionQuery.call(this);
 
             this.orphanFinder.stop();
-
-            this.currentTransport = signalRTransport;
             break;
 
         case this.CONNECTION_STATE_CONNECTED:
 
-            // if *we* are reconnecting (as opposed to signal-r reconnecting, which we do not need to handle specially)
+            // if *we* are reconnecting (as opposed to transport reconnecting, which we do not need to handle specially)
             if (this.reconnecting) {
                 resetSubscriptions.call(this, this.subscriptions);
                 this.reconnecting = false;
-            }
-
-            // log transport fallback for first connect
-            if (!this.currentTransport && signalRTransport && signalRTransport.name !== primaryTransportName) {
-                log.warn(LOG_AREA, `Unable to stream using ${primaryTransportName}, falling back to ${signalRTransport.name}`, null, true);
             }
 
             for (let i = 0; i < this.subscriptions.length; i++) {
@@ -182,16 +143,14 @@ function onConnectionStateChanged(change) {
             }
 
             this.orphanFinder.start();
-
-            this.currentTransport = signalRTransport;
             break;
     }
 }
 
 /**
- * handles the signalR connect start callback
+ * Handles connection start
  */
-function onConnectionStarted(change) {
+function onConnectionStarted() {
     // sometimes the started gets called after connected, sometimes before
     if (this.connectionState === this.CONNECTION_STATE_INITIALIZING) {
         this.connectionState = this.CONNECTION_STATE_STARTED;
@@ -200,6 +159,18 @@ function onConnectionStarted(change) {
     log.info(LOG_AREA, 'Connection started');
 
     this.trigger(this.EVENT_CONNECTION_STATE_CHANGED, this.connectionState);
+}
+
+function processUpdate(update) {
+    try {
+        if (update.ReferenceId[0] === OPENAPI_CONTROL_MESSAGE_PREFIX) {
+            handleControlMessage.call(this, update);
+        } else {
+            sendDataUpdateToSubscribers.call(this, update);
+        }
+    } catch (error) {
+        log.error(LOG_AREA, 'Error occurred in onReceived processing update', { error, update });
+    }
 }
 
 /**
@@ -213,17 +184,14 @@ function onReceived(updates) {
         return;
     }
 
+    if (!Array.isArray(updates)) {
+        processUpdate.call(this, updates);
+        return;
+    }
+
     for (let i = 0; i < updates.length; i++) {
         const update = updates[i];
-        try {
-            if (update.ReferenceId[0] === OPENAPI_CONTROL_MESSAGE_PREFIX) {
-                handleControlMessage.call(this, update);
-            } else {
-                sendDataUpdateToSubscribers.call(this, update);
-            }
-        } catch (error) {
-            log.error(LOG_AREA, 'Error occurred in onReceived procssing update', { error, update });
-        }
+        processUpdate.call(this, update);
     }
 }
 
@@ -251,6 +219,30 @@ function sendDataUpdateToSubscribers(update) {
     }
 }
 
+function getHeartbeats(message) {
+    if (message.Heartbeats) {
+        return message.Heartbeats;
+    }
+
+    if (message.Data && message.Data.length > 0) {
+        return message.Data[0].Heartbeats;
+    }
+
+    return null;
+}
+
+function getTargetReferenceIds(message) {
+    if (message.TargetReferenceIds) {
+        return message.TargetReferenceIds;
+    }
+
+    if (message.Data && message.Data.length > 0) {
+        return message.Data[0].TargetReferenceIds;
+    }
+
+    return null;
+}
+
 /**
  * Handles a control message on the streaming connection
  * @param {Object} message From open-api
@@ -258,11 +250,11 @@ function sendDataUpdateToSubscribers(update) {
 function handleControlMessage(message) {
     switch (message.ReferenceId) {
         case OPENAPI_CONTROL_MESSAGE_HEARTBEAT:
-            handleControlMessageFireHeartbeats.call(this, message.Heartbeats);
+            handleControlMessageFireHeartbeats.call(this, getHeartbeats(message));
             break;
 
         case OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS:
-            handleControlMessageResetSubscriptions.call(this, message.TargetReferenceIds);
+            handleControlMessageResetSubscriptions.call(this, getTargetReferenceIds(message));
             break;
 
         default:
@@ -272,11 +264,10 @@ function handleControlMessage(message) {
 }
 
 /**
- * fires heartbeats to relevant subscriptions
+ * Fires heartbeats to relevant subscriptions
  * @param {Array.<{OriginatingReferenceId: string, Reason: string}>} heartbeatList
  */
 function handleControlMessageFireHeartbeats(heartbeatList) {
-
     log.debug(LOG_AREA, 'heartbeats received', heartbeatList);
     for (let i = 0; i < heartbeatList.length; i++) {
         const heartbeat = heartbeatList[i];
@@ -302,7 +293,6 @@ function startTimerToStopIgnoringSubscriptions(subscriptions) {
  * Resets subscriptions passed
  */
 function resetSubscriptions(subscriptions) {
-
     for (let i = 0; i < subscriptions.length; i++) {
         const subscription = subscriptions[i];
         subscription.reset();
@@ -317,7 +307,6 @@ function resetSubscriptions(subscriptions) {
  * @param {Array.<string>} referenceIdList
  */
 function handleControlMessageResetSubscriptions(referenceIdList) {
-
     if (!referenceIdList || !referenceIdList.length) {
         log.debug(LOG_AREA, 'Resetting all subscriptions');
         resetSubscriptions.call(this, this.subscriptions.slice(0));
@@ -349,27 +338,10 @@ function onConnectionSlow() {
 }
 
 /**
- * handles a signal-r error
- * This occurs when data cannot be sent, or cannot be received or something unknown goes wrong.
- * signal-r attempts to keep the subscription and if it doesn't we will get the normal failed events
- */
-function onConnectionError(errorDetail) {
-    log.error(LOG_AREA, 'connection error', errorDetail);
-}
-
-/**
- * Overrides the signalr log in order to channel log messages into our logger
- * @param message
- */
-function onSignalRLog(message) {
-    log.debug('SignalR', message);
-}
-
-/**
  * Updates the connection query string
  */
-function updateConnectionQuery() {
-    this.connection.qs = 'authorization=' + encodeURIComponent(this.authProvider.getToken()) + '&context=' + encodeURIComponent(this.contextId);
+function updateConnectionQuery(forceAuth = false) {
+    this.connection.updateQuery(this.authProvider.getToken(), this.contextId, forceAuth);
 }
 
 /**
@@ -491,28 +463,33 @@ function removeSubscription(subscription) {
  * @param {number} [options.connectRetryDelay=1000] - The delay in milliseconds to wait before attempting a new connect after
  *          signal-r has disconnected
  * @param {Boolean} [options.waitForPageLoad=true] - Whether the signal-r streaming connection waits for page load before starting
- * @param {Object} [options.serializers={}] - The map of subscription serializers where key is format name and value is an serializer constructor.
- * @param {Object} [options.serializerEngines={}] - The map of subscription serializer engines where key is format name and
+ * @param {Object} [options.parsers={}] - The map of subscription parsers where key is format name and value is parser constructor.
+ * @param {Object} [options.parserEngines={}] - The map of subscription parser engines where key is format name and
  *          value is an engine implementation.
- * @param {Array.<string>} [options.transportTypes=['webSockets', 'longPolling']] - The transports to be used in order by signal-r.
+ * @param {Array.<string>} [options.transportTypes=['plainWebSockets', 'webSockets', 'longPolling']] - The transports to be used in order by signal-r.
  */
 function Streaming(transport, baseUrl, authProvider, options) {
-
     emitter.mixinTo(this);
 
     this.connectionState = this.CONNECTION_STATE_INITIALIZING;
-    this.connectionUrl = baseUrl + '/streaming/connection';
+    this.baseUrl = baseUrl;
     this.authProvider = authProvider;
     this.transport = transport;
     this.subscriptions = [];
 
-    this.signalrStartOptions = {
-        // faster and does not cause problems after IE8
+    this.authProvider.on('tokenReceived', () => {
+        // Forcing authorization request upon new token arrival.
+        const forceAuthorizationRequest = true;
+        updateConnectionQuery.call(this, forceAuthorizationRequest);
+    });
+
+    this.options = {
+        // Faster and does not cause problems after IE8
         waitForPageLoad: (options && options.waitForPageLoad) || false,
 
-        // SignalR has a bug in SSE and forever frame is slow
-        // WebSockets defined twice is required to double check as initial fail might be temporary.
-        transport: (options && options.transportTypes) || ['webSockets', 'webSockets', 'longPolling'],
+        // Why longPolling: SignalR has a bug in SSE and forever frame is slow
+        // New type: plainWebSockets. This is new approach to streaming with array buffer communication format instead of JSON.
+        transport: (options && options.transportTypes) || ['webSockets', 'longPolling'],
     };
 
     if (options) {
@@ -522,12 +499,12 @@ function Streaming(transport, baseUrl, authProvider, options) {
             this.retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
         }
 
-        if (options.serializerEngines) {
-            SerializerFacade.addEngines(options.serializerEngines);
+        if (options.parserEngines) {
+            ParserFacade.addEngines(options.parserEngines);
         }
 
-        if (options.serializers) {
-            SerializerFacade.addSerializers(options.serializers);
+        if (options.parsers) {
+            ParserFacade.addParsers(options.parsers);
         }
     }
 
@@ -539,46 +516,39 @@ function Streaming(transport, baseUrl, authProvider, options) {
 /**
  * Event that occurs when the connection state changes.
  */
-Streaming.prototype.EVENT_CONNECTION_STATE_CHANGED = 'connectionStateChanged';
+Streaming.prototype.EVENT_CONNECTION_STATE_CHANGED = connectionConstants.EVENT_CONNECTION_STATE_CHANGED;
 /**
  * Event that occurs when the connection is slow.
  */
-Streaming.prototype.EVENT_CONNECTION_SLOW = 'connectionSlow';
+Streaming.prototype.EVENT_CONNECTION_SLOW = connectionConstants.EVENT_CONNECTION_SLOW;
 
 /**
  * Streaming has been created but has not yet started the connection.
  */
-Streaming.prototype.CONNECTION_STATE_INITIALIZING = 0x1;
+Streaming.prototype.CONNECTION_STATE_INITIALIZING = connectionConstants.CONNECTION_STATE_INITIALIZING;
 /**
- * The connection has been started but signal-r may not yet be connecting.
+ * The connection has been started but may not yet be connecting.
  */
-Streaming.prototype.CONNECTION_STATE_STARTED = 0x2;
+Streaming.prototype.CONNECTION_STATE_STARTED = connectionConstants.CONNECTION_STATE_STARTED;
 /**
- * signal-r is trying to connect. The previous state was CONNECTION_STATE_STARTED or CONNECTION_STATE_DISCONNECTED.
+ * Connection is trying to connect. The previous state was CONNECTION_STATE_STARTED or CONNECTION_STATE_DISCONNECTED.
  */
-Streaming.prototype.CONNECTION_STATE_CONNECTING = 0x4;
+Streaming.prototype.CONNECTION_STATE_CONNECTING = connectionConstants.CONNECTION_STATE_CONNECTING;
 /**
- * signal-r is connected and everything is good.
+ * Connection is connected and everything is good.
  */
-Streaming.prototype.CONNECTION_STATE_CONNECTED = 0x8;
+Streaming.prototype.CONNECTION_STATE_CONNECTED = connectionConstants.CONNECTION_STATE_CONNECTED;
 /**
- * signal-r is reconnecting. The previous state was CONNECTION_STATE_CONNECTING.
+ * Connection is reconnecting. The previous state was CONNECTION_STATE_CONNECTING.
  * We are current not connected, but might recover without having to reset.
  */
-Streaming.prototype.CONNECTION_STATE_RECONNECTING = 0x10;
+Streaming.prototype.CONNECTION_STATE_RECONNECTING = connectionConstants.CONNECTION_STATE_RECONNECTING;
 /**
- * signal-r is disconnected. Streaming may attempt to connect again.
+ * Connection is disconnected. Streaming may attempt to connect again.
  */
-Streaming.prototype.CONNECTION_STATE_DISCONNECTED = 0x20;
+Streaming.prototype.CONNECTION_STATE_DISCONNECTED = connectionConstants.CONNECTION_STATE_DISCONNECTED;
 
-Streaming.prototype.READABLE_CONNECTION_STATE_MAP = {
-    [Streaming.prototype.CONNECTION_STATE_INITIALIZING]: 'Initializing',
-    [Streaming.prototype.CONNECTION_STATE_STARTED]: 'Started',
-    [Streaming.prototype.CONNECTION_STATE_CONNECTING]: 'Connecting',
-    [Streaming.prototype.CONNECTION_STATE_CONNECTED]: 'Connected',
-    [Streaming.prototype.CONNECTION_STATE_RECONNECTING]: 'Reconnecting',
-    [Streaming.prototype.CONNECTION_STATE_DISCONNECTED]: 'Disconnected',
-};
+Streaming.prototype.READABLE_CONNECTION_STATE_MAP = connectionConstants.READABLE_CONNECTION_STATE_MAP;
 
 /**
  * Constructs a new subscription to the given resource.
@@ -600,9 +570,9 @@ Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptio
 
     const normalizedSubscriptionArgs = extend({}, subscriptionArgs);
 
-    if (!SerializerFacade.isFormatSupported(normalizedSubscriptionArgs.Format)) {
+    if (!ParserFacade.isFormatSupported(normalizedSubscriptionArgs.Format)) {
         // Set default format, if target format is not supported.
-        normalizedSubscriptionArgs.Format = SerializerFacade.getDefaultFormat();
+        normalizedSubscriptionArgs.Format = ParserFacade.getDefaultFormat();
     }
 
     const subscription = new Subscription(this.contextId, this.transport, serviceGroup, url, normalizedSubscriptionArgs,
@@ -718,6 +688,12 @@ Streaming.prototype.dispose = function() {
     this.transport.delete('root', 'v1/subscriptions/{contextId}', { contextId: this.contextId });
 
     this.disconnect();
+};
+
+Streaming.prototype.getQuery = function() {
+    if (this.connection) {
+        return this.connection.getQuery();
+    }
 };
 
 // -- Export section --

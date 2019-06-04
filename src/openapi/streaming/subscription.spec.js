@@ -3,16 +3,16 @@ import mockTransport from '../../test/mocks/transport';
 import * as mockProtoPrice from '../../test/mocks/proto-price';
 import protobuf from 'protobufjs/dist/protobuf';
 import Subscription from './subscription';
-import SerializerProtobuf from './serializer/serializer-protobuf';
-import SerializerFacade from './serializer/serializer-facade';
+import ParserProtobuf from './parser/parser-protobuf';
+import ParserFacade from './parser/parser-facade';
 import log from '../../log';
 
-SerializerFacade.addEngines({
+ParserFacade.addEngines({
     'application/x-protobuf': protobuf,
 });
 
-SerializerFacade.addSerializers({
-    'application/x-protobuf': SerializerProtobuf,
+ParserFacade.addParsers({
+    'application/x-protobuf': ParserProtobuf,
 });
 
 describe('openapi StreamingSubscription', () => {
@@ -829,7 +829,7 @@ describe('openapi StreamingSubscription', () => {
         });
     });
 
-    describe('protobuf serialization', () => {
+    describe('protobuf parsing', () => {
 
         it('should parse schema from snapshot and pass JSON data', (done) => {
             const args = {
@@ -856,9 +856,9 @@ describe('openapi StreamingSubscription', () => {
                     expect.objectContaining(mockProtoPrice.objectMessage)
                 );
 
-                const serializer = subscription.serializer;
+                const parser = subscription.parser;
 
-                const schemaObject = serializer.getSchemaType('Price', 'PriceResponse');
+                const schemaObject = parser.getSchemaType('Price', 'PriceResponse');
                 expect(schemaObject).toBeTruthy();
 
                 const plainFields = JSON.parse(JSON.stringify(schemaObject.fields));
@@ -911,7 +911,7 @@ describe('openapi StreamingSubscription', () => {
         });
     });
 
-    describe('json serialization', () => {
+    describe('json parsing', () => {
 
         it('should parse data without schema', (done) => {
             const args = {

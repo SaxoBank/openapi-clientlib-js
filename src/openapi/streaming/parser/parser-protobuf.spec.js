@@ -1,19 +1,19 @@
 import * as mockProtoPrice from '../../../test/mocks/proto-price';
 import * as mockProtoMeta from '../../../test/mocks/proto-meta';
 import protobuf from 'protobufjs/dist/protobuf';
-import SerializerProtobuf from './serializer-protobuf';
+import ParserProtobuf from './parser-protobuf';
 
-describe('Serializer Protobuf', () => {
+describe('Parser Protobuf', () => {
 
     describe('metadata', () => {
         it('should return json object with explicit null and empty', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
+            const parser = new ParserProtobuf('default', protobuf);
             const mock = mockProtoMeta.metaNulls();
 
-            serializer.addSchema(mock.schema, 'Main');
+            parser.addSchema(mock.schema, 'Main');
 
             const objectPayload = mock.payloadMessageNull();
-            const data = serializer.parse(serializer.stringify(objectPayload, 'Main'), 'Main');
+            const data = parser.parse(parser.stringify(objectPayload, 'Main'), 'Main');
 
             expect(data).toEqual(expect.objectContaining({
                 'count': 1,
@@ -28,13 +28,13 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should return json object with collection envelope', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
+            const parser = new ParserProtobuf('default', protobuf);
             const mock = mockProtoMeta.metaCollectionEnvelope();
 
-            serializer.addSchema(mock.schema, 'Main');
+            parser.addSchema(mock.schema, 'Main');
 
             const objectPayload = mock.payloadAll();
-            const data = serializer.parse(serializer.stringify(objectPayload, 'Main'), 'Main');
+            const data = parser.parse(parser.stringify(objectPayload, 'Main'), 'Main');
 
             expect(data).toBeTruthy();
             expect(data).toEqual(expect.arrayContaining([
@@ -57,13 +57,13 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should return json object with collection envelope with null message', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
+            const parser = new ParserProtobuf('default', protobuf);
             const mock = mockProtoMeta.metaCollectionEnvelope();
 
-            serializer.addSchema(mock.schema, 'Main');
+            parser.addSchema(mock.schema, 'Main');
 
             const objectPayload = mock.payloadNullMessage();
-            const data = serializer.parse(serializer.stringify(objectPayload, 'Main'), 'Main');
+            const data = parser.parse(parser.stringify(objectPayload, 'Main'), 'Main');
 
             expect(data).toBeTruthy();
             expect(data).toEqual(expect.arrayContaining([
@@ -85,13 +85,13 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should return json object with collection envelope with empty logs', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
+            const parser = new ParserProtobuf('default', protobuf);
             const mock = mockProtoMeta.metaCollectionEnvelope();
 
-            serializer.addSchema(mock.schema, 'Main');
+            parser.addSchema(mock.schema, 'Main');
 
             const objectPayload = mock.payloadEmptyLogs();
-            const data = serializer.parse(serializer.stringify(objectPayload, 'Main'), 'Main');
+            const data = parser.parse(parser.stringify(objectPayload, 'Main'), 'Main');
 
             expect(data).toBeTruthy();
             expect(data).toEqual(expect.arrayContaining([
@@ -113,13 +113,13 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should return json object with collection envelope with deleted row', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
+            const parser = new ParserProtobuf('default', protobuf);
             const mock = mockProtoMeta.metaCollectionEnvelope();
 
-            serializer.addSchema(mock.schema, 'Main');
+            parser.addSchema(mock.schema, 'Main');
 
             const objectPayload = mock.payloadDeletedRow();
-            const data = serializer.parse(serializer.stringify(objectPayload, 'Main'), 'Main');
+            const data = parser.parse(parser.stringify(objectPayload, 'Main'), 'Main');
 
             expect(data).toBeTruthy();
             expect(data).toEqual(expect.arrayContaining([
@@ -143,11 +143,11 @@ describe('Serializer Protobuf', () => {
 
     describe('addSchemas', () => {
         it('should check option tag for root message', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
-            serializer.addSchema(mockProtoPrice.schemaOption, 'InstrumentPriceDetails');
-            const schemas = serializer.getSchema('InstrumentPriceDetails');
+            const parser = new ParserProtobuf('default', protobuf);
+            parser.addSchema(mockProtoPrice.schemaOption, 'InstrumentPriceDetails');
+            const schemas = parser.getSchema('InstrumentPriceDetails');
             const rootMessage = schemas.root.getOption('saxobank_root');
-            const schemaObject = serializer.getSchemaType('InstrumentPriceDetails', rootMessage);
+            const schemaObject = parser.getSchemaType('InstrumentPriceDetails', rootMessage);
 
             expect(schemas).not.toBeFalsy();
             expect(schemaObject.name).toBe('InstrumentPriceDetails');
@@ -155,9 +155,9 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should add new price schema', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
-            serializer.addSchema(mockProtoPrice.schema, 'Price');
-            const schemaObject = serializer.getSchemaType('Price', 'PriceResponse');
+            const parser = new ParserProtobuf('default', protobuf);
+            parser.addSchema(mockProtoPrice.schema, 'Price');
+            const schemaObject = parser.getSchemaType('Price', 'PriceResponse');
 
             expect(schemaObject).not.toBeFalsy();
 
@@ -169,27 +169,27 @@ describe('Serializer Protobuf', () => {
         });
 
         it('should skip adding invalid schema', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
-            const done = serializer.addSchema('invalid schema: 123', 'InvalidSchema');
+            const parser = new ParserProtobuf('default', protobuf);
+            const done = parser.addSchema('invalid schema: 123', 'InvalidSchema');
 
             expect(done).toBe(false);
-            expect(serializer.getSchemaType('InvalidSchema')).toBeFalsy();
+            expect(parser.getSchemaType('InvalidSchema')).toBeFalsy();
         });
     });
 
     describe('parse', () => {
         it('should parse encoded base64 price response', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
-            serializer.addSchema(mockProtoPrice.schema, 'Price');
-            const price = serializer.parse(mockProtoPrice.encodedMessage, 'Price');
+            const parser = new ParserProtobuf('default', protobuf);
+            parser.addSchema(mockProtoPrice.schema, 'Price');
+            const price = parser.parse(mockProtoPrice.encodedMessage, 'Price');
 
             expect(price).toEqual(expect.objectContaining(mockProtoPrice.decodedObjectMessage));
         });
 
         it('should parse encoded base64 order response', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
-            serializer.addSchema(mockProtoPrice.orderSchema, 'Order');
-            const objectMessage = serializer.parse(mockProtoPrice.encodedMessageOrder, 'Order');
+            const parser = new ParserProtobuf('default', protobuf);
+            parser.addSchema(mockProtoPrice.orderSchema, 'Order');
+            const objectMessage = parser.parse(mockProtoPrice.encodedMessageOrder, 'Order');
 
             expect(objectMessage).toBeTruthy();
         });
@@ -197,9 +197,9 @@ describe('Serializer Protobuf', () => {
 
     describe('stringify', () => {
         it('should stringify price response', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
-            serializer.addSchema(mockProtoPrice.schema, 'Price');
-            const encoded = serializer.stringify(mockProtoPrice.objectMessage, 'Price');
+            const parser = new ParserProtobuf('default', protobuf);
+            parser.addSchema(mockProtoPrice.schema, 'Price');
+            const encoded = parser.stringify(mockProtoPrice.objectMessage, 'Price');
 
             expect(encoded).toBe(mockProtoPrice.encodedMessage);
         });
@@ -207,9 +207,9 @@ describe('Serializer Protobuf', () => {
 
     describe('.google.protobuf.Timestamp wrapper', () => {
         it('should return date with support for nano precision', () => {
-            const serializer = new SerializerProtobuf('default', protobuf);
-            serializer.addSchema(mockProtoPrice.orderSchema, 'Order');
-            const objectMessage = serializer.parse(mockProtoPrice.encodedMessageOrder, 'Order');
+            const parser = new ParserProtobuf('default', protobuf);
+            parser.addSchema(mockProtoPrice.orderSchema, 'Order');
+            const objectMessage = parser.parse(mockProtoPrice.encodedMessageOrder, 'Order');
 
             expect(objectMessage).toEqual(expect.arrayContaining([
                 {

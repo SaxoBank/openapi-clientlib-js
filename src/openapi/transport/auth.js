@@ -115,6 +115,7 @@ function getToken(url) {
 }
 
 function Auth(initialToken, initialExpiry, onChange) {
+    emitter.mixinTo(this);
 
     function addBearer(newToken) {
         if (newToken && !startsWith(newToken, TOKEN_BEARER, false)) {
@@ -137,6 +138,7 @@ function Auth(initialToken, initialExpiry, onChange) {
         expiry = newExpiry;
 
         onChange(token, expiry);
+        this.trigger('tokenReceived');
     };
 }
 
