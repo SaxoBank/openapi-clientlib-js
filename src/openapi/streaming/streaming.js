@@ -44,6 +44,7 @@ function init() {
     this.connection.setStateChangedCallback(onConnectionStateChanged.bind(this));
     this.connection.setReceivedCallback(onReceived.bind(this));
     this.connection.setConnectionSlowCallback(onConnectionSlow.bind(this));
+    this.connection.setErrorCallback(onErrorCallback.bind(this));
 
     // start the connection process
     this.connection.start(onConnectionStarted.bind(this));
@@ -335,6 +336,10 @@ function handleControlMessageResetSubscriptions(referenceIdList) {
 function onConnectionSlow() {
     log.info(LOG_AREA, 'connection is slow');
     this.trigger(this.EVENT_CONNECTION_SLOW);
+}
+
+function onErrorCallback(errorDetails) {
+    log.error(LOG_AREA, 'connection error', errorDetails);
 }
 
 /**

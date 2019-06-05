@@ -40,6 +40,7 @@ function onTransportFail(error) {
     this.transport.setReceivedCallback(this.receiveCallback);
     this.transport.setStateChangedCallback(this.stateChangedCallback);
     this.transport.setConnectionSlowCallback(this.connectionSlowCallback);
+    this.transport.setErrorCallback(this.errorCallback);
 
     if (this.state === STATE_STARTED) {
         this.transport.updateQuery(this.authToken, this.contextId);
@@ -100,6 +101,7 @@ function Connection(options, baseUrl, restTransport, failCallback = NOOP) {
     this.stateChangedCallback = NOOP;
     this.receiveCallback = NOOP;
     this.connectionSlowCallback = NOOP;
+    this.errorCallback = NOOP;
 
     // Parameters
     this.baseUrl = baseUrl;
@@ -135,6 +137,13 @@ Connection.prototype.setReceivedCallback = function(callback) {
     if (this.transport) {
         this.receiveCallback = callback;
         this.transport.setReceivedCallback(callback);
+    }
+};
+
+Connection.prototype.setErrorCallback = function(callback) {
+    if (this.transport) {
+        this.errorCallback = callback;
+        this.transport.setErrorCallback(callback);
     }
 };
 

@@ -350,7 +350,9 @@ describe('openapi Streaming', () => {
         it('handles connection error events', () => {
             jest.spyOn(log, 'error');
             errorCallback('error details');
-            expect(log.error.mock.calls.length).toEqual(1);
+
+            // One error from transport and second error from streaming.
+            expect(log.error.mock.calls.length).toEqual(2);
         });
         it('handles signal-r log calls', () => {
             jest.spyOn(log, 'debug');

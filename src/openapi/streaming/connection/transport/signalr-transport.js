@@ -2,8 +2,8 @@ import log from '../../../../log';
 import * as constants from './../constants';
 
 const NAME = 'signalr';
-
 const LOG_AREA = 'SignalRTransport';
+const NOOP = () => {};
 
 /**
  * Maps from the signalR connection state to the ConnectionState Enum
@@ -36,7 +36,10 @@ function mapConnectionState(state) {
  * signal-r attempts to keep the subscription and if it doesn't we will get the normal failed events
  */
 function handleError(errorDetail) {
-    log.error(LOG_AREA, 'connection error', errorDetail);
+    log.error(LOG_AREA, 'Transport error', errorDetail);
+    if (typeof this.errorCallback === 'function') {
+        this.errorCallback(errorDetail);
+    }
 }
 
 /**
@@ -62,7 +65,8 @@ function SignalrTransport(baseUrl) {
     this.connectionUrl = `${baseUrl}/streaming/connection`;
     this.connection = $.connection(this.connectionUrl);
     this.transport = null;
-    this.stateChangedCallback = null;
+    this.stateChangedCallback = NOOP;
+    this.errorCallback = NOOP;
     this.connection.stateChanged(handleStateChanged.bind(this));
     this.connection.log = handleLog.bind(this);
     this.connection.error(handleError.bind(this));
@@ -82,6 +86,10 @@ SignalrTransport.prototype.setStateChangedCallback = function(callback) {
 
 SignalrTransport.prototype.setReceivedCallback = function(callback) {
     this.connection.received(callback);
+};
+
+SignalrTransport.prototype.setErrorCallback = function(callback) {
+    this.errorCallback = callback;
 };
 
 SignalrTransport.prototype.setConnectionSlowCallback = function(callback) {
