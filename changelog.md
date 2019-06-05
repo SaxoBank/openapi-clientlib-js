@@ -1,3 +1,7 @@
+#### v4.6.0
+
++ Implement raw/plain websocket support which allows to drop signalr and use our onw transport layer.
+
 #### v4.5.6
 
 + Fix parsing and do not attempt to stringify FormData.
