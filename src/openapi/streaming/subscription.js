@@ -12,7 +12,7 @@ import {
     ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
 } from './subscription-actions';
 import SubscriptionQueue from './subscription-queue';
-import SerializerFacade from './serializer/serializer-facade';
+import ParserFacade from './parser/parser-facade';
 
 // -- Local variables section --
 
@@ -81,7 +81,7 @@ function subscribe() {
     const data = extend({}, this.subscriptionData, {
         ContextId: this.streamingContextId,
         ReferenceId: referenceId,
-        KnownSchemas: this.serializer.getSchemaNames(),
+        KnownSchemas: this.parser.getSchemaNames(),
     });
 
     normalizeSubscribeData(data);
@@ -310,7 +310,7 @@ function onSubscribeError(referenceId, response) {
     if (errorCode === ERROR_UNSUPPORTED_FORMAT && this.subscriptionData && this.subscriptionData.Format === FORMAT_PROTOBUF) {
         // Fallback to JSON format if specific endpoint doesn't support PROTOBUF format.
         this.subscriptionData.Format = FORMAT_JSON;
-        this.serializer = SerializerFacade.getSerializer(FORMAT_JSON, this.serviceGroup, this.url);
+        this.parser = ParserFacade.getParser(FORMAT_JSON, this.serviceGroup, this.url);
 
         tryPerformAction.call(this, ACTION_SUBSCRIBE);
         return;
@@ -434,9 +434,9 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     this.queue = new SubscriptionQueue();
 
     /**
-     * The serializer, chosen based on provided format.
+     * The parser, chosen based on provided format.
      */
-    this.serializer = SerializerFacade.getSerializer(subscriptionArgs.Format, serviceGroup, url);
+    this.parser = ParserFacade.getParser(subscriptionArgs.Format, serviceGroup, url);
 
     this.onStateChangedCallbacks = [];
 
@@ -493,7 +493,7 @@ Subscription.prototype.removeStateChangedCallback = function(callback) {
 
 Subscription.prototype.processUpdate = function(message, type) {
     const nextMessage = extend({}, message, {
-        Data: this.serializer.parse(message.Data, this.SchemaName),
+        Data: this.parser.parse(message.Data, this.SchemaName),
     });
 
     this.onUpdate(nextMessage, type);
@@ -502,17 +502,17 @@ Subscription.prototype.processUpdate = function(message, type) {
 Subscription.prototype.processSnapshot = function(response) {
     if (response.Schema && response.SchemaName) {
         this.SchemaName = response.SchemaName;
-        this.serializer.addSchema(response.Schema, response.SchemaName);
+        this.parser.addSchema(response.Schema, response.SchemaName);
     }
 
     if (!response.SchemaName) {
-        // If SchemaName is missing, trying to use last valid schema name from serializer as an fallback.
-        this.SchemaName = this.serializer.getSchemaName();
+        // If SchemaName is missing, trying to use last valid schema name from parser as an fallback.
+        this.SchemaName = this.parser.getSchemaName();
 
         if (this.subscriptionData.Format === FORMAT_PROTOBUF && !this.SchemaName) {
-            // If SchemaName is missing both in response and serializer cache, it means that openapi doesn't support protobuf fot this endpoint.
-            // In such scenario, falling back to default serializer.
-            this.serializer = SerializerFacade.getSerializer(SerializerFacade.getDefaultFormat(), this.serviceGroup, this.url);
+            // If SchemaName is missing both in response and parser cache, it means that openapi doesn't support protobuf fot this endpoint.
+            // In such scenario, falling back to default parser.
+            this.parser = ParserFacade.getParser(ParserFacade.getDefaultFormat(), this.serviceGroup, this.url);
         }
     }
 
@@ -521,7 +521,7 @@ Subscription.prototype.processSnapshot = function(response) {
 };
 
 /**
- * This assumes the subscription is dead and subscribes again. If unsubscribed or awaiting a unsubscription, this is ignored.
+ * This assumes the subscription is dead and subscribes again. If unsubscribed or awaiting a unsubscribe, this is ignored.
  * It should be used in the case of errors, such as the subscription becoming orphaned and when the server asks us to reset a subscription.
  * @private
  */
@@ -574,7 +574,6 @@ Subscription.prototype.reset = function() {
  * @private
  */
 Subscription.prototype.onSubscribe = function(modify) {
-
     if (this.isDisposed) {
         throw new Error('Subscribing a disposed subscription - you will not get data');
     }

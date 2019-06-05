@@ -55,7 +55,10 @@ describe('openapi Streaming', () => {
             },
         };
         transport = mockTransport();
-        authProvider = { 'getToken': jest.fn() };
+        authProvider = {
+            'getToken': jest.fn(),
+            'on': jest.fn(),
+        };
         authProvider.getToken.mockImplementation(() => 'TOKEN');
 
         subscriptionUpdateSpy = jest.fn().mockName('subscriptionUpdate');
@@ -83,7 +86,7 @@ describe('openapi Streaming', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
             expect(global.$.connection.mock.calls.length).toEqual(1);
             expect(global.$.connection.mock.calls[0]).toEqual(['testUrl/streaming/connection']);
-            expect(streaming.connection.qs).toEqual('authorization=TOKEN&context=0000000000');
+            expect(streaming.getQuery()).toEqual('authorization=TOKEN&context=0000000000');
         });
     });
 
@@ -347,7 +350,9 @@ describe('openapi Streaming', () => {
         it('handles connection error events', () => {
             jest.spyOn(log, 'error');
             errorCallback('error details');
-            expect(log.error.mock.calls.length).toEqual(1);
+
+            // One error from transport and second error from streaming.
+            expect(log.error.mock.calls.length).toEqual(2);
         });
         it('handles signal-r log calls', () => {
             jest.spyOn(log, 'debug');
@@ -543,13 +548,13 @@ describe('openapi Streaming', () => {
         it('has defaults', () => {
             new Streaming(transport, 'testUrl', authProvider);
             expect(mockConnection.start.mock.calls.length).toEqual(1);
-            expect(mockConnection.start.mock.calls[0][0]).toEqual({ waitForPageLoad: false, transport: ['webSockets', 'webSockets', 'longPolling'] });
+            expect(mockConnection.start.mock.calls[0][0]).toEqual({ waitForPageLoad: false, transport: ['webSockets', 'longPolling'] });
         });
 
         it('can override waitForPageLoad', () => {
             new Streaming(transport, 'testUrl', authProvider, { waitForPageLoad: true });
             expect(mockConnection.start.mock.calls.length).toEqual(1);
-            expect(mockConnection.start.mock.calls[0][0]).toEqual({ waitForPageLoad: true, transport: ['webSockets', 'webSockets', 'longPolling'] });
+            expect(mockConnection.start.mock.calls[0][0]).toEqual({ waitForPageLoad: true, transport: ['webSockets', 'longPolling'] });
         });
 
         it('can override transport', () => {

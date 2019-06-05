@@ -40,6 +40,10 @@
         "Uint16Array": false,
         "crypto": false,
         "$": false,
+        "DataView": true,
+        "Int8Array": true,
+        "ArrayBuffer": true,
+        "WebSocket": true
     },
     "rules": {
         // Possible errors
