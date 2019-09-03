@@ -150,14 +150,15 @@ function onReadyToPerformNextAction() {
     if (!this.connectionAvailable || this.queue.isEmpty()) {
         return;
     }
-    performAction.call(this, this.queue.dequeue());
+    performAction.call(this, this.queue.dequeue(), this.queue.isEmpty());
 }
 
 /**
  * Performs an action to a subscription based on the current state.
  * @param queuedAction
+ * @param isLastQueuedAction
  */
-function performAction(queuedAction) {
+function performAction(queuedAction, isLastQueuedAction) {
     const { action, args } = queuedAction;
 
     switch (action) {
@@ -217,10 +218,14 @@ function performAction(queuedAction) {
             throw new Error('unrecognised action ' + action);
     }
 
+    if (this.onQueueEmpty && isLastQueuedAction) {
+        this.onQueueEmpty();
+    }
+
     // Required to manually rerun next action, because if nothing happens in given cycle,
     // next task from a queue will never be picked up.
     if (!this.queue.isEmpty() && !(TRANSITIONING_STATES & this.currentState)) {
-        performAction.call(this, this.queue.dequeue());
+        performAction.call(this, this.queue.dequeue(), this.queue.isEmpty());
     }
 }
 
@@ -413,7 +418,8 @@ function setState(state) {
  * @class
  * @alias saxo.openapi.StreamingSubscription
  */
-function Subscription(streamingContextId, transport, serviceGroup, url, subscriptionArgs, onSubscriptionCreated, onUpdate, onError) {
+// eslint-disable-next-line max-params
+function Subscription(streamingContextId, transport, serviceGroup, url, subscriptionArgs, onSubscriptionCreated, onUpdate, onError, onQueueEmpty) {
 
     /**
      * The streaming context id identifies the particular streaming connection that this subscription will use.
@@ -445,6 +451,7 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     this.url = url;
     this.onUpdate = onUpdate;
     this.onError = onError;
+    this.onQueueEmpty = onQueueEmpty;
     this.onSubscriptionCreated = onSubscriptionCreated;
     this.subscriptionData = subscriptionArgs;
 

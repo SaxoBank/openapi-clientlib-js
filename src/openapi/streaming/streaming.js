@@ -569,9 +569,10 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP = connectionConstants.READABLE
  *                              The first argument will be the data received and the second argument will either be
  *                              subscription.UPDATE_TYPE_DELTA or subscription.UPDATE_TYPE_SNAPSHOT
  * @param {function} onError - A callback function that is invoked when an error occurs.
+ * @param {function} onQueueEmpty - A callback function that is invoked after the last action is dequeued.
  * @returns {saxo.openapi.StreamingSubscription} A subscription object.
  */
-Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptionArgs, onUpdate, onError) {
+Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptionArgs, onUpdate, onError, onQueueEmpty) {
 
     const normalizedSubscriptionArgs = extend({}, subscriptionArgs);
 
@@ -581,7 +582,7 @@ Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptio
     }
 
     const subscription = new Subscription(this.contextId, this.transport, serviceGroup, url, normalizedSubscriptionArgs,
-        onSubscriptionCreated.bind(this), onUpdate, onError);
+        onSubscriptionCreated.bind(this), onUpdate, onError, onQueueEmpty);
 
     this.subscriptions.push(subscription);
 
