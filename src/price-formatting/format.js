@@ -182,7 +182,7 @@ function formatPricePartsDecimals(parts, numberFormatting, value, decimals, form
     const pipDecimals = getPipDecimals(formatFlags);
 
     if (formatFlags.Percentage) {
-        parts.First = formatNumber(value * 100, decimals, numberFormatting) + ' %';
+        parts.First = formatNumber(value * 100, decimals, numberFormatting) + '%';
     } else if (formatFlags.NoRounding || (!pipDecimals && !formatFlags.FormatAsPips)) {
         getFirstAndPipsParts(formatNumber(value, formatFlags.NoRounding ? actualDecimals : decimals, numberFormatting), parts, numberFormatting);
     } else {

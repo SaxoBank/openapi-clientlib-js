@@ -209,9 +209,9 @@ describe('price-formatting format', () => {
     });
 
     it('supports percentage', () => {
-        expect(priceFormatting.format(0.1233, 2, priceFormatOptions.Percentage)).toEqual('12.33 %');
+        expect(priceFormatting.format(0.1233, 2, priceFormatOptions.Percentage)).toEqual('12.33%');
 
-        expect(priceFormatting.format(0, 2, priceFormatOptions.Percentage)).toEqual('0.00 %');
+        expect(priceFormatting.format(0, 2, priceFormatOptions.Percentage)).toEqual('0.00%');
     });
 
     it('supports negative numbers (for net price change)', () => {
