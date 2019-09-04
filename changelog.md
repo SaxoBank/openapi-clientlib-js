@@ -1,3 +1,8 @@
+#### v4.7.0
+
++ add onQueueEmpty callback to subscription
++ change percentage formatter to not include a space
+
 #### v4.6.0
 
 + Implement raw/plain websocket support which allows to drop signalr and use our onw transport layer.
