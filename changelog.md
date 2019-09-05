@@ -1,3 +1,7 @@
+#### v4.8.0
+
++ Add the state variables to the prototype
+
 #### v4.7.0
 
 + add onQueueEmpty callback to subscription
