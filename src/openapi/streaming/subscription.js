@@ -21,15 +21,6 @@ import ParserFacade from './parser/parser-facade';
  */
 let referenceIdCounter = 1;
 
-const STATE_SUBSCRIBE_REQUESTED = 0x1;
-const STATE_SUBSCRIBED = 0x2;
-const STATE_UNSUBSCRIBE_REQUESTED = 0x4;
-const STATE_UNSUBSCRIBED = 0x8;
-const STATE_PATCH_REQUESTED = 0x10;
-const STATE_READY_FOR_UNSUBSCRIBE_BY_TAG = 0x20;
-
-const TRANSITIONING_STATES = STATE_SUBSCRIBE_REQUESTED | STATE_UNSUBSCRIBE_REQUESTED | STATE_PATCH_REQUESTED | STATE_READY_FOR_UNSUBSCRIBE_BY_TAG;
-
 const DEFAULT_REFRESH_RATE_MS = 1000;
 const MIN_REFRESH_RATE_MS = 100;
 
@@ -87,7 +78,7 @@ function subscribe() {
     normalizeSubscribeData(data);
 
     log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: subscribeUrl });
-    setState.call(this, STATE_SUBSCRIBE_REQUESTED);
+    setState.call(this, this.STATE_SUBSCRIBE_REQUESTED);
 
     this.transport.post(this.serviceGroup, subscribeUrl, null, { body: data })
         .then(onSubscribeSuccess.bind(this, referenceId))
@@ -98,7 +89,7 @@ function subscribe() {
  * Does an actual unsubscribe.
  */
 function unsubscribe() {
-    setState.call(this, STATE_UNSUBSCRIBE_REQUESTED);
+    setState.call(this, this.STATE_UNSUBSCRIBE_REQUESTED);
     // capture the reference id so we can tell in the response whether it is the latest call
     const referenceId = this.referenceId;
 
@@ -113,7 +104,7 @@ function unsubscribe() {
  * Does subscription modification through PATCH request
  */
 function modifyPatch(args) {
-    setState.call(this, STATE_PATCH_REQUESTED);
+    setState.call(this, this.STATE_PATCH_REQUESTED);
     const referenceId = this.referenceId;
 
     this.transport.patch(this.serviceGroup, this.url + '/{contextId}/{referenceId}', {
@@ -125,7 +116,7 @@ function modifyPatch(args) {
 }
 
 function unsubscribeByTagPending() {
-    setState.call(this, STATE_READY_FOR_UNSUBSCRIBE_BY_TAG);
+    setState.call(this, this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG);
 }
 
 /**
@@ -136,7 +127,7 @@ function unsubscribeByTagPending() {
  * @param args
  */
 function tryPerformAction(action, args) {
-    if (!this.connectionAvailable || TRANSITIONING_STATES & this.currentState) {
+    if (!this.connectionAvailable || this.TRANSITIONING_STATES & this.currentState) {
         this.queue.enqueue({ action, args });
     } else {
         performAction.call(this, { action, args });
@@ -165,10 +156,10 @@ function performAction(queuedAction, isLastQueuedAction) {
         case ACTION_SUBSCRIBE:
         case ACTION_MODIFY_SUBSCRIBE:
             switch (this.currentState) {
-                case STATE_SUBSCRIBED:
+                case this.STATE_SUBSCRIBED:
                     break;
 
-                case STATE_UNSUBSCRIBED:
+                case this.STATE_UNSUBSCRIBED:
                     subscribe.call(this);
                     break;
 
@@ -179,7 +170,7 @@ function performAction(queuedAction, isLastQueuedAction) {
 
         case ACTION_MODIFY_PATCH:
             switch (this.currentState) {
-                case STATE_SUBSCRIBED:
+                case this.STATE_SUBSCRIBED:
                     modifyPatch.call(this, args);
                     break;
 
@@ -190,11 +181,11 @@ function performAction(queuedAction, isLastQueuedAction) {
 
         case ACTION_UNSUBSCRIBE:
             switch (this.currentState) {
-                case STATE_SUBSCRIBED:
+                case this.STATE_SUBSCRIBED:
                     unsubscribe.call(this);
                     break;
 
-                case STATE_UNSUBSCRIBED:
+                case this.STATE_UNSUBSCRIBED:
                     break;
 
                 default:
@@ -204,8 +195,8 @@ function performAction(queuedAction, isLastQueuedAction) {
 
         case ACTION_UNSUBSCRIBE_BY_TAG_PENDING:
             switch (this.currentState) {
-                case STATE_SUBSCRIBED:
-                case STATE_UNSUBSCRIBED:
+                case this.STATE_SUBSCRIBED:
+                case this.STATE_UNSUBSCRIBED:
                     unsubscribeByTagPending.call(this);
                     break;
 
@@ -224,7 +215,7 @@ function performAction(queuedAction, isLastQueuedAction) {
 
     // Required to manually rerun next action, because if nothing happens in given cycle,
     // next task from a queue will never be picked up.
-    if (!this.queue.isEmpty() && !(TRANSITIONING_STATES & this.currentState)) {
+    if (!this.queue.isEmpty() && !(this.TRANSITIONING_STATES & this.currentState)) {
         performAction.call(this, this.queue.dequeue(), this.queue.isEmpty());
     }
 }
@@ -258,7 +249,7 @@ function onSubscribeSuccess(referenceId, result) {
         return;
     }
 
-    setState.call(this, STATE_SUBSCRIBED);
+    setState.call(this, this.STATE_SUBSCRIBED);
 
     this.inactivityTimeout = responseData.InactivityTimeout || 0;
 
@@ -301,7 +292,7 @@ function onSubscribeError(referenceId, response) {
         return;
     }
 
-    setState.call(this, STATE_UNSUBSCRIBED);
+    setState.call(this, this.STATE_UNSUBSCRIBED);
     log.error(LOG_AREA, 'An error occurred subscribing', {
         response,
         url: this.url,
@@ -344,7 +335,7 @@ function onUnsubscribeSuccess(referenceId, response) {
         return;
     }
 
-    setState.call(this, STATE_UNSUBSCRIBED);
+    setState.call(this, this.STATE_UNSUBSCRIBED);
     onReadyToPerformNextAction.call(this);
 }
 
@@ -358,7 +349,7 @@ function onUnsubscribeError(referenceId, response) {
         return;
     }
 
-    setState.call(this, STATE_UNSUBSCRIBED);
+    setState.call(this, this.STATE_UNSUBSCRIBED);
     log.error(LOG_AREA, 'An error occurred unsubscribing', { response, url: this.url });
     onReadyToPerformNextAction.call(this);
 }
@@ -374,7 +365,7 @@ function onModifyPatchSuccess(referenceId, response) {
         return;
     }
 
-    setState.call(this, STATE_SUBSCRIBED);
+    setState.call(this, this.STATE_SUBSCRIBED);
     onReadyToPerformNextAction.call(this);
 }
 
@@ -388,7 +379,7 @@ function onModifyPatchError(referenceId, response) {
         return;
     }
 
-    setState.call(this, STATE_SUBSCRIBED);
+    setState.call(this, this.STATE_SUBSCRIBED);
     log.error(LOG_AREA, 'An error occurred patching', { response, url: this.url });
     onReadyToPerformNextAction.call(this);
 }
@@ -463,11 +454,23 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     }
     this.connectionAvailable = true;
 
-    setState.call(this, STATE_UNSUBSCRIBED);
+    setState.call(this, this.STATE_UNSUBSCRIBED);
 }
 
 Subscription.prototype.UPDATE_TYPE_SNAPSHOT = 1;
 Subscription.prototype.UPDATE_TYPE_DELTA = 2;
+
+Subscription.prototype.STATE_SUBSCRIBE_REQUESTED = 0x1;
+Subscription.prototype.STATE_SUBSCRIBED = 0x2;
+Subscription.prototype.STATE_UNSUBSCRIBE_REQUESTED = 0x4;
+Subscription.prototype.STATE_UNSUBSCRIBED = 0x8;
+Subscription.prototype.STATE_PATCH_REQUESTED = 0x10;
+
+Subscription.prototype.TRANSITIONING_STATES =
+    Subscription.prototype.STATE_SUBSCRIBE_REQUESTED |
+    Subscription.prototype.STATE_UNSUBSCRIBE_REQUESTED |
+    Subscription.prototype.STATE_PATCH_REQUESTED |
+    Subscription.prototype.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG;
 
 /**
  * Defines the name of the property on data used to indicate that the data item is a deletion, rather than a
@@ -535,24 +538,24 @@ Subscription.prototype.processSnapshot = function(response) {
 Subscription.prototype.reset = function() {
 
     switch (this.currentState) {
-        case STATE_UNSUBSCRIBED:
-        case STATE_UNSUBSCRIBE_REQUESTED:
+        case this.STATE_UNSUBSCRIBED:
+        case this.STATE_UNSUBSCRIBE_REQUESTED:
             // do not do anything if we are on our way to unsubscribed unless the next action would be to subscribe
             if (this.queue.peekAction() & ACTION_SUBSCRIBE) {
                 break;
             }
             return;
 
-        case STATE_SUBSCRIBE_REQUESTED:
+        case this.STATE_SUBSCRIBE_REQUESTED:
             // we could have been in the process of subscribing when disconnected. we would need to subscribe with a new streamingContextId
             break;
 
-        case STATE_SUBSCRIBED:
-        case STATE_PATCH_REQUESTED:
+        case this.STATE_SUBSCRIBED:
+        case this.STATE_PATCH_REQUESTED:
             this.onUnsubscribe();
             break;
 
-        case STATE_READY_FOR_UNSUBSCRIBE_BY_TAG:
+        case this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG:
             break;
 
         default:
@@ -568,7 +571,7 @@ Subscription.prototype.reset = function() {
     //  * subscription is orphaned (meaning subscription is dead).
 
     // set the state to unsubscribed, since that is what we are now assuming
-    setState.call(this, STATE_UNSUBSCRIBED);
+    setState.call(this, this.STATE_UNSUBSCRIBED);
 
     // subscribe... because the state is unsubscribed this will go ahead unless the connection is unavailable
     this.onSubscribe();
@@ -650,7 +653,7 @@ Subscription.prototype.onConnectionAvailable = function() {
     this.connectionAvailable = true;
 
     // if we waited to do something and we are not transitioning, then try something
-    if (!(TRANSITIONING_STATES & this.currentState)) {
+    if (!(this.TRANSITIONING_STATES & this.currentState)) {
         onReadyToPerformNextAction.call(this);
     }
 };
@@ -665,21 +668,21 @@ Subscription.prototype.onStreamingData = function(message) {
 
     switch (this.currentState) {
         // if we are unsubscribed or trying to unsubscribe then ignore the data
-        case STATE_UNSUBSCRIBE_REQUESTED:
+        case this.STATE_UNSUBSCRIBE_REQUESTED:
             return;
 
-        case STATE_UNSUBSCRIBED:
+        case this.STATE_UNSUBSCRIBED:
             return false;
 
         // we received a delta before we got initial data
-        case STATE_SUBSCRIBE_REQUESTED:
+        case this.STATE_SUBSCRIBE_REQUESTED:
             this.updatesBeforeSubscribed = this.updatesBeforeSubscribed || [];
             this.updatesBeforeSubscribed.push(message);
             return;
 
         // the normal state, go ahead
-        case STATE_SUBSCRIBED:
-        case STATE_PATCH_REQUESTED:
+        case this.STATE_SUBSCRIBED:
+        case this.STATE_PATCH_REQUESTED:
             break;
 
         default:
@@ -698,7 +701,7 @@ Subscription.prototype.onStreamingData = function(message) {
  * @private
  */
 Subscription.prototype.onHeartbeat = function() {
-    if (this.currentState === STATE_SUBSCRIBE_REQUESTED) {
+    if (this.currentState === this.STATE_SUBSCRIBE_REQUESTED) {
         log.warn(LOG_AREA, 'received heartbeat for a subscription we havent subscribed to yet', { url: this.url, serviceGroup: this.serviceGroup });
     }
     onActivity.call(this);
@@ -715,7 +718,7 @@ Subscription.prototype.onUnsubscribeByTagPending = function() {
  * Handled a subscription having been unsubscribed by tag.
  */
 Subscription.prototype.onUnsubscribeByTagComplete = function() {
-    setState.call(this, STATE_UNSUBSCRIBED);
+    setState.call(this, this.STATE_UNSUBSCRIBED);
     onReadyToPerformNextAction.call(this);
 };
 
@@ -723,7 +726,7 @@ Subscription.prototype.onUnsubscribeByTagComplete = function() {
  * Returns whether this subscription is ready to be unsubscribed by tag after it has been requested.
  */
 Subscription.prototype.isReadyForUnsubscribeByTag = function() {
-    return this.currentState === STATE_READY_FOR_UNSUBSCRIBE_BY_TAG;
+    return this.currentState === this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG;
 };
 
 /**
@@ -737,9 +740,9 @@ Subscription.prototype.timeTillOrphaned = function(now) {
     // once subscribed, orphan finder will be notified.
     if (!this.connectionAvailable ||
         this.inactivityTimeout === 0 ||
-        this.currentState === STATE_UNSUBSCRIBED ||
-        this.currentState === STATE_UNSUBSCRIBE_REQUESTED ||
-        this.currentState === STATE_SUBSCRIBE_REQUESTED) {
+        this.currentState === this.STATE_UNSUBSCRIBED ||
+        this.currentState === this.STATE_UNSUBSCRIBE_REQUESTED ||
+        this.currentState === this.STATE_SUBSCRIBE_REQUESTED) {
         return Infinity;
     }
 
