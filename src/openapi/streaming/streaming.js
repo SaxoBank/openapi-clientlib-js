@@ -574,7 +574,7 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP = connectionConstants.READABLE
  * @param {function} [options.onQueueEmpty] - A callback function that is invoked after the last action is dequeued.
  * @returns {saxo.openapi.StreamingSubscription} A subscription object.
  */
-Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptionArgs, options = {}) {
+Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptionArgs, options) {
     const normalizedSubscriptionArgs = extend({}, subscriptionArgs);
 
     if (!ParserFacade.isFormatSupported(normalizedSubscriptionArgs.Format)) {
