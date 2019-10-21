@@ -565,15 +565,16 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP = connectionConstants.READABLE
  * @param {string} [subscriptionArgs.Format] - The format for the subscription (passed to OpenAPI).
  * @param {object} [subscriptionArgs.Arguments] - The subscription arguments (passed to OpenAPI).
  * @param {string} [subscriptionArgs.Tag] - The tag for the subscription (passed to OpenAPI).
- * @param {function} onUpdate - A callback function that is invoked when an initial snapshot or update is received.
+ * @param {objecy} options - Optional parameters
+ * @param {object} [options.headers] - headers to add to the subscription request
+ * @param {function} [options.onUpdate] - A callback function that is invoked when an initial snapshot or update is received.
  *                              The first argument will be the data received and the second argument will either be
  *                              subscription.UPDATE_TYPE_DELTA or subscription.UPDATE_TYPE_SNAPSHOT
- * @param {function} onError - A callback function that is invoked when an error occurs.
- * @param {function} onQueueEmpty - A callback function that is invoked after the last action is dequeued.
+ * @param {function} [options.onError] - A callback function that is invoked when an error occurs.
+ * @param {function} [options.onQueueEmpty] - A callback function that is invoked after the last action is dequeued.
  * @returns {saxo.openapi.StreamingSubscription} A subscription object.
  */
-Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptionArgs, onUpdate, onError, onQueueEmpty) {
-
+Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptionArgs, options = {}) {
     const normalizedSubscriptionArgs = extend({}, subscriptionArgs);
 
     if (!ParserFacade.isFormatSupported(normalizedSubscriptionArgs.Format)) {
@@ -581,8 +582,15 @@ Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptio
         normalizedSubscriptionArgs.Format = ParserFacade.getDefaultFormat();
     }
 
-    const subscription = new Subscription(this.contextId, this.transport, serviceGroup, url, normalizedSubscriptionArgs,
-        onSubscriptionCreated.bind(this), onUpdate, onError, onQueueEmpty);
+    const subscription = new Subscription(
+        this.contextId,
+        this.transport,
+        serviceGroup,
+        url,
+        normalizedSubscriptionArgs,
+        onSubscriptionCreated.bind(this),
+        options
+    );
 
     this.subscriptions.push(subscription);
 
