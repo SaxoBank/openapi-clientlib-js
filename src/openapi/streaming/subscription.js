@@ -59,7 +59,6 @@ function normalizeSubscribeData(data) {
  * Call to actually do a subscribe.
  */
 function subscribe() {
-
     // capture the reference id so we can tell in the response whether it is the latest call
     const referenceId = String(referenceIdCounter++);
     this.referenceId = referenceId;
@@ -77,10 +76,16 @@ function subscribe() {
 
     normalizeSubscribeData(data);
 
+    const args = { body: data };
+
+    if (this.headers) {
+        args.headers = this.headers;
+    }
+
     log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: subscribeUrl });
     setState.call(this, this.STATE_SUBSCRIBE_REQUESTED);
 
-    this.transport.post(this.serviceGroup, subscribeUrl, null, { body: data })
+    this.transport.post(this.serviceGroup, subscribeUrl, null, args)
         .then(onSubscribeSuccess.bind(this, referenceId))
         .catch(onSubscribeError.bind(this, referenceId));
 }
@@ -410,7 +415,7 @@ function setState(state) {
  * @alias saxo.openapi.StreamingSubscription
  */
 // eslint-disable-next-line max-params
-function Subscription(streamingContextId, transport, serviceGroup, url, subscriptionArgs, onSubscriptionCreated, onUpdate, onError, onQueueEmpty) {
+function Subscription(streamingContextId, transport, serviceGroup, url, subscriptionArgs, onSubscriptionCreated, options = {}) {
 
     /**
      * The streaming context id identifies the particular streaming connection that this subscription will use.
@@ -440,11 +445,16 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     this.transport = transport;
     this.serviceGroup = serviceGroup;
     this.url = url;
-    this.onUpdate = onUpdate;
-    this.onError = onError;
-    this.onQueueEmpty = onQueueEmpty;
     this.onSubscriptionCreated = onSubscriptionCreated;
     this.subscriptionData = subscriptionArgs;
+
+    /**
+     * Setting optional fields.
+     */
+    this.onUpdate = options.onUpdate;
+    this.onError = options.onError;
+    this.onQueueEmpty = options.onQueueEmpty;
+    this.headers = options.headers;
 
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
