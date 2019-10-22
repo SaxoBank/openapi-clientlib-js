@@ -1,3 +1,7 @@
+#### v5.0.1
+
+- Patch release including prebuilt dist.
+
 #### v5.0.0
 
 - Add subscription option argument and move optional arguments there.
