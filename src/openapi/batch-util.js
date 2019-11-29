@@ -69,11 +69,11 @@ function parse(responseText, parentRequestId = 0) {
                     }
                 } else if (!currentData.response) {
                     const firstCharacter = line.charAt(0);
-                    if (firstCharacter === '{' || firstCharacter === '[') {
+                    if (firstCharacter === '{' || firstCharacter === '[' || firstCharacter === '"') {
                         try {
                             currentData.response = JSON.parse(line);
                         } catch (ex) {
-                            log.warning(LOG_AREA, 'Unexpected exception parsing json. Ignoring.', ex);
+                            log.warn(LOG_AREA, 'Unexpected exception parsing json. Ignoring.', ex);
                         }
                     }
                 }
