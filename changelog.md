@@ -1,3 +1,7 @@
+#### v5.0.2
+
+- Add support for json string format for batch responses.
+
 #### v5.0.1
 
 - Patch release including prebuilt dist.
