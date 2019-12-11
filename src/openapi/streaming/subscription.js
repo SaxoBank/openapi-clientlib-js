@@ -73,19 +73,14 @@ function subscribe() {
         ReferenceId: referenceId,
         KnownSchemas: this.parser.getSchemaNames(),
     });
+    const options = { body: data, headers: Object.assign({}, this.headers) };
 
     normalizeSubscribeData(data);
-
-    const args = { body: data };
-
-    if (this.headers) {
-        args.headers = this.headers;
-    }
 
     log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: subscribeUrl });
     setState.call(this, this.STATE_SUBSCRIBE_REQUESTED);
 
-    this.transport.post(this.serviceGroup, subscribeUrl, null, args)
+    this.transport.post(this.serviceGroup, subscribeUrl, null, options)
         .then(onSubscribeSuccess.bind(this, referenceId))
         .catch(onSubscribeError.bind(this, referenceId));
 }
