@@ -116,6 +116,37 @@ describe('openapi StreamingSubscription', () => {
             expect(transport.post.mock.calls.length).toEqual(1);
             expect(transport.post.mock.calls[0]).toEqual(['serviceGroup', 'src/test/resource', null, expect.not.objectContaining({ headers: expect.anything() })]);
         });
+
+        it('does not carry over headers mutation', (done) => {
+            const headers = { Header: 'header' };
+            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, null, { headers });
+
+            // Mutating passed headers and making sure results doesn't store newly added property.
+            headers.Authorization = '1234123';
+
+            subscription.onSubscribe();
+
+            // Mutating passed headers and making sure results doesn't store newly added property.
+            headers.MuatedValue = 'true';
+
+            const initialResponse = { Snapshot: { Data: [1, 'fish', 3] } };
+            sendInitialResponse(initialResponse);
+
+            setTimeout(() => {
+                subscription.onUnsubscribe();
+                transport.deleteResolve({ status: '200', response: {} });
+
+                setTimeout(() => {
+                    subscription.onSubscribe();
+                    sendInitialResponse(initialResponse);
+
+                    expect(transport.post.mock.calls.length).toEqual(2);
+                    expect(transport.post.mock.calls[0]).toEqual(['serviceGroup', 'src/test/resource', null, expect.objectContaining({ headers: { Header: 'header' } })]);
+
+                    done();
+                });
+            });
+        });
     });
 
     describe('initial snapshot', () => {

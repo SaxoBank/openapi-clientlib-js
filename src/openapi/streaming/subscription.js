@@ -73,7 +73,11 @@ function subscribe() {
         ReferenceId: referenceId,
         KnownSchemas: this.parser.getSchemaNames(),
     });
-    const options = { body: data, headers: extend({}, this.headers) };
+    const options = { body: data };
+
+    if (this.headers) {
+        options.headers = extend({}, this.headers);
+    }
 
     normalizeSubscribeData(data);
 
@@ -449,7 +453,7 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     this.onUpdate = options.onUpdate;
     this.onError = options.onError;
     this.onQueueEmpty = options.onQueueEmpty;
-    this.headers = options.headers;
+    this.headers = options.headers && extend({}, options.headers);
 
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
