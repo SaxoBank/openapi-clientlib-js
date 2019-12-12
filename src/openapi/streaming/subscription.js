@@ -73,7 +73,7 @@ function subscribe() {
         ReferenceId: referenceId,
         KnownSchemas: this.parser.getSchemaNames(),
     });
-    const options = { body: data, headers: Object.assign({}, this.headers) };
+    const options = { body: data, headers: extend({}, this.headers) };
 
     normalizeSubscribeData(data);
 
