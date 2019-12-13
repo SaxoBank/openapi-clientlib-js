@@ -73,19 +73,18 @@ function subscribe() {
         ReferenceId: referenceId,
         KnownSchemas: this.parser.getSchemaNames(),
     });
-
-    normalizeSubscribeData(data);
-
-    const args = { body: data };
+    const options = { body: data };
 
     if (this.headers) {
-        args.headers = this.headers;
+        options.headers = extend({}, this.headers);
     }
+
+    normalizeSubscribeData(data);
 
     log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: subscribeUrl });
     setState.call(this, this.STATE_SUBSCRIBE_REQUESTED);
 
-    this.transport.post(this.serviceGroup, subscribeUrl, null, args)
+    this.transport.post(this.serviceGroup, subscribeUrl, null, options)
         .then(onSubscribeSuccess.bind(this, referenceId))
         .catch(onSubscribeError.bind(this, referenceId));
 }
@@ -454,7 +453,7 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     this.onUpdate = options.onUpdate;
     this.onError = options.onError;
     this.onQueueEmpty = options.onQueueEmpty;
-    this.headers = options.headers;
+    this.headers = options.headers && extend({}, options.headers);
 
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
