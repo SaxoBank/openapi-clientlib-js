@@ -1,3 +1,7 @@
+#### v5.0.3
+
+- Clone headers passed to subscription to make sure an mutations are not carried over between subscribe requests.
+
 #### v5.0.2
 
 - Add support for json string format for batch responses.
