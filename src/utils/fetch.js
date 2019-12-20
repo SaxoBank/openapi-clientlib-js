@@ -12,6 +12,7 @@ const LOG_AREA = 'Fetch';
 // list of content-types that will be treated as binary blobs
 const binaryContentTypes = {
     'application/pdf': true,
+    'application/octet-stream': true,
     'application/vnd.ms-excel': true,
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': true,
 };

@@ -19,6 +19,22 @@ describe('utils fetch', () => {
         Promise.resolve(promise);
     });
 
+    it('octet-stream are downloaded as a binary blob', (done) => {
+        const contentType = 'application/octet-stream';
+        const result = new FetchResponse(200, 'this is generic binary data', contentType);
+        const promise = convertFetchSuccess('url', 'body', 0, result);
+
+        promise.then((response) => {
+            expect(response.response).toEqual('this is generic binary data');
+            expect(response.status).toEqual(200);
+            expect(response.headers.get('content-type')).toEqual(contentType);
+            expect(response.responseType).toEqual('blob');
+            done();
+        });
+
+        Promise.resolve(promise);
+    });
+
     it('json is downloaded and converted to an object', (done) => {
         const contentType = 'application/json';
         const result = new FetchResponse(200, '{"test":1}', contentType);
