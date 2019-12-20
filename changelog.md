@@ -1,3 +1,7 @@
+#### v5.0.4
+
+- Add support for octet-stream as blobs
+
 #### v5.0.3
 
 - Clone headers passed to subscription to make sure an mutations are not carried over between subscribe requests.
