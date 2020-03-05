@@ -349,7 +349,11 @@ function onUnsubscribeSuccess(referenceId, response) {
  */
 function onUnsubscribeError(referenceId, response) {
     if (referenceId !== this.referenceId) {
-        log.error(LOG_AREA, 'Received an error response for unsubscribing a subscription that has afterwards been reset - ignoring');
+        log.error(
+            LOG_AREA,
+            'Received an error response for unsubscribing a subscription that has afterwards been reset - ignoring',
+            { response, url: this.url, newReferenceId: referenceId, oldReferenceId: this.referenceId }
+        );
         return;
     }
 
@@ -379,7 +383,11 @@ function onModifyPatchSuccess(referenceId, response) {
  */
 function onModifyPatchError(referenceId, response) {
     if (referenceId !== this.referenceId) {
-        log.error(LOG_AREA, 'Received an error response for modify patch a subscription that has afterwards been reset - ignoring');
+        log.error(
+            LOG_AREA,
+            'Received an error response for modify patch a subscription that has afterwards been reset - ignoring',
+            { response, url: this.url, newReferenceId: referenceId, oldReferenceId: this.referenceId }
+        );
         return;
     }
 
