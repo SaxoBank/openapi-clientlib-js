@@ -65,6 +65,8 @@ const PriceFormatOptions = enumUtils.makeDefinition([
     /** @member {string} saxo.priceFormatOptions.DeciPipsSpaceForZero - Use a space instead of zero.
      *  Only used with DeciPipsFraction. */
     'DeciPipsSpaceForZero',
+    /** @member {string} saxo.priceFormatOptions.UseExtendedDecimals - Use up to eight non-zero decimal digits in total. */
+    'UseExtendedDecimals',
     /** @member {string} saxo.priceFormatOptions.NoRounding - Indicates that no rounding should be done - that
      *  decimals should be treated as a max decimals. */
     'NoRounding',
