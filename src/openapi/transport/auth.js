@@ -165,11 +165,11 @@ function onTransportError(oldTokenExpiry, result) {
 
         // if the current token is the same as when this was sent and its meant to be still valid
         // it means the token is invalid even though its not meant to expire yet
-        const isCurrentTokenInvalid = currentAuthExpiry > now && oldTokenExpiry === currentAuthExpiry;
+        const isCurrentTokenNotExpiredButRejected = currentAuthExpiry > now && oldTokenExpiry === currentAuthExpiry;
         const isCurrentTokenExpired = currentAuthExpiry < now;
         // if we are not in an ok waiting state
         const isFetching = !(this.state & STATE_WAITING && this.retries === 0);
-        const shouldRequest = (isCurrentTokenInvalid || isCurrentTokenExpired) && !isFetching;
+        const shouldRequest = (isCurrentTokenNotExpiredButRejected || isCurrentTokenExpired) && !isFetching;
         const urlErrorCount = this.getUrlErrorCount(result.url);
 
         if (urlErrorCount >= this.maxAuthErrors) {
@@ -179,7 +179,7 @@ function onTransportError(oldTokenExpiry, result) {
             return;
         }
 
-        if (isCurrentTokenInvalid) {
+        if (isCurrentTokenNotExpiredButRejected) {
             if (isFetching) {
                 log.debug(LOG_AREA, 'Second call failed with invalid token', {
                     currentAuthExpiry,
