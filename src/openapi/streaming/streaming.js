@@ -84,10 +84,38 @@ function setNewContextId() {
 }
 
 /**
+ * Find matching delay based on current retry count/index.
+ * @param retryLevels - The retry levels that contain different delays for various retry count levels.
+ *                      Structure: [ { level: Number, delay: Number } ].
+ * @param retryIndex - The current retry index/try/count.
+ * @param defaultDelay {number} - The default delay.
+ * @returns {number} Matching delay to retry index/try/count.
+ */
+function findRetryDelay(retryLevels, retryIndex, defaultDelay) {
+    let lastFoundDelay = defaultDelay;
+
+    for (let i = 0; i < retryLevels.length; i++) {
+        const levelData = retryLevels[i];
+        if (retryIndex >= levelData.level) {
+            lastFoundDelay = levelData.delay;
+        }
+    }
+
+    return lastFoundDelay;
+}
+
+/**
  * Retries the connection after a time
  */
 function retryConnection() {
-    setTimeout(reconnect.bind(this), this.retryDelay);
+    let delay = this.retryDelay;
+
+    if (this.retryDelayLevels) {
+        delay = findRetryDelay(this.retryDelayLevels, this.retryCount, this.retryDelay);
+    }
+
+    this.retryCount++;
+    setTimeout(reconnect.bind(this), delay);
 }
 
 /**
@@ -120,19 +148,18 @@ function onConnectionStateChanged(nextState) {
             for (let i = 0; i < this.subscriptions.length; i++) {
                 this.subscriptions[i].onConnectionUnavailable();
             }
-
             retryConnection.call(this);
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
-
+            this.retryCount = 0;
             updateConnectionQuery.call(this);
 
             this.orphanFinder.stop();
             break;
 
         case this.CONNECTION_STATE_CONNECTED:
-
+            this.retryCount = 0;
             // if *we* are reconnecting (as opposed to transport reconnecting, which we do not need to handle specially)
             if (this.reconnecting) {
                 resetSubscriptions.call(this, this.subscriptions);
@@ -467,6 +494,8 @@ function removeSubscription(subscription) {
  * @param {Object} [options] - The configuration options for the streaming connection
  * @param {number} [options.connectRetryDelay=1000] - The delay in milliseconds to wait before attempting a new connect after
  *          signal-r has disconnected
+ * @param {Object} [options.connectRetryDelayLevels] - The levels of delays in milliseconds for specific retry counts.
+ *          Structure: [{ level:Number, delay:Number }].
  * @param {Boolean} [options.waitForPageLoad=true] - Whether the signal-r streaming connection waits for page load before starting
  * @param {Object} [options.parsers={}] - The map of subscription parsers where key is format name and value is parser constructor.
  * @param {Object} [options.parserEngines={}] - The map of subscription parser engines where key is format name and
@@ -502,6 +531,10 @@ function Streaming(transport, baseUrl, authProvider, options) {
             this.retryDelay = options.connectRetryDelay;
         } else {
             this.retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
+        }
+
+        if (typeof options.connectRetryDelayLevels === 'object') {
+            this.retryDelayLevels = options.connectRetryDelayLevels;
         }
 
         if (options.parserEngines) {
