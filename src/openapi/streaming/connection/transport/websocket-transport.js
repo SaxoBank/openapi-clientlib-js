@@ -8,6 +8,7 @@
 import * as constants from '../constants';
 import log from '../../../../log';
 import * as uint64utils from '../../../../utils/uint64';
+import SignalrTransport from './signalr-transport';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
 
@@ -253,6 +254,7 @@ function WebsocketTransport(baseUrl, restTransport, failCallback = NOOP) {
     this.connectionSlowCallback = NOOP;
     this.startedCallback = NOOP;
     this.closeCallback = NOOP;
+    this.unauthorizedCallback = NOOP;
 }
 
 WebsocketTransport.NAME = NAME;
@@ -266,6 +268,10 @@ WebsocketTransport.isSupported = function() {
 };
 
 WebsocketTransport.prototype.isSupported = WebsocketTransport.isSupported;
+
+WebsocketTransport.prototype.setUnauthorizedCallback = function(callback) {
+    this.unauthorizedCallback = callback;
+};
 
 WebsocketTransport.prototype.setStateChangedCallback = function(callback) {
     this.stateChangedCallback = callback;

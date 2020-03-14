@@ -181,7 +181,7 @@ function onTransportError(oldTokenExpiry, result) {
 
         if (isCurrentTokenNotExpiredButRejected) {
             if (isFetching) {
-                log.debug(LOG_AREA, 'Second call failed with invalid token', {
+                log.debug(LOG_AREA, 'Another call failed with invalid token', {
                     currentAuthExpiry,
                     now,
                     result,

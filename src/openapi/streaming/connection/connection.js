@@ -39,6 +39,7 @@ function onTransportFail(error) {
 
     this.transport.setReceivedCallback(this.receiveCallback);
     this.transport.setStateChangedCallback(this.stateChangedCallback);
+    this.transport.setUnauthorizedCallback(this.unauthorizedCallback);
     this.transport.setConnectionSlowCallback(this.connectionSlowCallback);
     this.transport.setErrorCallback(this.errorCallback);
 
@@ -125,6 +126,13 @@ function Connection(options, baseUrl, restTransport, failCallback = NOOP) {
         log.debug(LOG_AREA, 'Supported Transport found', { name: this.transport.name });
     }
 }
+
+Connection.prototype.setUnauthorizedCallback = function(callback) {
+    if (this.transport) {
+        this.unauthorizedCallback = callback;
+        this.transport.setUnauthorizedCallback(callback);
+    }
+};
 
 Connection.prototype.setStateChangedCallback = function(callback) {
     if (this.transport) {
