@@ -308,6 +308,7 @@ WebsocketTransport.prototype.getAuthorizePromise = function(contextId) {
         return Promise.resolve();
     }
 
+    const thisTokenAuthExpiry = this.authExpiry;
     return new Promise((resolve, reject) => {
         this.restTransport.put(this.authorizeServiceGroup, `${this.authorizeUrl}?contextId=${contextId}`)
             .then((response) => {
@@ -318,9 +319,12 @@ WebsocketTransport.prototype.getAuthorizePromise = function(contextId) {
                 resolve(response);
             })
             .catch((error) => {
+                if (error && error.status === 401) {
+                    this.unauthorizedCallback(thisTokenAuthExpiry);
+                }
                 log.error(LOG_AREA, 'Authorization failed', {
                     contextId,
-                    error: error.message,
+                    error,
                 });
                 reject(error);
                 handleFailure.call(this, error);
@@ -365,9 +369,11 @@ WebsocketTransport.prototype.stop = function() {
     }
 };
 
-WebsocketTransport.prototype.updateQuery = function(authToken, contextId, forceAuth = false) {
+WebsocketTransport.prototype.updateQuery = function(authToken, contextId, authExpiry, forceAuth = false) {
     let query = `?contextId=${encodeURIComponent(contextId)}&Authorization=${encodeURIComponent(authToken)}`;
     let lastMessageIdString;
+
+    this.authExpiry = authExpiry;
 
     if (this.lastMessageId !== null && this.lastMessageId !== undefined) {
         lastMessageIdString = uint64utils.uint64ToStringLE(this.lastMessageId);

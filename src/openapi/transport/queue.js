@@ -14,9 +14,9 @@ function transportMethod(method) {
 
             // checking expiry every time so that if device goes to sleep and is woken then
             // we intercept a call about to be made and then do not have to cope with the 401 responses
-            if (this.transportAuth && this.transportAuth.auth.getExpiry() < Date.now()) {
+            if (this.authProvider && this.authProvider.getExpiry() < Date.now()) {
                 this.isQueueing = true;
-                this.transportAuth.checkAuthExpiry();
+                this.authProvider.refreshOpenApiToken();
             }
         }
 
@@ -44,7 +44,7 @@ function transportMethod(method) {
 }
 
 function tryEmptyQueue() {
-    if (this.waitForPromises.length === 0 && (!this.transportAuth || this.transportAuth.auth.getExpiry() > Date.now())) {
+    if (this.waitForPromises.length === 0 && (!this.authProvider || this.authProvider.getExpiry() > Date.now())) {
         this.isQueueing = false;
         this.emptyQueue();
     }
@@ -72,24 +72,23 @@ function authTokenReceived() {
  * @alias saxo.openapi.TransportQueue
  * @param {saxo.openapi.TransportAuth|saxo.openapi.TransportBatch|saxo.openapi.TransportCore|saxo.openapi.TransportQueue} transport -
  *      The transport to wrap.
- * @param {saxo.openapi.TransportAuth} [transportAuth] - Provides the relevant TransportAuth. If given then calls will be queued whilst
- *      the auth is expired.
+ * @param {saxo.openapi.authProvider} [authProvider] - If provided then calls will be queued whilst the token is expired.
  *      If not given then calls will continue even when the authentication is not expired and no 401 calls will be handled.
  */
-function TransportQueue(transport, transportAuth) {
+function TransportQueue(transport, authProvider) {
 
     if (!transport) {
         throw new Error('Missing required parameter: transport in TransportQueue');
     }
 
     this.isQueueing = false;
-    if (transportAuth) {
-        this.transportAuth = transportAuth;
-        if (transportAuth.auth.getExpiry() < Date.now()) {
+    if (authProvider) {
+        this.authProvider = authProvider;
+        if (authProvider.getExpiry() < Date.now()) {
             this.isQueueing = true;
         }
         // subscribe to listen for authentication changes that might trigger auth to be valid and the queue to empty
-        this.transportAuth.on(this.transportAuth.EVENT_TOKEN_RECEIVED, authTokenReceived, this);
+        authProvider.on(authProvider.EVENT_TOKEN_RECEIVED, authTokenReceived, this);
     }
 
     this.queue = [];
@@ -173,17 +172,23 @@ TransportQueue.prototype.emptyQueue = function() {
 TransportQueue.prototype.runQueueItem = function(item) {
     this.transport[item.method]
         .apply(this.transport, item.args)
-        .then(function() {
-            item.resolve.apply(null, arguments);
+        .then((...args) => {
+            item.resolve(...args);
         },
-        function(result) {
-            if (this.transportAuth && result && result.status === 401) {
-                this.isQueueing = true;
+        (result, ...args) => {
+            if (this.authProvider && result && result.status === 401) {
                 this.addToQueue(item);
+                // if we are fetching a new token, wait
+                if (this.authProvider.isFetchingNewToken()) {
+                    this.isQueueing = true;
+                } else {
+                    // if not we might already have a new token, so run straight away
+                    tryEmptyQueue.call(this);
+                }
                 return;
             }
-            item.reject.apply(null, arguments);
-        }.bind(this));
+            item.reject(result, ...args);
+        });
 };
 
 /**
@@ -199,8 +204,8 @@ TransportQueue.prototype.addToQueue = function(item) {
  */
 TransportQueue.prototype.dispose = function() {
     this.queue.length = 0;
-    if (this.transportAuth) {
-        this.transportAuth.off(this.transportAuth.EVENT_TOKEN_RECEIVED, authTokenReceived, this);
+    if (this.authProvider) {
+        this.authProvider.off(this.authProvider.EVENT_TOKEN_RECEIVED, authTokenReceived, this);
     }
     this.transport.dispose();
 };

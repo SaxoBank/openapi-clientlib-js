@@ -44,7 +44,7 @@ function onTransportFail(error) {
     this.transport.setErrorCallback(this.errorCallback);
 
     if (this.state === STATE_STARTED) {
-        this.transport.updateQuery(this.authToken, this.contextId);
+        this.transport.updateQuery(this.authToken, this.contextId, this.authExpiry);
         this.transport.start(this.options, this.startCallback);
     }
 }
@@ -179,8 +179,9 @@ Connection.prototype.stop = function() {
     }
 };
 
-Connection.prototype.updateQuery = function(authToken, contextId, forceAuth = false) {
+Connection.prototype.updateQuery = function(authToken, contextId, authExpiry, forceAuth = false) {
     this.authToken = authToken;
+    this.authExpiry = authExpiry;
     this.contextId = contextId;
 
     log.debug(LOG_AREA, 'Connection update query', {
@@ -189,7 +190,7 @@ Connection.prototype.updateQuery = function(authToken, contextId, forceAuth = fa
     });
 
     if (this.transport) {
-        this.transport.updateQuery(this.authToken, this.contextId, forceAuth);
+        this.transport.updateQuery(this.authToken, this.contextId, authExpiry, forceAuth);
     }
 };
 

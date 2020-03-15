@@ -3,6 +3,7 @@ import mockTransport from '../../test/mocks/transport';
 import '../../test/mocks/math-random';
 import Streaming, { findRetryDelay } from './streaming';
 import log from '../../log';
+import mockAuthProvider from '../../test/mocks/authProvider';
 
 describe('openapi Streaming', () => {
 
@@ -18,7 +19,6 @@ describe('openapi Streaming', () => {
     let transport;
 
     beforeEach(() => {
-
         mockConnection = {
             'stateChanged': jest.fn(),
             'start': jest.fn(),
@@ -55,14 +55,11 @@ describe('openapi Streaming', () => {
             },
         };
         transport = mockTransport();
-        authProvider = {
-            'getToken': jest.fn(),
-            'on': jest.fn(),
-        };
-        authProvider.getToken.mockImplementation(() => 'TOKEN');
+        authProvider = mockAuthProvider();
 
         subscriptionUpdateSpy = jest.fn().mockName('subscriptionUpdate');
         subscriptionErrorSpy = jest.fn().mockName('subscriptionError');
+
         installClock();
     });
     afterEach(() => uninstallClock());
@@ -82,11 +79,28 @@ describe('openapi Streaming', () => {
 
     describe('init', () => {
         it('initializes the connection', () => {
-
             const streaming = new Streaming(transport, 'testUrl', authProvider);
-            expect(global.$.connection.mock.calls.length).toEqual(1);
+
+            expect(global.$.connection).toHaveBeenCalledTimes(1);
             expect(global.$.connection.mock.calls[0]).toEqual(['testUrl/streaming/connection']);
-            expect(streaming.getQuery()).toEqual('authorization=TOKEN&context=0000000000');
+            expect(streaming.getQuery()).toEqual('authorization=Bearer%20TOKEN&context=0000000000');
+            expect(mockConnection.start).toHaveBeenCalledTimes(1);
+        });
+
+        it('waits for the authentication token to be valid', () => {
+            authProvider.getExpiry.mockImplementation(() => Date.now() - 1);
+            const streaming = new Streaming(transport, 'testUrl', authProvider);
+
+            expect(mockConnection.start).toHaveBeenCalledTimes(0);
+            expect(authProvider.one).toHaveBeenCalledTimes(1);
+
+            // change the token and expiry and call the one callback
+            authProvider.getExpiry.mockImplementation(() => Date.now() + 1000);
+            authProvider.getToken.mockImplementation(() => 'Bearer NEWTOKEN');
+            authProvider.one.mock.calls[0][1]();
+
+            expect(mockConnection.start).toHaveBeenCalledTimes(1);
+            expect(streaming.getQuery()).toEqual('authorization=Bearer%20NEWTOKEN&context=0000000000');
         });
     });
 
@@ -218,6 +232,7 @@ describe('openapi Streaming', () => {
             // we test the property because we get the subscription after unavailable has been called, and before we spy on the method
             expect(subscription.connectionAvailable).toEqual(false);
         });
+
         it('tells subscriptions it is connected when they are created after connect', () => {
             givenStreaming();
             stateChangedCallback({ newState: 1 /* connected */ });

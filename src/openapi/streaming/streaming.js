@@ -44,41 +44,39 @@ function init() {
     this.connection.setErrorCallback(onErrorCallback.bind(this));
 
     // start the connection process
-    connect();
+    connect.call(this);
 }
 
 /**
  * The streaming connection received a unauthorized - the token is
  * being rejected so we should get a new one.
  */
-function onUnauthorized() {
-    this.transportAuth.checkAuthExpiry();
+function onUnauthorized(expiryOfRejectedToken) {
+    this.authProvider.tokenRejected(expiryOfRejectedToken);
 }
 
 /**
  * Reconnects the streaming socket when it is disconnected
  */
 function connect() {
-    if (this.connectionState !== this.CONNECTION_STATE_DISCONNECTED) {
+    if (this.connectionState !== this.CONNECTION_STATE_DISCONNECTED && this.connectionState !== this.CONNECTION_STATE_INITIALIZING) {
         log.error(LOG_AREA, 'Only call connect on a disconnected streaming connection');
         return;
     }
 
-    let authTokenValid;
-    if (this.transportAuth.auth.getExpiry() < Date.now()) {
-        authTokenValid = new Promise((resolve) => {
-            this.transportAuth.one(this.transportAuth.EVENT_TOKEN_RECEIVED, resolve);
-        });
-    } else {
-        authTokenValid = Promise.resolve();
-    }
-
-    authTokenValid.then(() => {
+    const startConnection = () => {
         setNewContextId.call(this);
         updateConnectionQuery.call(this);
 
         this.connection.start(onConnectionStarted.bind(this));
-    });
+    };
+
+    const expiry = this.authProvider.getExpiry();
+    if (expiry && expiry < Date.now()) {
+        this.authProvider.one(this.authProvider.EVENT_TOKEN_RECEIVED, startConnection);
+    } else {
+        startConnection();
+    }
 }
 
 function setNewContextId() {
@@ -388,7 +386,7 @@ function onErrorCallback(errorDetails) {
  * Updates the connection query string
  */
 function updateConnectionQuery(forceAuth = false) {
-    this.connection.updateQuery(this.transportAuth.auth.getToken(), this.contextId, forceAuth);
+    this.connection.updateQuery(this.authProvider.getToken(), this.contextId, this.authProvider.getExpiry(), forceAuth);
 }
 
 /**
@@ -517,16 +515,16 @@ function removeSubscription(subscription) {
  *          value is an engine implementation.
  * @param {Array.<string>} [options.transportTypes=['plainWebSockets', 'webSockets', 'longPolling']] - The transports to be used in order by signal-r.
  */
-function Streaming(transport, baseUrl, transportAuth, options) {
+function Streaming(transport, baseUrl, authProvider, options) {
     emitter.mixinTo(this);
 
     this.connectionState = this.CONNECTION_STATE_INITIALIZING;
     this.baseUrl = baseUrl;
-    this.transportAuth = transportAuth;
+    this.authProvider = authProvider;
     this.transport = transport;
     this.subscriptions = [];
 
-    this.transportAuth.auth.on('tokenReceived', () => {
+    this.authProvider.on(this.authProvider.EVENT_TOKEN_RECEIVED, () => {
         // Forcing authorization request upon new token arrival.
         const forceAuthorizationRequest = true;
         updateConnectionQuery.call(this, forceAuthorizationRequest);

@@ -37,7 +37,7 @@ function mapConnectionState(state) {
  */
 function handleError(errorDetail) {
     log.error(LOG_AREA, 'Transport error', errorDetail);
-    if (!this.hasReceivedNewAuthSinceStart && errorDetail && errorDetail.source && errorDetail.source.status === 401) {
+    if (errorDetail && errorDetail.source && errorDetail.source.status === 401) {
         this.unauthorizedCallback();
     }
     if (typeof this.errorCallback === 'function') {
@@ -74,7 +74,6 @@ function SignalrTransport(baseUrl) {
     this.connection.stateChanged(handleStateChanged.bind(this));
     this.connection.log = handleLog.bind(this);
     this.connection.error(handleError.bind(this));
-    this.hasReceivedNewAuthSinceStart = false;
 }
 
 SignalrTransport.NAME = NAME;
@@ -106,7 +105,6 @@ SignalrTransport.prototype.setConnectionSlowCallback = function(callback) {
 };
 
 SignalrTransport.prototype.start = function(options, callback) {
-    this.hasReceivedNewAuthSinceStart = false;
     this.connection.start(options, callback);
 };
 
@@ -114,8 +112,7 @@ SignalrTransport.prototype.stop = function() {
     this.connection.stop();
 };
 
-SignalrTransport.prototype.updateQuery = function(authToken, contextId) {
-    this.hasReceivedNewAuthSinceStart = true;
+SignalrTransport.prototype.updateQuery = function(authToken, contextId, expiry) {
     this.connection.qs = `authorization=${encodeURIComponent(authToken)}&context=${encodeURIComponent(contextId)}`;
 };
 
