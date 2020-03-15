@@ -120,7 +120,7 @@ describe('openapi Streaming', () => {
         });
         it('tells subscriptions it is connected when they are created after connect', () => {
             givenStreaming();
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
             subscription = streaming.createSubscription('root', '/test/test', {}, subscriptionUpdateSpy, subscriptionErrorSpy);
             // we test the property because we get the subscription after unavailable has been called, and before we spy on the method
             expect(subscription.connectionAvailable).toEqual(true);
@@ -145,7 +145,7 @@ describe('openapi Streaming', () => {
         });
         it('goes to the connecting state', () => {
             givenStreaming();
-            stateChangedCallback({ newState: 0 /* connecting */});
+            stateChangedCallback({ newState: 0 /* connecting */ });
             expect(streaming.connectionState).toEqual(streaming.CONNECTION_STATE_CONNECTING);
 
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
@@ -155,7 +155,7 @@ describe('openapi Streaming', () => {
         });
         it('goes to the connected state', () => {
             givenStreaming();
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
             expect(streaming.connectionState).toEqual(streaming.CONNECTION_STATE_CONNECTED);
 
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
@@ -167,14 +167,14 @@ describe('openapi Streaming', () => {
         it('stays connected if started is called after connected state change', () => {
             // this does happen - timing can go either way in the wild
             givenStreaming();
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
             expect(streaming.connectionState).toEqual(streaming.CONNECTION_STATE_CONNECTED);
             startCallback();
             expect(streaming.connectionState).toEqual(streaming.CONNECTION_STATE_CONNECTED);
         });
         it('goes to the reconnected state', () => {
             givenStreaming();
-            stateChangedCallback({ newState: 2 /* reconnecting */});
+            stateChangedCallback({ newState: 2 /* reconnecting */ });
             expect(streaming.connectionState).toEqual(streaming.CONNECTION_STATE_RECONNECTING);
 
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
@@ -184,7 +184,7 @@ describe('openapi Streaming', () => {
         });
         it('goes to the disconnected state', () => {
             givenStreaming();
-            stateChangedCallback({ newState: 4 /* disconnected */});
+            stateChangedCallback({ newState: 4 /* disconnected */ });
             expect(streaming.connectionState).toEqual(streaming.CONNECTION_STATE_DISCONNECTED);
 
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
@@ -195,9 +195,9 @@ describe('openapi Streaming', () => {
 
         it('if signal-r is reconnecting, it does not reset but it does tell the subscription the connection is available', () => {
             givenStreaming();
-            stateChangedCallback({ newState: 1 /* connected */});
-            stateChangedCallback({ newState: 2 /* reconnecting */});
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
+            stateChangedCallback({ newState: 2 /* reconnecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
 
             expect(subscription.onConnectionAvailable.mock.calls.length).toEqual(2);
             expect(subscription.reset.mock.calls.length).toEqual(0);
@@ -205,9 +205,9 @@ describe('openapi Streaming', () => {
 
         it('if signal-r disconnects, it tries to connect and resets subscriptions', () => {
             givenStreaming();
-            stateChangedCallback({ newState: 0 /* connecting */});
-            stateChangedCallback({ newState: 1 /* connected */});
-            stateChangedCallback({ newState: 4 /* disconnected */});
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+            stateChangedCallback({ newState: 4 /* disconnected */ });
 
             expect(subscription.onConnectionAvailable.mock.calls.length).toEqual(1);
             expect(subscription.onConnectionUnavailable.mock.calls.length).toEqual(1);
@@ -216,8 +216,8 @@ describe('openapi Streaming', () => {
             tick(1000); // default connection retry delay
 
             expect(mockConnection.start.mock.calls.length).toEqual(2);
-            stateChangedCallback({ newState: 0 /* connecting */});
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
 
             expect(subscription.onConnectionAvailable.mock.calls.length).toEqual(2);
             expect(subscription.onConnectionUnavailable.mock.calls.length).toEqual(1);
@@ -229,9 +229,9 @@ describe('openapi Streaming', () => {
             givenStreaming({ connectRetryDelay: 0 });
             tick(1); // make sure the context id is different (in reality we will never be disconnected 0ms after starting to connect)
 
-            stateChangedCallback({ newState: 0 /* connecting */});
-            stateChangedCallback({ newState: 1 /* connected */});
-            stateChangedCallback({ newState: 4 /* disconnected */});
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+            stateChangedCallback({ newState: 4 /* disconnected */ });
 
             expect(subscription.onConnectionAvailable.mock.calls.length).toEqual(1);
             expect(subscription.onConnectionUnavailable.mock.calls.length).toEqual(1);
@@ -242,8 +242,8 @@ describe('openapi Streaming', () => {
             tick(0);
 
             expect(mockConnection.start.mock.calls.length).toEqual(2);
-            stateChangedCallback({ newState: 0 /* connecting */});
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
 
             expect(subscription.onConnectionAvailable.mock.calls.length).toEqual(2);
             expect(subscription.onConnectionUnavailable.mock.calls.length).toEqual(1);
@@ -257,9 +257,9 @@ describe('openapi Streaming', () => {
 
         it('if signal-r disconnects, it tries to connect and resets subscriptions, if the retry delay is 600,000', () => {
             givenStreaming({ connectRetryDelay: 600000 });
-            stateChangedCallback({ newState: 0 /* connecting */});
-            stateChangedCallback({ newState: 1 /* connected */});
-            stateChangedCallback({ newState: 4 /* disconnected */});
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+            stateChangedCallback({ newState: 4 /* disconnected */ });
 
             expect(subscription.onConnectionAvailable.mock.calls.length).toEqual(1);
             expect(subscription.onConnectionUnavailable.mock.calls.length).toEqual(1);
@@ -270,8 +270,8 @@ describe('openapi Streaming', () => {
             tick(600000);
 
             expect(mockConnection.start.mock.calls.length).toEqual(2);
-            stateChangedCallback({ newState: 0 /* connecting */});
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
 
             expect(subscription.onConnectionAvailable.mock.calls.length).toEqual(2);
             expect(subscription.onConnectionUnavailable.mock.calls.length).toEqual(1);
@@ -366,7 +366,7 @@ describe('openapi Streaming', () => {
         let subscription;
         beforeEach(() => {
             streaming = new Streaming(transport, 'testUrl', authProvider);
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
             subscription = mockSubscription();
             subscription.referenceId = 'MySpy';
             streaming.subscriptions.push(subscription);
@@ -413,7 +413,7 @@ describe('openapi Streaming', () => {
     describe('dispose', () => {
         it('unsubscribes everything', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
 
             const subscription = mockSubscription();
             subscription.referenceId = 'MySpy';
@@ -433,7 +433,7 @@ describe('openapi Streaming', () => {
             expect(transport.delete.mock.calls[0][2]).toEqual({ contextId: '0000000000' });
             expect(streaming.orphanFinder.stop.mock.calls.length).toEqual(1);
 
-            stateChangedCallback({ newState: 4 /* disconnected */});
+            stateChangedCallback({ newState: 4 /* disconnected */ });
 
             tick(10000);
             expect(mockConnection.start.mock.calls.length).toEqual(0);
@@ -441,7 +441,7 @@ describe('openapi Streaming', () => {
 
         it('disposes an individual subscription', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
 
             const subscription = mockSubscription();
             subscription.referenceId = 'MySpy';
@@ -476,7 +476,7 @@ describe('openapi Streaming', () => {
 
         it('when a subscription is orphaned, the subscription is reset', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
 
             const subscription = mockSubscription();
             subscription.referenceId = 'MySpy';
@@ -490,7 +490,7 @@ describe('openapi Streaming', () => {
 
         it('passes on subscribe calls', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
 
             const subscription = mockSubscription();
             subscription.referenceId = 'MySpy';
@@ -514,7 +514,7 @@ describe('openapi Streaming', () => {
 
         it('passes on subscribe calls', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
 
             const subscription = mockSubscription();
             subscription.referenceId = 'MySpy';
@@ -528,7 +528,7 @@ describe('openapi Streaming', () => {
 
         it('passes options on modify', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
 
             const subscription = mockSubscription();
             subscription.referenceId = 'MySpy';
