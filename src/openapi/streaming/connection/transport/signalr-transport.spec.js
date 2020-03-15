@@ -114,28 +114,28 @@ describe('openapi SignalR Transport', () => {
 
         it('should call stateChanged callback with connecting state when internal signalR state changed to connecting (0)', () => {
             givenTransport();
-            stateChangedCallback({ newState: 0 /* connecting */});
+            stateChangedCallback({ newState: 0 /* connecting */ });
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
             expect(stateChangedSpy.mock.calls[0]).toEqual([constants.CONNECTION_STATE_CONNECTING]);
         });
 
         it('should call stateChanged callback with connected state when internal signalR state changed to connected (1)', () => {
             givenTransport();
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
             expect(stateChangedSpy.mock.calls[0]).toEqual([constants.CONNECTION_STATE_CONNECTED]);
         });
 
         it('should call stateChanged callback with disconnected state when internal signalR state changed to disconnected (4)', () => {
             givenTransport();
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
             expect(stateChangedSpy.mock.calls[0]).toEqual([constants.CONNECTION_STATE_CONNECTED]);
         });
 
         it('should call stateChanged callback with reconnecting state when internal signalR state changed to reconnecting (2)', () => {
             givenTransport();
-            stateChangedCallback({ newState: 1 /* connected */});
+            stateChangedCallback({ newState: 1 /* connected */ });
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
             expect(stateChangedSpy.mock.calls[0]).toEqual([constants.CONNECTION_STATE_CONNECTED]);
         });

@@ -389,7 +389,7 @@ TransportAuth.prototype.debounceErrorCounterCleanup = function() {
  */
 TransportAuth.prototype.incrementErrorCounter = function(url) {
     if (this.authorizationErrorCount.hasOwnProperty(url)) {
-        this.authorizationErrorCount[url] = this.authorizationErrorCount[url] + 1;
+        this.authorizationErrorCount[url] += 1;
     } else {
         this.authorizationErrorCount[url] = 1;
     }
