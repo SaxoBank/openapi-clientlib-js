@@ -40,10 +40,9 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@babel/core": "7.2.0",
-    "@babel/preset-env": "7.2.0",
-    "babel-core": "7.0.0-bridge.0",
-    "babel-jest": "23.6.0",
+    "@babel/core": "7.8.7",
+    "@babel/preset-env": "7.8.7",
+    "babel-jest": "25.1.0",
     "eslint": "5.9.0",
     "eslint-import-resolver-node": "0.3.2",
     "eslint-plugin-destructuring": "2.1.0",
@@ -51,13 +50,13 @@
     "eslint-plugin-jest": "22.1.2",
     "eslint-plugin-promise": "4.0.1",
     "eslint-plugin-switch-case": "1.1.2",
-    "jest": "23.6.0",
+    "jest": "25.1.0",
     "mockdate": "2.0.2",
     "nodemon": "1.18.7",
     "protobufjs": "6.8.8",
     "regenerator-runtime": "0.13.1",
     "rimraf": "2.6.2",
-    "rollup": "0.67.4",
-    "rollup-plugin-babel": "4.0.3"
+    "rollup": "2.0.6",
+    "rollup-plugin-babel": "4.4.0"
   }
 }
