@@ -125,7 +125,6 @@ function addBearer(newToken) {
  * and will refresh the token generating an event which is picked up by some of the other Transports.
  * @class
  * @alias saxo.openapi.TransportAuth
- * @param {string} baseUrl - The base url used for all open api requests. This should be an absolute URL.
  * @param {Object} [options] - Options for auth and for the core transport. See Transport.
  * @param {string} [options.language] - The language sent as a header if not overridden.
  * @param {boolean} [options.defaultCache=true] - Sets the default caching behaviour if not overridden on a call.

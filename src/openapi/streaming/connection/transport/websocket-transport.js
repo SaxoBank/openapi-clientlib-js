@@ -8,7 +8,6 @@
 import * as constants from '../constants';
 import log from '../../../../log';
 import * as uint64utils from '../../../../utils/uint64';
-import SignalrTransport from './signalr-transport';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
 
