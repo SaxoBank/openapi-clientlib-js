@@ -405,6 +405,19 @@ describe('openapi AuthProvider', () => {
             });
         });
 
+        it('does not refresh the token when already fetching and refreshOpenApiToken is called', () => {
+            const initialOptions = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            authProvider = new AuthProvider(initialOptions);
+
+            expect(fetch).not.toBeCalled();
+            tick(600000);
+            expect(fetch).toBeCalledTimes(1);
+
+            // ignored because fetch is in progress
+            authProvider.refreshOpenApiToken();
+            expect(fetch).toBeCalledTimes(1);
+        });
+
         it('does a refresh if the timer should have fired but didnt (dropping timeouts while sleeping) - tokenRejected', () => {
             const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh' };
             authProvider = new AuthProvider(initialOptions);
