@@ -155,7 +155,7 @@ describe('openapi WebSocket Transport', () => {
                 expect(stateChangedSpy.mock.calls[1]).toEqual([constants.CONNECTION_STATE_CONNECTED]);
 
                 transport.socket.readyState = 3; // WebSocket internal state equal closed
-                transport.socket.onclose({  code: 1001 });
+                transport.socket.onclose({ code: 1001 });
 
                 expect(stateChangedSpy.mock.calls[2]).toEqual([constants.CONNECTION_STATE_DISCONNECTED]);
                 expect(stateChangedSpy.mock.calls[3]).toEqual([constants.CONNECTION_STATE_RECONNECTING]);
