@@ -91,7 +91,7 @@ function setNewContextId() {
  * @param defaultDelay {number} - The default delay.
  * @returns {number} Matching delay to retry index/try/count.
  */
-function findRetryDelay(retryLevels, retryIndex, defaultDelay) {
+export function findRetryDelay(retryLevels, retryIndex, defaultDelay) {
     let lastFoundDelay = defaultDelay;
 
     for (let i = 0; i < retryLevels.length; i++) {
@@ -152,7 +152,6 @@ function onConnectionStateChanged(nextState) {
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
-            this.retryCount = 0;
             updateConnectionQuery.call(this);
 
             this.orphanFinder.stop();
