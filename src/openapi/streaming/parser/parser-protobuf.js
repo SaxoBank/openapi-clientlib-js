@@ -44,7 +44,7 @@ function ParserProtobuf(name, engine) {
 
 ParserProtobuf.prototype = Object.create(
     ParserBase.prototype,
-    { constructor: { value: ParserProtobuf, enumerable: false, writable: true, configurable: true } }
+    { constructor: { value: ParserProtobuf, enumerable: false, writable: true, configurable: true } },
 );
 
 ParserProtobuf.prototype.getSchemaType = function(schemaName, typeName) {

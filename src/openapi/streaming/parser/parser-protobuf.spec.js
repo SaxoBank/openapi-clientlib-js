@@ -162,9 +162,9 @@ describe('Parser Protobuf', () => {
             expect(schemaObject).not.toBeFalsy();
 
             expect(
-                JSON.parse(JSON.stringify(schemaObject.fields))
+                JSON.parse(JSON.stringify(schemaObject.fields)),
             ).toEqual(
-                expect.objectContaining(mockProtoPrice.fields)
+                expect.objectContaining(mockProtoPrice.fields),
             );
         });
 

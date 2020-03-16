@@ -11,7 +11,7 @@ function ParserJson(name, engine = null) {
 
 ParserJson.prototype = Object.create(
     ParserBase.prototype,
-    { constructor: { value: ParserJson, enumerable: false, writable: true, configurable: true } }
+    { constructor: { value: ParserJson, enumerable: false, writable: true, configurable: true } },
 );
 
 ParserJson.prototype.parse = function(data, schemaName) {
