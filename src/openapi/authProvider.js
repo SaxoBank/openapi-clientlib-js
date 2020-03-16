@@ -8,6 +8,7 @@
 import emitter from '../micro-emitter';
 import log from '../log';
 import { startsWith } from '../utils/string';
+import fetch from '../utils/fetch';
 
 const LOG_AREA = 'AuthProvider';
 
@@ -104,7 +105,7 @@ function getToken(url) {
     const headers = this.tokenRefreshHeaders || {};
     headers['Content-Type'] = headers['Content-Type'] || 'JSON';
 
-    this.transport.fetch(this.tokenRefreshMethod, url, { headers, cache: false, credentials: this.tokenRefreshCredentials })
+    fetch(this.tokenRefreshMethod, url, { headers, cache: false, credentials: this.tokenRefreshCredentials })
         .then(onApiTokenReceived.bind(this), onApiTokenReceiveFail.bind(this));
 }
 
@@ -289,7 +290,7 @@ AuthProvider.prototype.EVENT_TOKEN_RECEIVED = 'tokenReceived';
 AuthProvider.prototype.EVENT_TOKEN_REFRESH_FAILED = 'tokenRefreshFailed';
 
 /**
- * Stops the transport from refreshing the token.
+ * Stops the AuthProvider from refreshing the token.
  */
 AuthProvider.prototype.dispose = function() {
     if (this.tokenRefreshTimer) {

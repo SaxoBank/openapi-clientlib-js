@@ -174,6 +174,8 @@ function handleSocketClose(event) {
         // the websocket spec disallows reading status codes for security reasons
         // (so websocket can't be used to probe http endpoints)
         // So, before we reconnect, lets re-authorize to be sure
+        // and if that gets a 401, that will report the token invalid via
+        // authTransport
         if (event.code === 1006) {
             this.getAuthorizePromise(this.contextId, true);
         }

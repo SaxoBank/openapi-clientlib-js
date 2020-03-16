@@ -50,6 +50,8 @@ function mockFetch() {
             };
         });
     });
+    fetch.resolve = () => { throw new Error('fetch not called'); };
+    fetch.reject = () => { throw new Error('fetch not called'); };
     return fetch;
 }
 

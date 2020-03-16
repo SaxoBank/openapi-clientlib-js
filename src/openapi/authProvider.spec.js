@@ -56,7 +56,6 @@ describe('openapi AuthProvider', () => {
 
             expect(authProvider.getToken()).toEqual('Bearer ' + options.token);
             expect(authProvider.getExpiry()).toEqual(options.expiry);
-            expect(authProvider.isAuthorised).toEqual(true);
 
             const newAuth = { token: 'TOK2', expiry: relativeDate(60) };
             authProvider.set(newAuth.token, newAuth.expiry);
@@ -72,14 +71,16 @@ describe('openapi AuthProvider', () => {
 
             const tokenRefreshSpy = jest.fn().mockName('tokenRefresh listener');
             authProvider.on(authProvider.EVENT_TOKEN_REFRESH, tokenRefreshSpy);
-            authProvider.set('TOK2', relativeDate(0));
+            tick(60000);
+
             authProvider.off(authProvider.EVENT_TOKEN_REFRESH, tokenRefreshSpy);
             expect(tokenRefreshSpy).toBeCalledTimes(1);
 
             authProvider.set('TOK3', relativeDate(0));
             expect(tokenRefreshSpy).toBeCalledTimes(1);
         });
-        it('fires an event when receiving a new token', function(done) {
+
+        it.only('fires an event when receiving a new token', function(done) {
             const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
             authProvider = new AuthProvider(options);
 
