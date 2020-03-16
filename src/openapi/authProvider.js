@@ -93,15 +93,30 @@ function onApiTokenReceiveFail(result) {
         this.state = STATE_WAITING;
         this.retries++;
         this.tokenRefreshTimerFireTime = Date.now() + this.retryDelayMs;
-        this.tokenRefreshTimer = setTimeout(this.refreshOpenApiToken.bind(this), this.retryDelayMs);
+        this.tokenRefreshTimer = setTimeout(refreshToken.bind(this), this.retryDelayMs);
     } else {
         this.state = STATE_FAILED;
         this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
     }
 }
 
+/**
+ * This internal method refreshes the token no matter what and should only
+ * be called if we know we are in the correct state to do it.
+ */
+function refreshToken() {
+    if (this.tokenRefreshTimer) {
+        clearTimeout(this.tokenRefreshTimer);
+    }
+    this.trigger(this.EVENT_TOKEN_REFRESH);
+    if (this.tokenRefreshUrl) {
+        getToken.call(this, this.tokenRefreshUrl);
+    }
+}
+
 function getToken(url) {
     this.state = STATE_REFRESHING;
+    this.lastTokenFetchTime = Date.now();
     const headers = this.tokenRefreshHeaders || {};
     headers['Content-Type'] = headers['Content-Type'] || 'JSON';
 
@@ -199,13 +214,7 @@ AuthProvider.prototype.refreshOpenApiToken = function() {
         return;
     }
 
-    if (this.tokenRefreshTimer) {
-        clearTimeout(this.tokenRefreshTimer);
-    }
-    this.trigger(this.EVENT_TOKEN_REFRESH);
-    if (this.tokenRefreshUrl) {
-        getToken.call(this, this.tokenRefreshUrl);
-    }
+    refreshToken.call(this);
 };
 
 /**
@@ -223,7 +232,8 @@ AuthProvider.prototype.tokenRejected = function(expiryOfRejectedToken) {
         // if we do not have the expiry of the current token, we don't know if we have
         // a different token now than the one causing the error. So we give some leeway
         // in order to not be re-requesting tokens in a loop
-        shouldRequest = ((now - currentAuthExpiry) > TRASH_NEW_TOKEN_DELAY_MS) && !isFetching;
+        shouldRequest = !isFetching &&
+            (!this.lastTokenFetchTime || (now - this.lastTokenFetchTime) > TRASH_NEW_TOKEN_DELAY_MS);
 
         if (shouldRequest) {
             log.warn(LOG_AREA, 'Request failed with invalid token before time', {
