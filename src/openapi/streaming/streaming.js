@@ -51,8 +51,8 @@ function init() {
  * The streaming connection received a unauthorized - the token is
  * being rejected so we should get a new one.
  */
-function onUnauthorized(expiryOfRejectedToken) {
-    this.authProvider.tokenRejected(expiryOfRejectedToken);
+function onUnauthorized() {
+    this.authProvider.tokenRejected();
 }
 
 /**
@@ -503,7 +503,7 @@ function removeSubscription(subscription) {
  * @mixes MicroEmitter
  * @param {Transport} transport - The transport to use for subscribing/unsubscribing.
  * @param {string} baseUrl - The base URL with which to connect. /streaming/connection will be appended to it.
- * @param {Object} transportAuth - An instance of the transport auth class.
+ * @param {Object} authProvider - An instance of the AuthProvider class.
  * @param {Object} [options] - The configuration options for the streaming connection
  * @param {number} [options.connectRetryDelay=1000] - The delay in milliseconds to wait before attempting a new connect after
  *          signal-r has disconnected
