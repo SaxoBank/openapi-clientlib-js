@@ -386,7 +386,7 @@ function onErrorCallback(errorDetails) {
  * Updates the connection query string
  */
 function updateConnectionQuery(forceAuth = false) {
-    this.connection.updateQuery(this.authProvider.getToken(), this.contextId, this.authProvider.getExpiry(), forceAuth);
+    this.connection.updateQuery(this.authProvider.getToken(), this.contextId, forceAuth);
 }
 
 /**

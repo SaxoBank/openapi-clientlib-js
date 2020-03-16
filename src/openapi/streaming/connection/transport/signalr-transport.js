@@ -112,7 +112,7 @@ SignalrTransport.prototype.stop = function() {
     this.connection.stop();
 };
 
-SignalrTransport.prototype.updateQuery = function(authToken, contextId, expiry) {
+SignalrTransport.prototype.updateQuery = function(authToken, contextId) {
     this.connection.qs = `authorization=${encodeURIComponent(authToken)}&context=${encodeURIComponent(contextId)}`;
 };
 
