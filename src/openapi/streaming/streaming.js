@@ -589,7 +589,7 @@ Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptio
         url,
         normalizedSubscriptionArgs,
         onSubscriptionCreated.bind(this),
-        options
+        options,
     );
 
     this.subscriptions.push(subscription);

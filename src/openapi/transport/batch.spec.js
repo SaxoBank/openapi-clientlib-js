@@ -377,7 +377,7 @@ describe('openapi TransportBatch', () => {
                 '',
                 '{ "mydata": "patch"}',
                 '--+--',
-                ''
+                '',
             ) });
 
         const getThen = jest.fn().mockName('getThen');
@@ -606,7 +606,7 @@ describe('openapi TransportBatch', () => {
                 '',
                 '{ "mydata": "delete"}',
                 '--+--',
-                ''
+                '',
             ) });
 
         const getCatch = jest.fn().mockName('getCatch');

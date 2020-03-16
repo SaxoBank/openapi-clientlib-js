@@ -898,9 +898,9 @@ describe('openapi StreamingSubscription', () => {
             setTimeout(() => {
                 expect(transport.post.mock.calls.length).toEqual(1);
                 expect(
-                    updateSpy.mock.calls[0][0]
+                    updateSpy.mock.calls[0][0],
                 ).toEqual(
-                    expect.objectContaining(mockProtoPrice.objectMessage)
+                    expect.objectContaining(mockProtoPrice.objectMessage),
                 );
 
                 const parser = subscription.parser;
@@ -948,9 +948,9 @@ describe('openapi StreamingSubscription', () => {
 
                 expect(lastTypeArgument).toEqual(subscription.UPDATE_TYPE_DELTA);
                 expect(
-                    JSON.parse(JSON.stringify(lastMessageArgument.Data))
+                    JSON.parse(JSON.stringify(lastMessageArgument.Data)),
                 ).toEqual(
-                    expect.objectContaining(mockProtoPrice.decodedObjectMessage)
+                    expect.objectContaining(mockProtoPrice.decodedObjectMessage),
                 );
 
                 done();
@@ -978,9 +978,9 @@ describe('openapi StreamingSubscription', () => {
             setTimeout(() => {
                 expect(transport.post.mock.calls.length).toEqual(1);
                 expect(
-                    updateSpy.mock.calls[0][0]
+                    updateSpy.mock.calls[0][0],
                 ).toEqual(
-                    expect.objectContaining(mockProtoPrice.objectMessage)
+                    expect.objectContaining(mockProtoPrice.objectMessage),
                 );
                 done();
             });
@@ -1003,9 +1003,9 @@ describe('openapi StreamingSubscription', () => {
             setTimeout(() => {
                 expect(transport.post.mock.calls.length).toEqual(1);
                 expect(
-                    updateSpy.mock.calls[0][0]
+                    updateSpy.mock.calls[0][0],
                 ).toEqual(
-                    expect.objectContaining(mockProtoPrice.objectMessage)
+                    expect.objectContaining(mockProtoPrice.objectMessage),
                 );
                 done();
             });

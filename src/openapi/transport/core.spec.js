@@ -187,7 +187,7 @@ describe('openapi TransportCore', () => {
                 {
                     contentLibraryId: 'fleeb',
                 },
-                { body: formData }
+                { body: formData },
             );
 
             expect(fetch.mock.calls.length).toEqual(1);
@@ -213,7 +213,7 @@ describe('openapi TransportCore', () => {
                 {
                     contentLibraryId: 'fleeb',
                 },
-                { body: file }
+                { body: file },
             );
 
             expect(fetch.mock.calls.length).toEqual(1);
@@ -238,7 +238,7 @@ describe('openapi TransportCore', () => {
                 {
                     contentLibraryId: 'fleeb',
                 },
-                { body: searchParams }
+                { body: searchParams },
             );
 
             expect(fetch.mock.calls.length).toEqual(1);
@@ -449,7 +449,7 @@ describe('openapi TransportCore', () => {
                     expect.objectContaining({
                         headers: expect.objectContaining({ 'Accept-Language': assertedLanguage }),
                     }),
-                ]
+                ],
             );
         }
 

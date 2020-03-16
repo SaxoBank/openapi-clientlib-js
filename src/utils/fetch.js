@@ -234,7 +234,7 @@ function localFetch(method, url, options) {
     return fetch(url, { headers, method, body, credentials })
         .then(
             convertFetchSuccess.bind(null, url, body, timerId),
-            convertFetchReject.bind(null, url, body, timerId)
+            convertFetchReject.bind(null, url, body, timerId),
         );
 }
 

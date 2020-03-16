@@ -581,7 +581,7 @@ describe('openapi Streaming', () => {
                         Tag: 'tag',
                     },
                     addStateChangedCallback: () => {},
-                }
+                },
             );
 
             streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
@@ -602,7 +602,7 @@ describe('openapi Streaming', () => {
                         Tag: 'tag',
                     },
                     addStateChangedCallback: () => {},
-                }
+                },
             );
 
             streaming.unsubscribeByTag('serviceGroup', 'url', 'tag2');
@@ -622,7 +622,7 @@ describe('openapi Streaming', () => {
                         Tag: 'tag',
                     },
                     addStateChangedCallback: () => {},
-                }
+                },
             );
 
             streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
@@ -658,7 +658,7 @@ describe('openapi Streaming', () => {
                     },
                     addStateChangedCallback: () => {},
                     isReadyForUnsubscribeByTag: () => false,
-                }
+                },
             );
 
             streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
@@ -699,7 +699,7 @@ describe('openapi Streaming', () => {
                     removeStateChangedCallback: () => {},
                     isReadyForUnsubscribeByTag: () => true,
                     onUnsubscribeByTagComplete: jest.fn().mockName('onUnsubscribeByTagComplete'),
-                }
+                },
             );
 
             streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
@@ -729,7 +729,7 @@ describe('openapi Streaming', () => {
                     removeStateChangedCallback: jest.fn().mockName('removeStateChangedCallback'),
                     isReadyForUnsubscribeByTag: () => true,
                     onUnsubscribeByTagComplete: jest.fn().mockName('onUnsubscribeByTagComplete'),
-                }
+                },
             );
 
             streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
@@ -762,7 +762,7 @@ describe('openapi Streaming', () => {
                     removeStateChangedCallback: jest.fn().mockName('removeStateChangedCallback'),
                     isReadyForUnsubscribeByTag: () => true,
                     onUnsubscribeByTagComplete: jest.fn().mockName('onUnsubscribeByTagComplete'),
-                }
+                },
             );
 
             streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');

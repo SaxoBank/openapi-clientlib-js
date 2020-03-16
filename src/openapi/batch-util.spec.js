@@ -22,7 +22,7 @@ describe('openapi batchUtil', () => {
             '',
             '{ "mydata": {"Prop": 1}}',
             '--90f26034-d914-44a0-bd16-908fc535018d--',
-            ''
+            '',
         ))).toEqual([
             { status: 201, response: { 'mydata': { 'Prop': 1 } } },
         ]);
@@ -43,7 +43,7 @@ describe('openapi batchUtil', () => {
             '',
             '["mydata", "Prop"]',
             '--90f26034-d914-44a0-bd16-908fc535018d--',
-            ''
+            '',
         ))).toEqual([
             { status: 201, response: ['mydata', 'Prop'] },
         ]);
@@ -76,7 +76,7 @@ describe('openapi batchUtil', () => {
             '',
             '{ "second": 2 }',
             '--90f26034-d914-44a0-bd16-908fc535018d--',
-            ''
+            '',
         ))).toEqual([
             { status: 201, response: { 'mydata': { 'Prop': 1 } } },
             { status: 200, response: { 'second': 2 } },
@@ -110,7 +110,7 @@ describe('openapi batchUtil', () => {
             '',
             '{ "second": 2 }',
             '--90f26034-d914-44a0-bd16-908fc535018d--',
-            ''
+            '',
         ), 100);
 
         expect(content).toEqual([
@@ -151,7 +151,7 @@ describe('batch building', () => {
                     '--+--',
                     ''),
                 boundary: '+',
-            }
+            },
             );
     });
 
@@ -173,7 +173,7 @@ describe('batch building', () => {
                     '--++--',
                     ''),
                 boundary: '++',
-            }
+            },
             );
     });
 
@@ -195,7 +195,7 @@ describe('batch building', () => {
                     '--+---',
                     ''),
                 boundary: '+-',
-            }
+            },
             );
     });
 
@@ -217,7 +217,7 @@ describe('batch building', () => {
                     '--+--',
                     ''),
                 boundary: '+',
-            }
+            },
             );
     });
 
@@ -239,7 +239,7 @@ describe('batch building', () => {
                     '--+--',
                     ''),
                 boundary: '+',
-            }
+            },
             );
 
         expect(batchUtil.build(
@@ -259,7 +259,7 @@ describe('batch building', () => {
                     '--+--',
                     ''),
                 boundary: '+',
-            }
+            },
             );
     });
 
@@ -300,7 +300,7 @@ describe('batch building', () => {
                     '--+--',
                     ''),
                 boundary: '+',
-            }
+            },
             );
     });
 });
