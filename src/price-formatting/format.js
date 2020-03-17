@@ -155,7 +155,7 @@ function getFractionParts(formatFlags, basePart, deciPipsPart, numberFormatting)
     return { basePart, deciPipsPart };
 }
 
-function getPipDecimals(formatFlags, decimals, actualDecimals) {
+function getEffectivePipDecimals(formatFlags, decimals, actualDecimals) {
     if (formatFlags.UseExtendedDecimals && supportsPipDecimals(formatFlags)) {
         const actualRemaining = Math.max(0, actualDecimals - decimals);
         return Math.max(getFlagPipDecimals(formatFlags), actualRemaining);
@@ -192,7 +192,7 @@ function formatPricePartsDecimals(parts, numberFormatting, value, decimals, form
         formatFlags.NoRounding = false;
     }
 
-    const pipDecimals = getPipDecimals(formatFlags, decimals, actualDecimals);
+    const pipDecimals = getEffectivePipDecimals(formatFlags, decimals, actualDecimals);
 
     if (formatFlags.Percentage) {
         parts.First = formatNumber(value * 100, decimals, numberFormatting) + '%';
