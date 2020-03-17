@@ -156,7 +156,7 @@ function getFractionParts(formatFlags, basePart, deciPipsPart, numberFormatting)
 }
 
 function getPipDecimals(formatFlags, decimals, actualDecimals) {
-    if (formatFlags.UseExtendedDecimals && getFlagPipDecimals(formatFlags) > 0) {
+    if (formatFlags.UseExtendedDecimals && supportsPipDecimals(formatFlags)) {
         const actualRemaining = Math.max(0, actualDecimals - decimals);
         return Math.max(getFlagPipDecimals(formatFlags), actualRemaining);
     }
@@ -173,6 +173,10 @@ function getFlagPipDecimals(formatFlags) {
     return 0;
 }
 
+function supportsPipDecimals(formatFlags) {
+    return getFlagPipDecimals(formatFlags) > 0;
+}
+
 function formatPricePartsDecimals(parts, numberFormatting, value, decimals, formatFlags) {
     if (formatFlags.Percentage && formatFlags.NoRounding) {
         throw new Error('No rounding is not supported on percentage');
@@ -180,7 +184,7 @@ function formatPricePartsDecimals(parts, numberFormatting, value, decimals, form
 
     const actualDecimals = numberFormatting.getActualDecimals(value);
 
-    if (formatFlags.UseExtendedDecimals && getFlagPipDecimals(formatFlags) === 0) {
+    if (formatFlags.UseExtendedDecimals && !supportsPipDecimals(formatFlags)) {
         decimals = Math.min(8, Math.max(decimals, actualDecimals));
     }
 
