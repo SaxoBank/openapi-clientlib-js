@@ -26,8 +26,8 @@ export default {
     NumberFormatting,
     PriceFormatting,
     priceFormatOptions,
-    AuthProvider,
     openapi: {
+        AuthProvider,
         batch,
         TransportCore,
         TransportAuth,
