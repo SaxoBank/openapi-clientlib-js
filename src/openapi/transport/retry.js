@@ -43,6 +43,8 @@ function transportMethod(method) {
  *      per http method type. If not given then calls will run with underlying transport without retry logic.
  * @param {number} [options.retryTimeout=0] - The number of ms after that the retry calls should be done.
  * @param {object.<string,object>} [options.methods] - Http methods that should retry. For each method provide an object with `retryLimit` parameter.
+ * Note that the default is to not retry. a call will be retried if it is a network error and retryNetworkError is true or the rejection
+ * includes a status and it is in the statuses list.
  * @example
  * // Constructor with parameters
  * var transportRetry = new TransportRetry(transport, {
@@ -125,8 +127,8 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
         .then(transportCall.resolve,
             (response) => {
                 const callOptions = this.methods[transportCall.method];
-                const isRetryForStatus = !(response && response.status) || callOptions.statuses && callOptions.statuses.indexOf(response.status) >= 0;
-                const isRetryRequest = response.isNetworkError ? callOptions.retryNetworkError : isRetryForStatus;
+                const isRetryForStatus = response && response.status && callOptions.statuses && callOptions.statuses.indexOf(response.status) >= 0;
+                const isRetryRequest = (response && response.isNetworkError) ? callOptions.retryNetworkError : isRetryForStatus;
                 const isWithinRetryLimitOption = callOptions.retryLimit > 0 && transportCall.retryCount < callOptions.retryLimit;
                 const isWithinRetryTimeoutsOption = callOptions.retryTimeouts && transportCall.retryCount < callOptions.retryTimeouts.length;
 

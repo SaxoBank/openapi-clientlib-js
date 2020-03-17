@@ -6,6 +6,7 @@
 
 - BREAKING - Source is now in ecmascript 2019 (no change to output, only affects if you are using the package source directly and not transpiling)
 - BREAKING - AuthProvider has been created on clientLib.openApi.AuthProvider and this needs passing into TransportAuth and Streaming
+- BREAKING - RetryTransport is more strict - it only retries if the status matches a provided one or its a network error and retryNetworkError is set
 - Fix - streaming authentication errors trigger a new token request
 
 #### v5.0.4
