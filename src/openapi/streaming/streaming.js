@@ -72,7 +72,7 @@ function connect() {
     };
 
     const expiry = this.authProvider.getExpiry();
-    if (expiry && expiry < Date.now()) {
+    if (expiry < Date.now()) {
         // in case the refresh timer has disappeared, ensure authProvider is
         // fetching a new token
         this.authProvider.refreshOpenApiToken();

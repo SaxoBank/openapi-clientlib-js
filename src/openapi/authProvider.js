@@ -164,7 +164,9 @@ function AuthProvider(options) { // eslint-disable-line complexity
 
     let token = addBearer(options && options.token || null);
     let expiry = options && options.expiry || 0;
-    if (expiry === 0) {
+
+    // convert to absolute if the value is too small to be absolute
+    if (expiry < Date.UTC(2000)) {
         expiry = toAbsoluteTokenExpiry(expiry);
     }
 
