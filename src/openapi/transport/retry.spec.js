@@ -46,7 +46,7 @@ describe('openapi TransportRetry', () => {
     });
 
     it('passes failed api response in reject callback as params', (done) => {
-        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 1 } } });
+        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 1, statuses: [503] } } });
         expect(transportRetry.retryTimeout).toEqual(2000);
         const deletePromise = transportRetry.delete();
         let apiResponse;
@@ -55,7 +55,7 @@ describe('openapi TransportRetry', () => {
         });
         setTimeout(() => {
             expect(transport.delete.mock.calls.length).toEqual(1);
-            transport.deleteReject(new TypeError('First Network request failed'));
+            transport.deleteReject({ status: 503, response: 'first' });
             setTimeout(() => {
                 // 1st retry
                 expect(transportRetry.failedCalls.length).toEqual(1);
@@ -63,7 +63,7 @@ describe('openapi TransportRetry', () => {
                 tick(2000); // now go forward 2 seconds
                 expect(transport.delete.mock.calls.length).toEqual(2);
                 expect(transportRetry.retryTimer).toBeNull(); // the timer is unset
-                const errorResponse = new TypeError('Seconed Network request failed');
+                const errorResponse = { status: 503, response: 'second' };
                 transport.deleteReject(errorResponse);
                 setTimeout(() => {
                     expect(apiResponse).toEqual(errorResponse);
@@ -109,11 +109,11 @@ describe('openapi TransportRetry', () => {
     });
 
     it('stops retrying after a successful call', (done) => {
-        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 3 } } });
+        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 3, statuses: [500] } } });
         const deletePromise = transportRetry.delete();
         setTimeout(() => {
             expect(transport.delete.mock.calls.length).toEqual(1);
-            transport.deleteReject(new TypeError('Network request failed'));
+            transport.deleteReject({ status: 500, response: 'test' });
             let isResolved = false;
             deletePromise.then(() => {
                 isResolved = true;
@@ -139,7 +139,7 @@ describe('openapi TransportRetry', () => {
     });
 
     it('retries a failed call according to options respecting retryTimeout and retryLimit options', (done) => {
-        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 3 } } });
+        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 3, statuses: [500] } } });
         expect(transportRetry.retryTimeout).toEqual(2000);
         const deletePromise = transportRetry.delete();
         let isRejected = false;
@@ -148,7 +148,7 @@ describe('openapi TransportRetry', () => {
         });
         setTimeout(() => {
             expect(transport.delete.mock.calls.length).toEqual(1);
-            transport.deleteReject(new TypeError('Network request failed'));
+            transport.deleteReject({ status: 500, response: 'test' });
             setTimeout(() => {
                 // 1st retry
                 expect(transportRetry.failedCalls.length).toEqual(1);
@@ -156,7 +156,7 @@ describe('openapi TransportRetry', () => {
                 tick(2000); // now go forward 2 seconds
                 expect(transport.delete.mock.calls.length).toEqual(2);
                 expect(transportRetry.retryTimer).toBeNull(); // the timer is unset
-                transport.deleteReject(new TypeError('Network request failed'));
+                transport.deleteReject({ status: 500, response: 'test' });
 
                 setTimeout(() => {
                     // 2nd retry
@@ -166,7 +166,7 @@ describe('openapi TransportRetry', () => {
                     expect(transport.delete.mock.calls.length).toEqual(3);
                     expect(transportRetry.retryTimer).toBeNull(); // the timer is unset
                     expect(transportRetry.failedCalls.length).toEqual(0);
-                    transport.deleteReject(new TypeError('Network request failed'));
+                    transport.deleteReject({ status: 500, response: 'test' });
 
                     setTimeout(() => {
                         // 3rd retry
@@ -176,7 +176,7 @@ describe('openapi TransportRetry', () => {
                         expect(transport.delete.mock.calls.length).toEqual(4); // 4 delete calls in total
                         expect(transportRetry.retryTimer).toBeNull(); // the timer is unset
                         expect(transportRetry.failedCalls.length).toEqual(0);
-                        transport.deleteReject(new TypeError('Network request failed'));
+                        transport.deleteReject({ status: 500, response: 'test' });
 
                         setTimeout(() => {
                             // no more retries after 3rd retry failed
@@ -195,7 +195,7 @@ describe('openapi TransportRetry', () => {
     });
 
     it('retries a failed call according to options respecting retryTimeouts option', (done) => {
-        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryTimeouts: [1000, 2000, 5000] } } });
+        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryTimeouts: [1000, 2000, 5000], statuses: [500] } } });
         expect(transportRetry.methods['delete'].retryTimeouts.length).toEqual(3);
         const deletePromise = transportRetry.delete();
         let isRejected = false;
@@ -204,7 +204,7 @@ describe('openapi TransportRetry', () => {
         });
         setTimeout(() => {
             expect(transport.delete.mock.calls.length).toEqual(1);
-            transport.deleteReject(new TypeError('Network request failed'));
+            transport.deleteReject({ status: 500, response: 'test' });
             setTimeout(() => {
                 // 1st retry
                 expect(transportRetry.individualFailedCalls.length).toEqual(1);
@@ -217,7 +217,7 @@ describe('openapi TransportRetry', () => {
                 expect(transportRetry.retryTimer).toBeNull(); // the global timer is still unset
                 expect(call1.retryTimer); // the individual timer is unset
                 expect(transportRetry.individualFailedCalls.length).toEqual(0);
-                transport.deleteReject(new TypeError('Network request failed'));
+                transport.deleteReject({ status: 500, response: 'test' });
 
                 setTimeout(() => {
                     // 2nd retry
@@ -231,7 +231,7 @@ describe('openapi TransportRetry', () => {
                     expect(transportRetry.retryTimer).toBeNull(); // the global timer is still unset
                     expect(call2.retryTimer); // the individual timer is unset
                     expect(transportRetry.individualFailedCalls.length).toEqual(0);
-                    transport.deleteReject(new TypeError('Network request failed'));
+                    transport.deleteReject({ status: 500, response: 'test' });
 
                     setTimeout(() => {
                         // 3rd retry
@@ -245,7 +245,7 @@ describe('openapi TransportRetry', () => {
                         expect(transportRetry.retryTimer).toBeNull(); // the global timer is still unset
                         expect(call3.retryTimer); // the individual timer is unset
                         expect(transportRetry.individualFailedCalls.length).toEqual(0);
-                        transport.deleteReject(new TypeError('Network request failed'));
+                        transport.deleteReject({ status: 500, response: 'test' });
 
                         setTimeout(() => {
                             // no more retries after 3rd retry failed
@@ -264,7 +264,7 @@ describe('openapi TransportRetry', () => {
     });
 
     it('retries multiple failed calls respecting individual options', (done) => {
-        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 3 }, 'post': { retryTimeouts: [1000, 2000] } } });
+        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 3, statuses: [500] }, 'post': { retryTimeouts: [1000, 2000], statuses: [500] } } });
         const deletePromise = transportRetry.delete();
         const postPromise = transportRetry.post();
         let isDeleteRejected = false;
@@ -278,8 +278,8 @@ describe('openapi TransportRetry', () => {
         setTimeout(() => {
             expect(transport.delete.mock.calls.length).toEqual(1);
             expect(transport.post.mock.calls.length).toEqual(1);
-            transport.deleteReject(new TypeError('Network request failed'));
-            transport.postReject(new TypeError('Network request failed'));
+            transport.deleteReject({ status: 500, response: 'test' });
+            transport.postReject({ status: 500, response: 'test' });
             setTimeout(() => {
                 // 1st post retry
                 expect(transportRetry.individualFailedCalls.length).toEqual(1); // contain the post call
@@ -290,7 +290,7 @@ describe('openapi TransportRetry', () => {
                 expect(transportRetry.retryTimer).toBeDefined(); // the global timer is still set
                 expect(transportRetry.individualFailedCalls.length).toEqual(0);
                 expect(transportRetry.failedCalls.length).toEqual(1); // still contain the delete call
-                transport.postReject(new TypeError('Network request failed'));
+                transport.postReject({ status: 500, response: 'test' });
 
                 setTimeout(() => {
                     // 1st delete retry
@@ -302,7 +302,7 @@ describe('openapi TransportRetry', () => {
                     expect(transportRetry.retryTimer).toBeNull(); // the global timer is unset
                     expect(transportRetry.individualFailedCalls.length).toEqual(1); // only contain the post call
                     expect(transportRetry.failedCalls.length).toEqual(0);
-                    transport.deleteReject(new TypeError('Network request failed'));
+                    transport.deleteReject({ status: 500, response: 'test' });
 
                     setTimeout(() => {
                         // 2nd post retry
@@ -326,7 +326,7 @@ describe('openapi TransportRetry', () => {
     });
 
     it('does not retry rejected calls with a valid status code', (done) => {
-        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 3 } } });
+        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 3, statuses: [503] } } });
         const deletePromise = transportRetry.delete();
         setTimeout(() => {
             expect(transport.delete.mock.calls.length).toEqual(1);
@@ -366,8 +366,29 @@ describe('openapi TransportRetry', () => {
         });
     });
 
+    it('does not retry a call if the rejection does not contain a status', (done) => {
+        transportRetry = new TransportRetry(transport, { retryTimeout: 2000, methods: { 'delete': { retryLimit: 3, statuses: [504] } } });
+        const deletePromise = transportRetry.delete();
+        let isRejected = false;
+        deletePromise.catch(() => {
+            isRejected = true;
+        });
+        setTimeout(() => {
+            expect(transport.delete.mock.calls.length).toEqual(1);
+            transport.deleteReject({ message: 'batch failure' });
+            setTimeout(() => {
+                expect(isRejected).toEqual(true);
+                expect(transportRetry.failedCalls.length).toEqual(0);
+                tick(2000);
+                expect(transportRetry.failedCalls.length).toEqual(0);
+                expect(transport.delete.mock.calls.length).toEqual(1);
+                done();
+            });
+        });
+    });
+
     it('stops retrying and rejects outstanding promises after transport was disposed', (done) => {
-        transportRetry = new TransportRetry(transport, { retryTimeout: 1000, methods: { 'delete': { retryLimit: 3 }, 'post': { retryTimeouts: [1000, 2000] } } });
+        transportRetry = new TransportRetry(transport, { retryTimeout: 1000, methods: { 'delete': { retryLimit: 3, statuses: [503] }, 'post': { retryTimeouts: [1000, 2000], statuses: [503] } } });
         const deletePromise = transportRetry.delete();
         const postPromise = transportRetry.post();
         let isDeleteRejected = false;
@@ -381,8 +402,8 @@ describe('openapi TransportRetry', () => {
         setTimeout(() => {
             expect(transport.delete.mock.calls.length).toEqual(1);
             expect(transport.post.mock.calls.length).toEqual(1);
-            transport.deleteReject(new TypeError('Network request failed'));
-            transport.postReject(new TypeError('Network request failed'));
+            transport.deleteReject({ status: 503, response: 'test' });
+            transport.postReject({ status: 503, response: 'test' });
             setTimeout(() => {
                 expect(transportRetry.individualFailedCalls.length).toEqual(1); // contain the post call
                 expect(transportRetry.failedCalls.length).toEqual(1); // contain the delete call

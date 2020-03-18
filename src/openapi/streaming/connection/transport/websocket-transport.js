@@ -170,6 +170,16 @@ function handleSocketClose(event) {
             code: event.code,
         });
 
+        // 1006 doesn't tell us its a 401 unauthorized, just that it might be
+        // the websocket spec disallows reading status codes for security reasons
+        // (so websocket can't be used to probe http endpoints)
+        // So, before we reconnect, lets re-authorize to be sure
+        // and if that gets a 401, that will report the token invalid via
+        // authTransport
+        if (event.code === 1006) {
+            this.getAuthorizePromise(this.contextId, true);
+        }
+
         // Order here is important. We need to invoke state callback first, as parent streaming manager updates query upon disconnect.
         this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
         reconnect.call(this);
@@ -242,7 +252,6 @@ function WebsocketTransport(baseUrl, restTransport, failCallback = NOOP) {
     this.restTransport = restTransport;
     this.contextId = null;
     this.authorizePromise = null;
-    this.isAuthorized = false;
 
     // Callbacks
     this.failCallback = failCallback;
@@ -253,6 +262,7 @@ function WebsocketTransport(baseUrl, restTransport, failCallback = NOOP) {
     this.connectionSlowCallback = NOOP;
     this.startedCallback = NOOP;
     this.closeCallback = NOOP;
+    this.unauthorizedCallback = NOOP;
 }
 
 WebsocketTransport.NAME = NAME;
@@ -266,6 +276,10 @@ WebsocketTransport.isSupported = function() {
 };
 
 WebsocketTransport.prototype.isSupported = WebsocketTransport.isSupported;
+
+WebsocketTransport.prototype.setUnauthorizedCallback = function(callback) {
+    this.unauthorizedCallback = callback;
+};
 
 WebsocketTransport.prototype.setStateChangedCallback = function(callback) {
     this.stateChangedCallback = callback;
@@ -296,30 +310,31 @@ WebsocketTransport.prototype.setConnectionSlowCallback = function(callback) {
     this.connectionSlowCallback = callback;
 };
 
-WebsocketTransport.prototype.getAuthorizePromise = function(contextId) {
-    if (this.isAuthorized) {
+WebsocketTransport.prototype.getAuthorizePromise = function(contextId, forceAuthenticate) {
+    if (!forceAuthenticate && this.authorizePromise) {
         log.debug(LOG_AREA, 'Connection already authorized');
-        return Promise.resolve();
+        return this.authorizePromise;
     }
 
-    return new Promise((resolve, reject) => {
+    this.authorizePromise = new Promise((resolve, reject) => {
         this.restTransport.put(this.authorizeServiceGroup, `${this.authorizeUrl}?contextId=${contextId}`)
             .then((response) => {
                 log.debug(LOG_AREA, 'Authorization completed', {
                     contextId,
                 });
-                this.isAuthorized = true;
                 resolve(response);
             })
             .catch((error) => {
                 log.error(LOG_AREA, 'Authorization failed', {
                     contextId,
-                    error: error.message,
+                    error,
                 });
                 reject(error);
                 handleFailure.call(this, error);
             });
     });
+
+    return this.authorizePromise;
 };
 
 WebsocketTransport.prototype.start = function(options, callback) {
@@ -330,7 +345,7 @@ WebsocketTransport.prototype.start = function(options, callback) {
         return;
     }
 
-    this.authorizePromise = this.getAuthorizePromise(this.contextId);
+    const authorizePromise = this.getAuthorizePromise(this.contextId);
 
     const url = getWebSocketUrl.call(this);
 
@@ -342,7 +357,7 @@ WebsocketTransport.prototype.start = function(options, callback) {
         this.socket = null;
     }
 
-    this.authorizePromise.then(() => {
+    authorizePromise.then(() => {
         this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
         log.debug(LOG_AREA, 'Creating WebSocket connection', { url });
         this.socket = new WebSocket(url);
@@ -378,8 +393,7 @@ WebsocketTransport.prototype.updateQuery = function(authToken, contextId, forceA
     this.contextId = contextId;
 
     if (forceAuth) {
-        this.isAuthorized = false;
-        this.authorizePromise = this.getAuthorizePromise(this.contextId);
+        this.getAuthorizePromise(this.contextId, true);
     }
 };
 
@@ -390,7 +404,6 @@ WebsocketTransport.prototype.getQuery = function() {
 WebsocketTransport.prototype.destroy = function() {
     clearInterval(this.reconnectTimeout);
     this.reconnectTimeout = null;
-    this.isAuthorized = false;
     this.contextId = null;
     this.lastMessageId = null;
     this.reconnectCount = 0;

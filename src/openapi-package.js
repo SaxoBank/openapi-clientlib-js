@@ -18,6 +18,7 @@ import TransportBatch from './openapi/transport/batch';
 import TransportQueue from './openapi/transport/queue';
 import TransportRetry from './openapi/transport/retry';
 import Streaming from './openapi/streaming/streaming';
+import AuthProvider from './openapi/authProvider';
 
 export default {
     log,
@@ -26,6 +27,7 @@ export default {
     PriceFormatting,
     priceFormatOptions,
     openapi: {
+        AuthProvider,
         batch,
         TransportCore,
         TransportAuth,

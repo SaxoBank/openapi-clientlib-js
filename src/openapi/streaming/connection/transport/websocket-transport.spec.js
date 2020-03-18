@@ -1,4 +1,4 @@
-import { installClock, uninstallClock } from '../../../../test/utils';
+import { installClock, uninstallClock, tick } from '../../../../test/utils';
 import mockTransport from '../../../../test/mocks/transport';
 import '../../../../test/mocks/math-random';
 import WebSocketTransport from './websocket-transport';
@@ -14,11 +14,11 @@ describe('openapi WebSocket Transport', () => {
 
     beforeEach(() => {
 
-        global.WebSocket = jest.fn().mockImplementation(() => jest.fn().mockImplementation(() => {
+        global.WebSocket = jest.fn().mockImplementation(() => {
             return {
                 close: jest.fn(),
             };
-        }));
+        });
 
         restTransportMock = mockTransport();
         authProvider = {
@@ -58,7 +58,10 @@ describe('openapi WebSocket Transport', () => {
     describe('updateQuery', () => {
         it('should update connection qs with new authorization token and context id', () => {
             const transport = new WebSocketTransport(BASE_URL, restTransportMock);
-            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+
+            restTransportMock.put.mockImplementation(() => Promise.resolve({ data: [] }));
+
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID, true);
             expect(transport.getQuery()).toBe('?contextId=0000000000&Authorization=TOKEN');
         });
     });
@@ -137,9 +140,10 @@ describe('openapi WebSocket Transport', () => {
             });
         });
 
-        it('should call stateChanged callback with disconnected state when internal signalR state changed to disconnected and reconnect', (done) => {
+        it.only('should call stateChanged callback with disconnected state when internal signalR state changed to disconnected and reconnect', (done) => {
             givenTransport();
 
+            const initialPromise = transport.authorizePromise;
             transport.authorizePromise.then(() => {
                 expect(stateChangedSpy.mock.calls.length).toEqual(1);
                 expect(stateChangedSpy.mock.calls[0]).toEqual([constants.CONNECTION_STATE_CONNECTING]);
@@ -151,10 +155,41 @@ describe('openapi WebSocket Transport', () => {
                 expect(stateChangedSpy.mock.calls[1]).toEqual([constants.CONNECTION_STATE_CONNECTED]);
 
                 transport.socket.readyState = 3; // WebSocket internal state equal closed
-                transport.socket.onclose({ event: { code: 1001 } });
+                transport.socket.onclose({ code: 1001 });
 
                 expect(stateChangedSpy.mock.calls[2]).toEqual([constants.CONNECTION_STATE_DISCONNECTED]);
                 expect(stateChangedSpy.mock.calls[3]).toEqual([constants.CONNECTION_STATE_RECONNECTING]);
+
+                tick(2000);
+
+                expect(transport.authorizePromise === initialPromise).toBeTruthy();
+                done();
+            });
+        });
+
+        it.only('should reconnect with a new authorization when it gets a possible 401', (done) => {
+            givenTransport();
+
+            const initialPromise = transport.authorizePromise;
+            transport.authorizePromise.then(() => {
+                expect(stateChangedSpy.mock.calls.length).toEqual(1);
+                expect(stateChangedSpy.mock.calls[0]).toEqual([constants.CONNECTION_STATE_CONNECTING]);
+
+                transport.socket.readyState = 1; // WebSocket internal state equal open
+                transport.socket.onopen();
+
+                expect(stateChangedSpy.mock.calls.length).toEqual(2);
+                expect(stateChangedSpy.mock.calls[1]).toEqual([constants.CONNECTION_STATE_CONNECTED]);
+
+                transport.socket.readyState = 3; // WebSocket internal state equal closed
+                transport.socket.onclose({ code: 1006 });
+
+                expect(stateChangedSpy.mock.calls[2]).toEqual([constants.CONNECTION_STATE_DISCONNECTED]);
+                expect(stateChangedSpy.mock.calls[3]).toEqual([constants.CONNECTION_STATE_RECONNECTING]);
+
+                tick(2000);
+
+                expect(transport.authorizePromise === initialPromise).toBeFalsy();
 
                 done();
             });

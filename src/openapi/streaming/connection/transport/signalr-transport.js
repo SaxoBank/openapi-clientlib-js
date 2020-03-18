@@ -37,6 +37,9 @@ function mapConnectionState(state) {
  */
 function handleError(errorDetail) {
     log.error(LOG_AREA, 'Transport error', errorDetail);
+    if (errorDetail && errorDetail.source && errorDetail.source.status === 401) {
+        this.unauthorizedCallback();
+    }
     if (typeof this.errorCallback === 'function') {
         this.errorCallback(errorDetail);
     }
@@ -67,6 +70,7 @@ function SignalrTransport(baseUrl) {
     this.transport = null;
     this.stateChangedCallback = NOOP;
     this.errorCallback = NOOP;
+    this.unauthorizedCallback = NOOP;
     this.connection.stateChanged(handleStateChanged.bind(this));
     this.connection.log = handleLog.bind(this);
     this.connection.error(handleError.bind(this));
@@ -79,6 +83,10 @@ SignalrTransport.isSupported = function() {
 };
 
 SignalrTransport.prototype.isSupported = SignalrTransport.isSupported;
+
+SignalrTransport.prototype.setUnauthorizedCallback = function(callback) {
+    this.unauthorizedCallback = callback;
+};
 
 SignalrTransport.prototype.setStateChangedCallback = function(callback) {
     this.stateChangedCallback = callback;

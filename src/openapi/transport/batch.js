@@ -36,10 +36,12 @@ function emptyQueueIntoServiceGroups() {
 function batchCallFailure(callList, batchResponse) {
     log.error(LOG_AREA, 'Batch request failed', batchResponse);
 
+    const status = (batchResponse && batchResponse.status === 401) ? 401 : undefined;
+
     for (let i = 0; i < callList.length; i++) {
         // pass on the batch response so that if a batch responds with a 401,
         // and queue is before batch, queue will auto retry
-        callList[i].reject({ message: 'batch failed' });
+        callList[i].reject({ message: 'batch failed', status, isNetworkError: batchResponse.isNetworkError });
     }
 }
 

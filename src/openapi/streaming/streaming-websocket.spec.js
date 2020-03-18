@@ -1,4 +1,5 @@
 /* eslint-disable */
+
 jest.mock('./connection/transport/websocket-transport');
 jest.mock('./connection/connection');
 
@@ -10,6 +11,7 @@ import '../../test/mocks/math-random';
 import Streaming from './streaming';
 import log from '../../log';
 import * as constants from './connection/constants';
+import mockAuthProvider from '../../test/mocks/authProvider';
 
 const defaultOptions = {
     transportTypes: ['plainWebSockets', 'webSockets'],
@@ -96,12 +98,7 @@ describe('openapi Streaming', () => {
         });
 
         transport = mockTransport();
-        authProvider = {
-            'getToken': jest.fn(),
-            'on': jest.fn(),
-        };
-        authProvider.getToken.mockImplementation(() => 'TOKEN');
-
+        authProvider = mockAuthProvider();
         subscriptionUpdateSpy = jest.fn().mockName('subscriptionUpdate');
         subscriptionErrorSpy = jest.fn().mockName('subscriptionError');
         installClock();
