@@ -1,7 +1,7 @@
 import { installClock, uninstallClock, tick, setTimeout } from '../../test/utils';
 import mockTransport from '../../test/mocks/transport';
 import '../../test/mocks/math-random';
-import Streaming from './streaming';
+import Streaming, { findRetryDelay } from './streaming';
 import log from '../../log';
 
 describe('openapi Streaming', () => {
@@ -87,6 +87,106 @@ describe('openapi Streaming', () => {
             expect(global.$.connection.mock.calls.length).toEqual(1);
             expect(global.$.connection.mock.calls[0]).toEqual(['testUrl/streaming/connection']);
             expect(streaming.getQuery()).toEqual('authorization=TOKEN&context=0000000000');
+        });
+    });
+
+    describe('findRetryDelay', () => {
+        it('find delay for level 0', () => {
+            const mockedLevels = [
+                { level: 0, delay: 1000 },
+                { level: 1, delay: 2000 },
+                { level: 5, delay: 5000 },
+            ];
+
+            const defaultDelay = 500;
+            const result = findRetryDelay(mockedLevels, 0, defaultDelay);
+
+            expect(result).toBe(1000);
+        });
+
+        it('find delay for level 1', () => {
+            const mockedLevels = [
+                { level: 0, delay: 1000 },
+                { level: 1, delay: 2000 },
+                { level: 5, delay: 5000 },
+            ];
+
+            const defaultDelay = 500;
+            const result = findRetryDelay(mockedLevels, 1, defaultDelay);
+
+            expect(result).toBe(2000);
+        });
+
+        it('find delay for level 4 in between two setup levels', () => {
+            const mockedLevels = [
+                { level: 0, delay: 1000 },
+                { level: 1, delay: 2000 },
+                { level: 5, delay: 5000 },
+            ];
+
+            const defaultDelay = 500;
+            const result = findRetryDelay(mockedLevels, 4, defaultDelay);
+
+            expect(result).toBe(2000);
+        });
+
+        it('find delay for level 5', () => {
+            const mockedLevels = [
+                { level: 0, delay: 1000 },
+                { level: 1, delay: 2000 },
+                { level: 5, delay: 5000 },
+            ];
+
+            const defaultDelay = 500;
+            const result = findRetryDelay(mockedLevels, 5, defaultDelay);
+
+            expect(result).toBe(5000);
+        });
+
+        it('find delay for retry index of 6', () => {
+            const mockedLevels = [
+                { level: 0, delay: 1000 },
+                { level: 1, delay: 2000 },
+                { level: 5, delay: 5000 },
+            ];
+
+            const defaultDelay = 500;
+            const result = findRetryDelay(mockedLevels, 6, defaultDelay);
+
+            expect(result).toBe(5000);
+        });
+
+        it('find delay for retry index of 100', () => {
+            const mockedLevels = [
+                { level: 0, delay: 1000 },
+                { level: 1, delay: 2000 },
+                { level: 5, delay: 5000 },
+            ];
+
+            const defaultDelay = 500;
+            const result = findRetryDelay(mockedLevels, 100, defaultDelay);
+
+            expect(result).toBe(5000);
+        });
+
+        it('return default delay if list of levels is empty', () => {
+            const mockedLevels = [];
+
+            const defaultDelay = 500;
+            const result = findRetryDelay(mockedLevels, 0, defaultDelay);
+
+            expect(result).toBe(500);
+        });
+
+        it('return default delay if list of levels is missing specific level', () => {
+            const mockedLevels = [
+                { level: 2, delay: 5000 },
+            ];
+
+            const defaultDelay = 500;
+            const result = findRetryDelay(mockedLevels, 0, defaultDelay);
+
+            expect(result).toBe(500);
         });
     });
 
@@ -279,6 +379,122 @@ describe('openapi Streaming', () => {
             expect(subscription.reset.mock.calls[0]).toEqual([]);
 
             expect(subscription.streamingContextId).toEqual('0060000000');
+            expect(subscription.streamingContextId).toEqual(streaming.contextId);
+        });
+
+        it('if signal-r disconnects, when retry levels are provided but missing for specific retry, use connectRetryDelay', () => {
+            const mockRetryLevels = [
+                { level: 1, delay: 2500 },
+            ];
+            const connectRetryDelay = 9000;
+
+            givenStreaming({ connectRetryDelayLevels: mockRetryLevels, connectRetryDelay });
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            // First disconnect
+            stateChangedCallback({ newState: 4 /* disconnected */ });
+
+            expect(subscription.streamingContextId).toEqual('0000000000');
+            expect(subscription.streamingContextId).toEqual(streaming.contextId);
+
+            tick(9000);
+
+            expect(mockConnection.start.mock.calls.length).toEqual(2);
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            expect(subscription.streamingContextId).toEqual('0000900000');
+            expect(subscription.streamingContextId).toEqual(streaming.contextId);
+        });
+
+        it('if signal-r disconnects, when retry levels are provided but empty, use connectRetryDelay', () => {
+            const mockRetryLevels = [];
+            const connectRetryDelay = 7500;
+
+            givenStreaming({ connectRetryDelayLevels: mockRetryLevels, connectRetryDelay });
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            // First disconnect
+            stateChangedCallback({ newState: 4 /* disconnected */ });
+
+            expect(subscription.streamingContextId).toEqual('0000000000');
+            expect(subscription.streamingContextId).toEqual(streaming.contextId);
+
+            tick(7500);
+
+            expect(mockConnection.start.mock.calls.length).toEqual(2);
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            expect(subscription.streamingContextId).toEqual('0000750000');
+            expect(subscription.streamingContextId).toEqual(streaming.contextId);
+        });
+
+        it('if signal-r disconnects, it tries to reconnect using defined retry levels', () => {
+            const mockRetryLevels = [
+                { level: 0, delay: 2500 },
+                { level: 1, delay: 5000 },
+                { level: 2, delay: 7000 },
+            ];
+
+            givenStreaming({ connectRetryDelayLevels: mockRetryLevels });
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            // First disconnect
+            stateChangedCallback({ newState: 4 /* disconnected */ });
+
+            expect(subscription.streamingContextId).toEqual('0000000000');
+            expect(subscription.streamingContextId).toEqual(streaming.contextId);
+
+            tick(2500);
+
+            expect(mockConnection.start.mock.calls.length).toEqual(2);
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            expect(subscription.streamingContextId).toEqual('0000250000');
+            expect(subscription.streamingContextId).toEqual(streaming.contextId);
+
+            // Second disconnect
+
+            stateChangedCallback({ newState: 4 /* disconnected */ });
+
+            tick(5000);
+
+            expect(mockConnection.start.mock.calls.length).toEqual(3);
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            expect(subscription.streamingContextId).toEqual('0000750000');
+            expect(subscription.streamingContextId).toEqual(streaming.contextId);
+
+            // Third disconnect
+
+            stateChangedCallback({ newState: 4 /* disconnected */ });
+
+            tick(7000);
+
+            expect(mockConnection.start.mock.calls.length).toEqual(4);
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            expect(subscription.streamingContextId).toEqual('0001450000');
+            expect(subscription.streamingContextId).toEqual(streaming.contextId);
+
+            // Forth disconnect
+
+            stateChangedCallback({ newState: 4 /* disconnected */ });
+
+            tick(7000);
+
+            expect(mockConnection.start.mock.calls.length).toEqual(5);
+            stateChangedCallback({ newState: 0 /* connecting */ });
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            expect(subscription.streamingContextId).toEqual('0002150000');
             expect(subscription.streamingContextId).toEqual(streaming.contextId);
         });
     });
