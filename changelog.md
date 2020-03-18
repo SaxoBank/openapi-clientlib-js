@@ -1,3 +1,7 @@
+#### v6.0.1
+
+- Add support for leveled delays for streaming reconnects.
+
 #### v6.0.0
 
 - BREAKING - Source is now in ecmascript 2019 (no change to output, only affects if you are using the package source directly and not transpiling)
