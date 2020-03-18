@@ -1,12 +1,9 @@
-#### v6.0.1
-
-- Add support for leveled delays for streaming reconnects.
-
-#### v6.0.0
+#### v6.0.2
 
 - BREAKING - Source is now in ecmascript 2019 (no change to output, only affects if you are using the package source directly and not transpiling)
 - BREAKING - AuthProvider has been created on clientLib.openApi.AuthProvider and this needs passing into TransportAuth and Streaming
 - BREAKING - RetryTransport is more strict - it only retries if the status matches a provided one or its a network error and retryNetworkError is set
+- Add support for leveled delays for streaming reconnects.
 - Fix - streaming authentication errors trigger a new token request
 
 #### v5.0.4
