@@ -521,6 +521,7 @@ function removeSubscription(subscription) {
 function Streaming(transport, baseUrl, authProvider, options) {
     emitter.mixinTo(this);
 
+    this.retryCount = 0;
     this.connectionState = this.CONNECTION_STATE_INITIALIZING;
     this.baseUrl = baseUrl;
     this.authProvider = authProvider;
