@@ -450,14 +450,12 @@ describe('openapi Streaming', () => {
 
         it('if signal-r disconnects, it tries to reconnect using defined retry levels', () => {
             const mockRetryLevels = [
-                { level: 0, delay: 2500 },
+                { level: 0, delay: 500 },
                 { level: 1, delay: 5000 },
                 { level: 2, delay: 7000 },
             ];
 
             givenStreaming({ connectRetryDelayLevels: mockRetryLevels });
-            stateChangedCallback({ newState: 0 /* connecting */ });
-            stateChangedCallback({ newState: 1 /* connected */ });
 
             // First disconnect
             stateChangedCallback({ newState: 4 /* disconnected */ });
@@ -465,13 +463,13 @@ describe('openapi Streaming', () => {
             expect(subscription.streamingContextId).toEqual('0000000000');
             expect(subscription.streamingContextId).toEqual(streaming.contextId);
 
-            tick(2500);
+            tick(500);
 
             expect(mockConnection.start.mock.calls.length).toEqual(2);
             stateChangedCallback({ newState: 0 /* connecting */ });
             stateChangedCallback({ newState: 1 /* connected */ });
 
-            expect(subscription.streamingContextId).toEqual('0000250000');
+            expect(subscription.streamingContextId).toEqual('0000050000');
             expect(subscription.streamingContextId).toEqual(streaming.contextId);
 
             // Second disconnect
@@ -484,7 +482,7 @@ describe('openapi Streaming', () => {
             stateChangedCallback({ newState: 0 /* connecting */ });
             stateChangedCallback({ newState: 1 /* connected */ });
 
-            expect(subscription.streamingContextId).toEqual('0000750000');
+            expect(subscription.streamingContextId).toEqual('0000550000');
             expect(subscription.streamingContextId).toEqual(streaming.contextId);
 
             // Third disconnect
@@ -497,7 +495,7 @@ describe('openapi Streaming', () => {
             stateChangedCallback({ newState: 0 /* connecting */ });
             stateChangedCallback({ newState: 1 /* connected */ });
 
-            expect(subscription.streamingContextId).toEqual('0001450000');
+            expect(subscription.streamingContextId).toEqual('0001250000');
             expect(subscription.streamingContextId).toEqual(streaming.contextId);
 
             // Forth disconnect
@@ -510,7 +508,7 @@ describe('openapi Streaming', () => {
             stateChangedCallback({ newState: 0 /* connecting */ });
             stateChangedCallback({ newState: 1 /* connected */ });
 
-            expect(subscription.streamingContextId).toEqual('0002150000');
+            expect(subscription.streamingContextId).toEqual('0001950000');
             expect(subscription.streamingContextId).toEqual(streaming.contextId);
         });
     });
