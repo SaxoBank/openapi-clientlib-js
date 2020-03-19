@@ -1,3 +1,7 @@
+#### v6.0.3
+
+- Fix level based retry mechanism by ensuring retryCount is set initially to 0.
+
 #### v6.0.2
 
 - BREAKING - Source is now in ecmascript 2019 (no change to output, only affects if you are using the package source directly and not transpiling)
