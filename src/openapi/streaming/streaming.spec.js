@@ -224,6 +224,7 @@ describe('openapi Streaming', () => {
 
         it('is initially initialising', () => {
             streaming = new Streaming(transport, 'testUrl', authProvider);
+            expect(streaming.retryCount).toBe(0);
             expect(streaming.connectionState).toEqual(streaming.CONNECTION_STATE_INITIALIZING);
         });
 
