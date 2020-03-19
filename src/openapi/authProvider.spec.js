@@ -3,7 +3,6 @@ import mockFetch from '../test/mocks/fetch';
 import AuthProvider from './authProvider';
 
 describe('openapi AuthProvider', () => {
-
     let authProvider;
     let fetch;
 
@@ -20,7 +19,7 @@ describe('openapi AuthProvider', () => {
     });
 
     function relativeDate(relativeTime) {
-        return new Date().getTime() + (relativeTime * 1000);
+        return new Date().getTime() + relativeTime * 1000;
     }
 
     it('throws an exception if created without options', () => {
@@ -33,9 +32,12 @@ describe('openapi AuthProvider', () => {
     });
 
     describe('auth store', () => {
-
         it('gets and sets', () => {
-            const options = { token: 'Bearer TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'refresh' };
+            const options = {
+                token: 'Bearer TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'refresh',
+            };
 
             authProvider = new AuthProvider(options);
 
@@ -49,7 +51,11 @@ describe('openapi AuthProvider', () => {
         });
 
         it('gets and sets adding Bearer', () => {
-            const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'refresh' };
+            const options = {
+                token: 'TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'refresh',
+            };
 
             authProvider = new AuthProvider(options);
 
@@ -65,7 +71,11 @@ describe('openapi AuthProvider', () => {
 
     describe('auth events', function() {
         it('fires an event when about to refresh', function() {
-            const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            const options = {
+                token: 'TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(options);
 
             const tokenRefreshSpy = jest.fn().mockName('tokenRefresh listener');
@@ -80,19 +90,39 @@ describe('openapi AuthProvider', () => {
         });
 
         it('fires an event when receiving a new token', function(done) {
-            const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            const options = {
+                token: 'TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(options);
 
-            const tokenReceivedSpy = jest.fn().mockName('tokenReceived listener');
-            const tokenRefreshFailSpy = jest.fn().mockName('tokenRefreshFail listener');
-            authProvider.on(authProvider.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-            authProvider.on(authProvider.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+            const tokenReceivedSpy = jest
+                .fn()
+                .mockName('tokenReceived listener');
+            const tokenRefreshFailSpy = jest
+                .fn()
+                .mockName('tokenRefreshFail listener');
+            authProvider.on(
+                authProvider.EVENT_TOKEN_REFRESH_FAILED,
+                tokenRefreshFailSpy,
+            );
+            authProvider.on(
+                authProvider.EVENT_TOKEN_RECEIVED,
+                tokenReceivedSpy,
+            );
             tick(60000);
 
             fetch.resolve('200', { token: 'TOK3', expiry: 60 });
             setTimeout(function() {
-                authProvider.off(authProvider.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-                authProvider.off(authProvider.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                authProvider.off(
+                    authProvider.EVENT_TOKEN_REFRESH_FAILED,
+                    tokenRefreshFailSpy,
+                );
+                authProvider.off(
+                    authProvider.EVENT_TOKEN_RECEIVED,
+                    tokenReceivedSpy,
+                );
                 expect(tokenReceivedSpy).toBeCalledTimes(1);
 
                 authProvider.set('TOK4', relativeDate(0));
@@ -107,13 +137,27 @@ describe('openapi AuthProvider', () => {
 
         describe('when token refreshing fails', function() {
             it('fires an event if unauthorized - 401', function(done) {
-                const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+                const options = {
+                    token: 'TOKEN',
+                    expiry: relativeDate(60),
+                    tokenRefreshUrl: 'http://refresh',
+                };
                 authProvider = new AuthProvider(options);
 
-                const tokenRefreshFailSpy = jest.fn().mockName('tokenRefreshFail listener');
-                const tokenReceivedSpy = jest.fn().mockName('tokenReceived listener');
-                authProvider.on(authProvider.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-                authProvider.on(authProvider.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                const tokenRefreshFailSpy = jest
+                    .fn()
+                    .mockName('tokenRefreshFail listener');
+                const tokenReceivedSpy = jest
+                    .fn()
+                    .mockName('tokenReceived listener');
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_REFRESH_FAILED,
+                    tokenRefreshFailSpy,
+                );
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_RECEIVED,
+                    tokenReceivedSpy,
+                );
 
                 tick(60000);
                 fetch.resolve(401, { error: 'not authorised' });
@@ -124,13 +168,27 @@ describe('openapi AuthProvider', () => {
             });
 
             it('fires an event if unauthorized - 401', function(done) {
-                const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+                const options = {
+                    token: 'TOKEN',
+                    expiry: relativeDate(60),
+                    tokenRefreshUrl: 'http://refresh',
+                };
                 authProvider = new AuthProvider(options);
 
-                const tokenRefreshFailSpy = jest.fn().mockName('tokenRefreshFail listener');
-                const tokenReceivedSpy = jest.fn().mockName('tokenReceived listener');
-                authProvider.on(authProvider.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-                authProvider.on(authProvider.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                const tokenRefreshFailSpy = jest
+                    .fn()
+                    .mockName('tokenRefreshFail listener');
+                const tokenReceivedSpy = jest
+                    .fn()
+                    .mockName('tokenReceived listener');
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_REFRESH_FAILED,
+                    tokenRefreshFailSpy,
+                );
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_RECEIVED,
+                    tokenReceivedSpy,
+                );
 
                 tick(60000);
                 fetch.resolve(403, { error: 'not authorised' });
@@ -141,18 +199,38 @@ describe('openapi AuthProvider', () => {
             });
 
             it('fires an event if forbidden', function(done) {
-                const options = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+                const options = {
+                    token: 'TOKEN',
+                    expiry: relativeDate(60),
+                    tokenRefreshUrl: 'http://refresh',
+                };
                 authProvider = new AuthProvider(options);
 
-                const tokenRefreshFailSpy = jest.fn().mockName('tokenRefreshFail listener');
-                const tokenReceivedSpy = jest.fn().mockName('tokenReceived listener');
-                authProvider.on(authProvider.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-                authProvider.on(authProvider.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                const tokenRefreshFailSpy = jest
+                    .fn()
+                    .mockName('tokenRefreshFail listener');
+                const tokenReceivedSpy = jest
+                    .fn()
+                    .mockName('tokenReceived listener');
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_REFRESH_FAILED,
+                    tokenRefreshFailSpy,
+                );
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_RECEIVED,
+                    tokenReceivedSpy,
+                );
                 tick(60000);
                 fetch.resolve(403, { error: 'forbidden' });
                 setTimeout(function() {
-                    authProvider.off(authProvider.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-                    authProvider.off(authProvider.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                    authProvider.off(
+                        authProvider.EVENT_TOKEN_REFRESH_FAILED,
+                        tokenRefreshFailSpy,
+                    );
+                    authProvider.off(
+                        authProvider.EVENT_TOKEN_RECEIVED,
+                        tokenReceivedSpy,
+                    );
                     expect(tokenRefreshFailSpy.mock.calls.length).toEqual(1);
                     done();
                 });
@@ -168,10 +246,20 @@ describe('openapi AuthProvider', () => {
                 };
                 authProvider = new AuthProvider(options);
 
-                const tokenRefreshFailSpy = jest.fn().mockName('tokenRefreshFail listener');
-                const tokenReceivedSpy = jest.fn().mockName('tokenReceived listener');
-                authProvider.on(authProvider.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-                authProvider.on(authProvider.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                const tokenRefreshFailSpy = jest
+                    .fn()
+                    .mockName('tokenRefreshFail listener');
+                const tokenReceivedSpy = jest
+                    .fn()
+                    .mockName('tokenReceived listener');
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_REFRESH_FAILED,
+                    tokenRefreshFailSpy,
+                );
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_RECEIVED,
+                    tokenReceivedSpy,
+                );
                 tick(60000);
                 expect(fetch).toHaveBeenCalledTimes(1);
                 fetch.reject(new Error('Network error'));
@@ -181,7 +269,9 @@ describe('openapi AuthProvider', () => {
                     expect(fetch).toHaveBeenCalledTimes(2);
                     fetch.reject(new Error('Network error'));
                     setTimeout(function() {
-                        expect(tokenRefreshFailSpy.mock.calls.length).toEqual(1);
+                        expect(tokenRefreshFailSpy.mock.calls.length).toEqual(
+                            1,
+                        );
                         expect(tokenReceivedSpy.mock.calls.length).toEqual(0);
                         done();
                     });
@@ -197,10 +287,20 @@ describe('openapi AuthProvider', () => {
                 };
                 authProvider = new AuthProvider(options);
 
-                const tokenRefreshFailSpy = jest.fn().mockName('tokenRefreshFail listener');
-                const tokenReceivedSpy = jest.fn().mockName('tokenReceived listener');
-                authProvider.on(authProvider.EVENT_TOKEN_REFRESH_FAILED, tokenRefreshFailSpy);
-                authProvider.on(authProvider.EVENT_TOKEN_RECEIVED, tokenReceivedSpy);
+                const tokenRefreshFailSpy = jest
+                    .fn()
+                    .mockName('tokenRefreshFail listener');
+                const tokenReceivedSpy = jest
+                    .fn()
+                    .mockName('tokenReceived listener');
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_REFRESH_FAILED,
+                    tokenRefreshFailSpy,
+                );
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_RECEIVED,
+                    tokenReceivedSpy,
+                );
                 tick(60000);
                 fetch.reject(new Error('Network error'));
                 setTimeout(function() {
@@ -208,7 +308,9 @@ describe('openapi AuthProvider', () => {
                     tick(1000);
                     fetch.resolve(200, { token: 'TOK5', expiry: 60 });
                     setTimeout(function() {
-                        expect(tokenRefreshFailSpy.mock.calls.length).toEqual(0);
+                        expect(tokenRefreshFailSpy.mock.calls.length).toEqual(
+                            0,
+                        );
                         expect(tokenReceivedSpy.mock.calls.length).toEqual(1);
                         done();
                     });
@@ -225,15 +327,24 @@ describe('openapi AuthProvider', () => {
             expect(authProvider.getExpiry()).toEqual(relativeDate(0));
             expect(authProvider.getToken()).toEqual(null);
             expect(fetch).toBeCalledTimes(1);
-            expect(fetch.mock.calls[0]).toEqual(['http://refresh', expect.objectContaining({ method: 'POST' })]);
+            expect(fetch.mock.calls[0]).toEqual([
+                'http://refresh',
+                expect.objectContaining({ method: 'POST' }),
+            ]);
         });
 
         it('refreshes immediately if the token is out of date', (done) => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(-1), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(-1),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).toBeCalledTimes(1);
-            expect(authProvider.getToken()).toEqual('Bearer ' + initialOptions.token);
+            expect(authProvider.getToken()).toEqual(
+                'Bearer ' + initialOptions.token,
+            );
             expect(authProvider.getExpiry()).toEqual(initialOptions.expiry);
 
             expect(fetch.mock.calls[0][0]).toEqual('http://refresh');
@@ -250,33 +361,55 @@ describe('openapi AuthProvider', () => {
             const headersOption = { foo: 'bar' };
             const expectedHeaders = { foo: 'bar', 'Content-Type': 'JSON' };
 
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(-1), tokenRefreshUrl: 'http://refresh', tokenRefreshHeaders: headersOption };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(-1),
+                tokenRefreshUrl: 'http://refresh',
+                tokenRefreshHeaders: headersOption,
+            };
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).toBeCalledTimes(1);
-            expect(fetch.mock.calls[0]).toEqual(expect.anything(), expect.objectContaining({ headers: expectedHeaders }));
+            expect(fetch.mock.calls[0]).toEqual(
+                expect.anything(),
+                expect.objectContaining({ headers: expectedHeaders }),
+            );
         });
 
         it('includes the headers passed in as options and does not override content-type', () => {
             const expectedHeaders = { foo: 'bar', 'Content-Type': 'JSON' };
             const headersOption = expectedHeaders;
 
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(-1), tokenRefreshUrl: 'http://refresh', tokenRefreshHeaders: headersOption };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(-1),
+                tokenRefreshUrl: 'http://refresh',
+                tokenRefreshHeaders: headersOption,
+            };
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).toBeCalledTimes(1);
-            expect(fetch.mock.calls[0]).toEqual(expect.anything(), expect.objectContaining({ headers: expectedHeaders }));
+            expect(fetch.mock.calls[0]).toEqual(
+                expect.anything(),
+                expect.objectContaining({ headers: expectedHeaders }),
+            );
         });
 
         it('refreshes when the token becomes out of date', (done) => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(10),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
             expect(fetch).not.toBeCalled();
 
             tick(10000);
 
             expect(fetch).toBeCalledTimes(1);
-            expect(authProvider.getToken()).toEqual('Bearer ' + initialOptions.token);
+            expect(authProvider.getToken()).toEqual(
+                'Bearer ' + initialOptions.token,
+            );
             expect(authProvider.getExpiry()).toEqual(initialOptions.expiry);
 
             fetch.resolve('200', { token: 'TOK2', expiry: 60 });
@@ -297,7 +430,13 @@ describe('openapi AuthProvider', () => {
         });
 
         it('retries if the auth refresh fails', (done) => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh', retryDelayMs: 599, maxRetryCount: 1 };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(10),
+                tokenRefreshUrl: 'http://refresh',
+                retryDelayMs: 599,
+                maxRetryCount: 1,
+            };
             authProvider = new AuthProvider(initialOptions);
 
             tick(10000);
@@ -322,8 +461,12 @@ describe('openapi AuthProvider', () => {
             });
         });
 
-        it('when refresh token is called it doesn\'t still refresh the token when it becomes expired before the call returns', () => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh' };
+        it("when refresh token is called it doesn't still refresh the token when it becomes expired before the call returns", () => {
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(10),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
             expect(fetch).not.toBeCalled();
 
@@ -336,7 +479,11 @@ describe('openapi AuthProvider', () => {
         });
 
         it('refreshes the token when a transport call returns a 401 - no expiry time', () => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();
@@ -345,7 +492,11 @@ describe('openapi AuthProvider', () => {
         });
 
         it('does not refresh the token when a transport call returns a 401 because it is already fetching or under time', (done) => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();
@@ -368,7 +519,11 @@ describe('openapi AuthProvider', () => {
         });
 
         it('refreshes the token when a transport call returns a 401 - with expiry time', () => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();
@@ -377,7 +532,11 @@ describe('openapi AuthProvider', () => {
         });
 
         it('doesnt refresh the token when a transport call returns a 401 - with expiry time when new token exists', () => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();
@@ -386,7 +545,11 @@ describe('openapi AuthProvider', () => {
         });
 
         it('does not refresh the token when a transport call returns a 401 with expiry time because it is already fetching or under time', (done) => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();
@@ -406,7 +569,11 @@ describe('openapi AuthProvider', () => {
         });
 
         it('does not refresh the token when already fetching and refreshOpenApiToken is called', () => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();
@@ -419,7 +586,11 @@ describe('openapi AuthProvider', () => {
         });
 
         it('does a refresh if the timer should have fired but didnt (dropping timeouts while sleeping) - tokenRejected', () => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(10),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
 
             clearTimeout(authProvider.tokenRefreshTimer);
@@ -431,7 +602,11 @@ describe('openapi AuthProvider', () => {
         });
 
         it('does a refresh if the timer should have fired but didnt (dropping timeouts while sleeping) - refreshOpenApiToken', () => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(10), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(10),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
 
             clearTimeout(authProvider.tokenRefreshTimer);
@@ -443,7 +618,11 @@ describe('openapi AuthProvider', () => {
         });
 
         it('does nothing if the token is in date', () => {
-            const initialOptions = { token: 'TOKEN', expiry: relativeDate(60), tokenRefreshUrl: 'http://refresh' };
+            const initialOptions = {
+                token: 'TOKEN',
+                expiry: relativeDate(60),
+                tokenRefreshUrl: 'http://refresh',
+            };
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();

@@ -38,7 +38,6 @@ function SubscriptionQueue() {
  * @param {Object} queuedItem - action with arguments to add to the queue.
  */
 SubscriptionQueue.prototype.enqueue = function(queuedItem) {
-
     if (!queuedItem.action) {
         throw new Error('Subscription queued action is invalid');
     }
@@ -70,9 +69,12 @@ SubscriptionQueue.prototype.enqueue = function(queuedItem) {
 
     // US => S
     // SU => U
-    if (prevAction === ACTION_UNSUBSCRIBE && action === ACTION_SUBSCRIBE ||
-        prevAction === ACTION_SUBSCRIBE && action === ACTION_UNSUBSCRIBE ||
-        prevAction === ACTION_UNSUBSCRIBE && action === ACTION_UNSUBSCRIBE_BY_TAG_PENDING) {
+    if (
+        (prevAction === ACTION_UNSUBSCRIBE && action === ACTION_SUBSCRIBE) ||
+        (prevAction === ACTION_SUBSCRIBE && action === ACTION_UNSUBSCRIBE) ||
+        (prevAction === ACTION_UNSUBSCRIBE &&
+            action === ACTION_UNSUBSCRIBE_BY_TAG_PENDING)
+    ) {
         this.items.splice(-1);
     }
 
@@ -95,7 +97,6 @@ SubscriptionQueue.prototype.peekAction = function() {
  * @return {Number|undefined} First action, if queue is not empty. Otherwise undefined.
  */
 SubscriptionQueue.prototype.dequeue = function() {
-
     if (this.isEmpty()) {
         return undefined;
     }
@@ -109,7 +110,10 @@ SubscriptionQueue.prototype.dequeue = function() {
     const lastItem = getLastItem.call(this);
     const lastAction = lastItem.action;
 
-    if (nextAction === ACTION_MODIFY_SUBSCRIBE && lastAction !== ACTION_UNSUBSCRIBE) {
+    if (
+        nextAction === ACTION_MODIFY_SUBSCRIBE &&
+        lastAction !== ACTION_UNSUBSCRIBE
+    ) {
         // M, U, S => M
         // M, U, M, U, M => M
         // M, P, P => M
@@ -117,7 +121,10 @@ SubscriptionQueue.prototype.dequeue = function() {
         return nextItem;
     }
 
-    if (lastAction === ACTION_UNSUBSCRIBE || lastAction === ACTION_UNSUBSCRIBE_BY_TAG_PENDING) {
+    if (
+        lastAction === ACTION_UNSUBSCRIBE ||
+        lastAction === ACTION_UNSUBSCRIBE_BY_TAG_PENDING
+    ) {
         // M, U, S, U => U
         // S, U => U
         // S, U, S, U => U

@@ -12,13 +12,15 @@ const NO_BREAK_SPACE_REGEX = /\u00A0/g;
 // -- Exported methods section --
 
 export function parseNumberNegativePattern(value, options, tryFallback) {
-
     const pre = options.negativePre.replace(NO_BREAK_SPACE_REGEX, ' ');
     const post = options.negativePost.replace(NO_BREAK_SPACE_REGEX, ' ');
     value = value.replace(NO_BREAK_SPACE_REGEX, ' ');
 
     if (startsWith(value, pre) && endsWith(value, post)) {
-        return ['-', value.substr(pre.length, value.length - (pre.length + post.length))];
+        return [
+            '-',
+            value.substr(pre.length, value.length - (pre.length + post.length)),
+        ];
     }
 
     if (tryFallback && startsWith(value, '-')) {
@@ -29,7 +31,6 @@ export function parseNumberNegativePattern(value, options, tryFallback) {
 }
 
 function parseNumber(value, options) {
-
     if (value == null) {
         return NaN;
     }
@@ -64,10 +65,15 @@ function parseNumber(value, options) {
         fraction = null;
     } else {
         integer = intAndFraction.substr(0, decimalPos);
-        fraction = intAndFraction.substr(decimalPos + options.decimalSeparator.length);
+        fraction = intAndFraction.substr(
+            decimalPos + options.decimalSeparator.length,
+        );
     }
     integer = integer.split(options.groupSeparator).join('');
-    const altNumGroupSeparator = options.groupSeparator.replace(NO_BREAK_SPACE_REGEX, ' ');
+    const altNumGroupSeparator = options.groupSeparator.replace(
+        NO_BREAK_SPACE_REGEX,
+        ' ',
+    );
     if (options.groupSeparator !== altNumGroupSeparator) {
         integer = integer.split(altNumGroupSeparator).join('');
     }

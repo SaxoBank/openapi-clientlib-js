@@ -9,12 +9,13 @@
 
 function transportMethod(method) {
     return function() {
-
         if (!this.isQueueing) {
-
             // checking expiry every time so that if device goes to sleep and is woken then
             // we intercept a call about to be made and then do not have to cope with the 401 responses
-            if (this.authProvider && this.authProvider.getExpiry() < Date.now()) {
+            if (
+                this.authProvider &&
+                this.authProvider.getExpiry() < Date.now()
+            ) {
                 this.isQueueing = true;
                 this.authProvider.refreshOpenApiToken();
             }
@@ -44,7 +45,10 @@ function transportMethod(method) {
 }
 
 function tryEmptyQueue() {
-    if (this.waitForPromises.length === 0 && (!this.authProvider || this.authProvider.getExpiry() > Date.now())) {
+    if (
+        this.waitForPromises.length === 0 &&
+        (!this.authProvider || this.authProvider.getExpiry() > Date.now())
+    ) {
         this.isQueueing = false;
         this.emptyQueue();
     }
@@ -76,9 +80,10 @@ function authTokenReceived() {
  *      If not given then calls will continue even when the authentication is not expired and no 401 calls will be handled.
  */
 function TransportQueue(transport, authProvider) {
-
     if (!transport) {
-        throw new Error('Missing required parameter: transport in TransportQueue');
+        throw new Error(
+            'Missing required parameter: transport in TransportQueue',
+        );
     }
 
     this.isQueueing = false;
@@ -88,7 +93,11 @@ function TransportQueue(transport, authProvider) {
             this.isQueueing = true;
         }
         // subscribe to listen for authentication changes that might trigger auth to be valid and the queue to empty
-        authProvider.on(authProvider.EVENT_TOKEN_RECEIVED, authTokenReceived, this);
+        authProvider.on(
+            authProvider.EVENT_TOKEN_RECEIVED,
+            authTokenReceived,
+            this,
+        );
     }
 
     this.queue = [];
@@ -170,9 +179,8 @@ TransportQueue.prototype.emptyQueue = function() {
  * @param item
  */
 TransportQueue.prototype.runQueueItem = function(item) {
-    this.transport[item.method]
-        .apply(this.transport, item.args)
-        .then((...args) => {
+    this.transport[item.method].apply(this.transport, item.args).then(
+        (...args) => {
             item.resolve(...args);
         },
         (result, ...args) => {
@@ -188,7 +196,8 @@ TransportQueue.prototype.runQueueItem = function(item) {
                 return;
             }
             item.reject(result, ...args);
-        });
+        },
+    );
 };
 
 /**
@@ -205,7 +214,11 @@ TransportQueue.prototype.addToQueue = function(item) {
 TransportQueue.prototype.dispose = function() {
     this.queue.length = 0;
     if (this.authProvider) {
-        this.authProvider.off(this.authProvider.EVENT_TOKEN_RECEIVED, authTokenReceived, this);
+        this.authProvider.off(
+            this.authProvider.EVENT_TOKEN_RECEIVED,
+            authTokenReceived,
+            this,
+        );
     }
     this.transport.dispose();
 };

@@ -81,10 +81,14 @@ function subscribe() {
 
     normalizeSubscribeData(data);
 
-    log.debug(LOG_AREA, 'starting..', { serviceGroup: this.serviceGroup, url: subscribeUrl });
+    log.debug(LOG_AREA, 'starting..', {
+        serviceGroup: this.serviceGroup,
+        url: subscribeUrl,
+    });
     setState.call(this, this.STATE_SUBSCRIBE_REQUESTED);
 
-    this.transport.post(this.serviceGroup, subscribeUrl, null, options)
+    this.transport
+        .post(this.serviceGroup, subscribeUrl, null, options)
         .then(onSubscribeSuccess.bind(this, referenceId))
         .catch(onSubscribeError.bind(this, referenceId));
 }
@@ -97,10 +101,11 @@ function unsubscribe() {
     // capture the reference id so we can tell in the response whether it is the latest call
     const referenceId = this.referenceId;
 
-    this.transport.delete(this.serviceGroup, this.url + '/{contextId}/{referenceId}', {
-        contextId: this.streamingContextId,
-        referenceId,
-    })
+    this.transport
+        .delete(this.serviceGroup, this.url + '/{contextId}/{referenceId}', {
+            contextId: this.streamingContextId,
+            referenceId,
+        })
         .then(onUnsubscribeSuccess.bind(this, referenceId))
         .catch(onUnsubscribeError.bind(this, referenceId));
 }
@@ -111,10 +116,16 @@ function modifyPatch(args) {
     setState.call(this, this.STATE_PATCH_REQUESTED);
     const referenceId = this.referenceId;
 
-    this.transport.patch(this.serviceGroup, this.url + '/{contextId}/{referenceId}', {
-        contextId: this.streamingContextId,
-        referenceId: this.referenceId,
-    }, { body: args })
+    this.transport
+        .patch(
+            this.serviceGroup,
+            this.url + '/{contextId}/{referenceId}',
+            {
+                contextId: this.streamingContextId,
+                referenceId: this.referenceId,
+            },
+            { body: args },
+        )
         .then(onModifyPatchSuccess.bind(this, referenceId))
         .catch(onModifyPatchError.bind(this, referenceId));
 }
@@ -131,7 +142,10 @@ function unsubscribeByTagPending() {
  * @param args
  */
 function tryPerformAction(action, args) {
-    if (!this.connectionAvailable || this.TRANSITIONING_STATES & this.currentState) {
+    if (
+        !this.connectionAvailable ||
+        this.TRANSITIONING_STATES & this.currentState
+    ) {
         this.queue.enqueue({ action, args });
     } else {
         performAction.call(this, { action, args });
@@ -168,7 +182,10 @@ function performAction(queuedAction, isLastQueuedAction) {
                     break;
 
                 default:
-                    log.error(LOG_AREA, 'unanticipated state', { state: this.currentState, action });
+                    log.error(LOG_AREA, 'unanticipated state', {
+                        state: this.currentState,
+                        action,
+                    });
             }
             break;
 
@@ -179,7 +196,10 @@ function performAction(queuedAction, isLastQueuedAction) {
                     break;
 
                 default:
-                    log.error(LOG_AREA, 'unanticipated state', { state: this.currentState, action });
+                    log.error(LOG_AREA, 'unanticipated state', {
+                        state: this.currentState,
+                        action,
+                    });
             }
             break;
 
@@ -193,7 +213,10 @@ function performAction(queuedAction, isLastQueuedAction) {
                     break;
 
                 default:
-                    log.error(LOG_AREA, 'unanticipated state', { state: this.currentState, action });
+                    log.error(LOG_AREA, 'unanticipated state', {
+                        state: this.currentState,
+                        action,
+                    });
             }
             break;
 
@@ -205,7 +228,10 @@ function performAction(queuedAction, isLastQueuedAction) {
                     break;
 
                 default:
-                    log.error(LOG_AREA, 'unanticipated state', { state: this.currentState, action });
+                    log.error(LOG_AREA, 'unanticipated state', {
+                        state: this.currentState,
+                        action,
+                    });
             }
             break;
 
@@ -219,7 +245,10 @@ function performAction(queuedAction, isLastQueuedAction) {
 
     // Required to manually rerun next action, because if nothing happens in given cycle,
     // next task from a queue will never be picked up.
-    if (!this.queue.isEmpty() && !(this.TRANSITIONING_STATES & this.currentState)) {
+    if (
+        !this.queue.isEmpty() &&
+        !(this.TRANSITIONING_STATES & this.currentState)
+    ) {
         performAction.call(this, this.queue.dequeue(), this.queue.isEmpty());
     }
 }
@@ -236,11 +265,13 @@ function performAction(queuedAction, isLastQueuedAction) {
  * {Object} result.Snapshot Snapshot of the current data available
  */
 function onSubscribeSuccess(referenceId, result) {
-
     const responseData = result.response;
 
     if (referenceId !== this.referenceId) {
-        log.error(LOG_AREA, 'Received an Ok subscribe response for subscribing a subscription that has afterwards been reset - ignoring');
+        log.error(
+            LOG_AREA,
+            'Received an Ok subscribe response for subscribing a subscription that has afterwards been reset - ignoring',
+        );
         // we could send the contextId as well an attempt a unsubscribe, but its hard to guess what could lead to this.
         // - (reset by disconnect/reconnect from streaming) we started subscribing, then web sockets was disconnected, but
         //    the server doesn't know it yet
@@ -258,7 +289,11 @@ function onSubscribeSuccess(referenceId, result) {
     this.inactivityTimeout = responseData.InactivityTimeout || 0;
 
     if (this.inactivityTimeout === 0) {
-        log.warn(LOG_AREA, 'inactivity timeout is 0 - interpreting as never timeout. Remove warning if normal.', result);
+        log.warn(
+            LOG_AREA,
+            'inactivity timeout is 0 - interpreting as never timeout. Remove warning if normal.',
+            result,
+        );
     }
 
     onActivity.call(this);
@@ -272,7 +307,10 @@ function onSubscribeSuccess(referenceId, result) {
         try {
             this.processSnapshot(responseData);
         } catch (ex) {
-            log.error(LOG_AREA, 'exception occurred in streaming snapshot update callback');
+            log.error(
+                LOG_AREA,
+                'exception occurred in streaming snapshot update callback',
+            );
         }
 
         if (this.updatesBeforeSubscribed) {
@@ -292,7 +330,10 @@ function onSubscribeSuccess(referenceId, result) {
  */
 function onSubscribeError(referenceId, response) {
     if (referenceId !== this.referenceId) {
-        log.debug(LOG_AREA, 'Received an error response for subscribing a subscription that has afterwards been reset - ignoring');
+        log.debug(
+            LOG_AREA,
+            'Received an error response for subscribing a subscription that has afterwards been reset - ignoring',
+        );
         return;
     }
 
@@ -305,12 +346,21 @@ function onSubscribeError(referenceId, response) {
         subscriptionData: this.subscriptionData,
     });
 
-    const errorCode = response && response.response ? response.response.ErrorCode : null;
+    const errorCode =
+        response && response.response ? response.response.ErrorCode : null;
 
-    if (errorCode === ERROR_UNSUPPORTED_FORMAT && this.subscriptionData && this.subscriptionData.Format === FORMAT_PROTOBUF) {
+    if (
+        errorCode === ERROR_UNSUPPORTED_FORMAT &&
+        this.subscriptionData &&
+        this.subscriptionData.Format === FORMAT_PROTOBUF
+    ) {
         // Fallback to JSON format if specific endpoint doesn't support PROTOBUF format.
         this.subscriptionData.Format = FORMAT_JSON;
-        this.parser = ParserFacade.getParser(FORMAT_JSON, this.serviceGroup, this.url);
+        this.parser = ParserFacade.getParser(
+            FORMAT_JSON,
+            this.serviceGroup,
+            this.url,
+        );
 
         tryPerformAction.call(this, ACTION_SUBSCRIBE);
         return;
@@ -333,7 +383,10 @@ function onSubscribeError(referenceId, response) {
  */
 function onUnsubscribeSuccess(referenceId, response) {
     if (referenceId !== this.referenceId) {
-        log.debug(LOG_AREA, 'Received an error response for subscribing a subscription that has afterwards been reset - ignoring');
+        log.debug(
+            LOG_AREA,
+            'Received an error response for subscribing a subscription that has afterwards been reset - ignoring',
+        );
         // we were unsubscribing when reset and the unsubscribe succeeded
         // return because we may have been asked to subscribe after resetting
         return;
@@ -349,12 +402,18 @@ function onUnsubscribeSuccess(referenceId, response) {
  */
 function onUnsubscribeError(referenceId, response) {
     if (referenceId !== this.referenceId) {
-        log.error(LOG_AREA, 'Received an error response for unsubscribing a subscription that has afterwards been reset - ignoring');
+        log.error(
+            LOG_AREA,
+            'Received an error response for unsubscribing a subscription that has afterwards been reset - ignoring',
+        );
         return;
     }
 
     setState.call(this, this.STATE_UNSUBSCRIBED);
-    log.error(LOG_AREA, 'An error occurred unsubscribing', { response, url: this.url });
+    log.error(LOG_AREA, 'An error occurred unsubscribing', {
+        response,
+        url: this.url,
+    });
     onReadyToPerformNextAction.call(this);
 }
 
@@ -365,7 +424,10 @@ function onUnsubscribeError(referenceId, response) {
  */
 function onModifyPatchSuccess(referenceId, response) {
     if (referenceId !== this.referenceId) {
-        log.debug(LOG_AREA, 'Received a response for modify patch a subscription that has afterwards been reset - ignoring');
+        log.debug(
+            LOG_AREA,
+            'Received a response for modify patch a subscription that has afterwards been reset - ignoring',
+        );
         return;
     }
 
@@ -379,12 +441,18 @@ function onModifyPatchSuccess(referenceId, response) {
  */
 function onModifyPatchError(referenceId, response) {
     if (referenceId !== this.referenceId) {
-        log.error(LOG_AREA, 'Received an error response for modify patch a subscription that has afterwards been reset - ignoring');
+        log.error(
+            LOG_AREA,
+            'Received an error response for modify patch a subscription that has afterwards been reset - ignoring',
+        );
         return;
     }
 
     setState.call(this, this.STATE_SUBSCRIBED);
-    log.error(LOG_AREA, 'An error occurred patching', { response, url: this.url });
+    log.error(LOG_AREA, 'An error occurred patching', {
+        response,
+        url: this.url,
+    });
     onReadyToPerformNextAction.call(this);
 }
 
@@ -414,8 +482,15 @@ function setState(state) {
  * @alias saxo.openapi.StreamingSubscription
  */
 // eslint-disable-next-line max-params
-function Subscription(streamingContextId, transport, serviceGroup, url, subscriptionArgs, onSubscriptionCreated, options = {}) {
-
+function Subscription(
+    streamingContextId,
+    transport,
+    serviceGroup,
+    url,
+    subscriptionArgs,
+    onSubscriptionCreated,
+    options = {},
+) {
     /**
      * The streaming context id identifies the particular streaming connection that this subscription will use.
      * @type {string}
@@ -437,7 +512,11 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     /**
      * The parser, chosen based on provided format.
      */
-    this.parser = ParserFacade.getParser(subscriptionArgs.Format, serviceGroup, url);
+    this.parser = ParserFacade.getParser(
+        subscriptionArgs.Format,
+        serviceGroup,
+        url,
+    );
 
     this.onStateChangedCallbacks = [];
 
@@ -458,7 +537,11 @@ function Subscription(streamingContextId, transport, serviceGroup, url, subscrip
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
     } else if (this.subscriptionData.RefreshRate < MIN_REFRESH_RATE_MS) {
-        log.warn(LOG_AREA, 'Low refresh rate. This has been rounded up to the minimum.', { minimumRate: MIN_REFRESH_RATE_MS });
+        log.warn(
+            LOG_AREA,
+            'Low refresh rate. This has been rounded up to the minimum.',
+            { minimumRate: MIN_REFRESH_RATE_MS },
+        );
         this.subscriptionData.RefreshRate = MIN_REFRESH_RATE_MS;
     }
     this.connectionAvailable = true;
@@ -528,10 +611,17 @@ Subscription.prototype.processSnapshot = function(response) {
         // If SchemaName is missing, trying to use last valid schema name from parser as an fallback.
         this.SchemaName = this.parser.getSchemaName();
 
-        if (this.subscriptionData.Format === FORMAT_PROTOBUF && !this.SchemaName) {
+        if (
+            this.subscriptionData.Format === FORMAT_PROTOBUF &&
+            !this.SchemaName
+        ) {
             // If SchemaName is missing both in response and parser cache, it means that openapi doesn't support protobuf fot this endpoint.
             // In such scenario, falling back to default parser.
-            this.parser = ParserFacade.getParser(ParserFacade.getDefaultFormat(), this.serviceGroup, this.url);
+            this.parser = ParserFacade.getParser(
+                ParserFacade.getDefaultFormat(),
+                this.serviceGroup,
+                this.url,
+            );
         }
     }
 
@@ -545,7 +635,6 @@ Subscription.prototype.processSnapshot = function(response) {
  * @private
  */
 Subscription.prototype.reset = function() {
-
     switch (this.currentState) {
         case this.STATE_UNSUBSCRIBED:
         case this.STATE_UNSUBSCRIBE_REQUESTED:
@@ -568,7 +657,10 @@ Subscription.prototype.reset = function() {
             break;
 
         default:
-            log.error(LOG_AREA, 'reset was called but subscription is in an unknown state');
+            log.error(
+                LOG_AREA,
+                'reset was called but subscription is in an unknown state',
+            );
             return;
     }
 
@@ -594,10 +686,15 @@ Subscription.prototype.reset = function() {
  */
 Subscription.prototype.onSubscribe = function(modify) {
     if (this.isDisposed) {
-        throw new Error('Subscribing a disposed subscription - you will not get data');
+        throw new Error(
+            'Subscribing a disposed subscription - you will not get data',
+        );
     }
 
-    tryPerformAction.call(this, modify ? ACTION_MODIFY_SUBSCRIBE : ACTION_SUBSCRIBE);
+    tryPerformAction.call(
+        this,
+        modify ? ACTION_MODIFY_SUBSCRIBE : ACTION_SUBSCRIBE,
+    );
 };
 
 /**
@@ -606,9 +703,10 @@ Subscription.prototype.onSubscribe = function(modify) {
  * @private
  */
 Subscription.prototype.onModify = function(newArgs, options) {
-
     if (this.isDisposed) {
-        throw new Error('Modifying a disposed subscription - you will not get data');
+        throw new Error(
+            'Modifying a disposed subscription - you will not get data',
+        );
     }
 
     this.subscriptionData.Arguments = newArgs;
@@ -616,7 +714,11 @@ Subscription.prototype.onModify = function(newArgs, options) {
         if (!options.patchArgsDelta) {
             throw new Error('Modify options patchArgsDelta is not defined');
         }
-        tryPerformAction.call(this, ACTION_MODIFY_PATCH, options.patchArgsDelta);
+        tryPerformAction.call(
+            this,
+            ACTION_MODIFY_PATCH,
+            options.patchArgsDelta,
+        );
     } else {
         // resubscribe with new arguments
         this.onUnsubscribe();
@@ -629,9 +731,10 @@ Subscription.prototype.onModify = function(newArgs, options) {
  * @private
  */
 Subscription.prototype.onUnsubscribe = function() {
-
     if (this.isDisposed) {
-        log.warn('Unsubscribing a disposed subscription - this is not necessary');
+        log.warn(
+            'Unsubscribing a disposed subscription - this is not necessary',
+        );
     }
 
     tryPerformAction.call(this, ACTION_UNSUBSCRIBE);
@@ -642,7 +745,6 @@ Subscription.prototype.onUnsubscribe = function() {
  * @private
  */
 Subscription.prototype.dispose = function() {
-
     this.isDisposed = true;
 };
 
@@ -701,7 +803,11 @@ Subscription.prototype.onStreamingData = function(message) {
     try {
         this.processUpdate(message, this.UPDATE_TYPE_DELTA);
     } catch (error) {
-        log.error(LOG_AREA, 'exception occurred in streaming delta update callback', error);
+        log.error(
+            LOG_AREA,
+            'exception occurred in streaming delta update callback',
+            error,
+        );
     }
 };
 
@@ -711,7 +817,11 @@ Subscription.prototype.onStreamingData = function(message) {
  */
 Subscription.prototype.onHeartbeat = function() {
     if (this.currentState === this.STATE_SUBSCRIBE_REQUESTED) {
-        log.warn(LOG_AREA, 'received heartbeat for a subscription we havent subscribed to yet', { url: this.url, serviceGroup: this.serviceGroup });
+        log.warn(
+            LOG_AREA,
+            'received heartbeat for a subscription we havent subscribed to yet',
+            { url: this.url, serviceGroup: this.serviceGroup },
+        );
     }
     onActivity.call(this);
 };
@@ -744,14 +854,15 @@ Subscription.prototype.isReadyForUnsubscribeByTag = function() {
  * @private
  */
 Subscription.prototype.timeTillOrphaned = function(now) {
-
     // this works because there are no suspended and resume states.
     // once subscribed, orphan finder will be notified.
-    if (!this.connectionAvailable ||
+    if (
+        !this.connectionAvailable ||
         this.inactivityTimeout === 0 ||
         this.currentState === this.STATE_UNSUBSCRIBED ||
         this.currentState === this.STATE_UNSUBSCRIBE_REQUESTED ||
-        this.currentState === this.STATE_SUBSCRIBE_REQUESTED) {
+        this.currentState === this.STATE_SUBSCRIBE_REQUESTED
+    ) {
         return Infinity;
     }
 

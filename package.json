@@ -1,62 +1,71 @@
 {
-  "name": "openapi-clientlib",
-  "version": "6.0.3",
-  "engines": {
-    "node": ">=4"
-  },
-  "scripts": {
-    "dist": "npm run clean && npm run rollup",
-    "clean": "rimraf dist",
-    "rollup": "rollup -c",
-    "dist-watch": "nodemon --watch src --watch libs -e js --exec npm run rollup",
-    "test": "npm run lint && npm run jest",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "jest": "jest --coverage",
-    "jest:watch": "jest --watch",
-    "jest:debug": "node --debug-brk node_modules/jest/bin/jest --runInBand"
-  },
-  "jest": {
-    "verbose": true,
-    "transform": {
-      "^.+\\.jsx?$": "babel-jest"
+    "name": "openapi-clientlib",
+    "version": "6.0.3",
+    "engines": {
+        "node": ">=4"
     },
-    "moduleDirectories": [
-      "node_modules",
-      "<rootDir>"
+    "scripts": {
+        "dist": "npm run clean && npm run rollup",
+        "clean": "rimraf dist",
+        "rollup": "rollup -c",
+        "dist-watch": "nodemon --watch src --watch libs -e js --exec npm run rollup",
+        "test": "npm run lint && npm run jest && npm run prettier:check",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "jest": "jest --coverage",
+        "jest:watch": "jest --watch",
+        "jest:debug": "node --debug-brk node_modules/jest/bin/jest --runInBand",
+        "prettier:write": "prettier **/*.{js,json} --write",
+        "prettier:check": "prettier **/*.{js,json} --check"
+    },
+    "jest": {
+        "verbose": true,
+        "transform": {
+            "^.+\\.jsx?$": "babel-jest"
+        },
+        "moduleDirectories": [
+            "node_modules",
+            "<rootDir>"
+        ],
+        "testEnvironment": "jsdom",
+        "restoreMocks": true,
+        "coverageDirectory": "dist/coverage/"
+    },
+    "main": "dist/release/openapi-client.js",
+    "files": [
+        "dist",
+        "src"
     ],
-    "testEnvironment": "jsdom",
-    "restoreMocks": true,
-    "coverageDirectory": "dist/coverage/"
-  },
-  "main": "dist/release/openapi-client.js",
-  "files": [
-    "dist",
-    "src"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/SaxoBank/openapi-clientlib-js.git"
-  },
-  "license": "Apache-2.0",
-  "devDependencies": {
-    "@babel/core": "7.8.7",
-    "@babel/preset-env": "7.8.7",
-    "babel-jest": "25.1.0",
-    "eslint": "6.8.0",
-    "eslint-import-resolver-node": "0.3.3",
-    "eslint-plugin-destructuring": "2.2.0",
-    "eslint-plugin-import": "2.20.1",
-    "eslint-plugin-jest": "23.8.2",
-    "eslint-plugin-promise": "4.2.1",
-    "eslint-plugin-switch-case": "1.1.2",
-    "jest": "25.1.0",
-    "mockdate": "2.0.2",
-    "nodemon": "1.18.7",
-    "protobufjs": "6.8.8",
-    "regenerator-runtime": "0.13.1",
-    "rimraf": "2.6.2",
-    "rollup": "2.0.6",
-    "rollup-plugin-babel": "4.4.0"
-  }
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/SaxoBank/openapi-clientlib-js.git"
+    },
+    "license": "Apache-2.0",
+    "devDependencies": {
+        "@babel/core": "7.8.7",
+        "@babel/preset-env": "7.8.7",
+        "babel-jest": "25.1.0",
+        "eslint": "6.8.0",
+        "eslint-import-resolver-node": "0.3.3",
+        "eslint-plugin-destructuring": "2.2.0",
+        "eslint-plugin-import": "2.20.1",
+        "eslint-plugin-jest": "23.8.2",
+        "eslint-plugin-promise": "4.2.1",
+        "eslint-plugin-switch-case": "1.1.2",
+        "jest": "25.1.0",
+        "mockdate": "2.0.2",
+        "nodemon": "1.18.7",
+        "prettier": "1.19.1",
+        "protobufjs": "6.8.8",
+        "regenerator-runtime": "0.13.1",
+        "rimraf": "2.6.2",
+        "rollup": "2.0.6",
+        "rollup-plugin-babel": "4.4.0"
+    },
+    "prettier": {
+        "trailingComma": "all",
+        "tabWidth": 4,
+        "singleQuote": true,
+        "arrowParens": "always"
+    }
 }

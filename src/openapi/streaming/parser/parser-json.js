@@ -9,10 +9,14 @@ function ParserJson(name, engine = null) {
     this.engine = engine;
 }
 
-ParserJson.prototype = Object.create(
-    ParserBase.prototype,
-    { constructor: { value: ParserJson, enumerable: false, writable: true, configurable: true } },
-);
+ParserJson.prototype = Object.create(ParserBase.prototype, {
+    constructor: {
+        value: ParserJson,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+});
 
 ParserJson.prototype.parse = function(data, schemaName) {
     return data;

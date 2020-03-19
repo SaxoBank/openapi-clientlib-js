@@ -1,4 +1,10 @@
-import { setTimeout, multiline, installClock, uninstallClock, tick } from '../../test/utils';
+import {
+    setTimeout,
+    multiline,
+    installClock,
+    uninstallClock,
+    tick,
+} from '../../test/utils';
 import mockTransport from '../../test/mocks/transport';
 import * as RequestUtils from '../../utils/request';
 import TransportBatch from './batch';
@@ -12,7 +18,6 @@ jest.mock('../../utils/function', () => {
 });
 
 describe('openapi TransportBatch', () => {
-
     const validBaseUrl = 'localhost/openapi/';
     let transport;
     let transportBatch;
@@ -36,7 +41,9 @@ describe('openapi TransportBatch', () => {
 
     it('requires baseUrl', () => {
         expect(function() {
-            transportBatch = new TransportBatch(transport, null, { timeoutMs: 0 });
+            transportBatch = new TransportBatch(transport, null, {
+                timeoutMs: 0,
+            });
         }).toThrow();
         expect(function() {
             transportBatch = new TransportBatch(null, validBaseUrl, {});
@@ -52,7 +59,7 @@ describe('openapi TransportBatch', () => {
         }).not.toThrow();
     });
 
-    it('handles different base url\'s', function() {
+    it("handles different base url's", function() {
         // for this to be valid, open api would have to be hosted at the same level or above on the current server
         expect(() => {
             transportBatch = new TransportBatch(transport, '/');
@@ -68,7 +75,10 @@ describe('openapi TransportBatch', () => {
         transportBatch = new TransportBatch(transport, 'localhost/openapi/');
         expect(transportBatch.basePath).toEqual('/openapi/');
 
-        transportBatch = new TransportBatch(transport, 'http://localhost/openapi/');
+        transportBatch = new TransportBatch(
+            transport,
+            'http://localhost/openapi/',
+        );
         expect(transportBatch.basePath).toEqual('/openapi/');
     });
 
@@ -78,13 +88,21 @@ describe('openapi TransportBatch', () => {
     });
 
     it('overrides timeout', function() {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 9999 });
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 9999,
+        });
         expect(transportBatch.timeoutMs).toEqual(9999);
     });
 
     it('does not batch if only a single call is to be made', function() {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
+        });
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
 
         expect(transport.get.mock.calls.length).toEqual(0);
         expect(transport.post.mock.calls.length).toEqual(0);
@@ -96,12 +114,34 @@ describe('openapi TransportBatch', () => {
     });
 
     it('queues up calls immediately if timeout is 0', function() {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        transportBatch.patch('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
+        });
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        transportBatch.put(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        transportBatch.post(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        transportBatch.delete(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        transportBatch.patch(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
 
         expect(transport.get.mock.calls.length).toEqual(0);
         expect(transport.put.mock.calls.length).toEqual(0);
@@ -112,54 +152,63 @@ describe('openapi TransportBatch', () => {
         tick(1);
 
         expect(transport.post.mock.calls.length).toEqual(1);
-        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-            body: multiline('--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:2',
-                'Host:localhost',
-                '',
-                '',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:3',
-                'Content-Type:application/json; charset=utf-8',
-                'Host:localhost',
-                '',
-                '',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:4',
-                'Content-Type:application/json; charset=utf-8',
-                'Host:localhost',
-                '',
-                '',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:5',
-                'Host:localhost',
-                '',
-                '',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'PATCH /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:6',
-                'Content-Type:application/json; charset=utf-8',
-                'Host:localhost',
-                '',
-                '',
-                '--+--',
-                ''),
-            cache: false,
-            requestId: 1 }]);
+        expect(transport.post.mock.calls[0]).toEqual([
+            'port',
+            'batch',
+            null,
+            {
+                headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline(
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:2',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:3',
+                    'Content-Type:application/json; charset=utf-8',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:4',
+                    'Content-Type:application/json; charset=utf-8',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:5',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'PATCH /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:6',
+                    'Content-Type:application/json; charset=utf-8',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+--',
+                    '',
+                ),
+                cache: false,
+                requestId: 1,
+            },
+        ]);
 
         expect(transport.get.mock.calls.length).toEqual(0);
         expect(transport.put.mock.calls.length).toEqual(0);
@@ -168,14 +217,32 @@ describe('openapi TransportBatch', () => {
     });
 
     it('queues up calls and executes after the timeout if the timeout is not 0', function() {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 10 });
-        transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 10,
+        });
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        transportBatch.put(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
 
         tick(5);
 
-        transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        transportBatch.post(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        transportBatch.delete(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
 
         tick(9);
 
@@ -184,51 +251,72 @@ describe('openapi TransportBatch', () => {
         expect(transport.delete.mock.calls.length).toEqual(0);
 
         expect(transport.post.mock.calls.length).toEqual(1);
-        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-            body: multiline('--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:2',
-                'Host:localhost',
-                '',
-                '',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:3',
-                'Content-Type:application/json; charset=utf-8',
-                'Host:localhost',
-                '',
-                '',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:4',
-                'Content-Type:application/json; charset=utf-8',
-                'Host:localhost',
-                '',
-                '',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:5',
-                'Host:localhost',
-                '',
-                '',
-                '--+--',
-                ''),
-            cache: false,
-            requestId: 1 }]);
+        expect(transport.post.mock.calls[0]).toEqual([
+            'port',
+            'batch',
+            null,
+            {
+                headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline(
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:2',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:3',
+                    'Content-Type:application/json; charset=utf-8',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'POST /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:4',
+                    'Content-Type:application/json; charset=utf-8',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'DELETE /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:5',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+--',
+                    '',
+                ),
+                cache: false,
+                requestId: 1,
+            },
+        ]);
     });
 
     it('accepts an object or a string in the body argument', function() {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' }, { body: { test: true, str: 'str' } });
-        transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518825, Type: 'CfdOnFutures' }, { body: '{ "test": true, "str": "str" }' });
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
+        });
+        transportBatch.put(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+            { body: { test: true, str: 'str' } },
+        );
+        transportBatch.put(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518825, Type: 'CfdOnFutures' },
+            { body: '{ "test": true, "str": "str" }' },
+        );
 
         expect(transport.put.mock.calls.length).toEqual(0);
         expect(transport.post.mock.calls.length).toEqual(0);
@@ -236,37 +324,58 @@ describe('openapi TransportBatch', () => {
         tick(1);
 
         expect(transport.post.mock.calls.length).toEqual(1);
-        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-            body: multiline('--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:2',
-                'Content-Type:application/json; charset=utf-8',
-                'Host:localhost',
-                '',
-                '{"test":true,"str":"str"}',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'PUT /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:3',
-                'Content-Type:application/json; charset=utf-8',
-                'Host:localhost',
-                '',
-                '{ "test": true, "str": "str" }',
-                '--+--',
-                ''),
-            cache: false,
-            requestId: 1 }]);
+        expect(transport.post.mock.calls[0]).toEqual([
+            'port',
+            'batch',
+            null,
+            {
+                headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline(
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'PUT /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:2',
+                    'Content-Type:application/json; charset=utf-8',
+                    'Host:localhost',
+                    '',
+                    '{"test":true,"str":"str"}',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'PUT /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:3',
+                    'Content-Type:application/json; charset=utf-8',
+                    'Host:localhost',
+                    '',
+                    '{ "test": true, "str": "str" }',
+                    '--+--',
+                    '',
+                ),
+                cache: false,
+                requestId: 1,
+            },
+        ]);
 
         expect(transport.put.mock.calls.length).toEqual(0);
     });
 
     it('allows not having any authentication passed in and picks it up off the calls', function() {
-        transportBatch = new TransportBatch(transport, validBaseUrl, null, { timeoutMs: 0 });
-        transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' }, { headers: { Authorization: 'TOKEN1', MyHeader: 'true' } });
-        transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518825, Type: 'CfdOnFutures' }, { headers: { Authorization: 'TOKEN2' } });
+        transportBatch = new TransportBatch(transport, validBaseUrl, null, {
+            timeoutMs: 0,
+        });
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+            { headers: { Authorization: 'TOKEN1', MyHeader: 'true' } },
+        );
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518825, Type: 'CfdOnFutures' },
+            { headers: { Authorization: 'TOKEN2' } },
+        );
 
         expect(transport.put.mock.calls.length).toEqual(0);
         expect(transport.post.mock.calls.length).toEqual(0);
@@ -274,47 +383,79 @@ describe('openapi TransportBatch', () => {
         tick(1);
 
         expect(transport.post.mock.calls.length).toEqual(1);
-        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-            body: multiline('--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:2',
-                'Authorization:TOKEN1',
-                'MyHeader:true',
-                'Host:localhost',
-                '',
-                '',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'GET /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
-                'X-Request-Id:3',
-                'Authorization:TOKEN2',
-                'Host:localhost',
-                '',
-                '',
-                '--+--',
-                ''),
-            cache: false,
-            requestId: 1 }]);
+        expect(transport.post.mock.calls[0]).toEqual([
+            'port',
+            'batch',
+            null,
+            {
+                headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline(
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:2',
+                    'Authorization:TOKEN1',
+                    'MyHeader:true',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'GET /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:3',
+                    'Authorization:TOKEN2',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+--',
+                    '',
+                ),
+                cache: false,
+                requestId: 1,
+            },
+        ]);
 
         expect(transport.get.mock.calls.length).toEqual(0);
     });
 
     it('processes the batch response', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 33, Type: 'CfdOnFutures' });
-        const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 44, Type: 'CfdOnFutures' });
-        const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 55, Type: 'CfdOnFutures' });
-        const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 66, Type: 'CfdOnFutures' });
-        const patchPromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 77, Type: 'CfdOnFutures' });
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
+        });
+        const getPromise = transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 33, Type: 'CfdOnFutures' },
+        );
+        const putPromise = transportBatch.put(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 44, Type: 'CfdOnFutures' },
+        );
+        const postPromise = transportBatch.post(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 55, Type: 'CfdOnFutures' },
+        );
+        const deletePromise = transportBatch.delete(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 66, Type: 'CfdOnFutures' },
+        );
+        const patchPromise = transportBatch.delete(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 77, Type: 'CfdOnFutures' },
+        );
 
         tick(1);
 
         expect(transport.post.mock.calls.length).toEqual(1);
 
-        transport.postResolve({ status: 200,
+        transport.postResolve({
+            status: 200,
             response: multiline(
                 '--+',
                 'Content-Type:application/http; msgtype=response',
@@ -378,7 +519,8 @@ describe('openapi TransportBatch', () => {
                 '{ "mydata": "patch"}',
                 '--+--',
                 '',
-            ) });
+            ),
+        });
 
         const getThen = jest.fn().mockName('getThen');
         const putThen = jest.fn().mockName('putThen');
@@ -396,46 +538,78 @@ describe('openapi TransportBatch', () => {
 
         setTimeout(() => {
             expect(getThen.mock.calls.length).toEqual(1);
-            expect(getThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'get' } }]);
+            expect(getThen.mock.calls[0]).toEqual([
+                { status: 200, response: { mydata: 'get' } },
+            ]);
 
             expect(putThen.mock.calls.length).toEqual(1);
-            expect(putThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'put' } }]);
+            expect(putThen.mock.calls[0]).toEqual([
+                { status: 200, response: { mydata: 'put' } },
+            ]);
 
             expect(postThen.mock.calls.length).toEqual(1);
-            expect(postThen.mock.calls[0]).toEqual([{ status: 201, response: { 'mydata': 'post' } }]);
+            expect(postThen.mock.calls[0]).toEqual([
+                { status: 201, response: { mydata: 'post' } },
+            ]);
 
             expect(deleteThen.mock.calls.length).toEqual(1);
-            expect(deleteThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'delete' } }]);
+            expect(deleteThen.mock.calls[0]).toEqual([
+                { status: 200, response: { mydata: 'delete' } },
+            ]);
 
             expect(patchThen.mock.calls.length).toEqual(1);
-            expect(patchThen.mock.calls[0]).toEqual([{ status: 200, response: { 'mydata': 'patch' } }]);
+            expect(patchThen.mock.calls[0]).toEqual([
+                { status: 200, response: { mydata: 'patch' } },
+            ]);
 
             done();
         });
     });
 
     it('passes on failures', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', {
-            InstrumentId: 1518824,
-            Type: 'CfdOnFutures',
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
         });
-        const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', {
-            InstrumentId: 1518824,
-            Type: 'CfdOnFutures',
-        });
-        const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', {
-            InstrumentId: 1518824,
-            Type: 'CfdOnFutures',
-        });
-        const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', {
-            InstrumentId: 1518824,
-            Type: 'CfdOnFutures',
-        });
-        const patchPromise = transportBatch.patch('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', {
-            InstrumentId: 1518824,
-            Type: 'CfdOnFutures',
-        });
+        const getPromise = transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            {
+                InstrumentId: 1518824,
+                Type: 'CfdOnFutures',
+            },
+        );
+        const putPromise = transportBatch.put(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            {
+                InstrumentId: 1518824,
+                Type: 'CfdOnFutures',
+            },
+        );
+        const postPromise = transportBatch.post(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            {
+                InstrumentId: 1518824,
+                Type: 'CfdOnFutures',
+            },
+        );
+        const deletePromise = transportBatch.delete(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            {
+                InstrumentId: 1518824,
+                Type: 'CfdOnFutures',
+            },
+        );
+        const patchPromise = transportBatch.patch(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            {
+                InstrumentId: 1518824,
+                Type: 'CfdOnFutures',
+            },
+        );
 
         tick(1);
 
@@ -461,41 +635,72 @@ describe('openapi TransportBatch', () => {
             // we reject the promise with nothing, which somes through as undefined.
             // put in here in case it changes and we decide to reject with something
             expect(getCatch.mock.calls.length).toEqual(1);
-            expect(getCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(getCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed' },
+            ]);
 
             expect(putCatch.mock.calls.length).toEqual(1);
-            expect(putCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(putCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed' },
+            ]);
 
             expect(postCatch.mock.calls.length).toEqual(1);
-            expect(postCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(postCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed' },
+            ]);
 
             expect(deleteCatch.mock.calls.length).toEqual(1);
-            expect(deleteCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(deleteCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed' },
+            ]);
 
             expect(patchCatch.mock.calls.length).toEqual(1);
-            expect(patchCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(patchCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed' },
+            ]);
 
             done();
         });
     });
 
     it('passes on a failure when the promise resolves without a batch', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const patchPromise = transportBatch.patch('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
+        });
+        const getPromise = transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        const putPromise = transportBatch.put(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        const postPromise = transportBatch.post(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        const deletePromise = transportBatch.delete(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        const patchPromise = transportBatch.patch(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
 
         tick(1);
 
         expect(transport.post.mock.calls.length).toEqual(1);
 
-        transport.postResolve(
-            {
-                status: 200,
-                response: '',
-            });
+        transport.postResolve({
+            status: 200,
+            response: '',
+        });
 
         const getCatch = jest.fn().mockName('getCatch');
         const putCatch = jest.fn().mockName('putCatch');
@@ -513,38 +718,75 @@ describe('openapi TransportBatch', () => {
 
         setTimeout(() => {
             expect(getCatch.mock.calls.length).toEqual(1);
-            expect(getCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(getCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed' },
+            ]);
 
             expect(putCatch.mock.calls.length).toEqual(1);
-            expect(deleteCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(deleteCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed' },
+            ]);
 
             expect(postCatch.mock.calls.length).toEqual(1);
-            expect(postCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(postCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed' },
+            ]);
 
             expect(deleteCatch.mock.calls.length).toEqual(1);
-            expect(deleteCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(deleteCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed' },
+            ]);
 
             expect(patchCatch.mock.calls.length).toEqual(1);
-            expect(patchCatch.mock.calls[0]).toEqual([{ message: 'batch failed' }]);
+            expect(patchCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed' },
+            ]);
 
             done();
         });
     });
 
     it('detects a non 2xx status code as a rejection', function(done) {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        const getPromise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const get304Promise = transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const putPromise = transportBatch.put('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const postPromise = transportBatch.post('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const deletePromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
-        const patchPromise = transportBatch.delete('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: 'CfdOnFutures' });
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
+        });
+        const getPromise = transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        const get304Promise = transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        const putPromise = transportBatch.put(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        const postPromise = transportBatch.post(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        const deletePromise = transportBatch.delete(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
+        const patchPromise = transportBatch.delete(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+        );
 
         tick(1);
 
         expect(transport.post.mock.calls.length).toEqual(1);
 
-        transport.postResolve({ status: 200,
+        transport.postResolve({
+            status: 200,
             response: multiline(
                 '--+',
                 'Content-Type:application/http; msgtype=response',
@@ -607,7 +849,8 @@ describe('openapi TransportBatch', () => {
                 '{ "mydata": "delete"}',
                 '--+--',
                 '',
-            ) });
+            ),
+        });
 
         const getCatch = jest.fn().mockName('getCatch');
         const get304Then = jest.fn().mockName('get304Then');
@@ -635,13 +878,19 @@ describe('openapi TransportBatch', () => {
             expect(get304Then.mock.calls[0]).toEqual([{ status: 304 }]);
 
             expect(putCatch.mock.calls.length).toEqual(1);
-            expect(putCatch.mock.calls[0]).toEqual([{ status: 300, response: { mydata: 'put' } }]);
+            expect(putCatch.mock.calls[0]).toEqual([
+                { status: 300, response: { mydata: 'put' } },
+            ]);
 
             expect(postThen.mock.calls.length).toEqual(1);
-            expect(postThen.mock.calls[0]).toEqual([{ status: 299, response: { mydata: 'post' } }]);
+            expect(postThen.mock.calls[0]).toEqual([
+                { status: 299, response: { mydata: 'post' } },
+            ]);
 
             expect(deleteCatch.mock.calls.length).toEqual(1);
-            expect(deleteCatch.mock.calls[0]).toEqual([{ status: 400, response: { mydata: 'delete' } }]);
+            expect(deleteCatch.mock.calls[0]).toEqual([
+                { status: 400, response: { mydata: 'delete' } },
+            ]);
 
             // patch is testing what happens when openapi doesn't include the item in the response
             expect(patchCatch.mock.calls.length).toEqual(1);
@@ -652,65 +901,105 @@ describe('openapi TransportBatch', () => {
     });
 
     it('uri-encodes arguments', function() {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518824, Type: '&=' });
-        transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}/{Type}', { InstrumentId: 1518825, Type: '&=' });
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
+        });
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: '&=' },
+        );
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518825, Type: '&=' },
+        );
 
         tick(1);
 
         expect(transport.post.mock.calls.length).toEqual(1);
-        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-            body: multiline('--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'GET /openapi/port/ref/v1/instruments/details/1518824/%26%3D HTTP/1.1',
-                'X-Request-Id:2',
-                'Host:localhost',
-                '',
-                '',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'GET /openapi/port/ref/v1/instruments/details/1518825/%26%3D HTTP/1.1',
-                'X-Request-Id:3',
-                'Host:localhost',
-                '',
-                '',
-                '--+--',
-                ''),
-            cache: false,
-            requestId: 1 }]);
+        expect(transport.post.mock.calls[0]).toEqual([
+            'port',
+            'batch',
+            null,
+            {
+                headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline(
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'GET /openapi/port/ref/v1/instruments/details/1518824/%26%3D HTTP/1.1',
+                    'X-Request-Id:2',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'GET /openapi/port/ref/v1/instruments/details/1518825/%26%3D HTTP/1.1',
+                    'X-Request-Id:3',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+--',
+                    '',
+                ),
+                cache: false,
+                requestId: 1,
+            },
+        ]);
     });
 
     it('supports queryParams', function() {
-        transportBatch = new TransportBatch(transport, validBaseUrl, { timeoutMs: 0 });
-        transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}', { InstrumentId: 1518824 }, { queryParams: { a: 1, b: 2 } });
-        transportBatch.get('port', 'ref/v1/instruments/details/{InstrumentId}', { InstrumentId: 1518825 }, { queryParams: { a: '&=' } });
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
+        });
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}',
+            { InstrumentId: 1518824 },
+            { queryParams: { a: 1, b: 2 } },
+        );
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}',
+            { InstrumentId: 1518825 },
+            { queryParams: { a: '&=' } },
+        );
 
         tick(1);
 
         expect(transport.post.mock.calls.length).toEqual(1);
-        expect(transport.post.mock.calls[0]).toEqual(['port', 'batch', null, { headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
-            body: multiline('--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'GET /openapi/port/ref/v1/instruments/details/1518824?a=1&b=2 HTTP/1.1',
-                'X-Request-Id:2',
-                'Host:localhost',
-                '',
-                '',
-                '--+',
-                'Content-Type:application/http; msgtype=request',
-                '',
-                'GET /openapi/port/ref/v1/instruments/details/1518825?a=%26%3D HTTP/1.1',
-                'X-Request-Id:3',
-                'Host:localhost',
-                '',
-                '',
-                '--+--',
-                ''),
-            cache: false,
-            requestId: 1 }]);
+        expect(transport.post.mock.calls[0]).toEqual([
+            'port',
+            'batch',
+            null,
+            {
+                headers: { 'Content-Type': 'multipart/mixed; boundary="+"' },
+                body: multiline(
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'GET /openapi/port/ref/v1/instruments/details/1518824?a=1&b=2 HTTP/1.1',
+                    'X-Request-Id:2',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'GET /openapi/port/ref/v1/instruments/details/1518825?a=%26%3D HTTP/1.1',
+                    'X-Request-Id:3',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+--',
+                    '',
+                ),
+                cache: false,
+                requestId: 1,
+            },
+        ]);
     });
 
     it('disposes okay', () => {

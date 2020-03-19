@@ -1,4 +1,9 @@
-import { setTimeout, installClock, uninstallClock, tick } from '../../test/utils';
+import {
+    setTimeout,
+    installClock,
+    uninstallClock,
+    tick,
+} from '../../test/utils';
 import mockTransport from '../../test/mocks/transport';
 import * as mockProtoPrice from '../../test/mocks/proto-price';
 import protobuf from 'protobufjs/dist/protobuf';
@@ -16,7 +21,6 @@ ParserFacade.addParsers({
 });
 
 describe('openapi StreamingSubscription', () => {
-
     let transport;
     let updateSpy;
     let createdSpy;
@@ -49,7 +53,13 @@ describe('openapi StreamingSubscription', () => {
         let subscription;
 
         beforeEach(() => {
-            subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', { RefreshRate: 120 });
+            subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                { RefreshRate: 120 },
+            );
         });
 
         it('is ready for unsubscribe immediately if not yet subscribed', () => {
@@ -79,47 +89,118 @@ describe('openapi StreamingSubscription', () => {
 
     describe('options', () => {
         it('accepts a refresh rate', () => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', { RefreshRate: 120 });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                { RefreshRate: 120 },
+            );
             subscription.onSubscribe();
 
             expect(transport.post.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls[0]).toEqual(['serviceGroup', 'src/test/resource', null, expect.objectContaining({ body: expect.objectContaining({ RefreshRate: 120 }) })]);
+            expect(transport.post.mock.calls[0]).toEqual([
+                'serviceGroup',
+                'src/test/resource',
+                null,
+                expect.objectContaining({
+                    body: expect.objectContaining({ RefreshRate: 120 }),
+                }),
+            ]);
         });
         it('has a minimum refresh rate', () => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', { RefreshRate: 1 });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                { RefreshRate: 1 },
+            );
             subscription.onSubscribe();
 
             expect(transport.post.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls[0]).toEqual(['serviceGroup', 'src/test/resource', null, expect.objectContaining({ body: expect.objectContaining({ RefreshRate: 100 }) })]);
+            expect(transport.post.mock.calls[0]).toEqual([
+                'serviceGroup',
+                'src/test/resource',
+                null,
+                expect.objectContaining({
+                    body: expect.objectContaining({ RefreshRate: 100 }),
+                }),
+            ]);
         });
 
         it('accepts a top', () => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', { RefreshRate: 120, Top: 10 });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                { RefreshRate: 120, Top: 10 },
+            );
             subscription.onSubscribe();
 
             expect(transport.post.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls[0]).toEqual(['serviceGroup', 'src/test/resource?$top=10', null, expect.objectContaining({ body: expect.objectContaining({ RefreshRate: 120 }) })]);
+            expect(transport.post.mock.calls[0]).toEqual([
+                'serviceGroup',
+                'src/test/resource?$top=10',
+                null,
+                expect.objectContaining({
+                    body: expect.objectContaining({ RefreshRate: 120 }),
+                }),
+            ]);
         });
 
         it('accepts a header as part of the options argument', () => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, null, { headers: { Header: 'header' } });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                null,
+                { headers: { Header: 'header' } },
+            );
             subscription.onSubscribe();
 
             expect(transport.post.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls[0]).toEqual(['serviceGroup', 'src/test/resource', null, expect.objectContaining({ headers: { Header: 'header' } })]);
+            expect(transport.post.mock.calls[0]).toEqual([
+                'serviceGroup',
+                'src/test/resource',
+                null,
+                expect.objectContaining({ headers: { Header: 'header' } }),
+            ]);
         });
 
         it('will omit headers if none are passed', () => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {});
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+            );
             subscription.onSubscribe();
 
             expect(transport.post.mock.calls.length).toEqual(1);
-            expect(transport.post.mock.calls[0]).toEqual(['serviceGroup', 'src/test/resource', null, expect.not.objectContaining({ headers: expect.anything() })]);
+            expect(transport.post.mock.calls[0]).toEqual([
+                'serviceGroup',
+                'src/test/resource',
+                null,
+                expect.not.objectContaining({ headers: expect.anything() }),
+            ]);
         });
 
         it('does not carry over headers mutation', (done) => {
             const headers = { Header: 'header' };
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, null, { headers });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                null,
+                { headers },
+            );
 
             // Mutating passed headers and making sure results doesn't store newly added property.
             headers.Authorization = '1234123';
@@ -141,7 +222,14 @@ describe('openapi StreamingSubscription', () => {
                     sendInitialResponse(initialResponse);
 
                     expect(transport.post.mock.calls.length).toEqual(2);
-                    expect(transport.post.mock.calls[0]).toEqual(['serviceGroup', 'src/test/resource', null, expect.objectContaining({ headers: { Header: 'header' } })]);
+                    expect(transport.post.mock.calls[0]).toEqual([
+                        'serviceGroup',
+                        'src/test/resource',
+                        null,
+                        expect.objectContaining({
+                            headers: { Header: 'header' },
+                        }),
+                    ]);
 
                     done();
                 });
@@ -151,7 +239,15 @@ describe('openapi StreamingSubscription', () => {
 
     describe('initial snapshot', () => {
         it('handles snapshots containing an array of data ', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             const initialResponse = { Snapshot: { Data: [1, 'fish', 3] } };
@@ -160,13 +256,24 @@ describe('openapi StreamingSubscription', () => {
             setTimeout(() => {
                 // the update function should be called once with all data
                 expect(updateSpy.mock.calls.length).toEqual(1);
-                expect(updateSpy.mock.calls[0]).toEqual([{ Data: [1, 'fish', 3] }, subscription.UPDATE_TYPE_SNAPSHOT]);
+                expect(updateSpy.mock.calls[0]).toEqual([
+                    { Data: [1, 'fish', 3] },
+                    subscription.UPDATE_TYPE_SNAPSHOT,
+                ]);
                 done();
             });
         });
 
         it('handles snapshots containing a single datum', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             const initialResponse = { Snapshot: 'wibble' };
@@ -174,45 +281,87 @@ describe('openapi StreamingSubscription', () => {
 
             setTimeout(() => {
                 expect(updateSpy.mock.calls.length).toEqual(1);
-                expect(updateSpy.mock.calls[0]).toEqual(['wibble', subscription.UPDATE_TYPE_SNAPSHOT]);
+                expect(updateSpy.mock.calls[0]).toEqual([
+                    'wibble',
+                    subscription.UPDATE_TYPE_SNAPSHOT,
+                ]);
                 done();
             });
         });
 
         it('handles errors', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onError: errorSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onError: errorSpy },
+            );
             subscription.onSubscribe();
 
-            transport.postReject({ status: '401', response: { message: 'An error has occurred' } });
+            transport.postReject({
+                status: '401',
+                response: { message: 'An error has occurred' },
+            });
 
             setTimeout(() => {
                 expect(errorSpy.mock.calls.length).toEqual(1);
-                expect(errorSpy.mock.calls[0]).toEqual([{ status: '401', response: { message: 'An error has occurred' } }]);
+                expect(errorSpy.mock.calls[0]).toEqual([
+                    {
+                        status: '401',
+                        response: { message: 'An error has occurred' },
+                    },
+                ]);
                 done();
             });
         });
 
         it('handles protobuf format errors fallback to json', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'test/resource', { Format: 'application/x-protobuf' }, createdSpy, { onError: errorSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'test/resource',
+                { Format: 'application/x-protobuf' },
+                createdSpy,
+                { onError: errorSpy },
+            );
             subscription.onSubscribe();
 
-            transport.postReject({ status: '404', response: { ErrorCode: 'UnsupportedSubscriptionFormat' } });
+            transport.postReject({
+                status: '404',
+                response: { ErrorCode: 'UnsupportedSubscriptionFormat' },
+            });
 
             transport.post.mockClear();
 
             setTimeout(() => {
                 expect(errorSpy.mock.calls.length).toEqual(0);
-                expect(subscription.subscriptionData.Format).toEqual('application/json');
+                expect(subscription.subscriptionData.Format).toEqual(
+                    'application/json',
+                );
 
                 expect(transport.post.mock.calls.length).toEqual(1);
-                expect(transport.post.mock.calls[0][3].body.Format).toEqual('application/json');
+                expect(transport.post.mock.calls[0][3].body.Format).toEqual(
+                    'application/json',
+                );
 
                 done();
             });
         });
 
         it('catches exceptions thrown during initial update', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             updateSpy.mockImplementation(() => {
@@ -223,10 +372,12 @@ describe('openapi StreamingSubscription', () => {
             sendInitialResponse(initialResponse);
 
             setTimeout(() => {
-
                 expect(updateSpy.mock.calls.length).toEqual(1);
 
-                const streamingData = { ReferenceId: subscription.referenceId, Data: [1, 3] };
+                const streamingData = {
+                    ReferenceId: subscription.referenceId,
+                    Data: [1, 3],
+                };
                 subscription.onStreamingData(streamingData);
 
                 // check we have not artificiailly set the streaming state as unsubscribed
@@ -240,7 +391,15 @@ describe('openapi StreamingSubscription', () => {
     describe('streamed update', () => {
         let subscription;
         beforeEach((done) => {
-            subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
             sendInitialResponse({ Snapshot: { Data: [] } });
             setTimeout(() => {
@@ -250,32 +409,52 @@ describe('openapi StreamingSubscription', () => {
         });
 
         it('handles updates with the correct referenceId', () => {
-            const streamingData = { ReferenceId: subscription.referenceId, Data: [1, 3] };
+            const streamingData = {
+                ReferenceId: subscription.referenceId,
+                Data: [1, 3],
+            };
             subscription.onStreamingData(streamingData);
 
             // the update function should be called once
             expect(updateSpy.mock.calls.length).toEqual(1);
-            expect(updateSpy.mock.calls[0]).toEqual([streamingData, subscription.UPDATE_TYPE_DELTA]);
+            expect(updateSpy.mock.calls[0]).toEqual([
+                streamingData,
+                subscription.UPDATE_TYPE_DELTA,
+            ]);
         });
 
         it('handles single-valued updates', () => {
-            const streamingData = { ReferenceId: subscription.referenceId, Data: ['foo'] };
+            const streamingData = {
+                ReferenceId: subscription.referenceId,
+                Data: ['foo'],
+            };
             subscription.onStreamingData(streamingData);
 
             expect(updateSpy.mock.calls.length).toEqual(1);
-            expect(updateSpy.mock.calls[0]).toEqual([streamingData, subscription.UPDATE_TYPE_DELTA]);
+            expect(updateSpy.mock.calls[0]).toEqual([
+                streamingData,
+                subscription.UPDATE_TYPE_DELTA,
+            ]);
         });
 
         it('handles single-valued updates in modify patch state', () => {
-
             const patchArgsDelta = { argsDelta: 'delta' };
-            subscription.onModify({ args: 'test' }, { isPatch: true, patchArgsDelta });
+            subscription.onModify(
+                { args: 'test' },
+                { isPatch: true, patchArgsDelta },
+            );
 
-            const streamingData = { ReferenceId: subscription.referenceId, Data: ['foo'] };
+            const streamingData = {
+                ReferenceId: subscription.referenceId,
+                Data: ['foo'],
+            };
             subscription.onStreamingData(streamingData);
 
             expect(updateSpy.mock.calls.length).toEqual(1);
-            expect(updateSpy.mock.calls[0]).toEqual([streamingData, subscription.UPDATE_TYPE_DELTA]);
+            expect(updateSpy.mock.calls[0]).toEqual([
+                streamingData,
+                subscription.UPDATE_TYPE_DELTA,
+            ]);
         });
 
         it('catches exceptions thrown during updates', () => {
@@ -283,15 +462,25 @@ describe('openapi StreamingSubscription', () => {
                 throw new Error('Unhandled Exception');
             });
 
-            expect(() => subscription.onStreamingData({ ReferenceId: subscription.referenceId, Data: 'foo' }))
-                .not.toThrowError();
+            expect(() =>
+                subscription.onStreamingData({
+                    ReferenceId: subscription.referenceId,
+                    Data: 'foo',
+                }),
+            ).not.toThrowError();
         });
 
         it('handles an unsubscribe from streaming data callback', () => {
             updateSpy.mockImplementation(() => subscription.onUnsubscribe());
 
-            subscription.onStreamingData({ ReferenceId: subscription.referenceId, Data: 'foo' });
-            subscription.onStreamingData({ ReferenceId: subscription.referenceId, Data: 'foo' });
+            subscription.onStreamingData({
+                ReferenceId: subscription.referenceId,
+                Data: 'foo',
+            });
+            subscription.onStreamingData({
+                ReferenceId: subscription.referenceId,
+                Data: 'foo',
+            });
 
             expect(updateSpy.mock.calls.length).toEqual(1);
             expect(transport.delete.mock.calls.length).toEqual(1);
@@ -300,27 +489,54 @@ describe('openapi StreamingSubscription', () => {
 
     describe('out of order behaviour', () => {
         it('handles getting a delta before an initial response', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
-            const streamingDelta = { ReferenceId: subscription.referenceId, Data: ['foo'] };
+            const streamingDelta = {
+                ReferenceId: subscription.referenceId,
+                Data: ['foo'],
+            };
             subscription.onStreamingData(streamingDelta);
 
             const initialResponse = { Snapshot: { Data: [1, 'fish', 3] } };
             sendInitialResponse(initialResponse);
 
             setTimeout(() => {
-
                 expect(updateSpy.mock.calls.length).toEqual(2);
-                expect(updateSpy.mock.calls[0]).toEqual([initialResponse.Snapshot, subscription.UPDATE_TYPE_SNAPSHOT]);
-                expect(updateSpy.mock.calls[1]).toEqual([streamingDelta, subscription.UPDATE_TYPE_DELTA]);
+                expect(updateSpy.mock.calls[0]).toEqual([
+                    initialResponse.Snapshot,
+                    subscription.UPDATE_TYPE_SNAPSHOT,
+                ]);
+                expect(updateSpy.mock.calls[1]).toEqual([
+                    streamingDelta,
+                    subscription.UPDATE_TYPE_DELTA,
+                ]);
                 done();
             });
         });
         it('ignores updates when unsubscribed', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
-            subscription.onStreamingData({ ReferenceId: subscription.referenceId, Data: 'foo' });
+            subscription.onStreamingData({
+                ReferenceId: subscription.referenceId,
+                Data: 'foo',
+            });
             expect(updateSpy.mock.calls.length).toEqual(0);
 
             subscription.onSubscribe();
@@ -329,16 +545,21 @@ describe('openapi StreamingSubscription', () => {
             sendInitialResponse(initialResponse);
 
             setTimeout(() => {
-
                 expect(updateSpy.mock.calls.length).toEqual(1);
 
-                subscription.onStreamingData({ ReferenceId: subscription.referenceId, Data: 'foo' });
+                subscription.onStreamingData({
+                    ReferenceId: subscription.referenceId,
+                    Data: 'foo',
+                });
 
                 expect(updateSpy.mock.calls.length).toEqual(2);
 
                 subscription.onUnsubscribe();
 
-                subscription.onStreamingData({ ReferenceId: subscription.referenceId, Data: 'foo' });
+                subscription.onStreamingData({
+                    ReferenceId: subscription.referenceId,
+                    Data: 'foo',
+                });
 
                 expect(updateSpy.mock.calls.length).toEqual(2);
 
@@ -346,12 +567,23 @@ describe('openapi StreamingSubscription', () => {
             });
         });
         it('ignores snapshot when unsubscribed', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             subscription.onSubscribe();
             subscription.onUnsubscribe();
 
-            subscription.onStreamingData({ ReferenceId: subscription.referenceId, Data: 'foo' });
+            subscription.onStreamingData({
+                ReferenceId: subscription.referenceId,
+                Data: 'foo',
+            });
             const initialResponse = { Snapshot: { Data: [1, 'fish', 3] } };
             sendInitialResponse(initialResponse);
 
@@ -361,7 +593,15 @@ describe('openapi StreamingSubscription', () => {
             });
         });
         it('throws an error if you subscribe when disposed', () => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             subscription.onSubscribe();
             subscription.onUnsubscribe();
@@ -373,13 +613,29 @@ describe('openapi StreamingSubscription', () => {
 
     describe('connection unavailable behaviour', () => {
         it('does not subscribe when the connection is unavailable', () => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onConnectionUnavailable();
             subscription.onSubscribe();
             expect(transport.post.mock.calls.length).toEqual(0);
         });
         it('does not unsubscribe when the connection is unavailable', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             expect(transport.post.mock.calls.length).toEqual(1);
@@ -401,7 +657,15 @@ describe('openapi StreamingSubscription', () => {
             });
         });
         it('does not unsubscribe if connection becomes unavailable whilst subscribing', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
             subscription.onConnectionUnavailable();
             subscription.onUnsubscribe();
@@ -422,7 +686,15 @@ describe('openapi StreamingSubscription', () => {
             });
         });
         it('does not subscribe if connection becomes unavailable whilst unsubscribing', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
             expect(transport.post.mock.calls.length).toEqual(1);
             transport.post.mockClear();
@@ -453,7 +725,15 @@ describe('openapi StreamingSubscription', () => {
             });
         });
         it('does not subscribe if connection becomes available whilst unsubscribing', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
             expect(transport.post.mock.calls.length).toEqual(1);
             transport.post.mockClear();
@@ -485,9 +765,16 @@ describe('openapi StreamingSubscription', () => {
     });
 
     describe('subscribe/unsubscribe queuing', () => {
-
         it('ignores multiple commands when already in the right state', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             jest.spyOn(log, 'error');
 
@@ -513,7 +800,6 @@ describe('openapi StreamingSubscription', () => {
 
             sendInitialResponse();
             setTimeout(() => {
-
                 // now subscribed
                 subscription.onSubscribe();
                 subscription.onSubscribe();
@@ -556,9 +842,17 @@ describe('openapi StreamingSubscription', () => {
 
         /**
          * Unsubscribe before subscribe is required for modify action.
-          */
+         */
         it('accept unsubscribe followed by a subscribe when waiting for an action to respond', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             jest.spyOn(log, 'error');
 
@@ -571,7 +865,6 @@ describe('openapi StreamingSubscription', () => {
 
             sendInitialResponse();
             setTimeout(() => {
-
                 expect(transport.post.mock.calls.length).toEqual(0);
                 expect(transport.delete.mock.calls.length).toEqual(0);
 
@@ -582,7 +875,15 @@ describe('openapi StreamingSubscription', () => {
         });
 
         it('if an error occurs unsubscribing then it continues with the next action', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             subscription.onSubscribe();
 
@@ -602,7 +903,15 @@ describe('openapi StreamingSubscription', () => {
         });
 
         it('ignores a subscribe followed by an unsubscribe when waiting for an action to respond', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             jest.spyOn(log, 'error');
 
@@ -612,7 +921,6 @@ describe('openapi StreamingSubscription', () => {
             sendInitialResponse();
 
             setTimeout(() => {
-
                 subscription.onUnsubscribe();
                 transport.delete.mockClear();
                 // waiting for unsubscribe to occur
@@ -626,7 +934,6 @@ describe('openapi StreamingSubscription', () => {
                 transport.deleteResolve({ status: 200 });
 
                 setTimeout(() => {
-
                     expect(transport.post.mock.calls.length).toEqual(0);
                     expect(transport.delete.mock.calls.length).toEqual(0);
 
@@ -640,7 +947,15 @@ describe('openapi StreamingSubscription', () => {
 
     describe('activity detection', () => {
         it('has an infinite time when unsubscribed, subscribing and unsubscribing', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             expect(subscription.timeTillOrphaned(Date.now())).toEqual(Infinity);
             subscription.onSubscribe();
@@ -650,22 +965,37 @@ describe('openapi StreamingSubscription', () => {
 
             sendInitialResponse({ InactivityTimeout: 100, Snapshot: {} });
             setTimeout(() => {
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(100 * 1000);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    100 * 1000,
+                );
                 tick(10);
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(100 * 1000 - 10);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    100 * 1000 - 10,
+                );
 
                 subscription.onUnsubscribe();
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(Infinity);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    Infinity,
+                );
 
                 transport.deleteResolve({ status: 200 });
                 setTimeout(() => {
-                    expect(subscription.timeTillOrphaned(Date.now())).toEqual(Infinity);
+                    expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                        Infinity,
+                    );
                     subscription.onSubscribe();
-                    expect(subscription.timeTillOrphaned(Date.now())).toEqual(Infinity);
+                    expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                        Infinity,
+                    );
 
-                    sendInitialResponse({ InactivityTimeout: 100, Snapshot: {} });
+                    sendInitialResponse({
+                        InactivityTimeout: 100,
+                        Snapshot: {},
+                    });
                     setTimeout(() => {
-                        expect(subscription.timeTillOrphaned(Date.now())).toEqual(100 * 1000);
+                        expect(
+                            subscription.timeTillOrphaned(Date.now()),
+                        ).toEqual(100 * 1000);
 
                         done();
                     });
@@ -673,64 +1003,124 @@ describe('openapi StreamingSubscription', () => {
             });
         });
         it('has an infinite time when there is no inactivity timeout', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             sendInitialResponse({ InactivityTimeout: 0, Snapshot: {} });
             setTimeout(() => {
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(Infinity);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    Infinity,
+                );
                 done();
             });
         });
         it('has an infinite time when the connection is unavailable', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             sendInitialResponse({ InactivityTimeout: 10, Snapshot: {} });
             setTimeout(() => {
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(10 * 1000);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    10 * 1000,
+                );
                 subscription.onConnectionUnavailable();
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(Infinity);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    Infinity,
+                );
                 done();
             });
         });
 
         it('counts data updates as an activity', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             sendInitialResponse({ InactivityTimeout: 10, Snapshot: {} });
             setTimeout(() => {
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(10 * 1000);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    10 * 1000,
+                );
                 tick(9000);
 
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(1 * 1000);
-                subscription.onStreamingData({ ReferenceId: subscription.referenceId, Data: [1, 3] });
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(10 * 1000);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    1 * 1000,
+                );
+                subscription.onStreamingData({
+                    ReferenceId: subscription.referenceId,
+                    Data: [1, 3],
+                });
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    10 * 1000,
+                );
 
                 tick(4956);
-                subscription.onStreamingData({ ReferenceId: subscription.referenceId, Data: [1, 3] });
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(10 * 1000);
+                subscription.onStreamingData({
+                    ReferenceId: subscription.referenceId,
+                    Data: [1, 3],
+                });
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    10 * 1000,
+                );
 
                 done();
             });
         });
         it('counts heartbeats as an activity', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             sendInitialResponse({ InactivityTimeout: 10, Snapshot: {} });
             setTimeout(() => {
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(10 * 1000);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    10 * 1000,
+                );
                 tick(9000);
 
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(1 * 1000);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    1 * 1000,
+                );
                 subscription.onHeartbeat();
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(10 * 1000);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    10 * 1000,
+                );
 
                 tick(4956);
                 subscription.onHeartbeat();
-                expect(subscription.timeTillOrphaned(Date.now())).toEqual(10 * 1000);
+                expect(subscription.timeTillOrphaned(Date.now())).toEqual(
+                    10 * 1000,
+                );
 
                 done();
             });
@@ -739,7 +1129,15 @@ describe('openapi StreamingSubscription', () => {
 
     describe('reset behaviour', () => {
         it('does nothing if unsubscribed or unsubscribing', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, updateSpy);
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                updateSpy,
+            );
 
             subscription.reset(); // reset before subscribed
 
@@ -750,7 +1148,6 @@ describe('openapi StreamingSubscription', () => {
 
             sendInitialResponse({ InactivityTimeout: 100, Snapshot: {} });
             setTimeout(() => {
-
                 subscription.onUnsubscribe();
 
                 expect(transport.post.mock.calls.length).toEqual(1);
@@ -767,7 +1164,6 @@ describe('openapi StreamingSubscription', () => {
 
                 transport.deleteResolve({ status: 200 });
                 setTimeout(() => {
-
                     oldReferenceId = subscription.referenceId;
                     subscription.reset(); // reset when unsubscribed
                     expect(oldReferenceId).toEqual(subscription.referenceId); // don't need to change as not subscribing
@@ -781,7 +1177,15 @@ describe('openapi StreamingSubscription', () => {
         });
 
         it('subscribes if in the process of subscribing', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             subscription.onSubscribe();
 
@@ -798,22 +1202,38 @@ describe('openapi StreamingSubscription', () => {
             transport.post.mockClear();
             expect(transport.delete.mock.calls.length).toEqual(0);
 
-            resolveToInitialSubscribe({ status: 201, response: { Snapshot: { initial: true } } });
+            resolveToInitialSubscribe({
+                status: 201,
+                response: { Snapshot: { initial: true } },
+            });
 
-            sendInitialResponse({ InactivityTimeout: 100, Snapshot: { resetResponse: true } });
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
             setTimeout(() => {
-
                 expect(errorSpy.mock.calls.length).toEqual(0);
 
                 expect(updateSpy.mock.calls.length).toEqual(1);
-                expect(updateSpy.mock.calls[0]).toEqual([{ resetResponse: true }, subscription.UPDATE_TYPE_SNAPSHOT]);
+                expect(updateSpy.mock.calls[0]).toEqual([
+                    { resetResponse: true },
+                    subscription.UPDATE_TYPE_SNAPSHOT,
+                ]);
 
                 done();
             });
         });
 
         it('subscribes if in the process of subscribing and handles a reject on an old subscription request', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             subscription.onSubscribe();
 
@@ -832,20 +1252,33 @@ describe('openapi StreamingSubscription', () => {
 
             rejectToInitialSubscribe({ status: 401 });
 
-            sendInitialResponse({ InactivityTimeout: 100, Snapshot: { resetResponse: true } });
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
             setTimeout(() => {
-
                 expect(errorSpy.mock.calls.length).toEqual(0);
 
                 expect(updateSpy.mock.calls.length).toEqual(1);
-                expect(updateSpy.mock.calls[0]).toEqual([{ resetResponse: true }, subscription.UPDATE_TYPE_SNAPSHOT]);
+                expect(updateSpy.mock.calls[0]).toEqual([
+                    { resetResponse: true },
+                    subscription.UPDATE_TYPE_SNAPSHOT,
+                ]);
 
                 done();
             });
         });
 
         it('subscribes if currently subscribed', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             subscription.onSubscribe();
 
@@ -853,7 +1286,10 @@ describe('openapi StreamingSubscription', () => {
             transport.post.mockClear();
             expect(transport.delete.mock.calls.length).toEqual(0);
 
-            sendInitialResponse({ InactivityTimeout: 100, Snapshot: { resetResponse: true } });
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
 
             setTimeout(() => {
                 // normally subscribed
@@ -863,7 +1299,9 @@ describe('openapi StreamingSubscription', () => {
 
                 // sends delete request for old subscription
                 expect(transport.delete.mock.calls.length).toEqual(1);
-                expect(transport.delete.mock.calls[0][2].referenceId).toEqual(oldReferenceId);
+                expect(transport.delete.mock.calls[0][2].referenceId).toEqual(
+                    oldReferenceId,
+                );
 
                 expect(oldReferenceId).not.toEqual(subscription.referenceId);
 
@@ -877,7 +1315,6 @@ describe('openapi StreamingSubscription', () => {
     });
 
     describe('protobuf parsing', () => {
-
         it('should parse schema from snapshot and pass JSON data', (done) => {
             const args = {
                 Format: 'application/x-protobuf',
@@ -885,7 +1322,15 @@ describe('openapi StreamingSubscription', () => {
                     ClientKey: '1234',
                 },
             };
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', args, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                args,
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             sendInitialResponse({
@@ -897,19 +1342,24 @@ describe('openapi StreamingSubscription', () => {
 
             setTimeout(() => {
                 expect(transport.post.mock.calls.length).toEqual(1);
-                expect(
-                    updateSpy.mock.calls[0][0],
-                ).toEqual(
+                expect(updateSpy.mock.calls[0][0]).toEqual(
                     expect.objectContaining(mockProtoPrice.objectMessage),
                 );
 
                 const parser = subscription.parser;
 
-                const schemaObject = parser.getSchemaType('Price', 'PriceResponse');
+                const schemaObject = parser.getSchemaType(
+                    'Price',
+                    'PriceResponse',
+                );
                 expect(schemaObject).toBeTruthy();
 
-                const plainFields = JSON.parse(JSON.stringify(schemaObject.fields));
-                expect(plainFields).toEqual(expect.objectContaining(mockProtoPrice.fields));
+                const plainFields = JSON.parse(
+                    JSON.stringify(schemaObject.fields),
+                );
+                expect(plainFields).toEqual(
+                    expect.objectContaining(mockProtoPrice.fields),
+                );
 
                 done();
             });
@@ -922,7 +1372,15 @@ describe('openapi StreamingSubscription', () => {
                     ClientKey: '1234',
                 },
             };
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', args, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                args,
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             sendInitialResponse({
@@ -943,14 +1401,20 @@ describe('openapi StreamingSubscription', () => {
 
                 subscription.onStreamingData(streamingData);
 
-                const [lastMessageArgument, lastTypeArgument] =
-                    updateSpy.mock.calls[updateSpy.mock.calls.length - 1];
+                const [
+                    lastMessageArgument,
+                    lastTypeArgument,
+                ] = updateSpy.mock.calls[updateSpy.mock.calls.length - 1];
 
-                expect(lastTypeArgument).toEqual(subscription.UPDATE_TYPE_DELTA);
+                expect(lastTypeArgument).toEqual(
+                    subscription.UPDATE_TYPE_DELTA,
+                );
                 expect(
                     JSON.parse(JSON.stringify(lastMessageArgument.Data)),
                 ).toEqual(
-                    expect.objectContaining(mockProtoPrice.decodedObjectMessage),
+                    expect.objectContaining(
+                        mockProtoPrice.decodedObjectMessage,
+                    ),
                 );
 
                 done();
@@ -959,7 +1423,6 @@ describe('openapi StreamingSubscription', () => {
     });
 
     describe('json parsing', () => {
-
         it('should parse data without schema', (done) => {
             const args = {
                 Format: 'application/json',
@@ -967,7 +1430,15 @@ describe('openapi StreamingSubscription', () => {
                     ClientKey: '1234',
                 },
             };
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', args, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                args,
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             sendInitialResponse({
@@ -977,9 +1448,7 @@ describe('openapi StreamingSubscription', () => {
 
             setTimeout(() => {
                 expect(transport.post.mock.calls.length).toEqual(1);
-                expect(
-                    updateSpy.mock.calls[0][0],
-                ).toEqual(
+                expect(updateSpy.mock.calls[0][0]).toEqual(
                     expect.objectContaining(mockProtoPrice.objectMessage),
                 );
                 done();
@@ -992,7 +1461,15 @@ describe('openapi StreamingSubscription', () => {
                     ClientKey: '1234',
                 },
             };
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', args, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                args,
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             sendInitialResponse({
@@ -1002,9 +1479,7 @@ describe('openapi StreamingSubscription', () => {
 
             setTimeout(() => {
                 expect(transport.post.mock.calls.length).toEqual(1);
-                expect(
-                    updateSpy.mock.calls[0][0],
-                ).toEqual(
+                expect(updateSpy.mock.calls[0][0]).toEqual(
                     expect.objectContaining(mockProtoPrice.objectMessage),
                 );
                 done();
@@ -1018,7 +1493,15 @@ describe('openapi StreamingSubscription', () => {
                     ClientKey: '1234',
                 },
             };
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', args, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                args,
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
             sendInitialResponse({
@@ -1036,11 +1519,17 @@ describe('openapi StreamingSubscription', () => {
 
                 subscription.onStreamingData(streamingData);
 
-                const [lastMessageArgument, lastTypeArgument] =
-                    updateSpy.mock.calls[updateSpy.mock.calls.length - 1];
+                const [
+                    lastMessageArgument,
+                    lastTypeArgument,
+                ] = updateSpy.mock.calls[updateSpy.mock.calls.length - 1];
 
-                expect(lastTypeArgument).toEqual(subscription.UPDATE_TYPE_DELTA);
-                expect(lastMessageArgument.Data).toEqual(expect.objectContaining(mockProtoPrice.objectMessage));
+                expect(lastTypeArgument).toEqual(
+                    subscription.UPDATE_TYPE_DELTA,
+                );
+                expect(lastMessageArgument.Data).toEqual(
+                    expect.objectContaining(mockProtoPrice.objectMessage),
+                );
 
                 done();
             });
@@ -1048,15 +1537,25 @@ describe('openapi StreamingSubscription', () => {
     });
 
     describe('modify behaviour', () => {
-
         it('calls patch on modify with patch method option', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             const initialArgs = { initialArgs: 'initialArgs' };
             subscription.subscriptionData.Arguments = initialArgs;
             subscription.onSubscribe();
 
-            sendInitialResponse({ InactivityTimeout: 100, Snapshot: { resetResponse: true } });
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
 
             setTimeout(() => {
                 const newArgs = {
@@ -1064,7 +1563,10 @@ describe('openapi StreamingSubscription', () => {
                     testArgs: 'test',
                 };
                 const patchArgsDelta = { testArgs: 'argsDelta' };
-                subscription.onModify(newArgs, { isPatch: true, patchArgsDelta });
+                subscription.onModify(newArgs, {
+                    isPatch: true,
+                    patchArgsDelta,
+                });
                 // new arguments assigned to the subscription
                 expect(subscription.subscriptionData.Arguments).toEqual({
                     newArgs: 'newArgs',
@@ -1078,19 +1580,32 @@ describe('openapi StreamingSubscription', () => {
         });
 
         it('resubscribes with new arguments on modify without patch method option', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             const initialArgs = { initialArgs: 'initialArgs' };
             subscription.subscriptionData.Arguments = initialArgs;
             subscription.onSubscribe();
 
-            sendInitialResponse({ InactivityTimeout: 100, Snapshot: { resetResponse: true } });
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
 
             setTimeout(() => {
                 const newArgs = { newArgs: 'test' };
                 subscription.onModify(newArgs);
                 // subscribed with new arguments
-                expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
+                expect(subscription.subscriptionData.Arguments).toEqual(
+                    newArgs,
+                );
                 // sends delete request on modify
                 expect(transport.delete.mock.calls.length).toEqual(1);
                 expect(transport.post.mock.calls.length).toEqual(1);
@@ -1100,71 +1615,129 @@ describe('openapi StreamingSubscription', () => {
         });
 
         it('sends next patch request only after previous patch completed', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
             const initialArgs = { initialArgs: 'initialArgs' };
             subscription.subscriptionData.Arguments = initialArgs;
             subscription.onSubscribe();
 
-            sendInitialResponse({ InactivityTimeout: 100, Snapshot: { resetResponse: true } });
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
 
             setTimeout(() => {
                 const args = { args: 'args' };
                 const newArgs = { args: 'newArgs' };
-                subscription.onModify(args, { isPatch: true, patchArgsDelta: { newArgs: 'firstArgs' } });
-                subscription.onModify(newArgs, { isPatch: true, patchArgsDelta: { newArgs: 'secondArgs' } });
+                subscription.onModify(args, {
+                    isPatch: true,
+                    patchArgsDelta: { newArgs: 'firstArgs' },
+                });
+                subscription.onModify(newArgs, {
+                    isPatch: true,
+                    patchArgsDelta: { newArgs: 'secondArgs' },
+                });
 
                 expect(transport.patch.mock.calls.length).toEqual(1);
                 // first patch arguments sent
-                expect(transport.patch.mock.calls[0][3].body).toEqual({ newArgs: 'firstArgs' });
+                expect(transport.patch.mock.calls[0][3].body).toEqual({
+                    newArgs: 'firstArgs',
+                });
 
                 transport.patchResolve({ status: '200', response: '' });
 
                 setTimeout(() => {
                     expect(transport.patch.mock.calls.length).toEqual(2);
                     // second patch arguments sent
-                    expect(transport.patch.mock.calls[1][3].body).toEqual({ newArgs: 'secondArgs' });
-                    expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
+                    expect(transport.patch.mock.calls[1][3].body).toEqual({
+                        newArgs: 'secondArgs',
+                    });
+                    expect(subscription.subscriptionData.Arguments).toEqual(
+                        newArgs,
+                    );
                     done();
                 });
             });
         });
 
         it('does not set state back to STATE_SUBSCRIBED after reset', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, updateSpy);
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                updateSpy,
+            );
             subscription.onSubscribe();
 
-            sendInitialResponse({ InactivityTimeout: 100, Snapshot: { resetResponse: true } });
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
 
             setTimeout(() => {
                 const stateBeforeModify = subscription.currentState;
                 const patchArgsDelta = { argsDelta: 'argsDelta' };
-                subscription.onModify({ newArgs: 'test' }, { isPatch: true, patchArgsDelta });
+                subscription.onModify(
+                    { newArgs: 'test' },
+                    { isPatch: true, patchArgsDelta },
+                );
                 subscription.reset();
 
                 transport.patchResolve({ status: '200', response: '' });
                 setTimeout(() => {
-                    expect(subscription.currentState).not.toEqual(stateBeforeModify);
+                    expect(subscription.currentState).not.toEqual(
+                        stateBeforeModify,
+                    );
                     done();
                 });
             });
         });
 
         it('does not set state back to STATE_SUBSCRIBED after reset on modify patch error', (done) => {
-            const subscription = new Subscription('123', transport, 'serviceGroup', 'src/test/resource', {}, createdSpy, { onUpdate: updateSpy });
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
             subscription.onSubscribe();
 
-            sendInitialResponse({ InactivityTimeout: 100, Snapshot: { resetResponse: true } });
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
 
             setTimeout(() => {
                 const stateBeforeModify = subscription.currentState;
                 const patchArgsDelta = { argsDelta: 'argsDelta' };
-                subscription.onModify({ newArgs: 'test' }, { isPatch: true, patchArgsDelta });
+                subscription.onModify(
+                    { newArgs: 'test' },
+                    { isPatch: true, patchArgsDelta },
+                );
                 subscription.reset();
 
-                transport.patchReject({ status: '500', response: 'patch failed' });
+                transport.patchReject({
+                    status: '500',
+                    response: 'patch failed',
+                });
                 setTimeout(() => {
-                    expect(subscription.currentState).not.toEqual(stateBeforeModify);
+                    expect(subscription.currentState).not.toEqual(
+                        stateBeforeModify,
+                    );
                     done();
                 });
             });

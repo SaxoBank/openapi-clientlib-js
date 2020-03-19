@@ -5,7 +5,11 @@ import { installClock, uninstallClock, tick } from '../test/utils';
 describe('utils fetch', () => {
     it('images are downloaded as a binary blob', (done) => {
         const contentType = 'image/jpeg';
-        const result = new FetchResponse(200, 'this is a binary image', contentType);
+        const result = new FetchResponse(
+            200,
+            'this is a binary image',
+            contentType,
+        );
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
         promise.then((response) => {
@@ -21,7 +25,11 @@ describe('utils fetch', () => {
 
     it('octet-stream are downloaded as a binary blob', (done) => {
         const contentType = 'application/octet-stream';
-        const result = new FetchResponse(200, 'this is generic binary data', contentType);
+        const result = new FetchResponse(
+            200,
+            'this is generic binary data',
+            contentType,
+        );
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
         promise.then((response) => {
@@ -52,8 +60,13 @@ describe('utils fetch', () => {
     });
 
     it('xslx is downloaded as a binary blob', (done) => {
-        const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-        const result = new FetchResponse(200, 'this is a binary string', contentType);
+        const contentType =
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        const result = new FetchResponse(
+            200,
+            'this is a binary string',
+            contentType,
+        );
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
         promise.then((response) => {
@@ -111,7 +124,11 @@ describe('utils fetch', () => {
         it('convertFetchSuccess clears timers', () => {
             const timerSpy = jest.fn().mockName('timerSpy');
             const timerId = setTimeout(timerSpy);
-            const result = new FetchResponse(200, 'this is a string', 'application/text');
+            const result = new FetchResponse(
+                200,
+                'this is a string',
+                'application/text',
+            );
             convertFetchSuccess('url', 'body', timerId, result);
             tick(1);
 

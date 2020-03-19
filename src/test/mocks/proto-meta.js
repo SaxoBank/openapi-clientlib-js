@@ -5,7 +5,7 @@
 // Probobuf ByteArray: 600 bytes
 
 export const metaNulls = () => {
-    return ({
+    return {
         schema: `syntax = "proto3";
        
        option saxobank_root = "Main";
@@ -30,7 +30,7 @@ export const metaNulls = () => {
        }
     `,
         payloadMessageNull: () => {
-            return ({
+            return {
                 count: 1,
                 message: null,
                 description: {
@@ -39,18 +39,18 @@ export const metaNulls = () => {
                     __meta_empty: [5],
                 },
                 __meta_nulls: [3],
-            });
+            };
         },
         payloadAllNull: () => {
-            return ({
+            return {
                 __meta_nulls: [2, 3],
-            });
+            };
         },
-    });
+    };
 };
 
 export const metaCollectionEnvelope = () => {
-    return ({
+    return {
         schema: `syntax = "proto3";
         
         option saxobank_root = "CollectionEnvelope";
@@ -71,44 +71,40 @@ export const metaCollectionEnvelope = () => {
         }
     `,
         payloadAll: () => {
-            return ({
-                Collection:
-                [
+            return {
+                Collection: [
                     { key: 1, count: 1, message: 'Message one.' },
                     { key: 2, count: 1, message: 'Message two.' },
                     { key: 3, count: 1, message: 'Message three.' },
                 ],
-            });
+            };
         },
         payloadDeletedRow: () => {
-            return ({
-                Collection:
-                [
+            return {
+                Collection: [
                     { key: 1, count: 1, message: 'Message one.' },
                     { key: 2, __meta_deleted: true },
                     { key: 3, count: 1, message: 'Message three.' },
                 ],
-            });
+            };
         },
         payloadEmptyLogs: () => {
-            return ({
-                Collection:
-                [
+            return {
+                Collection: [
                     { key: 1, count: 1, message: 'Message one.' },
                     { key: 2, __meta_empty: [7] },
                     { key: 3, count: 1, message: 'Message three.' },
                 ],
-            });
+            };
         },
         payloadNullMessage: () => {
-            return ({
-                Collection:
-                [
+            return {
+                Collection: [
                     { key: 1, count: 1, message: 'Message one.' },
                     { key: 2, __meta_nulls: [6] },
                     { key: 3, count: 1, message: 'Message three.' },
                 ],
-            });
+            };
         },
-    });
+    };
 };

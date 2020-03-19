@@ -29,8 +29,12 @@ function makeTransportMethod(method) {
             },
         };
 
-        return this.transport[method](serviceGroup, urlTemplate, templateArgs, newOptions)
-            .catch(onTransportError.bind(this, this.authProvider.getExpiry()));
+        return this.transport[method](
+            serviceGroup,
+            urlTemplate,
+            templateArgs,
+            newOptions,
+        ).catch(onTransportError.bind(this, this.authProvider.getExpiry()));
     };
 }
 
@@ -46,7 +50,11 @@ function onTransportError(oldTokenExpiry, result) {
         if (urlErrorCount >= this.maxAuthErrors) {
             // Blocking infinite loop of authorization re-requests which might be caused by invalid
             // behaviour of given endpoint which constantly returns 401 error.
-            log.error(LOG_AREA, 'Too many authorization errors occurred within specified timeframe for specific endpoint.', result.url);
+            log.error(
+                LOG_AREA,
+                'Too many authorization errors occurred within specified timeframe for specific endpoint.',
+                result.url,
+            );
             return;
         }
 
@@ -83,8 +91,11 @@ function TransportAuth(baseUrl, authProvider, options) {
         throw new Error('transport auth created without a auth provider');
     }
 
-    this.authErrorsCleanupDebounce = options && options.authErrorsCleanupDebounce || DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE;
-    this.maxAuthErrors = options && options.maxAuthErrors || DEFAULT_MAX_AUTH_ERRORS;
+    this.authErrorsCleanupDebounce =
+        (options && options.authErrorsCleanupDebounce) ||
+        DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE;
+    this.maxAuthErrors =
+        (options && options.maxAuthErrors) || DEFAULT_MAX_AUTH_ERRORS;
 
     this.transport = new TransportCore(baseUrl, options);
 
@@ -151,7 +162,10 @@ TransportAuth.prototype.debounceErrorCounterCleanup = function() {
         clearTimeout(this.errorCleanupTimoutId);
     }
 
-    this.errorCleanupTimoutId = setTimeout(onErrorCleanupTimeout.bind(this), this.authErrorsCleanupDebounce);
+    this.errorCleanupTimoutId = setTimeout(
+        onErrorCleanupTimeout.bind(this),
+        this.authErrorsCleanupDebounce,
+    );
 };
 
 /**

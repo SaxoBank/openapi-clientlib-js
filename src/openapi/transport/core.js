@@ -19,14 +19,15 @@ const DEFAULT_CACHE = true;
  */
 function generateTransportCall(method) {
     return function(serviceGroup, urlTemplate, templateArgs, options) {
-
         let body;
         let headers = {};
         let cache = this.defaultCache;
         let queryParams;
 
         if (!serviceGroup || !urlTemplate) {
-            throw new Error('Transport calls require a service group and a URL');
+            throw new Error(
+                'Transport calls require a service group and a URL',
+            );
         }
 
         if (options) {
@@ -50,15 +51,20 @@ function generateTransportCall(method) {
         }
 
         if (!headers['X-Request-Id']) {
-            headers['X-Request-Id'] = (options && options.requestId) || getRequestId();
+            headers['X-Request-Id'] =
+                (options && options.requestId) || getRequestId();
         }
 
-        return this.fetch(method, this.baseUrl + '/' + serviceGroup + '/' + url, {
-            body,
-            headers,
-            cache,
-            useXHttpMethodOverride: this.useXHttpMethodOverride,
-        });
+        return this.fetch(
+            method,
+            this.baseUrl + '/' + serviceGroup + '/' + url,
+            {
+                body,
+                headers,
+                cache,
+                useXHttpMethodOverride: this.useXHttpMethodOverride,
+            },
+        );
     };
 }
 
@@ -80,7 +86,10 @@ function Transport(baseUrl, options) {
     }
     this.baseUrl = baseUrl;
     this.language = options && options.language;
-    this.defaultCache = options && typeof options.defaultCache === 'boolean' ? options.defaultCache : DEFAULT_CACHE;
+    this.defaultCache =
+        options && typeof options.defaultCache === 'boolean'
+            ? options.defaultCache
+            : DEFAULT_CACHE;
 }
 
 /**
@@ -460,7 +469,9 @@ Transport.prototype.options = generateTransportCall('OPTIONS');
  * a X-HTTP-Method-Override header
  * @param {boolean} useXHttpMethodOverride
  */
-Transport.prototype.setUseXHttpMethodOverride = function(useXHttpMethodOverride) {
+Transport.prototype.setUseXHttpMethodOverride = function(
+    useXHttpMethodOverride,
+) {
     this.useXHttpMethodOverride = useXHttpMethodOverride;
 };
 

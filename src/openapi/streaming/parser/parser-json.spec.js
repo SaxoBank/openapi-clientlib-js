@@ -1,7 +1,6 @@
 import ParserJson from './parser-json';
 
 describe('Parser JSON', () => {
-
     describe('addSchemas', () => {
         it('should try to add schema but do nothing as schemas are not supported', () => {
             let parser = new ParserJson();

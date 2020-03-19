@@ -10,8 +10,8 @@ const TRANSPORT_NAME_MAP = {
     [WebsocketTransport.NAME]: WebsocketTransport,
 
     // Backward compatible mapping to SignalR.
-    'webSockets': SignalrTransport,
-    'longPolling': SignalrTransport,
+    webSockets: SignalrTransport,
+    longPolling: SignalrTransport,
 };
 
 const NOOP = () => {};
@@ -24,7 +24,11 @@ function onTransportFail(error) {
     log.error(LOG_AREA, 'Transport failed', { error });
 
     // Try to create next possible transport.
-    this.transport = createTransport.call(this, this.baseUrl, this.restTransport);
+    this.transport = createTransport.call(
+        this,
+        this.baseUrl,
+        this.restTransport,
+    );
 
     if (!this.transport) {
         // No next transport available. Report total failure.
@@ -56,7 +60,7 @@ function createTransport(baseUrl, restTransport) {
         this.tranportIndex++;
     }
 
-    if (this.tranportIndex > (this.transports.length - 1)) {
+    if (this.tranportIndex > this.transports.length - 1) {
         // No more transports to choose from.
         return null;
     }
@@ -69,7 +73,11 @@ function createTransport(baseUrl, restTransport) {
         return createTransport.call(this, baseUrl, restTransport);
     }
 
-    return new SelectedTransport(baseUrl, restTransport, onTransportFail.bind(this));
+    return new SelectedTransport(
+        baseUrl,
+        restTransport,
+        onTransportFail.bind(this),
+    );
 }
 
 function getSupportedTransports(transportNames) {
@@ -110,20 +118,29 @@ function Connection(options, baseUrl, restTransport, failCallback = NOOP) {
     this.options = options;
     this.authToken = null;
     this.contextId = null;
-    this.transports = getSupportedTransports.call(this, this.options && this.options.transport);
+    this.transports = getSupportedTransports.call(
+        this,
+        this.options && this.options.transport,
+    );
 
     this.state = STATE_CREATED;
 
     // Index of currently used transport. Index corresponds to position in this.transports.
     this.tranportIndex = null;
-    this.transport = createTransport.call(this, this.baseUrl, this.restTransport);
+    this.transport = createTransport.call(
+        this,
+        this.baseUrl,
+        this.restTransport,
+    );
 
     if (!this.transport) {
         // No next transport available. Report total failure.
         log.error(LOG_AREA, 'Supported Transport not found.');
         this.failCallback({ message: 'Unable to setup initial transport.' });
     } else {
-        log.debug(LOG_AREA, 'Supported Transport found', { name: this.transport.name });
+        log.debug(LOG_AREA, 'Supported Transport found', {
+            name: this.transport.name,
+        });
     }
 }
 
@@ -179,7 +196,11 @@ Connection.prototype.stop = function() {
     }
 };
 
-Connection.prototype.updateQuery = function(authToken, contextId, forceAuth = false) {
+Connection.prototype.updateQuery = function(
+    authToken,
+    contextId,
+    forceAuth = false,
+) {
     this.authToken = authToken;
     this.contextId = contextId;
 
@@ -217,4 +238,3 @@ Connection.prototype.getTransport = function() {
 };
 
 export default Connection;
-

@@ -58,16 +58,17 @@ const PriceFormatOptions = enumUtils.makeDefinition([
     /** @member {string} saxo.priceFormatOptions.DeciPipsSpaceSeparator - Use a space as separator between pips and deci-pips. */
     'DeciPipsSpaceSeparator',
     /** @member {string} saxo.priceFormatOptions.DeciPipsDecimalSeparator - Use culture specific decimal separator as separator.
-      *  Only used with AllowDecimalPips. */
+     *  Only used with AllowDecimalPips. */
     'DeciPipsDecimalSeparator',
     /** @member {string} saxo.priceFormatOptions.DeciPipsFraction - Use '1/2' fraction character for half-pips. */
     'DeciPipsFraction',
     /** @member {string} saxo.priceFormatOptions.DeciPipsSpaceForZero - Use a space instead of zero.
-      *  Only used with DeciPipsFraction. */
+     *  Only used with DeciPipsFraction. */
     'DeciPipsSpaceForZero',
     /** @member {string} saxo.priceFormatOptions.NoRounding - Indicates that no rounding should be done - that
-      *  decimals should be treated as a max decimals. */
-    'NoRounding']);
+     *  decimals should be treated as a max decimals. */
+    'NoRounding',
+]);
 
 // The following are currently unused, but as open api expands, they may be required in the future.
 // They are aggregate definitions

@@ -60,37 +60,27 @@ export function convertFetchSuccess(url, body, timerId, result) {
 
     const contentType = result.headers.get('content-type');
     if (contentType && contentType.indexOf('application/json') > -1) {
-        convertedPromise = result.text()
-            .then(function(text) {
-                try {
-                    return {
-                        response: JSON.parse(text),
-                        status: result.status,
-                        headers: result.headers,
-                        size: text.length,
-                        url,
-                        responseType: 'json',
-                    };
-                } catch (e) {
-                    log.error(LOG_AREA, 'Received a JSON response from OpenApi that could not be parsed', {
+        convertedPromise = result.text().then(function(text) {
+            try {
+                return {
+                    response: JSON.parse(text),
+                    status: result.status,
+                    headers: result.headers,
+                    size: text.length,
+                    url,
+                    responseType: 'json',
+                };
+            } catch (e) {
+                log.error(
+                    LOG_AREA,
+                    'Received a JSON response from OpenApi that could not be parsed',
+                    {
                         text,
                         response: result,
                         size: text.length,
                         url,
-                    });
-                    return {
-                        response: text,
-                        status: result.status,
-                        headers: result.headers,
-                        size: text.length,
-                        url,
-                        responseType: 'text',
-                    };
-                }
-            });
-    } else if (contentType && contentType.indexOf('multipart/mixed') > -1) {
-        convertedPromise = result.text()
-            .then(function(text) {
+                    },
+                );
                 return {
                     response: text,
                     status: result.status,
@@ -99,8 +89,23 @@ export function convertFetchSuccess(url, body, timerId, result) {
                     url,
                     responseType: 'text',
                 };
-            });
-    } else if (contentType && (contentType.indexOf('image/') > -1 || binaryContentTypes[contentType])) {
+            }
+        });
+    } else if (contentType && contentType.indexOf('multipart/mixed') > -1) {
+        convertedPromise = result.text().then(function(text) {
+            return {
+                response: text,
+                status: result.status,
+                headers: result.headers,
+                size: text.length,
+                url,
+                responseType: 'text',
+            };
+        });
+    } else if (
+        contentType &&
+        (contentType.indexOf('image/') > -1 || binaryContentTypes[contentType])
+    ) {
         convertedPromise = result.blob().then(function(blob) {
             return {
                 response: blob,
@@ -112,25 +117,28 @@ export function convertFetchSuccess(url, body, timerId, result) {
             };
         });
     } else {
-        convertedPromise = result.text().then(function(text) {
-            return {
-                response: text,
-                status: result.status,
-                headers: result.headers,
-                size: text ? text.length : 0,
-                url,
-                responseType: 'text',
-            };
-        }).catch(() => {
-            // since we guess that it can be interpreted as text, do not fail the promise
-            // if we fail to get text
-            return {
-                status: result.status,
-                headers: result.headers,
-                size: 0,
-                url,
-            };
-        });
+        convertedPromise = result
+            .text()
+            .then(function(text) {
+                return {
+                    response: text,
+                    status: result.status,
+                    headers: result.headers,
+                    size: text ? text.length : 0,
+                    url,
+                    responseType: 'text',
+                };
+            })
+            .catch(() => {
+                // since we guess that it can be interpreted as text, do not fail the promise
+                // if we fail to get text
+                return {
+                    status: result.status,
+                    headers: result.headers,
+                    size: 0,
+                    url,
+                };
+            });
     }
 
     if ((result.status < 200 || result.status > 299) && result.status !== 304) {
@@ -204,12 +212,15 @@ function localFetch(method, url, options) {
     }
 
     // encode objects. Batch calls come through as strings.
-    if (body && (typeof body === 'object' && !isAlreadySupported(body))) {
+    if (body && typeof body === 'object' && !isAlreadySupported(body)) {
         body = JSON.stringify(body);
         headers['Content-Type'] = 'application/json; charset=UTF-8';
     }
 
-    if (useXHttpMethodOverride && (method === 'PUT' || method === 'DELETE' || method === 'PATCH')) {
+    if (
+        useXHttpMethodOverride &&
+        (method === 'PUT' || method === 'DELETE' || method === 'PATCH')
+    ) {
         headers['X-HTTP-Method-Override'] = method;
         method = 'POST';
     }
@@ -231,21 +242,22 @@ function localFetch(method, url, options) {
         });
     }, 30000);
 
-    return fetch(url, { headers, method, body, credentials })
-        .then(
-            convertFetchSuccess.bind(null, url, body, timerId),
-            convertFetchReject.bind(null, url, body, timerId),
-        );
+    return fetch(url, { headers, method, body, credentials }).then(
+        convertFetchSuccess.bind(null, url, body, timerId),
+        convertFetchReject.bind(null, url, body, timerId),
+    );
 }
 
 // Check for handled type: https://fetch.spec.whatwg.org/#bodyinit
 // URLSearchParams and ReadableStream are guarded, because they are not supported in IE
 // USVString is not handled because it will be typeof "string"
 function isAlreadySupported(body) {
-    return body instanceof window.Blob ||
-    body instanceof window.ArrayBuffer ||
-    body instanceof window.FormData ||
-    (window.URLSearchParams && body instanceof window.URLSearchParams);
+    return (
+        body instanceof window.Blob ||
+        body instanceof window.ArrayBuffer ||
+        body instanceof window.FormData ||
+        (window.URLSearchParams && body instanceof window.URLSearchParams)
+    );
 }
 
 // -- Export section --

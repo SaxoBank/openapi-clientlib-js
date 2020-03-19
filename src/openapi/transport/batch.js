@@ -36,12 +36,17 @@ function emptyQueueIntoServiceGroups() {
 function batchCallFailure(callList, batchResponse) {
     log.error(LOG_AREA, 'Batch request failed', batchResponse);
 
-    const status = (batchResponse && batchResponse.status === 401) ? 401 : undefined;
+    const status =
+        batchResponse && batchResponse.status === 401 ? 401 : undefined;
 
     for (let i = 0; i < callList.length; i++) {
         // pass on the batch response so that if a batch responds with a 401,
         // and queue is before batch, queue will auto retry
-        callList[i].reject({ message: 'batch failed', status, isNetworkError: batchResponse.isNetworkError });
+        callList[i].reject({
+            message: 'batch failed',
+            status,
+            isNetworkError: batchResponse.isNetworkError,
+        });
     }
 }
 
@@ -56,7 +61,6 @@ function getParentRequestId(batchResult) {
 }
 
 function batchCallSuccess(callList, batchResult) {
-
     // not sure why this occurs, but logs indicate it does
     if (!(batchResult && batchResult.response)) {
         batchCallFailure(callList, batchResult);
@@ -72,13 +76,19 @@ function batchCallSuccess(callList, batchResult) {
         const result = results[i];
         if (result) {
             // decide in the same way as transport whether the call succeeded
-            if ((result.status < 200 || result.status > 299) && result.status !== 304) {
+            if (
+                (result.status < 200 || result.status > 299) &&
+                result.status !== 304
+            ) {
                 call.reject(result);
             } else {
                 call.resolve(result);
             }
         } else {
-            log.error(LOG_AREA, 'A batch response was missing', { index: i, batchResponse: batchResult });
+            log.error(LOG_AREA, 'A batch response was missing', {
+                index: i,
+                batchResponse: batchResult,
+            });
             call.reject();
         }
     }
@@ -106,19 +116,30 @@ function runBatchCall(serviceGroup, callList) {
         subRequests.push({
             method: call.method,
             headers,
-            url: this.basePath + serviceGroup + '/' + formatUrl(call.urlTemplate, call.urlArgs, call.options && call.options.queryParams),
+            url:
+                this.basePath +
+                serviceGroup +
+                '/' +
+                formatUrl(
+                    call.urlTemplate,
+                    call.urlArgs,
+                    call.options && call.options.queryParams,
+                ),
             data: body,
         });
     }
 
     const { body, boundary } = buildBatch(subRequests, this.host);
 
-    this.transport.post(serviceGroup, 'batch', null, {
-        headers: { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
-        body,
-        cache: false,
-        requestId: parentRequestId,
-    })
+    this.transport
+        .post(serviceGroup, 'batch', null, {
+            headers: {
+                'Content-Type': 'multipart/mixed; boundary="' + boundary + '"',
+            },
+            body,
+            cache: false,
+            requestId: parentRequestId,
+        })
         .then(batchCallSuccess.bind(this, callList))
         .catch(batchCallFailure.bind(this, callList));
 }
@@ -140,7 +161,9 @@ function TransportBatch(transport, baseUrl, options) {
     TransportQueue.call(this, transport);
 
     if (!baseUrl) {
-        throw new Error('Missing required parameter: baseUrl in TransportBatch');
+        throw new Error(
+            'Missing required parameter: baseUrl in TransportBatch',
+        );
     }
 
     const splitBaseUrl = baseUrl.match(reUrl);
@@ -164,11 +187,16 @@ function TransportBatch(transport, baseUrl, options) {
         this.host = location.host;
     }
 
-    this.timeoutMs = options && options.timeoutMs || 0;
+    this.timeoutMs = (options && options.timeoutMs) || 0;
     this.isQueueing = true;
 }
 TransportBatch.prototype = Object.create(TransportQueue.prototype, {
-    constructor: { value: TransportBatch, enumerable: false, writable: true, configurable: true },
+    constructor: {
+        value: TransportBatch,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
 });
 
 /**
@@ -176,7 +204,6 @@ TransportBatch.prototype = Object.create(TransportQueue.prototype, {
  * @param item
  */
 TransportBatch.prototype.addToQueue = function(item) {
-
     TransportQueue.prototype.addToQueue.call(this, item);
     if (!this.nextTickTimer || this.timeoutMs > 0) {
         if (this.timeoutMs === 0) {
@@ -186,7 +213,10 @@ TransportBatch.prototype.addToQueue = function(item) {
             if (this.nextTickTimer) {
                 return;
             }
-            this.nextTickTimer = setTimeout(this.runBatches.bind(this), this.timeoutMs);
+            this.nextTickTimer = setTimeout(
+                this.runBatches.bind(this),
+                this.timeoutMs,
+            );
         }
     }
 };

@@ -75,13 +75,18 @@ function mixinEmitter(target) {
     const subscribers = {};
 
     if (target.on || target.off || target.trigger) {
-        throw new Error('Mixing in would hide existing implementations of on/off/trigger');
+        throw new Error(
+            'Mixing in would hide existing implementations of on/off/trigger',
+        );
     }
 
     function addSubscriber(eventType, onFunction, that, isOne) {
         if (!eventType) {
             const methodName = isOne ? 'one' : 'on';
-            throw new Error(methodName + ' method requires an eventType - have you typo\'d ?');
+            throw new Error(
+                methodName +
+                    " method requires an eventType - have you typo'd ?",
+            );
         }
         if (!onFunction) {
             throw new Error('Subscribing without a function to call');
@@ -109,8 +114,10 @@ function mixinEmitter(target) {
             if (eventSubscribers) {
                 for (let i = eventSubscribers.length - 1; i >= 0; i--) {
                     const subscriber = eventSubscribers[i];
-                    if ((!onFunction || subscriber.onFunction === onFunction) &&
-                        (!subscriber.that || subscriber.that === that)) {
+                    if (
+                        (!onFunction || subscriber.onFunction === onFunction) &&
+                        (!subscriber.that || subscriber.that === that)
+                    ) {
                         eventSubscribers.splice(i, 1);
                     }
                 }
@@ -135,7 +142,11 @@ function mixinEmitter(target) {
             for (let i = eventSubscribers.length - 1; i >= 0; i--) {
                 const subscriber = eventSubscribers[i];
                 if (subscriber.isOne) {
-                    target.off(eventType, subscriber.onFunction, subscriber.that);
+                    target.off(
+                        eventType,
+                        subscriber.onFunction,
+                        subscriber.that,
+                    );
                 }
                 subscriber.onFunction.apply(subscriber.that, args);
             }

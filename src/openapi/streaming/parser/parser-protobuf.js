@@ -12,8 +12,14 @@ const ROOT_OPTION_NAME = 'saxobank_root';
  * @returns {Root}
  */
 function createRootSchema() {
-    let schemas = this.protobuf.Root.fromJSON(this.protobuf.common['google/protobuf/wrappers.proto'], this.protobuf.root);
-    schemas = this.protobuf.Root.fromJSON(this.protobuf.common['google/protobuf/timestamp.proto'], schemas);
+    let schemas = this.protobuf.Root.fromJSON(
+        this.protobuf.common['google/protobuf/wrappers.proto'],
+        this.protobuf.root,
+    );
+    schemas = this.protobuf.Root.fromJSON(
+        this.protobuf.common['google/protobuf/timestamp.proto'],
+        schemas,
+    );
     return schemas;
 }
 
@@ -42,10 +48,14 @@ function ParserProtobuf(name, engine) {
     this.metaProcessor = new MetaProcessor();
 }
 
-ParserProtobuf.prototype = Object.create(
-    ParserBase.prototype,
-    { constructor: { value: ParserProtobuf, enumerable: false, writable: true, configurable: true } },
-);
+ParserProtobuf.prototype = Object.create(ParserBase.prototype, {
+    constructor: {
+        value: ParserProtobuf,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+    },
+});
 
 ParserProtobuf.prototype.getSchemaType = function(schemaName, typeName) {
     const schemas = this.schemasMap[schemaName];
@@ -78,7 +88,9 @@ ParserProtobuf.prototype.addSchema = function(schemaData, name) {
 
     let schema = createRootSchema.call(this, this.protobuf);
     try {
-        schema = this.protobuf.parse(schemaData, schema.root, { keepCase: true });
+        schema = this.protobuf.parse(schemaData, schema.root, {
+            keepCase: true,
+        });
     } catch (e) {
         log.error(LOG_AREA, 'Schema parsing failed', {
             error: e.message,

@@ -3,7 +3,6 @@
  * @constructor
  */
 function ParserBase(name, engine = null) {
-
     // Parser name, used for lookup.
     this.name = name;
 

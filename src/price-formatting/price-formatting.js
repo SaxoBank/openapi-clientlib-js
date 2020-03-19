@@ -8,7 +8,10 @@ import formatPrice from './format';
 import parsePrice from './parse';
 import NumberFormatting from '../number-formatting/number-formatting';
 import { format as formatTemplate } from '../utils/string';
-import { getValidPriceCharacters, getValidPriceRegex } from './valid-characters';
+import {
+    getValidPriceCharacters,
+    getValidPriceRegex,
+} from './valid-characters';
 import { getModernFractionsSeparator } from './modern-fractions-character';
 
 // -- Local variables section --
@@ -39,9 +42,19 @@ function PriceFormatting(numberOptions) {
  * @param {number} [numeratorDecimals=0] - The number of decimal places of the numerator in the case of fractions and modern fractions.
  * @returns {string} The formatting string.
  */
-PriceFormatting.prototype.format = function(value, decimals, formatFlags, numeratorDecimals) {
-
-    const parts = formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals);
+PriceFormatting.prototype.format = function(
+    value,
+    decimals,
+    formatFlags,
+    numeratorDecimals,
+) {
+    const parts = formatPrice(
+        this.numberFormatting,
+        value,
+        decimals,
+        formatFlags,
+        numeratorDecimals,
+    );
     return parts.Pre + parts.First + parts.Pips + parts.DeciPips + parts.Post;
 };
 
@@ -63,8 +76,19 @@ PriceFormatting.prototype.format = function(value, decimals, formatFlags, numera
  * @param {number} [numeratorDecimals=0] - The number of decimal places of the numerator in the case of fractions and modern fractions.
  * @returns {saxo.PriceParts} formatted price parts.
  */
-PriceFormatting.prototype.formatPriceParts = function(value, decimals, formatFlags, numeratorDecimals) {
-    return formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals);
+PriceFormatting.prototype.formatPriceParts = function(
+    value,
+    decimals,
+    formatFlags,
+    numeratorDecimals,
+) {
+    return formatPrice(
+        this.numberFormatting,
+        value,
+        decimals,
+        formatFlags,
+        numeratorDecimals,
+    );
 };
 
 /**
@@ -76,11 +100,23 @@ PriceFormatting.prototype.formatPriceParts = function(value, decimals, formatFla
  * @param {string} [templateStr="{Pre}{First}{Pips}<small>{DeciPips}</small>{Post}"] - The template string to use.
  * @returns {string} A formatted string.
  */
-PriceFormatting.prototype.formatTemplated = function(value, decimals, formatFlags, numeratorDecimals, templateStr) {
+PriceFormatting.prototype.formatTemplated = function(
+    value,
+    decimals,
+    formatFlags,
+    numeratorDecimals,
+    templateStr,
+) {
     if (!templateStr) {
         templateStr = '{Pre}{First}{Pips}<small>{DeciPips}</small>{Post}';
     }
-    const parts = formatPrice(this.numberFormatting, value, decimals, formatFlags, numeratorDecimals);
+    const parts = formatPrice(
+        this.numberFormatting,
+        value,
+        decimals,
+        formatFlags,
+        numeratorDecimals,
+    );
     return formatTemplate(templateStr, parts);
 };
 

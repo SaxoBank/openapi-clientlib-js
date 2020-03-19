@@ -1,11 +1,11 @@
 ﻿function mockTransport() {
     const transport = {
-        'post': jest.fn(),
-        'put': jest.fn(),
-        'get': jest.fn(),
-        'delete': jest.fn(),
-        'patch': jest.fn(),
-        'dispose': jest.fn(),
+        post: jest.fn(),
+        put: jest.fn(),
+        get: jest.fn(),
+        delete: jest.fn(),
+        patch: jest.fn(),
+        dispose: jest.fn(),
     };
 
     function methodFunction(method) {

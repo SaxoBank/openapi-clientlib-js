@@ -37,17 +37,16 @@ const STATE_FAILED = 0x4;
  */
 function toAbsoluteTokenExpiry(relativeExpiry) {
     relativeExpiry = parseInt(relativeExpiry, 10);
-    return (new Date()).getTime() + relativeExpiry * 1000;
+    return new Date().getTime() + relativeExpiry * 1000;
 }
 
 /**
  * Called when the token has changed.
  */
 function createTimerForNextToken() {
-
     const expiry = this.getExpiry();
 
-    let elapse = expiry - (new Date()).getTime();
+    let elapse = expiry - new Date().getTime();
 
     // If in the past try anyway to refresh token - page can have reload and normally we have some margin for refreshing the token server side
     if (elapse <= 0) {
@@ -55,26 +54,42 @@ function createTimerForNextToken() {
     } else {
         elapse -= this.tokenRefreshMarginMs;
         if (elapse < 0) {
-            log.warn(LOG_AREA, 'token has changed, but expiry is less than the token refresh margin.', {
-                expiry,
-                tokenRefreshMarginMs: this.tokenRefreshMarginMs,
-            });
+            log.warn(
+                LOG_AREA,
+                'token has changed, but expiry is less than the token refresh margin.',
+                {
+                    expiry,
+                    tokenRefreshMarginMs: this.tokenRefreshMarginMs,
+                },
+            );
             elapse = 0;
         }
         this.tokenRefreshTimerFireTime = Date.now() + elapse;
-        this.tokenRefreshTimer = setTimeout(this.refreshOpenApiToken.bind(this), elapse);
+        this.tokenRefreshTimer = setTimeout(
+            this.refreshOpenApiToken.bind(this),
+            elapse,
+        );
     }
 }
 
 function onApiTokenReceived(result) {
     this.state = STATE_WAITING;
     this.retries = 0;
-    if (!result.response || !result.response[this.tokenRefreshPropertyNameToken]) {
-        log.warn(LOG_AREA, 'Token refresh succeeded but no new token was present in response', result);
+    if (
+        !result.response ||
+        !result.response[this.tokenRefreshPropertyNameToken]
+    ) {
+        log.warn(
+            LOG_AREA,
+            'Token refresh succeeded but no new token was present in response',
+            result,
+        );
         return;
     }
     const token = result.response[this.tokenRefreshPropertyNameToken];
-    const expiry = toAbsoluteTokenExpiry(result.response[this.tokenRefreshPropertyNameExpires]);
+    const expiry = toAbsoluteTokenExpiry(
+        result.response[this.tokenRefreshPropertyNameExpires],
+    );
     this.set(token, expiry);
     createTimerForNextToken.call(this);
     this.trigger(this.EVENT_TOKEN_RECEIVED, token, expiry);
@@ -93,7 +108,10 @@ function onApiTokenReceiveFail(result) {
         this.state = STATE_WAITING;
         this.retries++;
         this.tokenRefreshTimerFireTime = Date.now() + this.retryDelayMs;
-        this.tokenRefreshTimer = setTimeout(refreshToken.bind(this), this.retryDelayMs);
+        this.tokenRefreshTimer = setTimeout(
+            refreshToken.bind(this),
+            this.retryDelayMs,
+        );
     } else {
         this.state = STATE_FAILED;
         this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
@@ -120,8 +138,11 @@ function getToken(url) {
     const headers = this.tokenRefreshHeaders || {};
     headers['Content-Type'] = headers['Content-Type'] || 'JSON';
 
-    fetch(this.tokenRefreshMethod, url, { headers, cache: false, credentials: this.tokenRefreshCredentials })
-        .then(onApiTokenReceived.bind(this), onApiTokenReceiveFail.bind(this));
+    fetch(this.tokenRefreshMethod, url, {
+        headers,
+        cache: false,
+        credentials: this.tokenRefreshCredentials,
+    }).then(onApiTokenReceived.bind(this), onApiTokenReceiveFail.bind(this));
 }
 
 function addBearer(newToken) {
@@ -132,7 +153,7 @@ function addBearer(newToken) {
 }
 
 // -- Exported methods section --
-
+/* eslint-disable complexity */
 /**
  * This class builds on top of {@link saxo.openapi.TransportCore} and adds authentication management. You need only
  * construct one or the other, they automatically wrap each other. All of the options from the {@link saxo.openapi.TransportCore}
@@ -159,11 +180,11 @@ function addBearer(newToken) {
  * @param {number} [options.retryDelayMs] - The delay before retrying auth
  * @param {number} [options.maxRetryCount] - The maximum number of times to retry the auth url
  */
-function AuthProvider(options) { // eslint-disable-line complexity
+function AuthProvider(options) {
     emitter.mixinTo(this);
 
-    let token = addBearer(options && options.token || null);
-    let expiry = options && options.expiry || 0;
+    let token = addBearer((options && options.token) || null);
+    let expiry = (options && options.expiry) || 0;
 
     // convert to absolute if the value is too small to be absolute
     if (expiry < Date.UTC(2000)) {
@@ -177,20 +198,30 @@ function AuthProvider(options) { // eslint-disable-line complexity
         return expiry;
     };
     this.set = function(newToken, newExpiry) {
-
         token = addBearer(newToken);
         expiry = newExpiry;
     };
 
     this.tokenRefreshUrl = options && options.tokenRefreshUrl;
     this.tokenRefreshHeaders = options && options.tokenRefreshHeaders;
-    this.tokenRefreshCredentials = options && options.tokenRefreshCredentials || DEFAULT_TOKEN_REFRESH_CREDENTIALS;
-    this.tokenRefreshMethod = options && options.tokenRefreshMethod || DEFAULT_TOKEN_REFRESH_METHOD;
-    this.tokenRefreshPropertyNameToken = options && options.tokenRefreshPropertyNameToken || DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_TOKEN;
-    this.tokenRefreshPropertyNameExpires = options && options.tokenRefreshPropertyNameExpires || DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES;
-    this.tokenRefreshMarginMs = options && options.tokenRefreshMarginMs || DEFAULT_TOKEN_REFRESH_MARGIN_MS;
-    this.retryDelayMs = options && options.retryDelayMs || DEFAULT_RETRY_DELAY_MS;
-    this.maxRetryCount = options && options.maxRetryCount || DEFAULT_MAX_RETRY_COUNT;
+    this.tokenRefreshCredentials =
+        (options && options.tokenRefreshCredentials) ||
+        DEFAULT_TOKEN_REFRESH_CREDENTIALS;
+    this.tokenRefreshMethod =
+        (options && options.tokenRefreshMethod) || DEFAULT_TOKEN_REFRESH_METHOD;
+    this.tokenRefreshPropertyNameToken =
+        (options && options.tokenRefreshPropertyNameToken) ||
+        DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_TOKEN;
+    this.tokenRefreshPropertyNameExpires =
+        (options && options.tokenRefreshPropertyNameExpires) ||
+        DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES;
+    this.tokenRefreshMarginMs =
+        (options && options.tokenRefreshMarginMs) ||
+        DEFAULT_TOKEN_REFRESH_MARGIN_MS;
+    this.retryDelayMs =
+        (options && options.retryDelayMs) || DEFAULT_RETRY_DELAY_MS;
+    this.maxRetryCount =
+        (options && options.maxRetryCount) || DEFAULT_MAX_RETRY_COUNT;
 
     this.state = STATE_WAITING;
     this.retries = 0;
@@ -201,6 +232,7 @@ function AuthProvider(options) { // eslint-disable-line complexity
 
     createTimerForNextToken.call(this);
 }
+/* eslint-enable complexity */
 
 AuthProvider.prototype.isFetchingNewToken = function() {
     return !(this.state & STATE_WAITING && this.retries === 0);
@@ -234,27 +266,41 @@ AuthProvider.prototype.tokenRejected = function(expiryOfRejectedToken) {
         // if we do not have the expiry of the current token, we don't know if we have
         // a different token now than the one causing the error. So we give some leeway
         // in order to not be re-requesting tokens in a loop
-        shouldRequest = !isFetching &&
-            (!this.lastTokenFetchTime || (now - this.lastTokenFetchTime) > TRASH_NEW_TOKEN_DELAY_MS);
+        shouldRequest =
+            !isFetching &&
+            (!this.lastTokenFetchTime ||
+                now - this.lastTokenFetchTime > TRASH_NEW_TOKEN_DELAY_MS);
 
         if (shouldRequest) {
-            log.warn(LOG_AREA, 'Request failed with invalid token before time', {
-                currentAuthExpiry,
-                now,
-            });
+            log.warn(
+                LOG_AREA,
+                'Request failed with invalid token before time',
+                {
+                    currentAuthExpiry,
+                    now,
+                },
+            );
         } else {
-            log.debug(LOG_AREA, 'Request failed with invalid token - possibly valid due to expired', {
-                currentAuthExpiry,
-                now,
-            });
+            log.debug(
+                LOG_AREA,
+                'Request failed with invalid token - possibly valid due to expired',
+                {
+                    currentAuthExpiry,
+                    now,
+                },
+            );
         }
     } else {
         // if the current token is the same as when this was sent and its meant to be still valid
         // it means the token is invalid even though its not meant to expire yet
-        const isCurrentTokenNotExpiredButRejected = currentAuthExpiry > now && expiryOfRejectedToken === currentAuthExpiry;
+        const isCurrentTokenNotExpiredButRejected =
+            currentAuthExpiry > now &&
+            expiryOfRejectedToken === currentAuthExpiry;
         const isCurrentTokenExpired = currentAuthExpiry < now;
         // if we are not in an ok waiting state
-        shouldRequest = (isCurrentTokenNotExpiredButRejected || isCurrentTokenExpired) && !isFetching;
+        shouldRequest =
+            (isCurrentTokenNotExpiredButRejected || isCurrentTokenExpired) &&
+            !isFetching;
 
         if (isCurrentTokenNotExpiredButRejected) {
             if (isFetching) {
@@ -263,10 +309,14 @@ AuthProvider.prototype.tokenRejected = function(expiryOfRejectedToken) {
                     now,
                 });
             } else {
-                log.error(LOG_AREA, 'Unauthorized with a valid token, will fetch a new one', {
-                    currentAuthExpiry,
-                    now,
-                });
+                log.error(
+                    LOG_AREA,
+                    'Unauthorized with a valid token, will fetch a new one',
+                    {
+                        currentAuthExpiry,
+                        now,
+                    },
+                );
             }
         } else if (isCurrentTokenExpired && !isFetching) {
             const lateBy = now - this.tokenRefreshTimerFireTime;
@@ -276,10 +326,14 @@ AuthProvider.prototype.tokenRejected = function(expiryOfRejectedToken) {
                 lateBy,
             });
         } else {
-            log.info(LOG_AREA, 'Received an auth error because of an old token.', {
-                expiryOfRejectedToken,
-                currentAuthExpiry,
-            });
+            log.info(
+                LOG_AREA,
+                'Received an auth error because of an old token.',
+                {
+                    expiryOfRejectedToken,
+                    currentAuthExpiry,
+                },
+            );
         }
     }
 
