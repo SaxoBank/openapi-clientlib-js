@@ -1,8 +1,4 @@
-.grunt
 node_modules
-tmp
-bin
-obj
 dist
 .idea
 .eslintcache
