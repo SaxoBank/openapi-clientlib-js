@@ -1,3 +1,7 @@
+#### v6.0.4
+
+- Allow formatting price up to 8 decimals, avoiding trailing zeroes
+
 #### v6.0.3
 
 - Fix level based retry mechanism by ensuring retryCount is set initially to 0.
