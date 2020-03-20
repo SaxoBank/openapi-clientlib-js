@@ -2,22 +2,50 @@ import { de_ch, da_dk, fr_fr, ar_eg, hi_in } from '../test/locales';
 import PriceFormatting from './price-formatting';
 import priceFormatOptions from './format-options';
 
-function testConversion(value, decimals, priceFormatOption, numeratorDecimals, options) {
+function testConversion(
+    value,
+    decimals,
+    priceFormatOption,
+    numeratorDecimals,
+    options,
+) {
     if (options != null) {
         expect(typeof options).toEqual('object');
     }
     const prices = new PriceFormatting(options);
-    expect(prices.parse(prices.format(value, decimals, priceFormatOption, numeratorDecimals), decimals, priceFormatOption)).toEqual(value);
+    expect(
+        prices.parse(
+            prices.format(
+                value,
+                decimals,
+                priceFormatOption,
+                numeratorDecimals,
+            ),
+            decimals,
+            priceFormatOption,
+        ),
+    ).toEqual(value);
 }
 
-function testConversionChanged(value, newValue, decimals, priceFormatOption, options) {
+function testConversionChanged(
+    value,
+    newValue,
+    decimals,
+    priceFormatOption,
+    options,
+) {
     const prices = new PriceFormatting(options);
-    expect(prices.parse(prices.format(value, decimals, priceFormatOption), decimals, priceFormatOption)).toEqual(newValue);
+    expect(
+        prices.parse(
+            prices.format(value, decimals, priceFormatOption),
+            decimals,
+            priceFormatOption,
+        ),
+    ).toEqual(newValue);
 }
 
 describe('price-formatting parse', () => {
     it('does the basics', function() {
-
         testConversion(0, 1);
         testConversion(0, 4);
         testConversion(0, 8);
@@ -41,11 +69,13 @@ describe('price-formatting parse', () => {
 
         testConversion(-42.0625, 5, priceFormatOptions.Fractions);
 
-        testConversion(42, 3, [priceFormatOptions.IncludeZeroFractions, priceFormatOptions.Fractions]);
+        testConversion(42, 3, [
+            priceFormatOptions.IncludeZeroFractions,
+            priceFormatOptions.Fractions,
+        ]);
     });
 
     it('handles Special Futures Format - 32', function() {
-
         testConversion(2567.90625, 5, priceFormatOptions.ModernFractions);
 
         testConversion(2567.21875, 5, priceFormatOptions.ModernFractions);
@@ -87,7 +117,6 @@ describe('price-formatting parse', () => {
     });
 
     it('handles Special Futures Format - 64', function() {
-
         testConversion(2567.21875, 6, priceFormatOptions.ModernFractions);
 
         testConversion(2567.21875, 6, priceFormatOptions.ModernFractions, 1);
@@ -111,16 +140,36 @@ describe('price-formatting parse', () => {
     it('handles invalid Special Futures Format values', function() {
         const prices = new PriceFormatting();
 
-        expect(prices.parse('0\'', 6, priceFormatOptions.ModernFractions)).toEqual(0);
-        expect(prices.parse('\'', 6, priceFormatOptions.ModernFractions)).toEqual(0);
-        expect(prices.parse('\'0', 6, priceFormatOptions.ModernFractions)).toEqual(0);
-        expect(prices.parse('abc', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
-        expect(prices.parse('abc\'', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
-        expect(prices.parse('abc\'0', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
-        expect(prices.parse('0\'abc', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
-        expect(prices.parse('\'abc', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
-        expect(prices.parse('abc\'abc', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
-        expect(prices.parse('0\'99', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+        expect(
+            prices.parse("0'", 6, priceFormatOptions.ModernFractions),
+        ).toEqual(0);
+        expect(
+            prices.parse("'", 6, priceFormatOptions.ModernFractions),
+        ).toEqual(0);
+        expect(
+            prices.parse("'0", 6, priceFormatOptions.ModernFractions),
+        ).toEqual(0);
+        expect(
+            prices.parse('abc', 6, priceFormatOptions.ModernFractions),
+        ).toEqual(NaN);
+        expect(
+            prices.parse("abc'", 6, priceFormatOptions.ModernFractions),
+        ).toEqual(NaN);
+        expect(
+            prices.parse("abc'0", 6, priceFormatOptions.ModernFractions),
+        ).toEqual(NaN);
+        expect(
+            prices.parse("0'abc", 6, priceFormatOptions.ModernFractions),
+        ).toEqual(NaN);
+        expect(
+            prices.parse("'abc", 6, priceFormatOptions.ModernFractions),
+        ).toEqual(NaN);
+        expect(
+            prices.parse("abc'abc", 6, priceFormatOptions.ModernFractions),
+        ).toEqual(NaN);
+        expect(
+            prices.parse("0'99", 6, priceFormatOptions.ModernFractions),
+        ).toEqual(NaN);
     });
 
     it('handles misc scenarios', function() {
@@ -130,11 +179,16 @@ describe('price-formatting parse', () => {
         testConversion(0, 2, priceFormatOptions.Percentage);
 
         // Swiss vs. ModernFractions
-        testConversion(2567.90625, 5, priceFormatOptions.ModernFractions, 2, de_ch);
+        testConversion(
+            2567.90625,
+            5,
+            priceFormatOptions.ModernFractions,
+            2,
+            de_ch,
+        );
     });
 
     it('handles daDK', function() {
-
         testConversion(1.23451, 5, null, 0, da_dk);
 
         testConversion(1234567.2345, 4, null, 0, da_dk);
@@ -175,9 +229,15 @@ describe('price-formatting parse', () => {
     it('supports vulgar functions', () => {
         const prices = new PriceFormatting();
 
-        expect(prices.parse('2\u00BC', 2, priceFormatOptions.Fractions)).toEqual(2.25);
-        expect(prices.parse('1 \u00BD ', 2, priceFormatOptions.Fractions)).toEqual(1.5);
-        expect(prices.parse('100 \u215E ', 2, priceFormatOptions.Fractions)).toEqual(100 + 7 / 8);
+        expect(
+            prices.parse('2\u00BC', 2, priceFormatOptions.Fractions),
+        ).toEqual(2.25);
+        expect(
+            prices.parse('1 \u00BD ', 2, priceFormatOptions.Fractions),
+        ).toEqual(1.5);
+        expect(
+            prices.parse('100 \u215E ', 2, priceFormatOptions.Fractions),
+        ).toEqual(100 + 7 / 8);
     });
 
     it('disallows negative decimals', () => {
@@ -193,18 +253,32 @@ describe('price-formatting parse', () => {
         expect(prices.parse('')).toEqual(NaN);
         expect(prices.parse('abc')).toEqual(NaN);
 
-        expect(prices.parse(null, 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
-        expect(prices.parse(undefined, 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
-        expect(prices.parse('', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
-        expect(prices.parse('abc', 6, priceFormatOptions.ModernFractions)).toEqual(NaN);
+        expect(
+            prices.parse(null, 6, priceFormatOptions.ModernFractions),
+        ).toEqual(NaN);
+        expect(
+            prices.parse(undefined, 6, priceFormatOptions.ModernFractions),
+        ).toEqual(NaN);
+        expect(prices.parse('', 6, priceFormatOptions.ModernFractions)).toEqual(
+            NaN,
+        );
+        expect(
+            prices.parse('abc', 6, priceFormatOptions.ModernFractions),
+        ).toEqual(NaN);
 
-        expect(prices.parse(null, 6, priceFormatOptions.Fractions)).toEqual(NaN);
-        expect(prices.parse(undefined, 6, priceFormatOptions.Fractions)).toEqual(NaN);
+        expect(prices.parse(null, 6, priceFormatOptions.Fractions)).toEqual(
+            NaN,
+        );
+        expect(
+            prices.parse(undefined, 6, priceFormatOptions.Fractions),
+        ).toEqual(NaN);
         expect(prices.parse('', 6, priceFormatOptions.Fractions)).toEqual(NaN);
-        expect(prices.parse('abc', 6, priceFormatOptions.Fractions)).toEqual(NaN);
+        expect(prices.parse('abc', 6, priceFormatOptions.Fractions)).toEqual(
+            NaN,
+        );
     });
 
-/*
+    /*
 
     The below tests flags that are not implemented at the moment
 

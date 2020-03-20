@@ -9,15 +9,45 @@ import { parseNumberNegativePattern } from '../number-formatting/parse';
 
 // -- Local variables section --
 
-const divisionChars = ['/', String.fromCharCode(0x2044), String.fromCharCode(0x2215)];
-const fractionChars = [String.fromCharCode(0xBC), String.fromCharCode(0xBD), String.fromCharCode(0xBE), String.fromCharCode(0x2153),
-    String.fromCharCode(0x2154), String.fromCharCode(0x2155), String.fromCharCode(0x2156), String.fromCharCode(0x2157), String.fromCharCode(0x2158),
-    String.fromCharCode(0x2159), String.fromCharCode(0x215A), String.fromCharCode(0x215B), String.fromCharCode(0x215C), String.fromCharCode(0x215D),
-    String.fromCharCode(0x215E)];
-const fractionCharsValues = [1 / 4, 1 / 2, 3 / 4, 1 / 3,
-    2 / 3, 1 / 5, 2 / 5, 3 / 5, 4 / 5,
-    1 / 6, 5 / 6, 1 / 8, 3 / 8, 5 / 8,
-    7 / 8];
+const divisionChars = [
+    '/',
+    String.fromCharCode(0x2044),
+    String.fromCharCode(0x2215),
+];
+const fractionChars = [
+    String.fromCharCode(0xbc),
+    String.fromCharCode(0xbd),
+    String.fromCharCode(0xbe),
+    String.fromCharCode(0x2153),
+    String.fromCharCode(0x2154),
+    String.fromCharCode(0x2155),
+    String.fromCharCode(0x2156),
+    String.fromCharCode(0x2157),
+    String.fromCharCode(0x2158),
+    String.fromCharCode(0x2159),
+    String.fromCharCode(0x215a),
+    String.fromCharCode(0x215b),
+    String.fromCharCode(0x215c),
+    String.fromCharCode(0x215d),
+    String.fromCharCode(0x215e),
+];
+const fractionCharsValues = [
+    1 / 4,
+    1 / 2,
+    3 / 4,
+    1 / 3,
+    2 / 3,
+    1 / 5,
+    2 / 5,
+    3 / 5,
+    4 / 5,
+    1 / 6,
+    5 / 6,
+    1 / 8,
+    3 / 8,
+    5 / 8,
+    7 / 8,
+];
 
 // -- Local methods section --
 
@@ -54,11 +84,15 @@ function findFractionalPart(value) {
 
     const divIndex = indexOfArray(value, divisionChars);
 
-    if (divIndex > 0) { // -1 not found, 0 means nothing before
+    if (divIndex > 0) {
+        // -1 not found, 0 means nothing before
         index = divIndex - 1;
         let foundDigit = false;
         while (index >= 0) {
-            if (foundDigit && isNaN(parseInt(value.substring(index, index + 1), 10))) {
+            if (
+                foundDigit &&
+                isNaN(parseInt(value.substring(index, index + 1), 10))
+            ) {
                 break;
             } else if (!isNaN(value.substring(index, index + 1))) {
                 foundDigit = true;
@@ -77,15 +111,15 @@ function findFractionalPart(value) {
 }
 
 function parseDecimalprice(numberFormatting, s, formatFlags) {
-
     if (formatFlags.Percentage) {
         s = s.replace(/\s*%\s*$/, '');
     }
 
-    if (!formatFlags.DeciPipsSpaceSeparator &&
+    if (
+        !formatFlags.DeciPipsSpaceSeparator &&
         !formatFlags.DeciPipsDecimalSeparator &&
-        !formatFlags.DeciPipsFraction) {
-
+        !formatFlags.DeciPipsFraction
+    ) {
         let result = numberFormatting.parse(s);
 
         if (formatFlags.Percentage) {
@@ -116,10 +150,12 @@ function parseModernFractionalPrice(numberFormatting, s, decimals) {
         }
 
         if (pipIndex + 1 < s.length) {
-            const pipPart = numberFormatting.parse(s.substring(pipIndex + 1).trim());
+            const pipPart = numberFormatting.parse(
+                s.substring(pipIndex + 1).trim(),
+            );
 
             if (pipPart < denominator) {
-                result += (pipPart / denominator);
+                result += pipPart / denominator;
             } else {
                 result = NaN;
             }
@@ -141,7 +177,8 @@ function parseNonModernFractionalPrice(numberFormatting, s, decimals) {
 
     if (fracIndex !== -1 && fracIndex < s.length) {
         const integerPart = s.substring(0, fracIndex).trim();
-        result = (integerPart.length > 0 ? numberFormatting.parse(integerPart) : 0.0);
+        result =
+            integerPart.length > 0 ? numberFormatting.parse(integerPart) : 0.0;
 
         const fractionalPart = s.substring(fracIndex).trim();
         let isVulgarFraction = false;
@@ -157,8 +194,12 @@ function parseNonModernFractionalPrice(numberFormatting, s, decimals) {
         if (!isVulgarFraction) {
             const divIndex = indexOfArray(fractionalPart, divisionChars);
             if (divIndex !== -1 && divIndex < fractionalPart.length) {
-                const numeratorPart = fractionalPart.substring(0, divIndex).trim();
-                const denominatorPart = fractionalPart.substring(divIndex + 1).trim();
+                const numeratorPart = fractionalPart
+                    .substring(0, divIndex)
+                    .trim();
+                const denominatorPart = fractionalPart
+                    .substring(divIndex + 1)
+                    .trim();
 
                 const numeratorParsed = parseFloat(numeratorPart);
                 const denominatorParsed = parseFloat(denominatorPart);
@@ -184,7 +225,6 @@ function parseNonModernFractionalPrice(numberFormatting, s, decimals) {
 }
 
 function parseFractionalPrice(numberFormatting, s, formatFlags, decimals) {
-
     if (formatFlags.ModernFractions) {
         // special futures
         return parseModernFractionalPrice(numberFormatting, s, decimals);
@@ -204,7 +244,6 @@ function parseFractionalPrice(numberFormatting, s, formatFlags, decimals) {
  * @returns {number} The passed value, 0 if not parsed.
  */
 function parsePrice(numberFormatting, str, decimals, formatFlags) {
-
     if (str == null) {
         return NaN;
     }
@@ -216,8 +255,10 @@ function parsePrice(numberFormatting, str, decimals, formatFlags) {
     }
 
     if (decimals < 0) {
-        throw new Error('This library supports the openapi format specification, so fractions are done with ' +
-            'positive decimals and the Fractions or ModernFractions flag');
+        throw new Error(
+            'This library supports the openapi format specification, so fractions are done with ' +
+                'positive decimals and the Fractions or ModernFractions flag',
+        );
     }
 
     let s = String(str).trim();
@@ -229,16 +270,21 @@ function parsePrice(numberFormatting, str, decimals, formatFlags) {
         }
     }
 
-    if (!s) { // null, undefined, ""
+    if (!s) {
+        // null, undefined, ""
         return NaN;
     }
 
     try {
         if (formatFlags.ModernFractions || formatFlags.Fractions) {
-            return parseFractionalPrice(numberFormatting, s, formatFlags, decimals);
+            return parseFractionalPrice(
+                numberFormatting,
+                s,
+                formatFlags,
+                decimals,
+            );
         }
         return parseDecimalprice(numberFormatting, s, formatFlags);
-
     } catch (e) {
         return NaN;
     }

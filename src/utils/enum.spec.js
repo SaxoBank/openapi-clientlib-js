@@ -58,7 +58,11 @@ describe('utils enum', () => {
 
     describe('makeDefinition', () => {
         it('basically works', () => {
-            const enuDefinition = enumUtils.makeDefinition(['One', 'Two', 'Three']);
+            const enuDefinition = enumUtils.makeDefinition([
+                'One',
+                'Two',
+                'Three',
+            ]);
 
             expect(enuDefinition.One).toEqual('One');
             expect(enuDefinition.Two).toEqual('Two');
@@ -75,7 +79,10 @@ describe('utils enum', () => {
             expect(union.Three).toBe(true);
         });
         it('with objects', () => {
-            const union = enumUtils.union({ 'One': true, 'Two': true }, { 'One': true, 'Three': true });
+            const union = enumUtils.union(
+                { One: true, Two: true },
+                { One: true, Three: true },
+            );
 
             expect(union.One).toBe(true);
             expect(union.Two).toBe(true);
@@ -92,7 +99,10 @@ describe('utils enum', () => {
         });
 
         it('remains unchanged if no common properties', () => {
-            const exclusion = enumUtils.exclusion({ 'One': true, 'Two': true }, { 'Three': true, 'Four': true });
+            const exclusion = enumUtils.exclusion(
+                { One: true, Two: true },
+                { Three: true, Four: true },
+            );
 
             expect(exclusion.One).toBe(true);
             expect(exclusion.Two).toBe(true);
@@ -100,7 +110,10 @@ describe('utils enum', () => {
         });
 
         it('becomes empty if all properties excluded', () => {
-            const exclusion = enumUtils.exclusion('One, Two', 'One, Two, Three, Four');
+            const exclusion = enumUtils.exclusion(
+                'One, Two',
+                'One, Two, Three, Four',
+            );
 
             expect(Object.keys(exclusion).length).toBe(0);
         });

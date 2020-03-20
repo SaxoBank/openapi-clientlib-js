@@ -10,10 +10,12 @@
 function transportMethod(method) {
     return function() {
         // checking if http method call should be handled by RetryTransport
-        if (this.methods[method] && (this.methods[method].retryLimit > 0 || this.methods[method].retryTimeouts)) {
-
+        if (
+            this.methods[method] &&
+            (this.methods[method].retryLimit > 0 ||
+                this.methods[method].retryTimeouts)
+        ) {
             return new Promise((resolve, reject) => {
-
                 const transportCall = {
                     method,
                     args: arguments,
@@ -28,7 +30,6 @@ function transportMethod(method) {
         }
         // calls underlying transport http method
         return this.transport[method].apply(this.transport, arguments);
-
     };
 }
 
@@ -57,10 +58,13 @@ function transportMethod(method) {
  */
 function TransportRetry(transport, options) {
     if (!transport) {
-        throw new Error('Missing required parameter: transport in TransportRetry');
+        throw new Error(
+            'Missing required parameter: transport in TransportRetry',
+        );
     }
-    this.retryTimeout = (options && options.retryTimeout > 0) ? options.retryTimeout : 0;
-    this.methods = (options && options.methods) ? options.methods : {};
+    this.retryTimeout =
+        options && options.retryTimeout > 0 ? options.retryTimeout : 0;
+    this.methods = options && options.methods ? options.methods : {};
     this.transport = transport;
     this.failedCalls = [];
     this.individualFailedCalls = [];
@@ -124,20 +128,34 @@ TransportRetry.prototype.options = transportMethod('options');
 TransportRetry.prototype.sendTransportCall = function(transportCall) {
     this.transport[transportCall.method]
         .apply(this.transport, transportCall.args)
-        .then(transportCall.resolve,
-            (response) => {
-                const callOptions = this.methods[transportCall.method];
-                const isRetryForStatus = response && response.status && callOptions.statuses && callOptions.statuses.indexOf(response.status) >= 0;
-                const isRetryRequest = (response && response.isNetworkError) ? callOptions.retryNetworkError : isRetryForStatus;
-                const isWithinRetryLimitOption = callOptions.retryLimit > 0 && transportCall.retryCount < callOptions.retryLimit;
-                const isWithinRetryTimeoutsOption = callOptions.retryTimeouts && transportCall.retryCount < callOptions.retryTimeouts.length;
+        .then(transportCall.resolve, (response) => {
+            const callOptions = this.methods[transportCall.method];
+            const isRetryForStatus =
+                response &&
+                response.status &&
+                callOptions.statuses &&
+                callOptions.statuses.indexOf(response.status) >= 0;
+            const isRetryRequest =
+                response && response.isNetworkError
+                    ? callOptions.retryNetworkError
+                    : isRetryForStatus;
+            const isWithinRetryLimitOption =
+                callOptions.retryLimit > 0 &&
+                transportCall.retryCount < callOptions.retryLimit;
+            const isWithinRetryTimeoutsOption =
+                callOptions.retryTimeouts &&
+                transportCall.retryCount < callOptions.retryTimeouts.length;
 
-                if (isRetryRequest && (isWithinRetryLimitOption || isWithinRetryTimeoutsOption) && !this.isDisposed) {
-                    this.addFailedCall(transportCall);
-                } else {
-                    transportCall.reject(response);
-                }
-            });
+            if (
+                isRetryRequest &&
+                (isWithinRetryLimitOption || isWithinRetryTimeoutsOption) &&
+                !this.isDisposed
+            ) {
+                this.addFailedCall(transportCall);
+            } else {
+                transportCall.reject(response);
+            }
+        });
 };
 
 /**
@@ -147,7 +165,10 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
  */
 TransportRetry.prototype.addFailedCall = function(transportCall) {
     const callOptions = this.methods[transportCall.method];
-    if (callOptions.retryTimeouts && callOptions.retryTimeouts.length > transportCall.retryCount) {
+    if (
+        callOptions.retryTimeouts &&
+        callOptions.retryTimeouts.length > transportCall.retryCount
+    ) {
         // schedule an individual retry timeout
         this.individualFailedCalls.push(transportCall);
         transportCall.retryTimer = setTimeout(() => {
@@ -181,7 +202,9 @@ TransportRetry.prototype.retryFailedCalls = function() {
  */
 TransportRetry.prototype.retryIndividualFailedCall = function(transportCall) {
     transportCall.retryTimer = null;
-    const individualFailedCallsIndex = this.individualFailedCalls.indexOf(transportCall);
+    const individualFailedCallsIndex = this.individualFailedCalls.indexOf(
+        transportCall,
+    );
     if (individualFailedCallsIndex >= 0) {
         this.individualFailedCalls.splice(individualFailedCallsIndex, 1);
     }
@@ -203,9 +226,11 @@ TransportRetry.prototype.dispose = function() {
         clearTimeout(this.retryTimer);
         this.retryTimer = null;
     }
-    this.individualFailedCalls.concat(this.failedCalls).forEach((transportCall) => {
-        transportCall.reject.apply(null);
-    });
+    this.individualFailedCalls
+        .concat(this.failedCalls)
+        .forEach((transportCall) => {
+            transportCall.reject.apply(null);
+        });
     this.individualFailedCalls.length = 0;
     this.failedCalls.length = 0;
     this.transport.dispose();

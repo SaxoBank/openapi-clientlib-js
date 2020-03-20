@@ -38,7 +38,10 @@ function extend() {
                 if (!deep || typeof val !== 'object') {
                     result[prop] = val;
                 } else {
-                    if (typeof val !== typeof result[prop] || Array.isArray(val) !== Array.isArray(result[prop])) {
+                    if (
+                        typeof val !== typeof result[prop] ||
+                        Array.isArray(val) !== Array.isArray(result[prop])
+                    ) {
                         result[prop] = Array.isArray(val) ? [] : {};
                     }
                     extend(true, result[prop], val);

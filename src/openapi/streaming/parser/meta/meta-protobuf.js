@@ -5,7 +5,7 @@ const META_EMPTY = '__meta_empty';
  * Map of accessors for custom global envelopes.
  */
 const CUSTOM_ENVELOPES = {
-    'CollectionEnvelope': (data) => data.Collection,
+    CollectionEnvelope: (data) => data.Collection,
 };
 
 /**

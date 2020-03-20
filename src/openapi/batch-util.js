@@ -42,19 +42,22 @@ function parse(responseText, parentRequestId = 0) {
     for (let i = 0, l = lines.length; i < l; i++) {
         const line = lines[i];
         if (line.length) {
-
             if (!responseData[requestId]) {
                 requestId = line.match(requestRx);
                 if (requestId) {
                     requestId = parseInt(requestId[1], 10);
-                    requestId = globalToLocalRequestId(requestId, parentRequestId);
+                    requestId = globalToLocalRequestId(
+                        requestId,
+                        parentRequestId,
+                    );
                     responseData[requestId] = {};
                 }
             }
 
             if (line.indexOf(responseBoundary) === 0) {
                 if (currentData) {
-                    requestId = (requestId === null ? responseData.length : requestId);
+                    requestId =
+                        requestId === null ? responseData.length : requestId;
                     responseData[requestId] = currentData;
                 }
 
@@ -69,11 +72,19 @@ function parse(responseText, parentRequestId = 0) {
                     }
                 } else if (!currentData.response) {
                     const firstCharacter = line.charAt(0);
-                    if (firstCharacter === '{' || firstCharacter === '[' || firstCharacter === '"') {
+                    if (
+                        firstCharacter === '{' ||
+                        firstCharacter === '[' ||
+                        firstCharacter === '"'
+                    ) {
                         try {
                             currentData.response = JSON.parse(line);
                         } catch (ex) {
-                            log.warn(LOG_AREA, 'Unexpected exception parsing json. Ignoring.', ex);
+                            log.warn(
+                                LOG_AREA,
+                                'Unexpected exception parsing json. Ignoring.',
+                                ex,
+                            );
                         }
                     }
                 }
@@ -92,9 +103,10 @@ function parse(responseText, parentRequestId = 0) {
  * @returns { body: string, boundary: string }
  */
 function build(subRequests, host) {
-
     if (!subRequests || !host) {
-        throw new Error('Missing required parameters: batch build requires sub requests and host');
+        throw new Error(
+            'Missing required parameters: batch build requires sub requests and host',
+        );
     }
 
     const body = [];
@@ -102,8 +114,12 @@ function build(subRequests, host) {
 
     for (let i = 0, l = subRequests.length; i < l; i++) {
         const request = subRequests[i];
-        if (request.data && request.data.substr(0, boundary.length) === boundary) {
-            const nextCharacter = request.data.substr(boundary.length, 1) === '+' ? '-' : '+';
+        if (
+            request.data &&
+            request.data.substr(0, boundary.length) === boundary
+        ) {
+            const nextCharacter =
+                request.data.substr(boundary.length, 1) === '+' ? '-' : '+';
             boundary += nextCharacter;
         }
     }

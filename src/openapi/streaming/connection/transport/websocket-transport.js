@@ -37,7 +37,10 @@ function normalizeWebSocketUrl(url) {
 }
 
 function getWebSocketUrl() {
-    return normalizeWebSocketUrl.call(this, `${this.connectionUrl}${this.query}`);
+    return normalizeWebSocketUrl.call(
+        this,
+        `${this.connectionUrl}${this.query}`,
+    );
 }
 
 function destroySocket(socket) {
@@ -53,7 +56,10 @@ function destroySocket(socket) {
 
 function reconnect() {
     if (this.reconnectCount >= DEFAULT_RECONNECT_LIMIT) {
-        handleFailure.call(this, { message: 'Transport reached maximum amount of reconnects allowed till last successful connection.' });
+        handleFailure.call(this, {
+            message:
+                'Transport reached maximum amount of reconnects allowed till last successful connection.',
+        });
         return;
     }
 
@@ -77,7 +83,9 @@ function configure() {
         this.socket.onmessage = handleSocketMessage.bind(this);
         this.socket.onclose = handleSocketClose.bind(this);
     } catch (error) {
-        handleFailure.call(this, { message: 'Failed to setup webSocket connection' });
+        handleFailure.call(this, {
+            message: 'Failed to setup webSocket connection',
+        });
     }
 }
 
@@ -98,8 +106,13 @@ function parseMessage(rawData) {
         const referenceIdSize = message.getInt8(index);
         index += 1;
         // n bytes make up the reference id. The reference id is an ASCII string.
-        const referenceIdBuffer = new Int8Array(rawData.slice(index, index + referenceIdSize));
-        const referenceId = String.fromCharCode.apply(String, referenceIdBuffer);
+        const referenceIdBuffer = new Int8Array(
+            rawData.slice(index, index + referenceIdSize),
+        );
+        const referenceId = String.fromCharCode.apply(
+            String,
+            referenceIdBuffer,
+        );
         index += referenceIdSize;
         // 1 byte makes up the payload format. The value 0 indicates that the payload format is Json.
         const dataFormat = message.getUint8(index);
@@ -111,7 +124,9 @@ function parseMessage(rawData) {
         let data;
 
         if (dataFormat === 0) {
-            const payloadBuffer = new Uint8Array(rawData.slice(index, index + payloadSize));
+            const payloadBuffer = new Uint8Array(
+                rawData.slice(index, index + payloadSize),
+            );
             data = String.fromCharCode.apply(null, payloadBuffer);
             data = decodeURIComponent(escape(data));
             data = JSON.parse(data);
@@ -151,7 +166,9 @@ function handleSocketMessage(messageEvent) {
         try {
             parsedMessages = parseMessage.call(this, messageEvent.data);
         } catch (e) {
-            handleFailure.call(this, { message: `Error occurred during parsing of plain WebSocket message. Message: ${e.message}` });
+            handleFailure.call(this, {
+                message: `Error occurred during parsing of plain WebSocket message. Message: ${e.message}`,
+            });
             return;
         }
 
@@ -164,7 +181,10 @@ function handleSocketMessage(messageEvent) {
 }
 
 function handleSocketClose(event) {
-    if (this.socket && this.socket.readyState === STATE_INTERNAL_CLOSED || this.socket.readyState === STATE_INTERNAL_CLOSING) {
+    if (
+        (this.socket && this.socket.readyState === STATE_INTERNAL_CLOSED) ||
+        this.socket.readyState === STATE_INTERNAL_CLOSING
+    ) {
         log.debug(LOG_AREA, 'Transport connection closed', {
             readyState: this.socket.readyState,
             code: event.code,
@@ -208,7 +228,9 @@ function handleSocketError(error) {
             this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
             reconnect.call(this);
         } else {
-            handleFailure.call(this, { message: `WebSocket connection failed with error code: ${error.code}, reason: ${error.reason}` });
+            handleFailure.call(this, {
+                message: `WebSocket connection failed with error code: ${error.code}, reason: ${error.reason}`,
+            });
         }
     }
 }
@@ -310,14 +332,21 @@ WebsocketTransport.prototype.setConnectionSlowCallback = function(callback) {
     this.connectionSlowCallback = callback;
 };
 
-WebsocketTransport.prototype.getAuthorizePromise = function(contextId, forceAuthenticate) {
+WebsocketTransport.prototype.getAuthorizePromise = function(
+    contextId,
+    forceAuthenticate,
+) {
     if (!forceAuthenticate && this.authorizePromise) {
         log.debug(LOG_AREA, 'Connection already authorized');
         return this.authorizePromise;
     }
 
     this.authorizePromise = new Promise((resolve, reject) => {
-        this.restTransport.put(this.authorizeServiceGroup, `${this.authorizeUrl}?contextId=${contextId}`)
+        this.restTransport
+            .put(
+                this.authorizeServiceGroup,
+                `${this.authorizeUrl}?contextId=${contextId}`,
+            )
             .then((response) => {
                 log.debug(LOG_AREA, 'Authorization completed', {
                     contextId,
@@ -374,8 +403,14 @@ WebsocketTransport.prototype.stop = function() {
     }
 };
 
-WebsocketTransport.prototype.updateQuery = function(authToken, contextId, forceAuth = false) {
-    let query = `?contextId=${encodeURIComponent(contextId)}&Authorization=${encodeURIComponent(authToken)}`;
+WebsocketTransport.prototype.updateQuery = function(
+    authToken,
+    contextId,
+    forceAuth = false,
+) {
+    let query = `?contextId=${encodeURIComponent(
+        contextId,
+    )}&Authorization=${encodeURIComponent(authToken)}`;
     let lastMessageIdString;
 
     if (this.lastMessageId !== null && this.lastMessageId !== undefined) {

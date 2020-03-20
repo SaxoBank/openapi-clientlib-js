@@ -98,9 +98,15 @@ describe('NumberFormatting format', () => {
         });
 
         it('accepts localization options', () => {
-            expect(shortFormat(10000, { unitSuffixThousand: ' thou' })).toEqual('10 thou');
-            expect(shortFormat(100000000, { unitSuffixMillion: 'Mi' })).toEqual('100Mi');
-            expect(shortFormat(1000000000, { unitSuffixBillion: 'Bn' })).toEqual('1Bn');
+            expect(shortFormat(10000, { unitSuffixThousand: ' thou' })).toEqual(
+                '10 thou',
+            );
+            expect(shortFormat(100000000, { unitSuffixMillion: 'Mi' })).toEqual(
+                '100Mi',
+            );
+            expect(
+                shortFormat(1000000000, { unitSuffixBillion: 'Bn' }),
+            ).toEqual('1Bn');
         });
     });
 

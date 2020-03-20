@@ -1,10 +1,14 @@
-import { setTimeout, installClock, uninstallClock, tick } from '../../test/utils';
+import {
+    setTimeout,
+    installClock,
+    uninstallClock,
+    tick,
+} from '../../test/utils';
 import mockTransport from '../../test/mocks/transport';
 import mockAuthProvider from '../../test/mocks/authProvider';
 import TransportQueue from './queue';
 
 describe('openapi TransportQueue', () => {
-
     let transport;
     let transportQueue;
     let authProvider;
@@ -41,9 +45,11 @@ describe('openapi TransportQueue', () => {
         expect(transportQueue.isQueueing).toEqual(false);
 
         let waitingForPromiseResolve;
-        transportQueue.waitFor(new Promise(function(resolve, reject) {
-            waitingForPromiseResolve = resolve;
-        }));
+        transportQueue.waitFor(
+            new Promise(function(resolve, reject) {
+                waitingForPromiseResolve = resolve;
+            }),
+        );
 
         const getPromise = transportQueue.get();
         setTimeout(function() {
@@ -58,7 +64,9 @@ describe('openapi TransportQueue', () => {
 
                 setTimeout(function() {
                     expect(getSpy.mock.calls.length).toEqual(1);
-                    expect(getSpy.mock.calls[0]).toEqual([{ status: 204, response: 'test' }]);
+                    expect(getSpy.mock.calls[0]).toEqual([
+                        { status: 204, response: 'test' },
+                    ]);
 
                     done();
                 });
@@ -71,9 +79,11 @@ describe('openapi TransportQueue', () => {
         expect(transportQueue.isQueueing).toEqual(false);
 
         let waitingForPromiseResolve;
-        transportQueue.waitFor(new Promise(function(resolve, reject) {
-            waitingForPromiseResolve = resolve;
-        }));
+        transportQueue.waitFor(
+            new Promise(function(resolve, reject) {
+                waitingForPromiseResolve = resolve;
+            }),
+        );
 
         const getPromise = transportQueue.get();
         setTimeout(function() {
@@ -95,7 +105,7 @@ describe('openapi TransportQueue', () => {
         });
     });
 
-    it('waits for a auth that isn\'t ready when constructed', (done) => {
+    it("waits for a auth that isn't ready when constructed", (done) => {
         authProvider.setExpiry(Date.now() - 10000);
         transportQueue = new TransportQueue(transport, authProvider);
         expect(transportQueue.isQueueing).toEqual(true);
@@ -114,7 +124,7 @@ describe('openapi TransportQueue', () => {
         });
     });
 
-    it('doesn\'t wait if the expiry is in the future', (done) => {
+    it("doesn't wait if the expiry is in the future", (done) => {
         authProvider.setExpiry(Date.now() + 10000);
         transportQueue = new TransportQueue(transport, authProvider);
         expect(transportQueue.isQueueing).toEqual(false);
@@ -140,15 +150,17 @@ describe('openapi TransportQueue', () => {
         });
     });
 
-    it('doesn\'t resolve if a promise resolves but the expiry is still in the past', (done) => {
+    it("doesn't resolve if a promise resolves but the expiry is still in the past", (done) => {
         authProvider.setExpiry(Date.now() + 10000);
         transportQueue = new TransportQueue(transport, authProvider);
         expect(transportQueue.isQueueing).toEqual(false);
 
         let waitingForPromiseResolve;
-        transportQueue.waitFor(new Promise(function(resolve, reject) {
-            waitingForPromiseResolve = resolve;
-        }));
+        transportQueue.waitFor(
+            new Promise(function(resolve, reject) {
+                waitingForPromiseResolve = resolve;
+            }),
+        );
 
         expect(transportQueue.isQueueing).toEqual(true);
 
@@ -186,7 +198,6 @@ describe('openapi TransportQueue', () => {
         authProvider.isFetchingNewToken.mockReturnValue(true);
 
         setTimeout(function() {
-
             expect(getSpy1.mock.calls.length).toEqual(0);
             expect(getSpy2.mock.calls.length).toEqual(0);
             expect(transportQueue.isQueueing).toEqual(true);
@@ -221,7 +232,6 @@ describe('openapi TransportQueue', () => {
         getReject2({ status: 401 });
 
         setTimeout(function() {
-
             expect(getSpy1.mock.calls.length).toEqual(0);
             expect(getSpy2.mock.calls.length).toEqual(0);
             expect(transportQueue.isQueueing).toEqual(false);

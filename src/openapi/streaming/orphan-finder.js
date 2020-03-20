@@ -28,9 +28,10 @@ function onUpdateTimeout() {
 // -- Exported methods section --
 
 function StreamingOrphanFinder(subscriptions, onOrphanFound, startDelay) {
-
     if (!subscriptions || !onOrphanFound) {
-        throw new Error('Missing required parameters: subscription or onOrphanFound in streaming orphan finder');
+        throw new Error(
+            'Missing required parameters: subscription or onOrphanFound in streaming orphan finder',
+        );
     }
 
     this.subscriptions = subscriptions;
@@ -62,7 +63,6 @@ StreamingOrphanFinder.prototype.stop = function() {
 };
 
 StreamingOrphanFinder.prototype.update = function() {
-
     if (!this.enabled) {
         return;
     }
@@ -76,11 +76,17 @@ StreamingOrphanFinder.prototype.update = function() {
     // if this update is running very late then the chances are the phone is in background mode
     // or has just come out of it. If so, we delay checking
     if (oldNextUpdateIn < -MAX_UPDATE_DELAY) {
-
-        log.warn(LOG_AREA, 'update occurred much later than requested, assuming wake from sleep and will retry', oldNextUpdateIn);
+        log.warn(
+            LOG_AREA,
+            'update occurred much later than requested, assuming wake from sleep and will retry',
+            oldNextUpdateIn,
+        );
 
         this.minCheckTime = now + this.startDelay;
-        this.nextUpdateTimeoutId = setTimeout(onUpdateTimeout.bind(this), this.startDelay);
+        this.nextUpdateTimeoutId = setTimeout(
+            onUpdateTimeout.bind(this),
+            this.startDelay,
+        );
         this.nextUpdateTime = now + this.startDelay;
         return;
     }
@@ -102,12 +108,10 @@ StreamingOrphanFinder.prototype.update = function() {
 
         // we want to delay doing anything in case we just re-connected and the heartbeats are queued
         if (orphanedSubscriptions.length) {
-
             // if we were going to orphan a subscription, delay until the startDelay period is over
             orphanedSubscriptions.length = 0;
             newNextUpdateIn = startDelayEndsIn;
             foundNextUpdate = true;
-
         } else if (startDelayEndsIn > newNextUpdateIn) {
             // we weren't going to orphan anything, but if the next update is planned before the end of the start delay
             // then postpone it to the start delay
@@ -130,7 +134,10 @@ StreamingOrphanFinder.prototype.update = function() {
     }
 
     if (foundNextUpdate) {
-        this.nextUpdateTimeoutId = setTimeout(onUpdateTimeout.bind(this), newNextUpdateIn);
+        this.nextUpdateTimeoutId = setTimeout(
+            onUpdateTimeout.bind(this),
+            newNextUpdateIn,
+        );
     }
 
     // use now even though it may be out of date in order that multiple updates for roughly the same time do not clear/set timeouts

@@ -27,7 +27,8 @@ function getValidPriceCharacters(numberFormatting, includeScenarios) {
 
     characters = numberFormatting.groupSeparator;
 
-    if (characters.charCodeAt(0) === 160) { // if non breaking space
+    if (characters.charCodeAt(0) === 160) {
+        // if non breaking space
         characters += ' '; // add normal space
     }
 
@@ -40,7 +41,10 @@ function getValidPriceCharacters(numberFormatting, includeScenarios) {
     }
 
     if (includeScenarios.price) {
-        characters += getModernFractionsSeparator(numberFormatting) + ' /' + String.fromCharCode(160);
+        characters +=
+            getModernFractionsSeparator(numberFormatting) +
+            ' /' +
+            String.fromCharCode(160);
     }
 
     if (includeScenarios.numbers !== false) {
@@ -57,7 +61,10 @@ function getValidPriceCharacters(numberFormatting, includeScenarios) {
  * @returns {RegExp}
  */
 function getValidPriceRegex(numberFormatting, includeScenarios) {
-    const valid = getValidPriceCharacters(numberFormatting, extend({}, includeScenarios || {}, { numbers: false }));
+    const valid = getValidPriceCharacters(
+        numberFormatting,
+        extend({}, includeScenarios || {}, { numbers: false }),
+    );
     let regex = '';
 
     for (let i = 0; i < valid.length; i++) {

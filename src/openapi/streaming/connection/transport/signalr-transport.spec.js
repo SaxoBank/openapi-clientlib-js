@@ -9,7 +9,6 @@ const AUTH_TOKEN = 'TOKEN';
 const BASE_URL = 'testUrl';
 
 describe('openapi SignalR Transport', () => {
-
     let stateChangedCallback;
     let connectionSlowCallback;
     let errorCallback;
@@ -18,14 +17,13 @@ describe('openapi SignalR Transport', () => {
     let mockConnection;
 
     beforeEach(() => {
-
         mockConnection = {
-            'stateChanged': jest.fn(),
-            'start': jest.fn(),
-            'received': jest.fn(),
-            'error': jest.fn(),
-            'connectionSlow': jest.fn(),
-            'stop': jest.fn(),
+            stateChanged: jest.fn(),
+            start: jest.fn(),
+            received: jest.fn(),
+            error: jest.fn(),
+            connectionSlow: jest.fn(),
+            stop: jest.fn(),
         };
         mockConnection.stateChanged.mockImplementation((callback) => {
             stateChangedCallback = callback;
@@ -71,8 +69,12 @@ describe('openapi SignalR Transport', () => {
 
             expect(spyOnStartCallback.mock.calls.length).toEqual(1);
             expect(global.$.connection.mock.calls.length).toEqual(1);
-            expect(global.$.connection.mock.calls[0]).toEqual(['testUrl/streaming/connection']);
-            expect(transport.connection.qs).toEqual(`authorization=${AUTH_TOKEN}&context=${CONTEXT_ID}`);
+            expect(global.$.connection.mock.calls[0]).toEqual([
+                'testUrl/streaming/connection',
+            ]);
+            expect(transport.connection.qs).toEqual(
+                `authorization=${AUTH_TOKEN}&context=${CONTEXT_ID}`,
+            );
         });
     });
 
@@ -80,13 +82,17 @@ describe('openapi SignalR Transport', () => {
         it('should update connection qs with new authorization token and context id', () => {
             const transport = new SignalRTransport(BASE_URL);
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
-            expect(transport.connection.qs).toEqual(`authorization=${AUTH_TOKEN}&context=${CONTEXT_ID}`);
+            expect(transport.connection.qs).toEqual(
+                `authorization=${AUTH_TOKEN}&context=${CONTEXT_ID}`,
+            );
         });
     });
 
     describe('received', () => {
         it('should call received callback upon signalr received being called', () => {
-            const spyOnReceivedCallback = jest.fn().mockName('spyReceivedCallback');
+            const spyOnReceivedCallback = jest
+                .fn()
+                .mockName('spyReceivedCallback');
 
             const transport = new SignalRTransport(BASE_URL);
             transport.setReceivedCallback(spyOnReceivedCallback);
@@ -116,28 +122,36 @@ describe('openapi SignalR Transport', () => {
             givenTransport();
             stateChangedCallback({ newState: 0 /* connecting */ });
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
-            expect(stateChangedSpy.mock.calls[0]).toEqual([constants.CONNECTION_STATE_CONNECTING]);
+            expect(stateChangedSpy.mock.calls[0]).toEqual([
+                constants.CONNECTION_STATE_CONNECTING,
+            ]);
         });
 
         it('should call stateChanged callback with connected state when internal signalR state changed to connected (1)', () => {
             givenTransport();
             stateChangedCallback({ newState: 1 /* connected */ });
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
-            expect(stateChangedSpy.mock.calls[0]).toEqual([constants.CONNECTION_STATE_CONNECTED]);
+            expect(stateChangedSpy.mock.calls[0]).toEqual([
+                constants.CONNECTION_STATE_CONNECTED,
+            ]);
         });
 
         it('should call stateChanged callback with disconnected state when internal signalR state changed to disconnected (4)', () => {
             givenTransport();
             stateChangedCallback({ newState: 1 /* connected */ });
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
-            expect(stateChangedSpy.mock.calls[0]).toEqual([constants.CONNECTION_STATE_CONNECTED]);
+            expect(stateChangedSpy.mock.calls[0]).toEqual([
+                constants.CONNECTION_STATE_CONNECTED,
+            ]);
         });
 
         it('should call stateChanged callback with reconnecting state when internal signalR state changed to reconnecting (2)', () => {
             givenTransport();
             stateChangedCallback({ newState: 1 /* connected */ });
             expect(stateChangedSpy.mock.calls.length).toEqual(1);
-            expect(stateChangedSpy.mock.calls[0]).toEqual([constants.CONNECTION_STATE_CONNECTED]);
+            expect(stateChangedSpy.mock.calls[0]).toEqual([
+                constants.CONNECTION_STATE_CONNECTED,
+            ]);
         });
     });
 

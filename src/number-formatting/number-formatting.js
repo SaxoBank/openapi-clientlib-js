@@ -40,8 +40,13 @@ const numberOfZerosRx = /0+$/;
 function NumberFormatting(options) {
     extend(this, defaultOptions, options);
 
-    this.negativePre = this.negativePattern.substr(0, this.negativePattern.indexOf('{'));
-    this.negativePost = this.negativePattern.substr(this.negativePattern.indexOf('}') + 1);
+    this.negativePre = this.negativePattern.substr(
+        0,
+        this.negativePattern.indexOf('{'),
+    );
+    this.negativePost = this.negativePattern.substr(
+        this.negativePattern.indexOf('}') + 1,
+    );
 }
 
 /**
@@ -75,7 +80,11 @@ NumberFormatting.prototype.format = function(num, decimals) {
  * @param {number} [maxDecimals] - The maximum number of decimals to display after the decimal point.
  * @returns {string}
  */
-NumberFormatting.prototype.formatNoRounding = function(num, minDecimals, maxDecimals) {
+NumberFormatting.prototype.formatNoRounding = function(
+    num,
+    minDecimals,
+    maxDecimals,
+) {
     if (!minDecimals) {
         minDecimals = 0;
     }
@@ -83,9 +92,14 @@ NumberFormatting.prototype.formatNoRounding = function(num, minDecimals, maxDeci
         maxDecimals = 8;
     }
 
-    return formatNumber(num,
-        Math.min(maxDecimals, Math.max(minDecimals, this.getActualDecimals(num))),
-        this);
+    return formatNumber(
+        num,
+        Math.min(
+            maxDecimals,
+            Math.max(minDecimals, this.getActualDecimals(num)),
+        ),
+        this,
+    );
 };
 
 /**
@@ -104,7 +118,10 @@ NumberFormatting.prototype.shortFormat = function(number) {
  */
 NumberFormatting.prototype.getActualDecimals = function(number) {
     number = Math.abs(number);
-    return (number - Math.floor(number)).toFixed(8).substring(2, 10).replace(numberOfZerosRx, '').length;
+    return (number - Math.floor(number))
+        .toFixed(8)
+        .substring(2, 10)
+        .replace(numberOfZerosRx, '').length;
 };
 
 // -- Export section --

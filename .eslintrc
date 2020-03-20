@@ -6,10 +6,7 @@
     },
     "plugins": ["import", "destructuring", "switch-case", "promise"],
     "settings": {
-        "import/ignore": [
-            "libs",
-            "node_modules"
-        ]
+        "import/ignore": ["libs", "node_modules"]
     },
     "globals": {
         // define our own globals since the built-in list contains many false negatives like "find" that are non-standard
@@ -66,10 +63,8 @@
         "no-func-assign": "error",
         "no-inner-declarations": ["error", "functions"],
         "no-invalid-regexp": "error",
-        "no-irregular-whitespace": "error",
         "no-obj-calls": "error",
         "no-prototype-builtins": "off",
-        "no-regex-spaces": "error",
         "no-sparse-arrays": "error",
         "no-template-curly-in-string": "off",
         "no-unexpected-multiline": "error",
@@ -78,7 +73,8 @@
         "no-unsafe-finally": "error",
         "use-isnan": "error",
         "valid-jsdoc": [
-            "off", {
+            "off",
+            {
                 "requireReturn": false,
                 "requireParamDescription": false,
                 "requireReturnDescription": false
@@ -96,7 +92,7 @@
         "default-case": "off",
         "dot-location": ["error", "property"],
         "dot-notation": "off",
-        "eqeqeq": ["error", "always", {"null": "ignore"}],
+        "eqeqeq": ["error", "always", { "null": "ignore" }],
         "guard-for-in": "error",
         "no-alert": "error",
         "no-caller": "error",
@@ -129,7 +125,6 @@
                 "ignore": [-1, 0, 1, 2]
             }
         ],
-        "no-multi-spaces": "error",
         "no-multi-str": "error",
         "no-new": "off",
         "no-new-func": "error",
@@ -238,13 +233,6 @@
         "id-blacklist": "off",
         "id-length": ["off"],
         "id-match": "off",
-        "indent": [
-            "error",
-            4,
-            {
-                "SwitchCase": 1
-            }
-        ],
         "key-spacing": [
             "error",
             {
@@ -289,7 +277,6 @@
                 "capIsNew": true
             }
         ],
-        "new-parens": "error",
         "newline-after-var": "off",
         "newline-before-return": "off",
         "newline-per-chained-call": "off",
@@ -298,24 +285,13 @@
         "no-continue": "off",
         "no-inline-comments": "off",
         "no-lonely-if": "error",
-        "no-mixed-spaces-and-tabs": "error",
-        "no-multiple-empty-lines": [
-            "error",
-            {
-                "max": 1,
-                "maxBOF": 0,
-                "maxEOF": 1
-            }
-        ],
         "no-multi-assign": "off",
         "no-negated-condition": "off",
         "no-nested-ternary": "error",
         "no-new-object": "error",
         "no-plusplus": "off",
         "no-restricted-syntax": "off",
-        "no-tabs": "error",
         "no-ternary": "off",
-        "no-trailing-spaces": "error",
         "no-underscore-dangle": [
             "off",
             {
@@ -329,23 +305,7 @@
                 "defaultAssignment": false
             }
         ],
-        "no-whitespace-before-property": "error",
         "nonblock-statement-body-position": "off",
-        "object-curly-newline": [
-            "off", {
-                // waiting on https://github.com/eslint/eslint/issues/6488
-                "ObjectExpression": {
-                    "multiline": true,
-                    "minProperties": 3
-                }
-            }
-        ],
-        "object-curly-spacing": ["error", "always"],
-        "object-property-newline": [
-            "error", {
-                "allowMultiplePropertiesPerLine": true
-            }
-        ],
         "one-var": [
             "error",
             {
@@ -355,54 +315,13 @@
         ],
         "one-var-declaration-per-line": "off",
         "operator-assignment": ["error", "always"],
-        "operator-linebreak": ["error", "after"],
-        "padded-blocks": "off",
-        "quote-props": "off",
-        "quotes": ["error", "single"],
-        "require-jsdoc": "off",
-        "semi": ["error", "always"],
-        "semi-spacing": [
-            "error",
-            {
-                "before": false,
-                "after": true
-            }
-        ],
         "sort-keys": "off",
         "sort-vars": "off",
-        "space-before-blocks": ["error", "always"],
-        "space-before-function-paren": ["error", "never"],
-        "space-in-parens": ["error", "never"],
-        "space-infix-ops": "error",
-        "space-unary-ops": [
-            "error",
-            {
-                "words": true,
-                "nonwords": false
-            }
-        ],
-        "spaced-comment": ["error", "always", { "exceptions": ["*"] }],
         "template-tag-spacing": "off",
         "unicode-bom": "off",
         "wrap-regex": "off",
         // ES2015 rules
-        "arrow-body-style": [
-            "error",
-            "as-needed",
-            {
-                "requireReturnForObjectLiteral": true
-            }
-        ],
-        "arrow-parens": ["error", "always"],
-        "arrow-spacing": [
-            "error",
-            {
-                "before": true,
-                "after": true
-            }
-        ],
         "constructor-super": "error",
-        "generator-star-spacing": "off",
         "no-class-assign": "error",
         "no-confusing-arrow": "off",
         "no-const-assign": "error",
@@ -443,9 +362,9 @@
         "import/no-dynamic-require": "off",
         "import/no-internal-modules": "off",
         "import/no-restricted-paths": [
-            "off", {
-                "zones": [
-                ]
+            "off",
+            {
+                "zones": []
             }
         ],
         "import/no-absolute-path": "error",
@@ -488,13 +407,6 @@
         ],
         // Switch-Case
         "switch-case/no-case-curly": "error",
-        "switch-case/newline-between-switch-case": [
-            "error",
-            "always",
-            {
-                "fallthrough": "never"
-            }
-        ],
         "promise/catch-or-return": "off",
         "promise/param-names": "error",
         "promise/no-native": "off",
@@ -520,7 +432,8 @@
                 "max-nested-callbacks": "off",
                 "camelcase": "off",
                 "max-len": "off",
-                "max-statements": "off"
+                "max-statements": "off",
+                "max-lines": "off"
             }
         },
         {

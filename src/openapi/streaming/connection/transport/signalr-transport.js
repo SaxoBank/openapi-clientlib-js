@@ -37,7 +37,11 @@ function mapConnectionState(state) {
  */
 function handleError(errorDetail) {
     log.error(LOG_AREA, 'Transport error', errorDetail);
-    if (errorDetail && errorDetail.source && errorDetail.source.status === 401) {
+    if (
+        errorDetail &&
+        errorDetail.source &&
+        errorDetail.source.status === 401
+    ) {
         this.unauthorizedCallback();
     }
     if (typeof this.errorCallback === 'function') {
@@ -55,7 +59,9 @@ function handleLog(message) {
 
 function handleStateChanged(payload) {
     if (typeof this.stateChangedCallback === 'function') {
-        this.stateChangedCallback(mapConnectionState.call(this, payload.newState));
+        this.stateChangedCallback(
+            mapConnectionState.call(this, payload.newState),
+        );
     }
 }
 
@@ -113,7 +119,9 @@ SignalrTransport.prototype.stop = function() {
 };
 
 SignalrTransport.prototype.updateQuery = function(authToken, contextId) {
-    this.connection.qs = `authorization=${encodeURIComponent(authToken)}&context=${encodeURIComponent(contextId)}`;
+    this.connection.qs = `authorization=${encodeURIComponent(
+        authToken,
+    )}&context=${encodeURIComponent(contextId)}`;
 };
 
 SignalrTransport.prototype.getQuery = function() {

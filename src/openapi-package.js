@@ -37,10 +37,10 @@ export default {
         Streaming,
     },
     utils: {
-        'enum': utilsEnum,
-        'function': utilsFunction,
-        'object': utilsObject,
-        'string': utilsString,
+        enum: utilsEnum,
+        function: utilsFunction,
+        object: utilsObject,
+        string: utilsString,
         fetch: utilsFetch,
     },
 };

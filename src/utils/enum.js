@@ -109,7 +109,11 @@ function exclusion(enumA, enumB) {
     const enumResult = {};
 
     for (const value in enumA) {
-        if (enumA.hasOwnProperty(value) && enumA[value] && (!enumB.hasOwnProperty(value) || !enumB[value])) {
+        if (
+            enumA.hasOwnProperty(value) &&
+            enumA[value] &&
+            (!enumB.hasOwnProperty(value) || !enumB[value])
+        ) {
             enumResult[value] = true;
         }
     }

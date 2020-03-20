@@ -11,7 +11,6 @@ describe('log', () => {
     });
 
     it('works when it has subscribers', () => {
-
         const expectedContextObject = { foo: 'bar' };
 
         const debugSpy = jest.fn().mockName(log.DEBUG);
@@ -33,10 +32,26 @@ describe('log', () => {
         expect(warnSpy.mock.calls.length).toEqual(1);
         expect(errorSpy.mock.calls.length).toEqual(1);
 
-        expect(debugSpy.mock.calls[0]).toEqual(['area1', 'testing debug', { info: 'info1' }]);
-        expect(infoSpy.mock.calls[0]).toEqual(['area2', 'testing info', { info: 'info2' }]);
-        expect(warnSpy.mock.calls[0]).toEqual(['area3', 'testing warn', { info: 'info3' }]);
-        expect(errorSpy.mock.calls[0]).toEqual(['area4', 'testing error', { info: 'info4' }]);
+        expect(debugSpy.mock.calls[0]).toEqual([
+            'area1',
+            'testing debug',
+            { info: 'info1' },
+        ]);
+        expect(infoSpy.mock.calls[0]).toEqual([
+            'area2',
+            'testing info',
+            { info: 'info2' },
+        ]);
+        expect(warnSpy.mock.calls[0]).toEqual([
+            'area3',
+            'testing warn',
+            { info: 'info3' },
+        ]);
+        expect(errorSpy.mock.calls[0]).toEqual([
+            'area4',
+            'testing error',
+            { info: 'info4' },
+        ]);
         expect(debugSpy.mock.instances[0]).toEqual(expectedContextObject);
         expect(infoSpy.mock.instances[0]).toEqual(expectedContextObject);
         expect(warnSpy.mock.instances[0]).toEqual(expectedContextObject);

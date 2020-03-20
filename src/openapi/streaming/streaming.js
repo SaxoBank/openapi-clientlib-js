@@ -35,9 +35,15 @@ const ignoreSubscriptions = {};
  * then follows the Connection state model.
  */
 function init() {
-    this.connection = new Connection(this.options, this.baseUrl, this.transport);
+    this.connection = new Connection(
+        this.options,
+        this.baseUrl,
+        this.transport,
+    );
 
-    this.connection.setStateChangedCallback(onConnectionStateChanged.bind(this));
+    this.connection.setStateChangedCallback(
+        onConnectionStateChanged.bind(this),
+    );
     this.connection.setUnauthorizedCallback(onUnauthorized.bind(this));
     this.connection.setReceivedCallback(onReceived.bind(this));
     this.connection.setConnectionSlowCallback(onConnectionSlow.bind(this));
@@ -59,8 +65,14 @@ function onUnauthorized() {
  * Reconnects the streaming socket when it is disconnected
  */
 function connect() {
-    if (this.connectionState !== this.CONNECTION_STATE_DISCONNECTED && this.connectionState !== this.CONNECTION_STATE_INITIALIZING) {
-        log.error(LOG_AREA, 'Only call connect on a disconnected streaming connection');
+    if (
+        this.connectionState !== this.CONNECTION_STATE_DISCONNECTED &&
+        this.connectionState !== this.CONNECTION_STATE_INITIALIZING
+    ) {
+        log.error(
+            LOG_AREA,
+            'Only call connect on a disconnected streaming connection',
+        );
         return;
     }
 
@@ -76,7 +88,10 @@ function connect() {
         // in case the refresh timer has disappeared, ensure authProvider is
         // fetching a new token
         this.authProvider.refreshOpenApiToken();
-        this.authProvider.one(this.authProvider.EVENT_TOKEN_RECEIVED, startConnection);
+        this.authProvider.one(
+            this.authProvider.EVENT_TOKEN_RECEIVED,
+            startConnection,
+        );
     } else {
         startConnection();
     }
@@ -92,7 +107,9 @@ function setNewContextId() {
     const msSinceMidnight = now - midnight;
     const randomNumber = Math.floor(Math.random() * 100);
 
-    const contextId = padLeft(String(msSinceMidnight), 8, '0') + padLeft(String(randomNumber), 2, '0');
+    const contextId =
+        padLeft(String(msSinceMidnight), 8, '0') +
+        padLeft(String(randomNumber), 2, '0');
     this.contextId = contextId;
     for (let i = 0; i < this.subscriptions.length; i++) {
         this.subscriptions[i].streamingContextId = contextId;
@@ -127,7 +144,11 @@ function retryConnection() {
     let delay = this.retryDelay;
 
     if (this.retryDelayLevels) {
-        delay = findRetryDelay(this.retryDelayLevels, this.retryCount, this.retryDelay);
+        delay = findRetryDelay(
+            this.retryDelayLevels,
+            this.retryCount,
+            this.retryDelay,
+        );
     }
 
     this.retryCount++;
@@ -154,7 +175,6 @@ function onConnectionStateChanged(nextState) {
 
     switch (this.connectionState) {
         case this.CONNECTION_STATE_DISCONNECTED:
-
             log.warn(LOG_AREA, 'connection disconnected');
 
             this.orphanFinder.stop();
@@ -213,7 +233,10 @@ function processUpdate(update) {
             sendDataUpdateToSubscribers.call(this, update);
         }
     } catch (error) {
-        log.error(LOG_AREA, 'Error occurred in onReceived processing update', { error, update });
+        log.error(LOG_AREA, 'Error occurred in onReceived processing update', {
+            error,
+            update,
+        });
     }
 }
 
@@ -222,7 +245,6 @@ function processUpdate(update) {
  * @param updates
  */
 function onReceived(updates) {
-
     if (!updates) {
         log.warn(LOG_AREA, 'onReceived called with no data', updates);
         return;
@@ -256,10 +278,20 @@ function findSubscriptionByReferenceId(referenceId) {
  * @param update
  */
 function sendDataUpdateToSubscribers(update) {
-    const subscription = findSubscriptionByReferenceId.call(this, update.ReferenceId);
+    const subscription = findSubscriptionByReferenceId.call(
+        this,
+        update.ReferenceId,
+    );
     if (!subscription || subscription.onStreamingData(update) === false) {
-        const logFunction = ignoreSubscriptions[update.ReferenceId] ? log.debug : log.warn;
-        logFunction.call(log, LOG_AREA, 'Data update does not match a subscription', update);
+        const logFunction = ignoreSubscriptions[update.ReferenceId]
+            ? log.debug
+            : log.warn;
+        logFunction.call(
+            log,
+            LOG_AREA,
+            'Data update does not match a subscription',
+            update,
+        );
     }
 }
 
@@ -294,11 +326,17 @@ function getTargetReferenceIds(message) {
 function handleControlMessage(message) {
     switch (message.ReferenceId) {
         case OPENAPI_CONTROL_MESSAGE_HEARTBEAT:
-            handleControlMessageFireHeartbeats.call(this, getHeartbeats(message));
+            handleControlMessageFireHeartbeats.call(
+                this,
+                getHeartbeats(message),
+            );
             break;
 
         case OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS:
-            handleControlMessageResetSubscriptions.call(this, getTargetReferenceIds(message));
+            handleControlMessageResetSubscriptions.call(
+                this,
+                getTargetReferenceIds(message),
+            );
             break;
 
         default:
@@ -315,12 +353,24 @@ function handleControlMessageFireHeartbeats(heartbeatList) {
     log.debug(LOG_AREA, 'heartbeats received', heartbeatList);
     for (let i = 0; i < heartbeatList.length; i++) {
         const heartbeat = heartbeatList[i];
-        const subscription = findSubscriptionByReferenceId.call(this, heartbeat.OriginatingReferenceId);
+        const subscription = findSubscriptionByReferenceId.call(
+            this,
+            heartbeat.OriginatingReferenceId,
+        );
         if (subscription) {
             subscription.onHeartbeat();
         } else {
-            const logFunction = ignoreSubscriptions[heartbeat.OriginatingReferenceId] ? log.debug : log.warn;
-            logFunction.call(log, LOG_AREA, 'heartbeat received for non-found subscription', heartbeat);
+            const logFunction = ignoreSubscriptions[
+                heartbeat.OriginatingReferenceId
+            ]
+                ? log.debug
+                : log.warn;
+            logFunction.call(
+                log,
+                LOG_AREA,
+                'heartbeat received for non-found subscription',
+                heartbeat,
+            );
         }
     }
 }
@@ -362,12 +412,22 @@ function handleControlMessageResetSubscriptions(referenceIdList) {
     const subscriptionsToReset = [];
     for (let i = 0; i < referenceIdList.length; i++) {
         const referenceId = referenceIdList[i];
-        const subscription = findSubscriptionByReferenceId.call(this, referenceId);
+        const subscription = findSubscriptionByReferenceId.call(
+            this,
+            referenceId,
+        );
         if (subscription) {
             subscriptionsToReset.push(subscription);
         } else {
-            const logFunction = ignoreSubscriptions[referenceId] ? log.debug : log.warn;
-            logFunction.call(log, LOG_AREA, 'couldn\'t find subscription to reset', referenceId);
+            const logFunction = ignoreSubscriptions[referenceId]
+                ? log.debug
+                : log.warn;
+            logFunction.call(
+                log,
+                LOG_AREA,
+                "couldn't find subscription to reset",
+                referenceId,
+            );
         }
     }
     resetSubscriptions(subscriptionsToReset);
@@ -389,7 +449,11 @@ function onErrorCallback(errorDetails) {
  * Updates the connection query string
  */
 function updateConnectionQuery(forceAuth = false) {
-    this.connection.updateQuery(this.authProvider.getToken(), this.contextId, forceAuth);
+    this.connection.updateQuery(
+        this.authProvider.getToken(),
+        this.contextId,
+        forceAuth,
+    );
 }
 
 /**
@@ -405,7 +469,11 @@ function onSubscriptionCreated() {
  * @param subscription
  */
 function onOrphanFound(subscription) {
-    log.warn(LOG_AREA, 'Subscription has become orphaned - resetting', subscription);
+    log.warn(
+        LOG_AREA,
+        'Subscription has become orphaned - resetting',
+        subscription,
+    );
     subscription.reset();
 }
 
@@ -428,10 +496,11 @@ function getSubscriptionsByTag(serviceGroup, url, tag) {
     for (let i = 0; i < this.subscriptions.length; i++) {
         const subscription = this.subscriptions[i];
 
-        if (subscription.serviceGroup === serviceGroup &&
-                subscription.url === url &&
-                subscription.subscriptionData.Tag === tag) {
-
+        if (
+            subscription.serviceGroup === serviceGroup &&
+            subscription.url === url &&
+            subscription.subscriptionData.Tag === tag
+        ) {
             subscriptionsToRemove.push(subscription);
         }
     }
@@ -439,11 +508,18 @@ function getSubscriptionsByTag(serviceGroup, url, tag) {
     return subscriptionsToRemove;
 }
 
-function getSubscriptionsReadyPromise(subscriptionsToRemove, shouldDisposeSubscription) {
+function getSubscriptionsReadyPromise(
+    subscriptionsToRemove,
+    shouldDisposeSubscription,
+) {
     let onStateChanged;
 
     return new Promise((resolve) => {
-        onStateChanged = handleSubscriptionReadyForUnsubscribe.bind(this, subscriptionsToRemove, resolve);
+        onStateChanged = handleSubscriptionReadyForUnsubscribe.bind(
+            this,
+            subscriptionsToRemove,
+            resolve,
+        );
 
         for (let i = 0; i < subscriptionsToRemove.length; i++) {
             const subscription = subscriptionsToRemove[i];
@@ -459,25 +535,46 @@ function getSubscriptionsReadyPromise(subscriptionsToRemove, shouldDisposeSubscr
         }
 
         startTimerToStopIgnoringSubscriptions(subscriptionsToRemove);
-    })
-        .then(() => {
-            for (let i = 0; i < subscriptionsToRemove.length; i++) {
-                const subscription = subscriptionsToRemove[i];
-                subscription.removeStateChangedCallback(onStateChanged);
-            }
-        });
+    }).then(() => {
+        for (let i = 0; i < subscriptionsToRemove.length; i++) {
+            const subscription = subscriptionsToRemove[i];
+            subscription.removeStateChangedCallback(onStateChanged);
+        }
+    });
 }
 
-function unsubscribeSubscriptionByTag(serviceGroup, url, tag, shouldDisposeSubscription) {
-    const subscriptionsToRemove = getSubscriptionsByTag.call(this, serviceGroup, url, tag);
-    const allSubscriptionsReady = getSubscriptionsReadyPromise.call(this, subscriptionsToRemove, shouldDisposeSubscription);
+function unsubscribeSubscriptionByTag(
+    serviceGroup,
+    url,
+    tag,
+    shouldDisposeSubscription,
+) {
+    const subscriptionsToRemove = getSubscriptionsByTag.call(
+        this,
+        serviceGroup,
+        url,
+        tag,
+    );
+    const allSubscriptionsReady = getSubscriptionsReadyPromise.call(
+        this,
+        subscriptionsToRemove,
+        shouldDisposeSubscription,
+    );
 
     allSubscriptionsReady.then(() => {
-        this.transport.delete(serviceGroup, url + '/{contextId}/?Tag={tag}', {
-            contextId: this.contextId,
-            tag,
-        })
-            .catch((response) => log.error(LOG_AREA, 'An error occurred unsubscribing by tag', { response, serviceGroup, url, tag }))
+        this.transport
+            .delete(serviceGroup, url + '/{contextId}/?Tag={tag}', {
+                contextId: this.contextId,
+                tag,
+            })
+            .catch((response) =>
+                log.error(LOG_AREA, 'An error occurred unsubscribing by tag', {
+                    response,
+                    serviceGroup,
+                    url,
+                    tag,
+                }),
+            )
             .then(() => {
                 for (let i = 0; i < subscriptionsToRemove.length; i++) {
                     const subscription = subscriptionsToRemove[i];
@@ -540,7 +637,10 @@ function Streaming(transport, baseUrl, authProvider, options) {
 
         // Why longPolling: SignalR has a bug in SSE and forever frame is slow
         // New type: plainWebSockets. This is new approach to streaming with array buffer communication format instead of JSON.
-        transport: (options && options.transportTypes) || ['webSockets', 'longPolling'],
+        transport: (options && options.transportTypes) || [
+            'webSockets',
+            'longPolling',
+        ],
     };
 
     if (options) {
@@ -563,7 +663,10 @@ function Streaming(transport, baseUrl, authProvider, options) {
         }
     }
 
-    this.orphanFinder = new StreamingOrphanFinder(this.subscriptions, onOrphanFound.bind(this));
+    this.orphanFinder = new StreamingOrphanFinder(
+        this.subscriptions,
+        onOrphanFound.bind(this),
+    );
 
     init.call(this);
 }
@@ -571,39 +674,48 @@ function Streaming(transport, baseUrl, authProvider, options) {
 /**
  * Event that occurs when the connection state changes.
  */
-Streaming.prototype.EVENT_CONNECTION_STATE_CHANGED = connectionConstants.EVENT_CONNECTION_STATE_CHANGED;
+Streaming.prototype.EVENT_CONNECTION_STATE_CHANGED =
+    connectionConstants.EVENT_CONNECTION_STATE_CHANGED;
 /**
  * Event that occurs when the connection is slow.
  */
-Streaming.prototype.EVENT_CONNECTION_SLOW = connectionConstants.EVENT_CONNECTION_SLOW;
+Streaming.prototype.EVENT_CONNECTION_SLOW =
+    connectionConstants.EVENT_CONNECTION_SLOW;
 
 /**
  * Streaming has been created but has not yet started the connection.
  */
-Streaming.prototype.CONNECTION_STATE_INITIALIZING = connectionConstants.CONNECTION_STATE_INITIALIZING;
+Streaming.prototype.CONNECTION_STATE_INITIALIZING =
+    connectionConstants.CONNECTION_STATE_INITIALIZING;
 /**
  * The connection has been started but may not yet be connecting.
  */
-Streaming.prototype.CONNECTION_STATE_STARTED = connectionConstants.CONNECTION_STATE_STARTED;
+Streaming.prototype.CONNECTION_STATE_STARTED =
+    connectionConstants.CONNECTION_STATE_STARTED;
 /**
  * Connection is trying to connect. The previous state was CONNECTION_STATE_STARTED or CONNECTION_STATE_DISCONNECTED.
  */
-Streaming.prototype.CONNECTION_STATE_CONNECTING = connectionConstants.CONNECTION_STATE_CONNECTING;
+Streaming.prototype.CONNECTION_STATE_CONNECTING =
+    connectionConstants.CONNECTION_STATE_CONNECTING;
 /**
  * Connection is connected and everything is good.
  */
-Streaming.prototype.CONNECTION_STATE_CONNECTED = connectionConstants.CONNECTION_STATE_CONNECTED;
+Streaming.prototype.CONNECTION_STATE_CONNECTED =
+    connectionConstants.CONNECTION_STATE_CONNECTED;
 /**
  * Connection is reconnecting. The previous state was CONNECTION_STATE_CONNECTING.
  * We are current not connected, but might recover without having to reset.
  */
-Streaming.prototype.CONNECTION_STATE_RECONNECTING = connectionConstants.CONNECTION_STATE_RECONNECTING;
+Streaming.prototype.CONNECTION_STATE_RECONNECTING =
+    connectionConstants.CONNECTION_STATE_RECONNECTING;
 /**
  * Connection is disconnected. Streaming may attempt to connect again.
  */
-Streaming.prototype.CONNECTION_STATE_DISCONNECTED = connectionConstants.CONNECTION_STATE_DISCONNECTED;
+Streaming.prototype.CONNECTION_STATE_DISCONNECTED =
+    connectionConstants.CONNECTION_STATE_DISCONNECTED;
 
-Streaming.prototype.READABLE_CONNECTION_STATE_MAP = connectionConstants.READABLE_CONNECTION_STATE_MAP;
+Streaming.prototype.READABLE_CONNECTION_STATE_MAP =
+    connectionConstants.READABLE_CONNECTION_STATE_MAP;
 
 /**
  * Constructs a new subscription to the given resource.
@@ -624,7 +736,12 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP = connectionConstants.READABLE
  * @param {function} [options.onQueueEmpty] - A callback function that is invoked after the last action is dequeued.
  * @returns {saxo.openapi.StreamingSubscription} A subscription object.
  */
-Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptionArgs, options) {
+Streaming.prototype.createSubscription = function(
+    serviceGroup,
+    url,
+    subscriptionArgs,
+    options,
+) {
     const normalizedSubscriptionArgs = extend({}, subscriptionArgs);
 
     if (!ParserFacade.isFormatSupported(normalizedSubscriptionArgs.Format)) {
@@ -659,7 +776,6 @@ Streaming.prototype.createSubscription = function(serviceGroup, url, subscriptio
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to start.
  */
 Streaming.prototype.subscribe = function(subscription) {
-
     subscription.onSubscribe();
 };
 
@@ -672,7 +788,6 @@ Streaming.prototype.subscribe = function(subscription) {
  * @param {Object} options - Options for subscription modification.
  */
 Streaming.prototype.modify = function(subscription, args, options) {
-
     subscription.onModify(args, options);
 };
 
@@ -682,7 +797,6 @@ Streaming.prototype.modify = function(subscription, args, options) {
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to stop.
  */
 Streaming.prototype.unsubscribe = function(subscription) {
-
     ignoreSubscriptions[subscription.referenceId] = true;
     startTimerToStopIgnoringSubscriptions([subscription]);
     subscription.onUnsubscribe();
@@ -694,7 +808,6 @@ Streaming.prototype.unsubscribe = function(subscription) {
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to stop and remove.
  */
 Streaming.prototype.disposeSubscription = function(subscription) {
-
     this.unsubscribe(subscription);
     removeSubscription.call(this, subscription);
 };
@@ -718,7 +831,11 @@ Streaming.prototype.unsubscribeByTag = function(serviceGroup, url, tag) {
  * @param {string} url - the url of the subscriptions to unsubscribe
  * @param {string} tag - the tag of the subscriptions to unsubscribe
  */
-Streaming.prototype.disposeSubscriptionByTag = function(serviceGroup, url, tag) {
+Streaming.prototype.disposeSubscriptionByTag = function(
+    serviceGroup,
+    url,
+    tag,
+) {
     unsubscribeSubscriptionByTag.call(this, serviceGroup, url, tag, true);
 };
 
@@ -734,7 +851,6 @@ Streaming.prototype.disconnect = function() {
  * Shuts down streaming.
  */
 Streaming.prototype.dispose = function() {
-
     this.disposed = true;
 
     this.orphanFinder.stop();
@@ -749,7 +865,9 @@ Streaming.prototype.dispose = function() {
     this.subscriptions.length = 0;
 
     // delete all subscriptions on this context id
-    this.transport.delete('root', 'v1/subscriptions/{contextId}', { contextId: this.contextId });
+    this.transport.delete('root', 'v1/subscriptions/{contextId}', {
+        contextId: this.contextId,
+    });
 
     this.disconnect();
 };

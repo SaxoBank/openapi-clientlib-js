@@ -15,8 +15,7 @@ describe('microEmitter', () => {
     });
 
     it('copes with no subscribers', () => {
-        expect(() => eventEmitter.trigger('test'))
-            .not.toThrow();
+        expect(() => eventEmitter.trigger('test')).not.toThrow();
     });
     it('triggers an event and sends to subscribers when subscribed', () => {
         eventEmitter.trigger('test');
@@ -104,7 +103,6 @@ describe('microEmitter', () => {
     });
 
     it('can cope with being unsubscribed whilst processing - before', () => {
-
         // the first added subscriber spyTest unsubscribes
         eventEmitter.on('test', spyTest);
         eventEmitter.on('test', spyTest1);
@@ -119,7 +117,6 @@ describe('microEmitter', () => {
     });
 
     it('can cope with being unsubscribed whilst processing - after', () => {
-
         // the second added subscriber spyTest unsubscribes
         eventEmitter.on('test', spyTest1);
         eventEmitter.on('test', spyTest);
@@ -134,7 +131,6 @@ describe('microEmitter', () => {
     });
 
     it('can cope with being unsubscribed whilst processing - both', () => {
-
         eventEmitter.on('test', spyTest1);
         eventEmitter.on('test', spyTest);
 
@@ -149,7 +145,6 @@ describe('microEmitter', () => {
     });
 
     it('can cope with being subscribed whilst processing', () => {
-
         eventEmitter.on('test', spyTest);
 
         spyTest.mockImplementation(() => eventEmitter.on('test', spyTest1));
@@ -162,7 +157,6 @@ describe('microEmitter', () => {
     });
 
     it('can cope with multiple calls to off', () => {
-
         eventEmitter.on('test', spyTest);
         eventEmitter.on('test', spyTest1);
         eventEmitter.off('test', spyTest1);
@@ -175,8 +169,7 @@ describe('microEmitter', () => {
         expect(spyTest1.mock.calls.length).toEqual(0);
     });
 
-    it('can unsubscribe multiple on\'s by context', () => {
-
+    it("can unsubscribe multiple on's by context", () => {
         const context = {};
         eventEmitter.on('test', spyTest, context);
         eventEmitter.on('test', spyTest1, context);
@@ -193,7 +186,6 @@ describe('microEmitter', () => {
     });
 
     it('triggers a one() registered subscriber once', () => {
-
         eventEmitter.one('test', spyTest);
         eventEmitter.on('test', spyTest1);
 
@@ -205,7 +197,6 @@ describe('microEmitter', () => {
     });
 
     it('only triggers a one() registered subscriber once with recursive event', () => {
-
         eventEmitter.on('test', spyTest1);
         eventEmitter.one('test', () => eventEmitter.trigger('test'));
 
@@ -215,7 +206,6 @@ describe('microEmitter', () => {
     });
 
     it('can unsubscribe a one() registered subscriber', () => {
-
         eventEmitter.one('test', spyTest);
         eventEmitter.off('test', spyTest);
 

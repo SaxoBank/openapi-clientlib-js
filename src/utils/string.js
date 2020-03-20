@@ -105,14 +105,15 @@ function padLeft(value, length, padChar) {
  * @returns {string}
  */
 function formatUrl(urlTemplate, templateArgs, queryParams) {
-
     let url;
 
     if (templateArgs) {
         const urlEncodedTemplateArgs = {};
         for (const arg in templateArgs) {
             if (templateArgs.hasOwnProperty(arg)) {
-                urlEncodedTemplateArgs[arg] = encodeURIComponent(templateArgs[arg]);
+                urlEncodedTemplateArgs[arg] = encodeURIComponent(
+                    templateArgs[arg],
+                );
             }
         }
         url = format(urlTemplate, urlEncodedTemplateArgs);
@@ -123,8 +124,15 @@ function formatUrl(urlTemplate, templateArgs, queryParams) {
     if (queryParams) {
         let firstQueryParam = url.indexOf('?') < 0;
         for (const queryParamKey in queryParams) {
-            if (queryParams.hasOwnProperty(queryParamKey) && queryParams[queryParamKey] != null) {
-                url += (firstQueryParam ? '?' : '&') + queryParamKey + '=' + encodeURIComponent(queryParams[queryParamKey]);
+            if (
+                queryParams.hasOwnProperty(queryParamKey) &&
+                queryParams[queryParamKey] != null
+            ) {
+                url +=
+                    (firstQueryParam ? '?' : '&') +
+                    queryParamKey +
+                    '=' +
+                    encodeURIComponent(queryParams[queryParamKey]);
                 firstQueryParam = false;
             }
         }
@@ -135,11 +143,4 @@ function formatUrl(urlTemplate, templateArgs, queryParams) {
 
 // -- Export section --
 
-export {
-    format,
-    formatUrl,
-    startsWith,
-    endsWith,
-    multiply,
-    padLeft,
-};
+export { format, formatUrl, startsWith, endsWith, multiply, padLeft };

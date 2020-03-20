@@ -113,276 +113,240 @@ message PriceResponse {
 }`;
 
 export const fields = {
-    'asset_type': {
-        'type': 'string',
-        'id': 1,
+    asset_type: {
+        type: 'string',
+        id: 1,
     },
-    'greeks': {
-        'type': 'Greeks',
-        'id': 2,
+    greeks: {
+        type: 'Greeks',
+        id: 2,
     },
-    'historical_changes': {
-        'type': 'HistoricalChanges',
-        'id': 3,
+    historical_changes: {
+        type: 'HistoricalChanges',
+        id: 3,
     },
-    'instrument_price_details': {
-        'type': 'InstrumentPriceDetails',
-        'id': 4,
+    instrument_price_details: {
+        type: 'InstrumentPriceDetails',
+        id: 4,
     },
-    'last_updated': {
-        'type': 'google.protobuf.Timestamp',
-        'id': 5,
+    last_updated: {
+        type: 'google.protobuf.Timestamp',
+        id: 5,
     },
-    'margin_impact': {
-        'type': 'MarginImpact',
-        'id': 6,
+    margin_impact: {
+        type: 'MarginImpact',
+        id: 6,
     },
-    'market_depth': {
-        'type': 'MarketDepth',
-        'id': 7,
+    market_depth: {
+        type: 'MarketDepth',
+        id: 7,
     },
-    'price_info': {
-        'type': 'PriceInfo',
-        'id': 8,
+    price_info: {
+        type: 'PriceInfo',
+        id: 8,
     },
-    'price_source': {
-        'type': 'string',
-        'id': 9,
+    price_source: {
+        type: 'string',
+        id: 9,
     },
-    'quote': {
-        'type': 'TradableQuote',
-        'id': 10,
+    quote: {
+        type: 'TradableQuote',
+        id: 10,
     },
-    'uic': {
-        'type': 'int32',
-        'id': 11,
+    uic: {
+        type: 'int32',
+        id: 11,
     },
 };
 
 // 1588 bytes raw JSON.
 // 1118 bytes JSON with schema.
 export const objectMessage = {
-    'asset_type': 'FxOption',
-    'greeks': {
-        'delta': 10.323,
-        'gamma': 11.32132,
-        'mid_vol': 1000,
-        'phi': 0.00123,
-        'rho': 0.321,
-        'theta': 0.32,
-        'vega': 0.11,
+    asset_type: 'FxOption',
+    greeks: {
+        delta: 10.323,
+        gamma: 11.32132,
+        mid_vol: 1000,
+        phi: 0.00123,
+        rho: 0.321,
+        theta: 0.32,
+        vega: 0.11,
     },
-    'historical_changes': {
-        'percent_change1_month': 1,
-        'percent_change1_year': 2022,
-        'percent_change2_months': 3,
-        'percent_change2_years': 2012,
-        'percent_change3_months': 5,
-        'percent_change5_years': 2019,
-        'percent_change6_months': 7,
-        'percent_change_weekly': 8,
+    historical_changes: {
+        percent_change1_month: 1,
+        percent_change1_year: 2022,
+        percent_change2_months: 3,
+        percent_change2_years: 2012,
+        percent_change3_months: 5,
+        percent_change5_years: 2019,
+        percent_change6_months: 7,
+        percent_change_weekly: 8,
     },
-    'instrument_price_details': {
-        'accrued_interest': 1,
-        'ask_swap': 2,
-        'bid_swap': 3,
-        'cfd_borrowing_cost': 4,
-        'cfd_hard_to_finance_rate': 5,
-        'cfd_price_adjustment': true,
-        'dma': true,
-        'est_price_buy': 8,
-        'est_price_sell': 9,
-        'expiry_date': {
-            'seconds': '1510141304',
+    instrument_price_details: {
+        accrued_interest: 1,
+        ask_swap: 2,
+        bid_swap: 3,
+        cfd_borrowing_cost: 4,
+        cfd_hard_to_finance_rate: 5,
+        cfd_price_adjustment: true,
+        dma: true,
+        est_price_buy: 8,
+        est_price_sell: 9,
+        expiry_date: {
+            seconds: '1510141304',
         },
-        'is_market_open': true,
-        'lower_barrier': 1.3213,
-        'mid_forward_price': 1.1123,
-        'mid_spot_price': 1.3231,
-        'mid_yield': 1.2323,
-        'notice_date': {
-            'seconds': '1510141304',
+        is_market_open: true,
+        lower_barrier: 1.3213,
+        mid_forward_price: 1.1123,
+        mid_spot_price: 1.3231,
+        mid_yield: 1.2323,
+        notice_date: {
+            seconds: '1510141304',
         },
-        'open_interest': 0.123,
-        'paid_cfd_interest': 0.321,
-        'received_cfd_interest': 0.11112,
-        'short_trade_disabled': true,
-        'spot_ask': 1.11,
-        'spot_bid': 1.32,
-        'spot_date': {
-            'seconds': '1510141304',
+        open_interest: 0.123,
+        paid_cfd_interest: 0.321,
+        received_cfd_interest: 0.11112,
+        short_trade_disabled: true,
+        spot_ask: 1.11,
+        spot_bid: 1.32,
+        spot_date: {
+            seconds: '1510141304',
         },
-        'strike_price': 1.3212,
-        'upper_barrier': 1.3331,
-        'value_date': {
-            'seconds': '1510141304',
+        strike_price: 1.3212,
+        upper_barrier: 1.3331,
+        value_date: {
+            seconds: '1510141304',
         },
     },
-    'last_updated': {
-        'seconds': '1510141304',
+    last_updated: {
+        seconds: '1510141304',
     },
-    'margin_impact': {
-        'impact_buy': 1.32,
-        'impact_sell': 2.13,
-        'initial_margin': 1.11,
-        'maintenance_margin': 1.321,
+    margin_impact: {
+        impact_buy: 1.32,
+        impact_sell: 2.13,
+        initial_margin: 1.11,
+        maintenance_margin: 1.321,
     },
-    'market_depth': {
-        'ask': [
-            1.321,
-            1.11,
-        ],
-        'ask_orders': [
-            3.12,
-            3.11,
-        ],
-        'ask_size': [
-            1000,
-            2000,
-        ],
-        'bid': [
-            1.421,
-            1.321,
-        ],
-        'bid_orders': [
-            1.521,
-            1.451,
-        ],
-        'bid_size': [
-            2000,
-            1200,
-        ],
-        'no_of_bids': 32,
-        'no_of_offers': 72,
-        'using_orders': true,
+    market_depth: {
+        ask: [1.321, 1.11],
+        ask_orders: [3.12, 3.11],
+        ask_size: [1000, 2000],
+        bid: [1.421, 1.321],
+        bid_orders: [1.521, 1.451],
+        bid_size: [2000, 1200],
+        no_of_bids: 32,
+        no_of_offers: 72,
+        using_orders: true,
     },
-    'price_info': {
-        'high': 1.23,
-        'low': 1.12,
-        'net_change': 11,
-        'percent_change': 0.12,
+    price_info: {
+        high: 1.23,
+        low: 1.12,
+        net_change: 11,
+        percent_change: 0.12,
     },
-    'price_source': 'NASDAQ',
-    'quote': {
-        'amount': 1230,
-        'ask': 1.23,
-        'bid': 1.11,
-        'delayed_by_minutes': 23,
-        'error_code': '1235',
-        'mid': 1.15,
-        'price_type_ask': 'asktype',
-        'price_type_bid': 'bidtype',
-        'quote_id': '12313cdadad',
-        'r_f_q_state': 'idle',
+    price_source: 'NASDAQ',
+    quote: {
+        amount: 1230,
+        ask: 1.23,
+        bid: 1.11,
+        delayed_by_minutes: 23,
+        error_code: '1235',
+        mid: 1.15,
+        price_type_ask: 'asktype',
+        price_type_bid: 'bidtype',
+        quote_id: '12313cdadad',
+        r_f_q_state: 'idle',
     },
-    'uic': 12332,
+    uic: 12332,
 };
 
 export const decodedObjectMessage = {
-    'asset_type': 'FxOption',
-    'greeks': {
-        'delta': 10.323,
-        'gamma': 11.32132,
-        'mid_vol': 1000,
-        'phi': 0.00123,
-        'rho': 0.321,
-        'theta': 0.32,
-        'vega': 0.11,
+    asset_type: 'FxOption',
+    greeks: {
+        delta: 10.323,
+        gamma: 11.32132,
+        mid_vol: 1000,
+        phi: 0.00123,
+        rho: 0.321,
+        theta: 0.32,
+        vega: 0.11,
     },
-    'historical_changes': {
-        'percent_change1_month': 1,
-        'percent_change1_year': 2022,
-        'percent_change2_months': 3,
-        'percent_change2_years': 2012,
-        'percent_change3_months': 5,
-        'percent_change5_years': 2019,
-        'percent_change6_months': 7,
-        'percent_change_weekly': 8,
+    historical_changes: {
+        percent_change1_month: 1,
+        percent_change1_year: 2022,
+        percent_change2_months: 3,
+        percent_change2_years: 2012,
+        percent_change3_months: 5,
+        percent_change5_years: 2019,
+        percent_change6_months: 7,
+        percent_change_weekly: 8,
     },
-    'instrument_price_details': {
-        'accrued_interest': 1,
-        'ask_swap': 2,
-        'bid_swap': 3,
-        'cfd_borrowing_cost': 4,
-        'cfd_hard_to_finance_rate': 5,
-        'cfd_price_adjustment': true,
-        'dma': true,
-        'est_price_buy': 8,
-        'est_price_sell': 9,
-        'expiry_date': '2017-11-08T11:41:44.000Z',
-        'is_market_open': true,
-        'lower_barrier': 1.3213,
-        'mid_forward_price': 1.1123,
-        'mid_spot_price': 1.3231,
-        'mid_yield': 1.2323,
-        'notice_date': '2017-11-08T11:41:44.000Z',
-        'open_interest': 0.123,
-        'paid_cfd_interest': 0.321,
-        'received_cfd_interest': 0.11112,
-        'short_trade_disabled': true,
-        'spot_ask': 1.11,
-        'spot_bid': 1.32,
-        'spot_date': '2017-11-08T11:41:44.000Z',
-        'strike_price': 1.3212,
-        'upper_barrier': 1.3331,
-        'value_date': '2017-11-08T11:41:44.000Z',
+    instrument_price_details: {
+        accrued_interest: 1,
+        ask_swap: 2,
+        bid_swap: 3,
+        cfd_borrowing_cost: 4,
+        cfd_hard_to_finance_rate: 5,
+        cfd_price_adjustment: true,
+        dma: true,
+        est_price_buy: 8,
+        est_price_sell: 9,
+        expiry_date: '2017-11-08T11:41:44.000Z',
+        is_market_open: true,
+        lower_barrier: 1.3213,
+        mid_forward_price: 1.1123,
+        mid_spot_price: 1.3231,
+        mid_yield: 1.2323,
+        notice_date: '2017-11-08T11:41:44.000Z',
+        open_interest: 0.123,
+        paid_cfd_interest: 0.321,
+        received_cfd_interest: 0.11112,
+        short_trade_disabled: true,
+        spot_ask: 1.11,
+        spot_bid: 1.32,
+        spot_date: '2017-11-08T11:41:44.000Z',
+        strike_price: 1.3212,
+        upper_barrier: 1.3331,
+        value_date: '2017-11-08T11:41:44.000Z',
     },
-    'last_updated': '2017-11-08T11:41:44.000Z',
-    'margin_impact': {
-        'impact_buy': 1.32,
-        'impact_sell': 2.13,
-        'initial_margin': 1.11,
-        'maintenance_margin': 1.321,
+    last_updated: '2017-11-08T11:41:44.000Z',
+    margin_impact: {
+        impact_buy: 1.32,
+        impact_sell: 2.13,
+        initial_margin: 1.11,
+        maintenance_margin: 1.321,
     },
-    'market_depth': {
-        'ask': [
-            1.321,
-            1.11,
-        ],
-        'ask_orders': [
-            3.12,
-            3.11,
-        ],
-        'ask_size': [
-            1000,
-            2000,
-        ],
-        'bid': [
-            1.421,
-            1.321,
-        ],
-        'bid_orders': [
-            1.521,
-            1.451,
-        ],
-        'bid_size': [
-            2000,
-            1200,
-        ],
-        'no_of_bids': 32,
-        'no_of_offers': 72,
-        'using_orders': true,
+    market_depth: {
+        ask: [1.321, 1.11],
+        ask_orders: [3.12, 3.11],
+        ask_size: [1000, 2000],
+        bid: [1.421, 1.321],
+        bid_orders: [1.521, 1.451],
+        bid_size: [2000, 1200],
+        no_of_bids: 32,
+        no_of_offers: 72,
+        using_orders: true,
     },
-    'price_info': {
-        'high': 1.23,
-        'low': 1.12,
-        'net_change': 11,
-        'percent_change': 0.12,
+    price_info: {
+        high: 1.23,
+        low: 1.12,
+        net_change: 11,
+        percent_change: 0.12,
     },
-    'price_source': 'NASDAQ',
-    'quote': {
-        'amount': 1230,
-        'ask': 1.23,
-        'bid': 1.11,
-        'delayed_by_minutes': 23,
-        'error_code': '1235',
-        'mid': 1.15,
-        'price_type_ask': 'asktype',
-        'price_type_bid': 'bidtype',
-        'quote_id': '12313cdadad',
-        'r_f_q_state': 'idle',
+    price_source: 'NASDAQ',
+    quote: {
+        amount: 1230,
+        ask: 1.23,
+        bid: 1.11,
+        delayed_by_minutes: 23,
+        error_code: '1235',
+        mid: 1.15,
+        price_type_ask: 'asktype',
+        price_type_bid: 'bidtype',
+        quote_id: '12313cdadad',
+        r_f_q_state: 'idle',
     },
-    'uic': 12332,
+    uic: 12332,
 };
 
 export const schemaOption = `syntax = "proto3";
@@ -442,30 +406,32 @@ export const schemaOption = `syntax = "proto3";
 `;
 
 // 872 bytes
-export const encodedMessage = 'CghGeE9wdGlvbhI/CUw3iUFgpSRAEfgZFw6EpCZAGQAAAAAAQI9AIdeGinH+JlQ/KSUGgZVDi9Q/MXsUrkfhetQ/OSlcj8L1KLw/GkgJAAAAAAAA8D8RAAAAAACYn0AZAAAAAAAACEAhAAAAAABwn0ApAAAAAAAAFEAxAAAAAACMn0A5AAAAAAAAHEBBAAAAAAAAIEAi1QEJAAAAAAAA8D8RAAAAAAAAAEAZAAAAAAAACEAhAAAAAAAAEEApAAAAAAAAFEAwATgBQQAAAAAAACBASQAAAAAAACJAUgYI+NqL0AVYAWHcRgN4CyT1P2nrc7UV+8vxP3HPZtXnaiv1P3nWxW00gLfzP4IBBgj42ovQBYkBsHJoke18vz+RASUGgZVDi9Q/mQEYeO49XHK8P6ABAakBw/UoXI/C8T+xAR+F61G4HvU/ugEGCPjai9AFwQFrmnecoiP1P8kB+MJkqmBU9T/SAQYI+NqL0AUqBgj42ovQBTIkCR+F61G4HvU/EQrXo3A9CgFAGcP1KFyPwvE/IYlBYOXQIvU/OnIKEIlBYOXQIvU/w/UoXI/C8T8SEPYoXI/C9QhA4XoUrkfhCEAaEAAAAAAAQI9AAAAAAABAn0AiECPb+X5qvPY/iUFg5dAi9T8qELx0kxgEVvg/nu+nxks39z8yEAAAAAAAQJ9AAAAAAADAkkA4IEBISAFCJAmuR+F6FK7zPxHsUbgehevxPxkAAAAAAAAmQCG4HoXrUbi+P0oGTkFTREFRUksIzgkRrkfhehSu8z8Zw/UoXI/C8T8gFyoEMTIzNTFmZmZmZmbyPzoHYXNrdHlwZUIHYmlkdHlwZUoLMTIzMTNjZGFkYWRSBGlkbGVYrGA=';
+export const encodedMessage =
+    'CghGeE9wdGlvbhI/CUw3iUFgpSRAEfgZFw6EpCZAGQAAAAAAQI9AIdeGinH+JlQ/KSUGgZVDi9Q/MXsUrkfhetQ/OSlcj8L1KLw/GkgJAAAAAAAA8D8RAAAAAACYn0AZAAAAAAAACEAhAAAAAABwn0ApAAAAAAAAFEAxAAAAAACMn0A5AAAAAAAAHEBBAAAAAAAAIEAi1QEJAAAAAAAA8D8RAAAAAAAAAEAZAAAAAAAACEAhAAAAAAAAEEApAAAAAAAAFEAwATgBQQAAAAAAACBASQAAAAAAACJAUgYI+NqL0AVYAWHcRgN4CyT1P2nrc7UV+8vxP3HPZtXnaiv1P3nWxW00gLfzP4IBBgj42ovQBYkBsHJoke18vz+RASUGgZVDi9Q/mQEYeO49XHK8P6ABAakBw/UoXI/C8T+xAR+F61G4HvU/ugEGCPjai9AFwQFrmnecoiP1P8kB+MJkqmBU9T/SAQYI+NqL0AUqBgj42ovQBTIkCR+F61G4HvU/EQrXo3A9CgFAGcP1KFyPwvE/IYlBYOXQIvU/OnIKEIlBYOXQIvU/w/UoXI/C8T8SEPYoXI/C9QhA4XoUrkfhCEAaEAAAAAAAQI9AAAAAAABAn0AiECPb+X5qvPY/iUFg5dAi9T8qELx0kxgEVvg/nu+nxks39z8yEAAAAAAAQJ9AAAAAAADAkkA4IEBISAFCJAmuR+F6FK7zPxHsUbgehevxPxkAAAAAAAAmQCG4HoXrUbi+P0oGTkFTREFRUksIzgkRrkfhehSu8z8Zw/UoXI/C8T8gFyoEMTIzNTFmZmZmZmbyPzoHYXNrdHlwZUIHYmlkdHlwZUoLMTIzMTNjZGFkYWRSBGlkbGVYrGA=';
 
-export const encodedMessageOrder = 'Gi0iCEFMR08tVVNEUgNidXn6AQZhYmMxMjOKAggI+NqL0AUQAJECmbuWkA969T8aLSIDRVVSUgRzZWxs+gEGeHdjNDU2igIMCPjai9AFEMDDrvUCkQLl0CLb+T4iQA==';
+export const encodedMessageOrder =
+    'Gi0iCEFMR08tVVNEUgNidXn6AQZhYmMxMjOKAggI+NqL0AUQAJECmbuWkA969T8aLSIDRVVSUgRzZWxs+gEGeHdjNDU2igIMCPjai9AFEMDDrvUCkQLl0CLb+T4iQA==';
 
 export const orderObjectMessage = {
     Collection: [
         {
-            'OrderId': 'abc123',
-            'BuySell': 'buy',
-            'AccountId': 'ALGO-USD',
-            'Price': 1.3423,
-            'OrderTime': {
-                'seconds': '1510141304',
-                'nanos': '0',
+            OrderId: 'abc123',
+            BuySell: 'buy',
+            AccountId: 'ALGO-USD',
+            Price: 1.3423,
+            OrderTime: {
+                seconds: '1510141304',
+                nanos: '0',
             },
         },
         {
-            'OrderId': 'xwc456',
-            'BuySell': 'sell',
-            'AccountId': 'EUR',
-            'Price': 9.123,
-            'OrderTime': {
-                'seconds': '1510141304',
-                'nanos': '783000000',
+            OrderId: 'xwc456',
+            BuySell: 'sell',
+            AccountId: 'EUR',
+            Price: 9.123,
+            OrderTime: {
+                seconds: '1510141304',
+                nanos: '783000000',
             },
         },
     ],

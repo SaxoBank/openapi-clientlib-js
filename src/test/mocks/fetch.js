@@ -3,9 +3,11 @@
     this.response = response;
 
     const headersMap = {
-        'content-type': contentType || (
-            typeof response === 'object' ? 'application/json; utf-8' : 'application/text'
-        ),
+        'content-type':
+            contentType ||
+            (typeof response === 'object'
+                ? 'application/json; utf-8'
+                : 'application/text'),
     };
 
     this.headers = {

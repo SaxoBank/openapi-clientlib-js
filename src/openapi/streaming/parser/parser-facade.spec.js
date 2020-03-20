@@ -13,13 +13,21 @@ ParserFacade.addParsers({
 describe('Parser Facade', () => {
     describe('getParser', () => {
         it('should return json parser', () => {
-            const parser = ParserFacade.getParser('application/json', 'port', 'v1/balances');
+            const parser = ParserFacade.getParser(
+                'application/json',
+                'port',
+                'v1/balances',
+            );
             expect(parser.constructor.name).toEqual('ParserJson');
             expect(parser.getFormatName()).toEqual('application/json');
         });
 
         it('should return protobuf parser', () => {
-            const parser = ParserFacade.getParser('application/x-protobuf', 'port', 'v1/balances');
+            const parser = ParserFacade.getParser(
+                'application/x-protobuf',
+                'port',
+                'v1/balances',
+            );
             expect(parser.constructor.name).toEqual('ParserProtobuf');
             expect(parser.getFormatName()).toEqual('application/x-protobuf');
         });
