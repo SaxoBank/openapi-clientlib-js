@@ -2151,7 +2151,11 @@ describe('price-formatting format', () => {
 
     describe('supports extended decimals', () => {
         it('adds extra decimals up to the limit as first/pips when deci-pips not supported', () => {
-            const parts = priceFormatting.formatPriceParts(1.123456789012345, 2, priceFormatOptions.UseExtendedDecimals);
+            const parts = priceFormatting.formatPriceParts(
+                1.123456789012345,
+                2,
+                priceFormatOptions.UseExtendedDecimals,
+            );
 
             expect(parts).toEqual({
                 Pre: '',
@@ -2163,10 +2167,14 @@ describe('price-formatting format', () => {
         });
 
         it('adds extra decimals up to the limit as deci-pips when deci-pips are supported', () => {
-            const parts = priceFormatting.formatPriceParts(1.123456789012345, 2, {
-                [priceFormatOptions.AllowDecimalPips]: true,
-                [priceFormatOptions.UseExtendedDecimals]: true,
-            });
+            const parts = priceFormatting.formatPriceParts(
+                1.123456789012345,
+                2,
+                {
+                    [priceFormatOptions.AllowDecimalPips]: true,
+                    [priceFormatOptions.UseExtendedDecimals]: true,
+                },
+            );
 
             expect(parts).toEqual({
                 Pre: '',
@@ -2178,7 +2186,11 @@ describe('price-formatting format', () => {
         });
 
         it('only includes non-zero extra decimals when deci-pips not supported', () => {
-            const parts = priceFormatting.formatPriceParts(1.12345, 2, priceFormatOptions.UseExtendedDecimals);
+            const parts = priceFormatting.formatPriceParts(
+                1.12345,
+                2,
+                priceFormatOptions.UseExtendedDecimals,
+            );
 
             expect(parts).toEqual({
                 Pre: '',
@@ -2205,7 +2217,11 @@ describe('price-formatting format', () => {
         });
 
         it('includes trailing zero when within the requested number of decimals when deci-pips not supported', () => {
-            const parts = priceFormatting.formatPriceParts(1.1, 2, priceFormatOptions.UseExtendedDecimals);
+            const parts = priceFormatting.formatPriceParts(
+                1.1,
+                2,
+                priceFormatOptions.UseExtendedDecimals,
+            );
 
             expect(parts).toEqual({
                 Pre: '',
@@ -2230,6 +2246,5 @@ describe('price-formatting format', () => {
                 DeciPips: '0',
             });
         });
-
     });
 });
