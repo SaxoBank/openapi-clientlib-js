@@ -54,7 +54,7 @@
         "eslint-plugin-switch-case": "1.1.2",
         "jest": "25.1.0",
         "mockdate": "2.0.2",
-        "nodemon": "1.18.7",
+        "nodemon": "2.0.2",
         "prettier": "1.19.1",
         "protobufjs": "6.8.8",
         "regenerator-runtime": "0.13.1",
