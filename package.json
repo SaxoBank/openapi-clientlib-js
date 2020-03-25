@@ -55,7 +55,7 @@
         "jest": "25.1.0",
         "mockdate": "2.0.2",
         "nodemon": "2.0.2",
-        "prettier": "1.19.1",
+        "prettier": "2.0.2",
         "protobufjs": "6.8.9",
         "regenerator-runtime": "0.13.1",
         "rimraf": "2.6.2",
