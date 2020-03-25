@@ -58,7 +58,7 @@
         "prettier": "1.19.1",
         "protobufjs": "6.8.9",
         "regenerator-runtime": "0.13.1",
-        "rimraf": "2.6.2",
+        "rimraf": "3.0.2",
         "rollup": "2.0.6",
         "rollup-plugin-babel": "4.4.0"
     },
