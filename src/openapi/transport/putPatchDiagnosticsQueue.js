@@ -14,16 +14,16 @@ const LOG_AREA = 'TransportPutPatchDiagnositicsQueue';
 
 function putPatchTransportMethod(method) {
     return function() {
-        const transport = this.isQueueing ? this.transportQueue : this.transport;
-        return transport[method]
-            .apply(this.transport, arguments)
+        const transport = this.isQueueing
+            ? this.transportQueue
+            : this.transport;
+        return transport[method].apply(this.transport, arguments);
     };
 }
 
 function otherMethodTransport(method) {
     return function() {
-        return this.transport[method]
-            .apply(this.transport, arguments)
+        return this.transport[method].apply(this.transport, arguments);
     };
 }
 
@@ -56,7 +56,7 @@ function TransportPutPatchDiagnositicsQueue(transport, transportCore) {
 
     const diagnosticsPut = transportCore
         .put('root', 'v1/diagnostics/put')
-        .catch(function () {
+        .catch(function() {
             transportCore.setUseXHttpMethodOverride(true);
             log.info(
                 LOG_AREA,
@@ -74,13 +74,12 @@ function TransportPutPatchDiagnositicsQueue(transport, transportCore) {
             );
         });
 
-    this.transportQueue.waitFor(Promise.all([diagnosticsPut, diagnosticsPatch]).then(() => {
-        log.debug(
-            LOG_AREA,
-            'Diagnostics checks finished, continuing.',
-        );
-        this.isQueueing = false;
-    }))
+    this.transportQueue.waitFor(
+        Promise.all([diagnosticsPut, diagnosticsPatch]).then(() => {
+            log.debug(LOG_AREA, 'Diagnostics checks finished, continuing.');
+            this.isQueueing = false;
+        }),
+    );
 }
 
 /**
@@ -95,42 +94,54 @@ TransportPutPatchDiagnositicsQueue.prototype.get = otherMethodTransport('get');
  * @see {@link saxo.openapi.TransportCore#post}
  * @function
  */
-TransportPutPatchDiagnositicsQueue.prototype.post = otherMethodTransport('post');
+TransportPutPatchDiagnositicsQueue.prototype.post = otherMethodTransport(
+    'post',
+);
 
 /**
  * Performs a queued put request.
  * @see {@link saxo.openapi.TransportCore#put}
  * @function
  */
-TransportPutPatchDiagnositicsQueue.prototype.put = putPatchTransportMethod('put');
+TransportPutPatchDiagnositicsQueue.prototype.put = putPatchTransportMethod(
+    'put',
+);
 
 /**
  * Performs a queued delete request.
  * @see {@link saxo.openapi.TransportCore#delete}
  * @function
  */
-TransportPutPatchDiagnositicsQueue.prototype.delete = otherMethodTransport('delete');
+TransportPutPatchDiagnositicsQueue.prototype.delete = otherMethodTransport(
+    'delete',
+);
 
 /**
  * Performs a queued patch request.
  * @see {@link saxo.openapi.TransportCore#patch}
  * @function
  */
-TransportPutPatchDiagnositicsQueue.prototype.patch = putPatchTransportMethod('patch');
+TransportPutPatchDiagnositicsQueue.prototype.patch = putPatchTransportMethod(
+    'patch',
+);
 
 /**
  * Performs a queued head request.
  * @see {@link saxo.openapi.TransportCore#head}
  * @function
  */
-TransportPutPatchDiagnositicsQueue.prototype.head = otherMethodTransport('head');
+TransportPutPatchDiagnositicsQueue.prototype.head = otherMethodTransport(
+    'head',
+);
 
 /**
  * Performs a queued options request.
  * @see {@link saxo.openapi.TransportCore#options}
  * @function
  */
-TransportPutPatchDiagnositicsQueue.prototype.options = otherMethodTransport('options');
+TransportPutPatchDiagnositicsQueue.prototype.options = otherMethodTransport(
+    'options',
+);
 
 // -- Export section --
 
