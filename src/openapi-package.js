@@ -17,6 +17,7 @@ import TransportAuth from './openapi/transport/auth';
 import TransportBatch from './openapi/transport/batch';
 import TransportQueue from './openapi/transport/queue';
 import TransportRetry from './openapi/transport/retry';
+import TransportPutPatchDiagnositicsQueue from './openapi/transport/putPatchDiagnosticsQueue';
 import Streaming from './openapi/streaming/streaming';
 import AuthProvider from './openapi/authProvider';
 
@@ -34,6 +35,7 @@ export default {
         TransportBatch,
         TransportQueue,
         TransportRetry,
+        TransportPutPatchDiagnositicsQueue,
         Streaming,
     },
     utils: {
