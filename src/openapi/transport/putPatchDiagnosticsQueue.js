@@ -17,7 +17,7 @@ function putPatchTransportMethod(method) {
         const transport = this.isQueueing
             ? this.transportQueue
             : this.transport;
-        return transport[method].apply(this.transport, arguments);
+        return transport[method].apply(transport, arguments);
     };
 }
 
@@ -54,31 +54,26 @@ function TransportPutPatchDiagnositicsQueue(transport, transportCore) {
     this.transport = transport;
     this.transportQueue = new TransportQueue(transport);
 
-    const diagnosticsPut = transportCore
-        .put('root', 'v1/diagnostics/put')
-        .catch(function() {
-            transportCore.setUseXHttpMethodOverride(true);
-            log.info(
-                LOG_AREA,
-                'Diagnostic check for put failed. Fallback to POST used.',
-            );
-        });
+    const diagnosticsPut = transportCore.put('root', 'v1/diagnostics/put');
 
-    const diagnosticsPatch = transportCore
-        .patch('root', 'v1/diagnostics/patch')
-        .catch(() => {
-            transportCore.setUseXHttpMethodOverride(true);
-            log.info(
-                LOG_AREA,
-                'Diagnostic check for patch failed. Fallback to POST used.',
-            );
-        });
+    const diagnosticsPatch = transportCore.patch(
+        'root',
+        'v1/diagnostics/patch',
+    );
 
     this.transportQueue.waitFor(
-        Promise.all([diagnosticsPut, diagnosticsPatch]).then(() => {
-            log.debug(LOG_AREA, 'Diagnostics checks finished, continuing.');
-            this.isQueueing = false;
-        }),
+        Promise.all([diagnosticsPut, diagnosticsPatch])
+            .catch(() => {
+                transportCore.setUseXHttpMethodOverride(true);
+                log.info(
+                    LOG_AREA,
+                    'Diagnostic check for put/patch failed. Fallback to POST used.',
+                );
+            })
+            .then(() => {
+                log.debug(LOG_AREA, 'Diagnostics checks finished, continuing.');
+                this.isQueueing = false;
+            }),
     );
 }
 

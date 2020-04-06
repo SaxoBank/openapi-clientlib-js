@@ -56,6 +56,7 @@ function tryEmptyQueue() {
 
 function onWaitForPromiseResolved(promise) {
     this.waitForPromises.splice(this.waitForPromises.indexOf(promise), 1);
+
     tryEmptyQueue.call(this);
 }
 

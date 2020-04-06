@@ -1,3 +1,7 @@
+### v.6.1.0
+
+- Add TransportPutPatchDiagnositicsQueue which waits on any put/patch until a diagnostics call has been made to check if a proxy rejects it and revert to POST instead.
+
 #### v6.0.4
 
 - Allow formatting price up to 8 decimals, avoiding trailing zeroes
