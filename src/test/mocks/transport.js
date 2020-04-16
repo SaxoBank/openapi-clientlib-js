@@ -5,7 +5,9 @@
         get: jest.fn(),
         delete: jest.fn(),
         patch: jest.fn(),
+        options: jest.fn(),
         dispose: jest.fn(),
+        setUseXHttpMethodOverride: jest.fn(),
     };
 
     function methodFunction(method) {
@@ -20,6 +22,7 @@
     transport.get.mockImplementation(methodFunction.bind(null, 'get'));
     transport.delete.mockImplementation(methodFunction.bind(null, 'delete'));
     transport.patch.mockImplementation(methodFunction.bind(null, 'patch'));
+    transport.options.mockImplementation(methodFunction.bind(null, 'options'));
 
     return transport;
 }

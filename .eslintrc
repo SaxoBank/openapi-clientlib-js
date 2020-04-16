@@ -433,7 +433,8 @@
                 "camelcase": "off",
                 "max-len": "off",
                 "max-statements": "off",
-                "max-lines": "off"
+                "max-lines": "off",
+                "destructuring/in-params": "off"
             }
         },
         {
