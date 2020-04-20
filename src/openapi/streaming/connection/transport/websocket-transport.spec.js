@@ -138,6 +138,7 @@ describe('openapi WebSocket Transport', () => {
         let transport;
         let stateChangedSpy;
         let spyOnStartCallback;
+        let unauthorizedCallbackStub;
 
         function givenTransport(options) {
             spyOnStartCallback = jest.fn().mockName('spyStartCallback');
@@ -150,10 +151,13 @@ describe('openapi WebSocket Transport', () => {
             transport.start(options, spyOnStartCallback);
             stateChangedSpy = jest.fn().mockName('stateChanged');
             transport.setStateChangedCallback(stateChangedSpy);
+            
+            unauthorizedCallbackStub = jest.fn().mockImplementation(() => transport.updateQuery(AUTH_TOKEN, CONTEXT_ID, true));
+            transport.setUnauthorizedCallback(unauthorizedCallbackStub);
             return transport;
         }
 
-        it('should call stateChanged callback with connecting state when internal signalR state changed to connecting', (done) => {
+        it('should call stateChanged callback with connecting state when internal state changed to connecting', (done) => {
             givenTransport();
 
             transport.authorizePromise.then(() => {
@@ -165,7 +169,7 @@ describe('openapi WebSocket Transport', () => {
             });
         });
 
-        it('should call stateChanged callback with connected state when internal signalR state changed to connected', (done) => {
+        it('should call stateChanged callback with connected state when internal state changed to connected', (done) => {
             givenTransport();
 
             transport.authorizePromise.then(() => {
@@ -186,7 +190,7 @@ describe('openapi WebSocket Transport', () => {
             });
         });
 
-        it.only('should call stateChanged callback with disconnected state when internal signalR state changed to disconnected and reconnect', (done) => {
+        it('should call stateChanged callback with reconnecting state when internal state changed to reconnect', (done) => {
             givenTransport();
 
             const initialPromise = transport.authorizePromise;
@@ -208,9 +212,6 @@ describe('openapi WebSocket Transport', () => {
                 transport.socket.onclose({ code: 1001 });
 
                 expect(stateChangedSpy.mock.calls[2]).toEqual([
-                    constants.CONNECTION_STATE_DISCONNECTED,
-                ]);
-                expect(stateChangedSpy.mock.calls[3]).toEqual([
                     constants.CONNECTION_STATE_RECONNECTING,
                 ]);
 
@@ -223,7 +224,7 @@ describe('openapi WebSocket Transport', () => {
             });
         });
 
-        it.only('should reconnect with a new authorization when it gets a possible 401', (done) => {
+        it('should reconnect with a new authorization when it gets a possible 401', (done) => {
             givenTransport();
 
             const initialPromise = transport.authorizePromise;
@@ -242,12 +243,9 @@ describe('openapi WebSocket Transport', () => {
                 ]);
 
                 transport.socket.readyState = 3; // WebSocket internal state equal closed
-                transport.socket.onclose({ code: 1006 });
+                transport.socket.onclose({ code: 1002 });
 
                 expect(stateChangedSpy.mock.calls[2]).toEqual([
-                    constants.CONNECTION_STATE_DISCONNECTED,
-                ]);
-                expect(stateChangedSpy.mock.calls[3]).toEqual([
                     constants.CONNECTION_STATE_RECONNECTING,
                 ]);
 

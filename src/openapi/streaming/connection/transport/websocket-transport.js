@@ -165,7 +165,6 @@ function handleSocketOpen() {
 
         log.debug(LOG_AREA, 'Socket opened');
         this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
-        this.startedCallback();
     }
 }
 
@@ -363,8 +362,8 @@ WebsocketTransport.prototype.start = function(options, callback) {
     const authorizePromise = this.getAuthorizePromise(this.contextId);
 
     authorizePromise.then(() => {
+        this.startedCallback();
         this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
-        
         connect.call(this);
     });
 };
