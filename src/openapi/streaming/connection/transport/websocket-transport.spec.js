@@ -151,8 +151,12 @@ describe('openapi WebSocket Transport', () => {
             transport.start(options, spyOnStartCallback);
             stateChangedSpy = jest.fn().mockName('stateChanged');
             transport.setStateChangedCallback(stateChangedSpy);
-            
-            unauthorizedCallbackStub = jest.fn().mockImplementation(() => transport.updateQuery(AUTH_TOKEN, CONTEXT_ID, true));
+
+            unauthorizedCallbackStub = jest
+                .fn()
+                .mockImplementation(() =>
+                    transport.updateQuery(AUTH_TOKEN, CONTEXT_ID, true),
+                );
             transport.setUnauthorizedCallback(unauthorizedCallbackStub);
             return transport;
         }

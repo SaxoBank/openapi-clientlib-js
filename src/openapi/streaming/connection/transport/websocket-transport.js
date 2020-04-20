@@ -16,7 +16,7 @@ const NAME = 'plainWebSockets';
 const socketCloseCodes = {
     NORMAL_CLOSURE: 1000,
     TOKEN_EXPIRED: 1002,
-}
+};
 
 const CLOSE_REASON_DESTROY = 'Normal Close due to connection destroy action';
 
@@ -45,7 +45,7 @@ function connect() {
         socket.onopen = handleSocketOpen.bind(this);
         socket.onmessage = handleSocketMessage.bind(this);
         socket.onclose = handleSocketClose.bind(this);
-        
+
         this.socket = socket;
     } catch (error) {
         handleFailure.call(this, {
@@ -219,8 +219,6 @@ function handleSocketClose(event) {
     reconnect.call(this);
 }
 
-
-
 // -- Exported methods section --
 
 /**
@@ -355,7 +353,6 @@ WebsocketTransport.prototype.start = function(options, callback) {
         log.debug(LOG_AREA, 'only one socket per connection is allowed');
         return;
     }
-    
 
     log.debug(LOG_AREA, 'Starting transport');
 
@@ -378,7 +375,7 @@ WebsocketTransport.prototype.stop = function() {
     this.authorizePromis = null;
     this.reconnectCount = 0;
     this.hasWorked = false;
-    
+
     this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
 };
 
