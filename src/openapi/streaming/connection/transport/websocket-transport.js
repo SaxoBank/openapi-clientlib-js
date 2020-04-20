@@ -13,22 +13,17 @@ const LOG_AREA = 'PlainWebSocketsTransport';
 
 const NAME = 'plainWebSockets';
 
-// Internal webSocket readyState possible values.
-// eslint-disable-next-line no-unused-vars
-const STATE_INTERNAL_CONNECTING = 0;
-const STATE_INTERNAL_OPEN = 1;
-const STATE_INTERNAL_CLOSING = 2;
-const STATE_INTERNAL_CLOSED = 3;
+const socketCloseCodes = {
+    NORMAL_CLOSURE: 1000,
+    TOKEN_EXPIRED: 1002,
+}
+
+const CLOSE_REASON_DESTROY = 'Normal Close due to connection destroy action';
 
 const DEFAULT_RECONNECT_DELAY = 2000;
 const DEFAULT_RECONNECT_LIMIT = 10;
 
 const NOOP = () => {};
-
-// Normal closure; the connection successfully completed whatever purpose for which it was created.
-// Ref. https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Status_codes
-const CLOSE_STATUS_CODE = 1000;
-const CLOSE_REASON_DESTROY = 'Normal Close due to connection destroy action';
 
 // -- Local methods section --
 
@@ -36,30 +31,46 @@ function normalizeWebSocketUrl(url) {
     return url.replace('http://', 'ws://').replace('https://', 'wss://');
 }
 
-function getWebSocketUrl() {
-    return normalizeWebSocketUrl.call(
-        this,
-        `${this.connectionUrl}${this.query}`,
-    );
+function connect() {
+    try {
+        const url = normalizeWebSocketUrl.call(
+            this,
+            `${this.connectionUrl}${this.query}`,
+        );
+
+        log.debug(LOG_AREA, 'Creating WebSocket connection', { url });
+        const socket = new WebSocket(url);
+
+        socket.binaryType = 'arraybuffer';
+        socket.onopen = handleSocketOpen.bind(this);
+        socket.onmessage = handleSocketMessage.bind(this);
+        socket.onclose = handleSocketClose.bind(this);
+        
+        this.socket = socket;
+    } catch (error) {
+        handleFailure.call(this, {
+            message: 'Failed to setup webSocket connection',
+        });
+    }
 }
 
-function destroySocket(socket) {
+function disconnect() {
+    const socket = this.socket;
     if (!socket) {
         return;
     }
+
     socket.onopen = null;
-    socket.onerror = null;
     socket.onmessage = null;
     socket.onclose = null;
-    socket.close(CLOSE_STATUS_CODE, CLOSE_REASON_DESTROY);
+    socket.close(socketCloseCodes.NORMAL_CLOSURE, CLOSE_REASON_DESTROY);
+
+    this.socket = null;
 }
 
 function reconnect() {
     if (this.reconnectCount >= DEFAULT_RECONNECT_LIMIT) {
-        handleFailure.call(this, {
-            message:
-                'Transport reached maximum amount of reconnects allowed till last successful connection.',
-        });
+        this.stop();
         return;
     }
 
@@ -69,24 +80,11 @@ function reconnect() {
     this.reconnectTimeout = setTimeout(() => {
         this.reconnectCount++;
 
-        this.stop();
-        this.start();
+        disconnect.call(this);
+        connect.call(this);
+
         log.debug(LOG_AREA, 'Transport reconnected');
     }, DEFAULT_RECONNECT_DELAY);
-}
-
-function configure() {
-    try {
-        this.socket.binaryType = 'arraybuffer';
-        this.socket.onopen = handleSocketOpen.bind(this);
-        this.socket.onerror = handleSocketError.bind(this);
-        this.socket.onmessage = handleSocketMessage.bind(this);
-        this.socket.onclose = handleSocketClose.bind(this);
-    } catch (error) {
-        handleFailure.call(this, {
-            message: 'Failed to setup webSocket connection',
-        });
-    }
 }
 
 function parseMessage(rawData) {
@@ -160,6 +158,17 @@ function handleFailure(error) {
     this.failCallback(error);
 }
 
+function handleSocketOpen() {
+    if (this.socket) {
+        this.hasWorked = true;
+        this.reconnectCount = 0;
+
+        log.debug(LOG_AREA, 'Socket opened');
+        this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+        this.startedCallback();
+    }
+}
+
 function handleSocketMessage(messageEvent) {
     if (messageEvent.data instanceof ArrayBuffer) {
         let parsedMessages;
@@ -181,59 +190,37 @@ function handleSocketMessage(messageEvent) {
 }
 
 function handleSocketClose(event) {
-    if (
-        (this.socket && this.socket.readyState === STATE_INTERNAL_CLOSED) ||
-        this.socket.readyState === STATE_INTERNAL_CLOSING
-    ) {
-        log.debug(LOG_AREA, 'Transport connection closed', {
+    if (!this.socket) {
+        return;
+    }
+
+    if (!this.hasWorked) {
+        handleFailure({
+            message: `websocket error occured. code: ${event.code}, reason: ${event.reason}`,
+        });
+
+        return;
+    }
+
+    const isCleanDisconnect = event.wasClean === true;
+    if (!isCleanDisconnect) {
+        log.error(LOG_AREA, 'websocket connection closed abruptly', {
             readyState: this.socket.readyState,
             code: event.code,
+            reason: event.reason,
         });
-
-        // 1006 doesn't tell us its a 401 unauthorized, just that it might be
-        // the websocket spec disallows reading status codes for security reasons
-        // (so websocket can't be used to probe http endpoints)
-        // So, before we reconnect, lets re-authorize to be sure
-        // and if that gets a 401, that will report the token invalid via
-        // authTransport
-        if (event.code === 1006) {
-            this.getAuthorizePromise(this.contextId, true);
-        }
-
-        // Order here is important. We need to invoke state callback first, as parent streaming manager updates query upon disconnect.
-        this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
-        reconnect.call(this);
+    } else {
+        log.debug(LOG_AREA, 'websocket connection closed');
     }
+
+    if (event.code === socketCloseCodes.TOKEN_EXPIRED) {
+        this.unauthorizedCallback();
+    }
+
+    reconnect.call(this);
 }
 
-function handleSocketOpen() {
-    if (this.socket && this.socket.readyState === STATE_INTERNAL_OPEN) {
-        this.hasWorked = true;
-        this.reconnectCount = 0;
 
-        log.debug(LOG_AREA, 'Socket opened');
-        this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
-    }
-}
-
-function handleSocketError(error) {
-    if (this.socket) {
-        log.error(LOG_AREA, 'Socket error occurred', {
-            code: error.code,
-            reason: error.reason,
-        });
-
-        if (this.hasWorked) {
-            // If transport worked at least once, try to reconnect when error occurs instead of failing.
-            this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
-            reconnect.call(this);
-        } else {
-            handleFailure.call(this, {
-                message: `WebSocket connection failed with error code: ${error.code}, reason: ${error.reason}`,
-            });
-        }
-    }
-}
 
 // -- Exported methods section --
 
@@ -319,15 +306,6 @@ WebsocketTransport.prototype.setErrorCallback = function(callback) {
     this.errorCallback = callback;
 };
 
-/**
- *
- * Suggested next step is a fallback to another transport if possible.
- * @param callback
- */
-WebsocketTransport.prototype.fail = function(callback) {
-    this.failCallback = callback;
-};
-
 WebsocketTransport.prototype.setConnectionSlowCallback = function(callback) {
     this.connectionSlowCallback = callback;
 };
@@ -374,33 +352,35 @@ WebsocketTransport.prototype.start = function(options, callback) {
         return;
     }
 
-    const authorizePromise = this.getAuthorizePromise(this.contextId);
-
-    const url = getWebSocketUrl.call(this);
-
-    log.debug(LOG_AREA, 'Starting transport', { url });
-
     if (this.socket) {
-        // To make sure one socket connection per transport exists, destroy previous one if it exists.
-        destroySocket(this.socket);
-        this.socket = null;
+        log.debug(LOG_AREA, 'only one socket per connection is allowed');
+        return;
     }
+    
+
+    log.debug(LOG_AREA, 'Starting transport');
+
+    const authorizePromise = this.getAuthorizePromise(this.contextId);
 
     authorizePromise.then(() => {
         this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
-        log.debug(LOG_AREA, 'Creating WebSocket connection', { url });
-        this.socket = new WebSocket(url);
-        configure.call(this);
-        this.startedCallback();
+        
+        connect.call(this);
     });
 };
 
 WebsocketTransport.prototype.stop = function() {
-    if (this.socket) {
-        this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
-        this.destroy();
-        log.debug(LOG_AREA, 'Transport stopped');
-    }
+    disconnect.call(this);
+
+    clearInterval(this.reconnectTimeout);
+    this.reconnectTimeout = null;
+    this.contextId = null;
+    this.lastMessageId = null;
+    this.authorizePromis = null;
+    this.reconnectCount = 0;
+    this.hasWorked = false;
+    
+    this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
 };
 
 WebsocketTransport.prototype.updateQuery = function(
@@ -434,17 +414,6 @@ WebsocketTransport.prototype.updateQuery = function(
 
 WebsocketTransport.prototype.getQuery = function() {
     return this.query;
-};
-
-WebsocketTransport.prototype.destroy = function() {
-    clearInterval(this.reconnectTimeout);
-    this.reconnectTimeout = null;
-    this.contextId = null;
-    this.lastMessageId = null;
-    this.reconnectCount = 0;
-
-    destroySocket(this.socket);
-    this.socket = null;
 };
 
 export default WebsocketTransport;
