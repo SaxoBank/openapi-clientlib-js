@@ -11,11 +11,14 @@ const BASE_URL = 'testUrl';
 describe('openapi WebSocket Transport', () => {
     let restTransportMock;
     let authProvider;
+    let spySocketClose;
 
     beforeEach(() => {
+        spySocketClose = jest.fn().mockName('spySocketClose');
+
         global.WebSocket = jest.fn().mockImplementation(() => {
             return {
-                close: jest.fn(),
+                close: spySocketClose,
             };
         });
 
@@ -59,6 +62,38 @@ describe('openapi WebSocket Transport', () => {
                     'testUrl/streamingws/connect?contextId=0000000000&Authorization=TOKEN',
                 );
 
+                done();
+            });
+        });
+
+        it('should fallback to other transport if websocket handshake fails', (done) => {
+            const options = {};
+            const spyOnStartCallback = jest.fn().mockName('spyStartCallback');
+            const spyOnFailCallback = jest.fn().mockName('spyFailCallback');
+
+            restTransportMock.put.mockImplementation(() =>
+                Promise.resolve({ data: [] }),
+            );
+
+            const transport = new WebSocketTransport(
+                BASE_URL,
+                restTransportMock,
+                spyOnFailCallback,
+            );
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start(options, spyOnStartCallback);
+
+            transport.authorizePromise.then(() => {
+                expect(spyOnStartCallback).toBeCalledTimes(1);
+                expect(global.WebSocket).toBeCalledWith(
+                    'testUrl/streamingws/connect?contextId=0000000000&Authorization=TOKEN',
+                );
+
+                // simulate handshake failure by not calling onopen first
+                transport.socket.onclose({ code: 1006 });
+
+                expect(spyOnFailCallback).toBeCalledTimes(1);
+                expect(spySocketClose).toBeCalledTimes(1);
                 done();
             });
         });
