@@ -153,8 +153,8 @@ function parseMessage(rawData) {
  * @param { Object } error - The error object with message property.
  */
 function handleFailure(error) {
+    disconnect.call(this);
     this.stateChangedCallback(constants.CONNECTION_STATE_FAILED);
-    this.destroy();
     this.failCallback(error);
 }
 
@@ -194,7 +194,7 @@ function handleSocketClose(event) {
     }
 
     if (!this.hasWorked) {
-        handleFailure({
+        handleFailure.call(this, {
             message: `websocket error occured. code: ${event.code}, reason: ${event.reason}`,
         });
 
@@ -345,7 +345,9 @@ WebsocketTransport.prototype.start = function(options, callback) {
     this.startedCallback = callback || NOOP;
 
     if (!this.isSupported()) {
-        handleFailure({ message: 'WebSocket Transport is not supported.' });
+        handleFailure.call(this, {
+            message: 'WebSocket Transport is not supported.',
+        });
         return;
     }
 
