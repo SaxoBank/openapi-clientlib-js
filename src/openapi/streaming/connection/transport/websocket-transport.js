@@ -31,7 +31,7 @@ function normalizeWebSocketUrl(url) {
     return url.replace('http://', 'ws://').replace('https://', 'wss://');
 }
 
-function connect() {
+function createSocket() {
     try {
         const url = normalizeWebSocketUrl.call(
             this,
@@ -54,7 +54,7 @@ function connect() {
     }
 }
 
-function disconnect() {
+function destroySocket() {
     const socket = this.socket;
     if (!socket) {
         return;
@@ -80,8 +80,8 @@ function reconnect() {
     this.reconnectTimeout = setTimeout(() => {
         this.reconnectCount++;
 
-        disconnect.call(this);
-        connect.call(this);
+        destroySocket.call(this);
+        createSocket.call(this);
 
         log.debug(LOG_AREA, 'Transport reconnected');
     }, DEFAULT_RECONNECT_DELAY);
@@ -153,14 +153,14 @@ function parseMessage(rawData) {
  * @param { Object } error - The error object with message property.
  */
 function handleFailure(error) {
-    disconnect.call(this);
+    destroySocket.call(this);
     this.stateChangedCallback(constants.CONNECTION_STATE_FAILED);
     this.failCallback(error);
 }
 
 function handleSocketOpen() {
     if (this.socket) {
-        this.hasWorked = true;
+        this.hasBeenConnected = true;
         this.reconnectCount = 0;
 
         log.debug(LOG_AREA, 'Socket opened');
@@ -193,7 +193,7 @@ function handleSocketClose(event) {
         return;
     }
 
-    if (!this.hasWorked) {
+    if (!this.hasBeenConnected) {
         handleFailure.call(this, {
             message: `websocket error occured. code: ${event.code}, reason: ${event.reason}`,
         });
@@ -203,7 +203,7 @@ function handleSocketClose(event) {
 
     const isCleanDisconnect = event.wasClean === true;
     if (!isCleanDisconnect) {
-        log.error(LOG_AREA, 'websocket connection closed abruptly', {
+        log.warn(LOG_AREA, 'websocket connection closed abruptly', {
             readyState: this.socket.readyState,
             code: event.code,
             reason: event.reason,
@@ -248,7 +248,7 @@ function WebsocketTransport(baseUrl, restTransport, failCallback = NOOP) {
     this.authorizeServiceGroup = 'streamingws';
 
     // If true, indicates that transport had at least once successful connection (received onopen).
-    this.hasWorked = false;
+    this.hasBeenConnected = false;
 
     this.lastMessageId = null;
     this.reconnectTimeout = null;
@@ -352,7 +352,7 @@ WebsocketTransport.prototype.start = function(options, callback) {
     }
 
     if (this.socket) {
-        log.debug(LOG_AREA, 'only one socket per connection is allowed');
+        log.warn(LOG_AREA, 'only one socket per connection is allowed');
         return;
     }
 
@@ -363,20 +363,20 @@ WebsocketTransport.prototype.start = function(options, callback) {
     authorizePromise.then(() => {
         this.startedCallback();
         this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
-        connect.call(this);
+        createSocket.call(this);
     });
 };
 
 WebsocketTransport.prototype.stop = function() {
-    disconnect.call(this);
+    destroySocket.call(this);
 
     clearInterval(this.reconnectTimeout);
     this.reconnectTimeout = null;
     this.contextId = null;
     this.lastMessageId = null;
-    this.authorizePromis = null;
+    this.authorizePromise = null;
     this.reconnectCount = 0;
-    this.hasWorked = false;
+    this.hasBeenConnected = false;
 
     this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
 };
