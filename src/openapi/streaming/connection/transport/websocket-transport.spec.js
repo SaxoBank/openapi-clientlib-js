@@ -173,7 +173,7 @@ describe('openapi WebSocket Transport', () => {
         let transport;
         let stateChangedSpy;
         let spyOnStartCallback;
-        let unauthorizedCallbackStub;
+        let spyOnunauthorizedCallback;
 
         function givenTransport(options) {
             spyOnStartCallback = jest.fn().mockName('spyStartCallback');
@@ -187,12 +187,10 @@ describe('openapi WebSocket Transport', () => {
             stateChangedSpy = jest.fn().mockName('stateChanged');
             transport.setStateChangedCallback(stateChangedSpy);
 
-            unauthorizedCallbackStub = jest
+            spyOnunauthorizedCallback = jest
                 .fn()
-                .mockImplementation(() =>
-                    transport.updateQuery(AUTH_TOKEN, CONTEXT_ID, true),
-                );
-            transport.setUnauthorizedCallback(unauthorizedCallbackStub);
+                .mockName('spyunauthorizedCallback');
+            transport.setUnauthorizedCallback(spyOnunauthorizedCallback);
             return transport;
         }
 
@@ -266,7 +264,6 @@ describe('openapi WebSocket Transport', () => {
         it('should reconnect with a new authorization when it gets a possible 401', (done) => {
             givenTransport();
 
-            const initialPromise = transport.authorizePromise;
             transport.authorizePromise.then(() => {
                 expect(stateChangedSpy.mock.calls.length).toEqual(1);
                 expect(stateChangedSpy.mock.calls[0]).toEqual([
@@ -284,17 +281,23 @@ describe('openapi WebSocket Transport', () => {
                 transport.socket.readyState = 3; // WebSocket internal state equal closed
                 transport.socket.onclose({ code: 1002 });
 
-                expect(stateChangedSpy.mock.calls[2]).toEqual([
-                    constants.CONNECTION_STATE_RECONNECTING,
-                ]);
+                expect(spyOnunauthorizedCallback).toBeCalledTimes(1);
 
-                tick(2000);
+                // simulate token update
+                transport.updateQuery('NEW-TOKEN', CONTEXT_ID, true);
 
-                expect(
-                    transport.authorizePromise === initialPromise,
-                ).toBeFalsy();
+                // should re-cpnnect after authorization
+                transport.authorizePromise.then(() => {
+                    expect(stateChangedSpy.mock.calls[2]).toEqual([
+                        constants.CONNECTION_STATE_RECONNECTING,
+                    ]);
 
-                done();
+                    expect(global.WebSocket).toBeCalledWith(
+                        'testUrl/streamingws/connect?contextId=0000000000&Authorization=NEW-TOKEN',
+                    );
+
+                    done();
+                });
             });
         });
     });

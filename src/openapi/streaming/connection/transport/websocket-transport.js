@@ -68,7 +68,7 @@ function destroySocket() {
     this.socket = null;
 }
 
-function reconnect() {
+function reconnect(isImmediate) {
     if (this.reconnectCount >= DEFAULT_RECONNECT_LIMIT) {
         this.stop();
         return;
@@ -77,14 +77,24 @@ function reconnect() {
     clearTimeout(this.reconnectTimeout);
     this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
 
-    this.reconnectTimeout = setTimeout(() => {
+    const restartConnection = () => {
         this.reconnectCount++;
 
         destroySocket.call(this);
         createSocket.call(this);
 
         log.debug(LOG_AREA, 'Transport reconnected');
-    }, DEFAULT_RECONNECT_DELAY);
+    };
+
+    if (isImmediate) {
+        restartConnection();
+        return;
+    }
+
+    this.reconnectTimeout = setTimeout(
+        restartConnection,
+        DEFAULT_RECONNECT_DELAY,
+    );
 }
 
 function parseMessage(rawData) {
@@ -214,6 +224,10 @@ function handleSocketClose(event) {
 
     if (event.code === socketCloseCodes.TOKEN_EXPIRED) {
         this.unauthorizedCallback();
+
+        // reconnect once we authorise with the new token
+        this.isReconnectPending = true;
+        return;
     }
 
     reconnect.call(this);
@@ -249,6 +263,9 @@ function WebsocketTransport(baseUrl, restTransport, failCallback = NOOP) {
 
     // If true, indicates that transport had at least once successful connection (received onopen).
     this.hasBeenConnected = false;
+
+    // If socket closes due to unauthorised token, we wait for authorisation with new token before reconnecting
+    this.isReconnectPending = false;
 
     this.lastMessageId = null;
     this.reconnectTimeout = null;
@@ -406,7 +423,14 @@ WebsocketTransport.prototype.updateQuery = function(
     this.contextId = contextId;
 
     if (forceAuth) {
-        this.getAuthorizePromise(this.contextId, true);
+        const authorizePromise = this.getAuthorizePromise(this.contextId, true);
+
+        if (this.isReconnectPending) {
+            authorizePromise.then(() => {
+                this.isReconnectPending = false;
+                reconnect.call(this, true);
+            });
+        }
     }
 };
 
