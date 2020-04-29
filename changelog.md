@@ -1,3 +1,8 @@
+### v.6.2.0
+
+- Refactoring of Plain Websocket Transport reconnecting logic.
+- Fixed Plain Websocket Transport error with null contextId.
+
 ### v.6.1.0
 
 - Add TransportPutPatchDiagnositicsQueue which waits on any put/patch until a diagnostics call has been made to check if a proxy rejects it and revert to POST instead.
