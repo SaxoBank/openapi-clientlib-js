@@ -185,6 +185,8 @@ function performAction(queuedAction, isLastQueuedAction) {
                     log.error(LOG_AREA, 'unanticipated state', {
                         state: this.currentState,
                         action,
+                        url: this.url,
+                        serviceGroup: this.serviceGroup,
                     });
             }
             break;
@@ -341,6 +343,7 @@ function onSubscribeError(referenceId, response) {
     log.error(LOG_AREA, 'An error occurred subscribing', {
         response,
         url: this.url,
+        serviceGroup: this.serviceGroup,
         ContextId: this.streamingContextId,
         ReferenceId: this.referenceId,
         subscriptionData: this.subscriptionData,
@@ -797,7 +800,11 @@ Subscription.prototype.onStreamingData = function(message) {
             break;
 
         default:
-            log.error(LOG_AREA, 'unanticipated state', this.currentState);
+            log.error(LOG_AREA, 'unanticipated state', {
+                currentState: this.currentState,
+                url: this.url,
+                serviceGroup: this.serviceGroup,
+            });
     }
 
     try {
@@ -806,7 +813,15 @@ Subscription.prototype.onStreamingData = function(message) {
         log.error(
             LOG_AREA,
             'exception occurred in streaming delta update callback',
-            error,
+            {
+                error: {
+                    message: error.message,
+                    stack: error.stack,
+                },
+                payload: message,
+                url: this.url,
+                serviceGroup: this.serviceGroup,
+            },
         );
     }
 };
