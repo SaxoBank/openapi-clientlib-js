@@ -2,7 +2,7 @@ import log from './../../../log';
 import WebsocketTransport from './transport/websocket-transport';
 import SignalrTransport from './transport/signalr-transport';
 
-const LOG_AREA = 'PlainWebSocketsTransport';
+const LOG_AREA = 'Connection';
 const DEFAULT_TRANSPORTS = [WebsocketTransport, SignalrTransport];
 
 const TRANSPORT_NAME_MAP = {
