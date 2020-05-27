@@ -20,19 +20,13 @@ const STATE_CREATED = 'connection-state-created';
 const STATE_STARTED = 'connection-state-started';
 const STATE_STOPPED = 'connection-state-stopped';
 
-function getLogDetails() {
-    return {
+function onTransportFail(error) {
+    log.error(LOG_AREA, 'Transport failed', {
+        error,
         url: this.baseUrl,
         index: this.tranportIndex,
         contextId: this.contextId,
         enabledTransports: this.options && this.options.transport,
-    };
-}
-
-function onTransportFail(error) {
-    log.error(LOG_AREA, 'Transport failed', {
-        error,
-        ...getLogDetails.call(this),
     });
 
     // Try to create next possible transport.
@@ -46,7 +40,10 @@ function onTransportFail(error) {
         // No next transport available. Report total failure.
         log.error(LOG_AREA, 'Next supported Transport not found', {
             error,
-            ...getLogDetails.call(this),
+            url: this.baseUrl,
+            index: this.tranportIndex,
+            contextId: this.contextId,
+            enabledTransports: this.options && this.options.transport,
         });
         this.failCallback({ message: 'Next supported Transport not found' });
         return;
@@ -150,11 +147,12 @@ function Connection(options, baseUrl, restTransport, failCallback = NOOP) {
 
     if (!this.transport) {
         // No next transport available. Report total failure.
-        log.error(
-            LOG_AREA,
-            'Supported Transport not found.',
-            getLogDetails.call(this),
-        );
+        log.error(LOG_AREA, 'Supported Transport not found.', {
+            url: this.baseUrl,
+            index: this.tranportIndex,
+            contextId: this.contextId,
+            enabledTransports: this.options && this.options.transport,
+        });
         this.failCallback({ message: 'Unable to setup initial transport.' });
     } else {
         log.debug(LOG_AREA, 'Supported Transport found', {
