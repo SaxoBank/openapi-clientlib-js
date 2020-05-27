@@ -44,11 +44,11 @@ function onTransportFail(error) {
 
     if (!this.transport) {
         // No next transport available. Report total failure.
-        log.error(LOG_AREA, 'Next supported Transport not found.', {
+        log.error(LOG_AREA, 'Next supported Transport not found', {
             error,
             ...getLogDetails.call(this),
         });
-        this.failCallback({ message: 'Next supported Transport not found.' });
+        this.failCallback({ message: 'Next supported Transport not found' });
         return;
     }
 
