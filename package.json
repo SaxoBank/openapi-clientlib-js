@@ -1,6 +1,6 @@
 {
     "name": "openapi-clientlib",
-    "version": "6.2.1",
+    "version": "6.2.1-beta-log-1",
     "engines": {
         "node": ">=4"
     },
