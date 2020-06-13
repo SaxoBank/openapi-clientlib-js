@@ -25,32 +25,12 @@ const DEFAULT_RECONNECT_LIMIT = 10;
 
 const NOOP = () => {};
 
-let maxCallstackSize;
-
 // -- Local methods section --
 
-function getMaxCallstackSize() {
-    if (maxCallstackSize) {
-        return maxCallstackSize;
-    }
-
-    let index = 0;
-    function recurse() {
-        index++;
-        recurse();
-    }
-
-    try {
-        recurse();
-    } catch (e) {
-        maxCallstackSize = index;
-    }
-
-    return maxCallstackSize;
-}
-
 function getJSONPayloadString(payloadBuffer) {
-    const chunkSize = getMaxCallstackSize();
+    // optimal number is used for chunk size instead of max callstack size since logic to get max callstack size is expensive
+    // and might not work correctly with older browser leading to crash
+    const chunkSize = 1000;
     const chunks = Math.ceil(payloadBuffer.length / chunkSize);
     let payload = '';
     let chunkIndex = 0;
