@@ -3,6 +3,7 @@ import mockTransport from '../../../../test/mocks/transport';
 import '../../../../test/mocks/math-random';
 import WebSocketTransport from './websocket-transport';
 import * as constants from './../constants';
+import jsonPayload from './payload.json';
 
 const CONTEXT_ID = '0000000000';
 const AUTH_TOKEN = 'TOKEN';
@@ -138,32 +139,68 @@ describe('openapi WebSocket Transport', () => {
 
             transport.authorizePromise.then(() => {
                 expect(transport.socket.onmessage).not.toBeNull();
-                const base64Payload =
-                    'MAAAAAAAAAAAAApfaGVhcnRiZWF0AGEAAABbeyJSZWZlcmVuY2VJZCI6Il9oZWFydGJlYXQiLCJIZWFydGJlYXRzIjpbeyJPcmlnaW5hdGluZ1JlZmVyZW5jZUlkIjoiNyIsIlJlYXNvbiI6Ik5vTmV3RGF0YSJ9XX1d';
-                const payload = Uint8Array.from(atob(base64Payload), (c) =>
-                    c.charCodeAt(0),
+
+                const dataBuffer = Uint8Array.from(
+                    JSON.stringify(jsonPayload),
+                    (c) => c.charCodeAt(0),
                 );
+                const payload = new Uint8Array(dataBuffer.length + 17);
+                payload.set(
+                    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 133, 12, 0, 0],
+                    0,
+                );
+                payload.set(dataBuffer, 17);
 
                 transport.socket.onmessage({ data: payload.buffer });
                 expect(spyOnReceivedCallback).toBeCalledTimes(1);
                 expect(spyOnReceivedCallback).toBeCalledWith([
                     {
-                        Data: [
-                            {
-                                Heartbeats: [
-                                    {
-                                        OriginatingReferenceId: '7',
-                                        Reason: 'NoNewData',
-                                    },
-                                ],
-                                ReferenceId: '_heartbeat',
-                            },
-                        ],
+                        Data: jsonPayload,
                         DataFormat: 0,
-                        ReferenceId: '_heartbeat',
+                        ReferenceId: '8',
                         ReservedField: 0,
                     },
                 ]);
+                done();
+            });
+        });
+
+        it('should call fail callback if ill formatted json is received', (done) => {
+            const spyOnFailCallback = jest.fn().mockName('spyOnFailCallback');
+
+            restTransportMock.put.mockImplementation(() =>
+                Promise.resolve({ data: [] }),
+            );
+
+            const transport = new WebSocketTransport(
+                BASE_URL,
+                restTransportMock,
+                spyOnFailCallback,
+            );
+
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start();
+            transport.authorizePromise.then(() => {
+                expect(transport.socket.onmessage).not.toBeNull();
+                const illFormattedJson = '{some-key:123';
+                const dataBuffer = Uint8Array.from(illFormattedJson, (c) =>
+                    c.charCodeAt(0),
+                );
+                const payload = new Uint8Array(dataBuffer.length + 17);
+                payload.set(
+                    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 13, 0, 0, 0],
+                    0,
+                );
+                payload.set(dataBuffer, 17);
+
+                transport.socket.onmessage({ data: payload.buffer });
+                expect(spyOnFailCallback).toBeCalledTimes(1);
+                expect(spyOnFailCallback).toBeCalledWith(
+                    expect.objectContaining({
+                        payload: illFormattedJson,
+                        payloadSize: 13,
+                    }),
+                );
                 done();
             });
         });

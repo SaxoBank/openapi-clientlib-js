@@ -46,7 +46,7 @@ function getJSONPayloadString(payloadBuffer) {
         chunkIndex++;
     }
 
-    return decodeURIComponent(escape(payload));
+    return payload;
 }
 
 function normalizeWebSocketUrl(url) {

@@ -14,7 +14,7 @@
         "lint:fix": "eslint . --fix",
         "jest": "jest --coverage",
         "jest:watch": "jest --watch",
-        "jest:debug": "node --debug-brk node_modules/jest/bin/jest --runInBand",
+        "jest:debug": "node --inspect-brk node_modules/jest/bin/jest --runInBand",
         "prettier:write": "prettier **/*.{js,json} --write",
         "prettier:check": "prettier **/*.{js,json} --check"
     },
