@@ -27,6 +27,28 @@ const NOOP = () => {};
 
 // -- Local methods section --
 
+function getJSONPayloadString(payloadBuffer) {
+    // optimal number is used for chunk size instead of max callstack size since logic to get max callstack size is expensive
+    // and might not work correctly with older browser leading to crash
+    const chunkSize = 1000;
+    const chunks = Math.ceil(payloadBuffer.length / chunkSize);
+    let payload = '';
+    let chunkIndex = 0;
+
+    while (chunkIndex < chunks) {
+        payload += String.fromCharCode.apply(
+            null,
+            payloadBuffer.slice(
+                chunkIndex * chunkSize,
+                (chunkIndex + 1) * chunkSize,
+            ),
+        );
+        chunkIndex++;
+    }
+
+    return payload;
+}
+
 function normalizeWebSocketUrl(url) {
     return url.replace('http://', 'ws://').replace('https://', 'wss://');
 }
@@ -135,9 +157,17 @@ function parseMessage(rawData) {
             const payloadBuffer = new Uint8Array(
                 rawData.slice(index, index + payloadSize),
             );
-            data = String.fromCharCode.apply(null, payloadBuffer);
-            data = decodeURIComponent(escape(data));
-            data = JSON.parse(data);
+
+            try {
+                data = getJSONPayloadString(payloadBuffer);
+                data = JSON.parse(data);
+            } catch (e) {
+                const error = new Error(e.message);
+                error.payload = data;
+                error.payloadSize = payloadSize;
+
+                throw error;
+            }
         } else {
             // Protobuf
             data = new Uint8Array(rawData.slice(index, index + payloadSize));
@@ -186,6 +216,8 @@ function handleSocketMessage(messageEvent) {
         } catch (e) {
             handleFailure.call(this, {
                 message: `Error occurred during parsing of plain WebSocket message. Message: ${e.message}`,
+                payload: e.payload,
+                payloadSize: e.payloadSize,
             });
             return;
         }

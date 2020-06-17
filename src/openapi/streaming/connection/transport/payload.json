@@ -1,0 +1,98 @@
+[
+    {
+        "Assets": "ANN:xasxANSLY:xnasJONES]APPEALSHARESCREDITSUISSE",
+        "DateTime": "2015-10-08T23:38:00Z",
+        "Headline": "2338GMT[DowJones]DespitethevaluationappealofAnsell's(ANN.AU)shares,CreditSuissecan'tdrumupmuchenthusiasm.Itnotesthevaluationnowsitsbelowtwo-andfive-yearaverages,whileEPSwillseesupportfromthesurgicalgloves-to-condomsmaker's",
+        "Id": "201510081938DOWJONESASTK__EN_904_460.101.6",
+        "IsHot": false,
+        "SourceId": 1074
+    },
+    {
+        "Assets": "JONES]APPEALSHARESCREDITSUISSE",
+        "DateTime": "2015-10-08T23:38:00Z",
+        "Headline": "2338GMT[DowJones]DespitethevaluationappealofAnsell's(ANN.AU)shares,CreditSuissecan'tdrumupmuchenthusiasm.Itnotesthevaluationnowsitsbelowtwo-andfive-yearaverages,whileEPSwillseesupportfromthesurgicalgloves-to-condomsmaker's",
+        "Id": "201510081938DOWJONESASTK__EN_907_460.101.6",
+        "IsHot": false,
+        "SourceId": 441
+    },
+    {
+        "Assets": "ANN:xasxANSLY:xnasJONES]APPEALSHARESCREDITSUISSE",
+        "DateTime": "2015-10-08T23:38:00Z",
+        "Headline": "2338GMT[DowJones]DespitethevaluationappealofAnsell's(ANN.AU)shares,CreditSuissecan'tdrumupmuchenthusiasm.Itnotesthevaluationnowsitsbelowtwo-andfive-yearaverages,whileEPSwillseesupportfromthesurgicalgloves-to-condomsmaker's",
+        "Id": "201510081938DOWJONESNEWSAUNZ_904_460.101.7",
+        "IsHot": false,
+        "SourceId": 354
+    },
+    {
+        "Assets": "TOM2:xams0MKS:xlonTMOAY:xnas",
+        "DateTime": "2015-10-08T07:32:00Z",
+        "Headline": "*DJTacoTitulaerbenoemdalsbestuurslidTomTombijBAVA",
+        "Id": "201510080332DOWJONESNEWS__NL_1421_460.102.9",
+        "IsHot": false,
+        "SourceId": 1062
+    },
+    {
+        "Assets": "TOM2:xams0MKS:xlonTMOAY:xnas",
+        "DateTime": "2015-10-08T07:32:00Z",
+        "Headline": "*DJTomTom:benoemingTitulaervoorvierjaar",
+        "Id": "201510080332DOWJONESNEWS__NL_1422_460.102.9",
+        "IsHot": false,
+        "SourceId": 1062
+    },
+    {
+        "Assets": "",
+        "DateTime": "2015-10-08T07:31:00Z",
+        "Headline": "*DJNATOStoltenberg:HastoBePoliticalTransitioninSyria",
+        "Id": "201510080331DOWJONESACAP__EN_1769_460.101.5",
+        "IsHot": true,
+        "SourceId": 225
+    },
+    {
+        "Assets": "",
+        "DateTime": "2015-10-08T07:31:00Z",
+        "Headline": "DJTable:PalWonn(TW)SepRevNT$63.1MVsNT$63.3M",
+        "Id": "201510080331DOWJONESASTK__EN_1764_460.101.6",
+        "IsHot": false,
+        "SourceId": 441
+    },
+    {
+        "Assets": "HTY:xlonHMATY:xnas",
+        "DateTime": "2015-10-08T07:31:00Z",
+        "Headline": "DJDanskeBankA/SForm8.3-HellermannTytonGroupPlc",
+        "Id": "201510080331DOWJONESASTK__EN_1765_460.101.6",
+        "IsHot": false,
+        "SourceId": 441
+    },
+    {
+        "Assets": "",
+        "DateTime": "2015-10-08T07:31:00Z",
+        "Headline": "DJTable:WelltendTechnologyCorp.SepRevNT$160.3M",
+        "Id": "201510080331DOWJONESASTK__EN_1768_460.101.6",
+        "IsHot": false,
+        "SourceId": 441
+    },
+    {
+        "Assets": "",
+        "DateTime": "2015-10-08T07:31:00Z",
+        "Headline": "*DJNATOStoltenberg:HastoBePoliticalTransitioninSyria",
+        "Id": "201510080331DOWJONESASTK__EN_1769_460.101.6",
+        "IsHot": true,
+        "SourceId": 441
+    },
+    {
+        "Assets": "HTY:xlonHMATY:xnas",
+        "DateTime": "2015-10-08T07:31:00Z",
+        "Headline": "DJDanskeBankA/SForm8.3-HellermannTytonGroupPlc",
+        "Id": "201510080331DOWJONESBSTK__EN_1765_460.101.6",
+        "IsHot": false,
+        "SourceId": 440
+    },
+    {
+        "Assets": "0AI3:xlon0AI4:xlon0MR6:xlon0OJA:xlon0O76:xlon0O77:xlon0MOP:xlonCARLA:xcseCHR:xcseCOLOB:xcseFLS:xcseMAERSKA:xcseTDC:xcseCABGY:xnasCHYHY:xnasCLPBY:xnasFLIDY:xnasTDCAY:xnasSAB:xlonSBMRY:xnasASC:xosl",
+        "DateTime": "2015-10-08T07:30:00Z",
+        "Headline": "Aktier/åbning:Coloplasttyngesafschweizisksalgsanbefaling",
+        "Id": "201510080330DIREKT__ADV___DA_1271289",
+        "IsHot": false,
+        "SourceId": 1053
+    }
+]
