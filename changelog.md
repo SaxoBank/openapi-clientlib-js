@@ -1,3 +1,11 @@
+### v.6.2.2
+
+- Fix stackoverflow exception during JSON payload parsing.
+
+### v.6.2.1
+
+- More detailed error logging for streaming.
+
 ### v.6.2.0
 
 - Refactoring of Plain Websocket Transport reconnecting logic.

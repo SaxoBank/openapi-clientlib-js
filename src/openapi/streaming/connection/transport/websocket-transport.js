@@ -222,7 +222,7 @@ function handleSocketMessage(messageEvent) {
             return;
         }
 
-        log.debug('Parsed message', {
+        log.debug(LOG_AREA, 'Parsed message', {
             messages: parsedMessages,
         });
 
