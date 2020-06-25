@@ -1,3 +1,7 @@
+### v.6.2.3
+
+- Fix typed array slice method not supported exception in IE11 and old chrome
+
 ### v.6.2.2
 
 - Fix stackoverflow exception during JSON payload parsing.

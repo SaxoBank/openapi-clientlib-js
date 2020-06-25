@@ -31,16 +31,18 @@ function getJSONPayloadString(payloadBuffer) {
     // optimal number is used for chunk size instead of max callstack size since logic to get max callstack size is expensive
     // and might not work correctly with older browser leading to crash
     const chunkSize = 1000;
-    const chunks = Math.ceil(payloadBuffer.length / chunkSize);
+    const chunks = Math.ceil(payloadBuffer.byteLength / chunkSize);
     let payload = '';
     let chunkIndex = 0;
 
     while (chunkIndex < chunks) {
         payload += String.fromCharCode.apply(
             null,
-            payloadBuffer.slice(
-                chunkIndex * chunkSize,
-                (chunkIndex + 1) * chunkSize,
+            new Uint8Array(
+                payloadBuffer.slice(
+                    chunkIndex * chunkSize,
+                    (chunkIndex + 1) * chunkSize,
+                ),
             ),
         );
         chunkIndex++;
@@ -154,11 +156,8 @@ function parseMessage(rawData) {
         let data;
 
         if (dataFormat === 0) {
-            const payloadBuffer = new Uint8Array(
-                rawData.slice(index, index + payloadSize),
-            );
-
             try {
+                const payloadBuffer = rawData.slice(index, index + payloadSize);
                 data = getJSONPayloadString(payloadBuffer);
                 data = JSON.parse(data);
             } catch (e) {
