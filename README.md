@@ -15,7 +15,12 @@ It also has hooks for custom conversion of data and mocked data as well as a bun
 `npm install`
 4. Run tasks
 `npm run dist` build distribution  
-`npm test` run unit tests  
+`npm run check` check lint errors and run unit tests
+
+## Publishing
+
+npm version patch | minor | major -m "Upgrade to %s for reasons"
+npm publish
 
 ## Consuming the library
 
