@@ -140,13 +140,12 @@ describe('openapi WebSocket Transport', () => {
             transport.authorizePromise.then(() => {
                 expect(transport.socket.onmessage).not.toBeNull();
 
-                const dataBuffer = Uint8Array.from(
+                const dataBuffer = new window.TextEncoder().encode(
                     JSON.stringify(jsonPayload),
-                    (c) => c.charCodeAt(0),
                 );
                 const payload = new Uint8Array(dataBuffer.length + 17);
                 payload.set(
-                    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 133, 12, 0, 0],
+                    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 134, 12, 0, 0],
                     0,
                 );
                 payload.set(dataBuffer, 17);

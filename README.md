@@ -49,7 +49,9 @@ The library requires below dependencies to be provided in environment where it w
 |Dependency |Version                 |Details & URL |
 |-----------|------------------------|--------------|
 |SignalR    |2.0.3                   |Signal-R can be downloaded from https://github.com/SignalR/SignalR/releases/tag/2.0.3.|
-|jQuery     |>1.11                  |We do not depend on jQuery, but SignalR does. You can use any version of jquery that SignalR supports.|
+|jQuery     |>1.11                   |We do not depend on jQuery, but SignalR does. You can use any version of jquery that SignalR supports.|
+|TextDecoder|                        |TextDecoder is used to decode utf8 JSON string payload for plain websocket transport. 
+                                     |It will fallback to SignalR if TextDecoder is not available in the environment
 
 ### Browser Support
 The library requires an ES5-compatible browser and requires fetch and promises to be available or polyfilled.
