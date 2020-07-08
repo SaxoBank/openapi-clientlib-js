@@ -27,30 +27,6 @@ const NOOP = () => {};
 
 // -- Local methods section --
 
-function getJSONPayloadString(payloadBuffer) {
-    // optimal number is used for chunk size instead of max callstack size since logic to get max callstack size is expensive
-    // and might not work correctly with older browser leading to crash
-    const chunkSize = 1000;
-    const chunks = Math.ceil(payloadBuffer.byteLength / chunkSize);
-    let payload = '';
-    let chunkIndex = 0;
-
-    while (chunkIndex < chunks) {
-        payload += String.fromCharCode.apply(
-            null,
-            new Uint8Array(
-                payloadBuffer.slice(
-                    chunkIndex * chunkSize,
-                    (chunkIndex + 1) * chunkSize,
-                ),
-            ),
-        );
-        chunkIndex++;
-    }
-
-    return payload;
-}
-
 function normalizeWebSocketUrl(url) {
     return url.replace('http://', 'ws://').replace('https://', 'wss://');
 }
@@ -139,7 +115,9 @@ function parseMessage(rawData) {
         index += 1;
         // n bytes make up the reference id. The reference id is an ASCII string.
         const referenceIdBuffer = new Int8Array(
-            rawData.slice(index, index + referenceIdSize),
+            rawData,
+            index,
+            referenceIdSize,
         );
         const referenceId = String.fromCharCode.apply(
             String,
@@ -157,8 +135,8 @@ function parseMessage(rawData) {
 
         if (dataFormat === 0) {
             try {
-                const payloadBuffer = rawData.slice(index, index + payloadSize);
-                data = getJSONPayloadString(payloadBuffer);
+                const payload = new Uint8Array(rawData, index, payloadSize);
+                data = this.utf8Decoder.decode(payload);
                 data = JSON.parse(data);
             } catch (e) {
                 const error = new Error(e.message);
@@ -169,7 +147,7 @@ function parseMessage(rawData) {
             }
         } else {
             // Protobuf
-            data = new Uint8Array(rawData.slice(index, index + payloadSize));
+            data = new Uint8Array(rawData, index, payloadSize);
         }
 
         this.lastMessageId = messageId;
@@ -317,6 +295,14 @@ function WebsocketTransport(baseUrl, restTransport, failCallback = NOOP) {
     this.startedCallback = NOOP;
     this.closeCallback = NOOP;
     this.unauthorizedCallback = NOOP;
+
+    try {
+        this.utf8Decoder = new window.TextDecoder();
+    } catch (e) {
+        failCallback({
+            message: `Error occured while initializing text decoder : ${e.message}`,
+        });
+    }
 }
 
 WebsocketTransport.NAME = NAME;
@@ -325,7 +311,8 @@ WebsocketTransport.isSupported = function() {
     return (
         Boolean(window.WebSocket) &&
         Boolean(window.Int8Array) &&
-        Boolean(window.Uint8Array)
+        Boolean(window.Uint8Array) &&
+        Boolean(window.TextDecoder)
     );
 };
 
