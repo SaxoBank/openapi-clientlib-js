@@ -115,7 +115,9 @@ function parseMessage(rawData) {
         index += 1;
         // n bytes make up the reference id. The reference id is an ASCII string.
         const referenceIdBuffer = new Int8Array(
-            rawData.slice(index, index + referenceIdSize),
+            rawData,
+            index,
+            referenceIdSize,
         );
         const referenceId = String.fromCharCode.apply(
             String,
@@ -133,8 +135,8 @@ function parseMessage(rawData) {
 
         if (dataFormat === 0) {
             try {
-                const payloadBuffer = rawData.slice(index, index + payloadSize);
-                data = this.utf8Decoder.decode(payloadBuffer);
+                const payload = new Uint8Array(rawData, index, payloadSize);
+                data = this.utf8Decoder.decode(payload);
                 data = JSON.parse(data);
             } catch (e) {
                 const error = new Error(e.message);
@@ -145,7 +147,7 @@ function parseMessage(rawData) {
             }
         } else {
             // Protobuf
-            data = new Uint8Array(rawData.slice(index, index + payloadSize));
+            data = new Uint8Array(rawData, index, payloadSize);
         }
 
         this.lastMessageId = messageId;
