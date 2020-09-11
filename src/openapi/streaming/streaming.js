@@ -35,11 +35,7 @@ const ignoreSubscriptions = {};
  * then follows the Connection state model.
  */
 function init() {
-    this.connection = new Connection(
-        this.options,
-        this.baseUrl,
-        this.transport,
-    );
+    this.connection = new Connection(this.options, this.baseUrl);
 
     this.connection.setStateChangedCallback(
         onConnectionStateChanged.bind(this),

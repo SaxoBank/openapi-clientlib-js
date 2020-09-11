@@ -1,6 +1,6 @@
 import { installClock, uninstallClock, tick } from '../../../../test/utils';
-import mockTransport from '../../../../test/mocks/transport';
 import '../../../../test/mocks/math-random';
+import mockFetch from '../../../../test/mocks/fetch';
 import WebSocketTransport from './websocket-transport';
 import * as constants from './../constants';
 import jsonPayload from './payload.json';
@@ -10,7 +10,7 @@ const AUTH_TOKEN = 'TOKEN';
 const BASE_URL = 'testUrl';
 
 describe('openapi WebSocket Transport', () => {
-    let restTransportMock;
+    let fetchMock;
     let authProvider;
     let spySocketClose;
 
@@ -23,7 +23,7 @@ describe('openapi WebSocket Transport', () => {
             };
         });
 
-        restTransportMock = mockTransport();
+        fetchMock = mockFetch();
         authProvider = {
             getToken: jest.fn(),
             on: jest.fn(),
@@ -39,22 +39,18 @@ describe('openapi WebSocket Transport', () => {
             const spyOnStartCallback = jest.fn().mockName('spyStartCallback');
             const options = {};
 
-            restTransportMock.put.mockImplementation(() =>
-                Promise.resolve({ data: [] }),
-            );
-
-            const transport = new WebSocketTransport(
-                BASE_URL,
-                restTransportMock,
-            );
+            const transport = new WebSocketTransport(BASE_URL);
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
             transport.start(options, spyOnStartCallback);
+            fetchMock.resolve(200, {});
 
             transport.authorizePromise.then(() => {
-                expect(restTransportMock.put).toBeCalledTimes(1);
-                expect(restTransportMock.put).toBeCalledWith(
-                    'streamingws',
-                    'authorize?contextId=0000000000',
+                expect(fetchMock).toBeCalledTimes(1);
+                expect(fetchMock).toBeCalledWith(
+                    'testUrl/streamingws/authorize?contextId=0000000000',
+                    expect.objectContaining({
+                        headers: { 'X-Request-Id': 1, Authorization: 'TOKEN' },
+                    }),
                 );
 
                 expect(spyOnStartCallback).toBeCalledTimes(1);
@@ -72,17 +68,13 @@ describe('openapi WebSocket Transport', () => {
             const spyOnStartCallback = jest.fn().mockName('spyStartCallback');
             const spyOnFailCallback = jest.fn().mockName('spyFailCallback');
 
-            restTransportMock.put.mockImplementation(() =>
-                Promise.resolve({ data: [] }),
-            );
-
             const transport = new WebSocketTransport(
                 BASE_URL,
-                restTransportMock,
                 spyOnFailCallback,
             );
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
             transport.start(options, spyOnStartCallback);
+            fetchMock.resolve(200, {});
 
             transport.authorizePromise.then(() => {
                 expect(spyOnStartCallback).toBeCalledTimes(1);
@@ -102,16 +94,9 @@ describe('openapi WebSocket Transport', () => {
 
     describe('updateQuery', () => {
         it('should update connection qs with new authorization token and context id', () => {
-            const transport = new WebSocketTransport(
-                BASE_URL,
-                restTransportMock,
-            );
+            const transport = new WebSocketTransport(BASE_URL);
 
-            restTransportMock.put.mockImplementation(() =>
-                Promise.resolve({ data: [] }),
-            );
-
-            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID, true);
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
             expect(transport.getQuery()).toBe(
                 '?contextId=0000000000&Authorization=TOKEN',
             );
@@ -125,17 +110,11 @@ describe('openapi WebSocket Transport', () => {
                 .mockName('spyReceivedCallback');
             const spyOnStartCallback = jest.fn().mockName('spyStartCallback');
 
-            restTransportMock.put.mockImplementation(() =>
-                Promise.resolve({ data: [] }),
-            );
-
-            const transport = new WebSocketTransport(
-                BASE_URL,
-                restTransportMock,
-            );
+            const transport = new WebSocketTransport(BASE_URL);
             transport.setReceivedCallback(spyOnReceivedCallback);
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
             transport.start({}, spyOnStartCallback);
+            fetchMock.resolve(200, {});
 
             transport.authorizePromise.then(() => {
                 expect(transport.socket.onmessage).not.toBeNull();
@@ -167,18 +146,15 @@ describe('openapi WebSocket Transport', () => {
         it('should call fail callback if ill formatted json is received', (done) => {
             const spyOnFailCallback = jest.fn().mockName('spyOnFailCallback');
 
-            restTransportMock.put.mockImplementation(() =>
-                Promise.resolve({ data: [] }),
-            );
-
             const transport = new WebSocketTransport(
                 BASE_URL,
-                restTransportMock,
                 spyOnFailCallback,
             );
 
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
             transport.start();
+            fetchMock.resolve(200, {});
+
             transport.authorizePromise.then(() => {
                 expect(transport.socket.onmessage).not.toBeNull();
                 const illFormattedJson = '{some-key:123';
@@ -213,13 +189,12 @@ describe('openapi WebSocket Transport', () => {
 
         function givenTransport(options) {
             spyOnStartCallback = jest.fn().mockName('spyStartCallback');
-            restTransportMock.put.mockImplementation(() =>
-                Promise.resolve({ data: [] }),
-            );
 
-            transport = new WebSocketTransport(BASE_URL, restTransportMock);
+            transport = new WebSocketTransport(BASE_URL);
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
             transport.start(options, spyOnStartCallback);
+            fetchMock.resolve(200, {});
+
             stateChangedSpy = jest.fn().mockName('stateChanged');
             transport.setStateChangedCallback(stateChangedSpy);
 
@@ -321,6 +296,7 @@ describe('openapi WebSocket Transport', () => {
 
                 // simulate token update
                 transport.updateQuery('NEW-TOKEN', CONTEXT_ID, true);
+                fetchMock.resolve(200, {});
 
                 // should re-cpnnect after authorization
                 transport.authorizePromise.then(() => {

@@ -8,6 +8,8 @@
 import * as constants from '../constants';
 import log from '../../../../log';
 import * as uint64utils from '../../../../utils/uint64';
+import fetch from '../../../../utils/fetch';
+import { getRequestId } from '../../../../utils/request';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
 
@@ -258,17 +260,15 @@ function handleSocketClose(event) {
  *
  * @constructor
  */
-function WebsocketTransport(baseUrl, restTransport, failCallback = NOOP) {
+function WebsocketTransport(baseUrl, failCallback = NOOP) {
     this.name = NAME;
 
     // WebSocket instance
     this.socket = null;
 
     // Urls
-    this.baseUrl = baseUrl;
     this.connectionUrl = `${baseUrl}/streamingws/connect`;
-    this.authorizeUrl = 'authorize';
-    this.authorizeServiceGroup = 'streamingws';
+    this.authorizeUrl = `${baseUrl}/streamingws/authorize`;
 
     // If true, indicates that transport had at least once successful connection (received onopen).
     this.hasBeenConnected = false;
@@ -281,9 +281,9 @@ function WebsocketTransport(baseUrl, restTransport, failCallback = NOOP) {
     this.reconnectCount = 0;
 
     this.query = null;
-    this.restTransport = restTransport;
     this.contextId = null;
     this.authorizePromise = null;
+    this.authToken = null;
 
     // Callbacks
     this.failCallback = failCallback;
@@ -344,6 +344,7 @@ WebsocketTransport.prototype.setConnectionSlowCallback = function(callback) {
 
 WebsocketTransport.prototype.getAuthorizePromise = function(
     contextId,
+    authToken,
     forceAuthenticate,
 ) {
     if (!forceAuthenticate && this.authorizePromise) {
@@ -351,12 +352,25 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
         return this.authorizePromise;
     }
 
+    if (!authToken) {
+        const errorMessage = 'Authorization token is not provided';
+        log.error(LOG_AREA, errorMessage, {
+            contextId,
+        });
+
+        return Promise.reject(new Error(errorMessage));
+    }
+
     this.authorizePromise = new Promise((resolve, reject) => {
-        this.restTransport
-            .put(
-                this.authorizeServiceGroup,
-                `${this.authorizeUrl}?contextId=${contextId}`,
-            )
+        const options = {
+            headers: {
+                'X-Request-Id': getRequestId(),
+                Authorization: authToken,
+            },
+        };
+        const url = `${this.authorizeUrl}?contextId=${contextId}`;
+
+        fetch('PUT', url, options)
             .then((response) => {
                 log.debug(LOG_AREA, 'Authorization completed', {
                     contextId,
@@ -393,7 +407,10 @@ WebsocketTransport.prototype.start = function(options, callback) {
 
     log.debug(LOG_AREA, 'Starting transport');
 
-    const authorizePromise = this.getAuthorizePromise(this.contextId);
+    const authorizePromise = this.getAuthorizePromise(
+        this.contextId,
+        this.authToken,
+    );
 
     authorizePromise.then(() => {
         this.startedCallback();
@@ -439,9 +456,14 @@ WebsocketTransport.prototype.updateQuery = function(
 
     this.query = query;
     this.contextId = contextId;
+    this.authToken = authToken;
 
     if (forceAuth) {
-        const authorizePromise = this.getAuthorizePromise(this.contextId, true);
+        const authorizePromise = this.getAuthorizePromise(
+            this.contextId,
+            authToken,
+            true,
+        );
 
         if (this.isReconnectPending) {
             authorizePromise.then(() => {
