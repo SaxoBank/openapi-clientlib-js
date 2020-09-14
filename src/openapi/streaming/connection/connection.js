@@ -36,11 +36,7 @@ function onTransportFail(error) {
     });
 
     // Try to create next possible transport.
-    this.transport = createTransport.call(
-        this,
-        this.baseUrl,
-        this.restTransport,
-    );
+    this.transport = createTransport.call(this, this.baseUrl);
 
     if (!this.transport) {
         // No next transport available. Report total failure.
@@ -68,7 +64,7 @@ function onTransportFail(error) {
     }
 }
 
-function createTransport(baseUrl, restTransport) {
+function createTransport(baseUrl) {
     if (this.tranportIndex === null || this.tranportIndex === undefined) {
         this.tranportIndex = 0;
     } else {
@@ -85,14 +81,10 @@ function createTransport(baseUrl, restTransport) {
 
     if (!SelectedTransport.isSupported()) {
         // SelectedTransport transport is not supported by browser. Try to create next possible transport.
-        return createTransport.call(this, baseUrl, restTransport);
+        return createTransport.call(this, baseUrl);
     }
 
-    return new SelectedTransport(
-        baseUrl,
-        restTransport,
-        onTransportFail.bind(this),
-    );
+    return new SelectedTransport(baseUrl, onTransportFail.bind(this));
 }
 
 function getSupportedTransports(transportNames) {
@@ -118,7 +110,7 @@ function getSupportedTransports(transportNames) {
  * - WebSocket
  * - SignalR WebSocket/Long Polling (Legacy/Fallback solution).
  */
-function Connection(options, baseUrl, restTransport, failCallback = NOOP) {
+function Connection(options, baseUrl, failCallback = NOOP) {
     // Callbacks
     this.failCallback = failCallback;
     this.startCallback = NOOP;
@@ -129,7 +121,6 @@ function Connection(options, baseUrl, restTransport, failCallback = NOOP) {
 
     // Parameters
     this.baseUrl = baseUrl;
-    this.restTransport = restTransport;
     this.options = options;
     this.authToken = null;
     this.contextId = null;
@@ -142,11 +133,7 @@ function Connection(options, baseUrl, restTransport, failCallback = NOOP) {
 
     // Index of currently used transport. Index corresponds to position in this.transports.
     this.tranportIndex = null;
-    this.transport = createTransport.call(
-        this,
-        this.baseUrl,
-        this.restTransport,
-    );
+    this.transport = createTransport.call(this, this.baseUrl);
 
     if (!this.transport) {
         // No next transport available. Report total failure.
