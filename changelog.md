@@ -1,3 +1,7 @@
+### v.6.2.5
+
+- Use fetch instead of openapi transport for authorization
+
 ### v.6.2.4
 
 - Use TextDecoder to decode utf8 string payload
