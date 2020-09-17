@@ -38,21 +38,21 @@ function makeTransportMethod(method) {
     };
 }
 
-function onErrorCleanupTimeout() {
-    this.authorizationErrorCount = {};
-    this.errorCleanupTimoutId = null;
-}
-
 function onTransportError(oldTokenExpiry, result) {
     if (result && result.status === 401) {
-        const urlErrorCount = this.getUrlErrorCount(result.url);
+        this.addAuthError(result.url, oldTokenExpiry);
+        this.cleanupAuthErrors();
+        const areUrlAuthErrorsProblematic = this.areUrlAuthErrorsProblematic(
+            result.url,
+            oldTokenExpiry,
+        );
 
-        if (urlErrorCount >= this.maxAuthErrors) {
+        if (areUrlAuthErrorsProblematic) {
             // Blocking infinite loop of authorization re-requests which might be caused by invalid
             // behaviour of given endpoint which constantly returns 401 error.
             log.error(
                 LOG_AREA,
-                'Too many authorization errors occurred within specified timeframe for specific endpoint.',
+                'Too many authorization errors occurred within specified timeframe for specific endpoint',
                 result.url,
             );
             return;
@@ -60,8 +60,6 @@ function onTransportError(oldTokenExpiry, result) {
 
         log.debug(LOG_AREA, 'Authentication failure', result);
 
-        this.incrementErrorCounter(result.url);
-        this.debounceErrorCounterCleanup();
         this.authProvider.tokenRejected(oldTokenExpiry);
     }
     throw result;
@@ -82,25 +80,21 @@ function onTransportError(oldTokenExpiry, result) {
  * @param {Object} [options] - Options for auth and for the core transport. See Transport.
  * @param {string} [options.language] - The language sent as a header if not overridden.
  * @param {boolean} [options.defaultCache=true] - Sets the default caching behaviour if not overridden on a call.
- * @param {number} [options.authErrorsCleanupDebounce] - The debounce timeout (in ms) used for clearing of authorization errors count.
- * @param {number} [options.maxAuthErrors] - The maximum number of authorization errors that
- *          can occur for specific endpoint within specific timeframe.
+ * @param {number} [options.authErrorsIgnoreDuration] - The timeout (in ms) used for clearing of authorization errors.
  */
 function TransportAuth(baseUrl, authProvider, options) {
     if (!authProvider) {
         throw new Error('transport auth created without a auth provider');
     }
 
-    this.authErrorsCleanupDebounce =
-        (options && options.authErrorsCleanupDebounce) ||
+    this.authErrorsIgnoreDuration =
+        (options && options.authErrorsIgnoreDuration) ||
         DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE;
-    this.maxAuthErrors =
-        (options && options.maxAuthErrors) || DEFAULT_MAX_AUTH_ERRORS;
 
     this.transport = new TransportCore(baseUrl, options);
 
     // Map of authorization error counts per endpoint/url.
-    this.authorizationErrorCount = {};
+    this.authorizationErrors = {};
 
     this.authProvider = authProvider;
 }
@@ -155,28 +149,41 @@ TransportAuth.prototype.head = makeTransportMethod('head');
 TransportAuth.prototype.options = makeTransportMethod('options');
 
 /**
- * Run debounced cleanup of error counter map
+ * Cleanup of error counter map
  */
-TransportAuth.prototype.debounceErrorCounterCleanup = function() {
-    if (this.errorCleanupTimoutId) {
-        clearTimeout(this.errorCleanupTimoutId);
-    }
+TransportAuth.prototype.cleanupAuthErrors = function() {
+    const cleanThoseBefore = Date.now() - this.authErrorsIgnoreDuration;
 
-    this.errorCleanupTimoutId = setTimeout(
-        onErrorCleanupTimeout.bind(this),
-        this.authErrorsCleanupDebounce,
-    );
+    for (const url in this.authorizationErrors) {
+        if (this.authorizationErrors.hasOwnProperty(url)) {
+            const newEntries = [];
+            for (let i = 0; i < this.authorizationErrors[url].length; i++) {
+                if (this.authorizationErrors[url][i].added > cleanThoseBefore) {
+                    newEntries.push(this.authorizationErrors[url][i]);
+                }
+            }
+            if (newEntries.length) {
+                this.authorizationErrors[url] = newEntries;
+            } else {
+                delete this.authorizationErrors[url];
+            }
+        }
+    }
 };
 
 /**
- * Increment error counter for specific url/endpoint.
- * @param {string} url - The url/endpoint for which error count is incremented.
+ * Add a authentication error to the error map
+ * @param {string} url - The url/endpoint at which a auth error occurred
+ * @param {number} authExpiry - The expiry of the token that was rejected
  */
-TransportAuth.prototype.incrementErrorCounter = function(url) {
-    if (this.authorizationErrorCount.hasOwnProperty(url)) {
-        this.authorizationErrorCount[url] += 1;
+TransportAuth.prototype.addAuthError = function(url, authExpiry) {
+    if (this.authorizationErrors.hasOwnProperty(url)) {
+        this.authorizationErrors[url].push({
+            authExpiry,
+            added: Date.now(),
+        });
     } else {
-        this.authorizationErrorCount[url] = 1;
+        this.authorizationErrors[url] = [{ authExpiry, added: Date.now() }];
     }
 };
 
@@ -185,12 +192,19 @@ TransportAuth.prototype.incrementErrorCounter = function(url) {
  * @param {string} url - The url/endpoint for which error count is returned.
  * @returns {number} The number of errors
  */
-TransportAuth.prototype.getUrlErrorCount = function(url) {
-    if (this.authorizationErrorCount.hasOwnProperty(url)) {
-        return this.authorizationErrorCount[url];
+TransportAuth.prototype.areUrlAuthErrorsProblematic = function(
+    url,
+    authExpiry,
+) {
+    if (this.authorizationErrors.hasOwnProperty(url)) {
+        for (let i = 0; i < this.authorizationErrors[url].length; i++) {
+            if (this.authorizationErrors[url][i].authExpiry !== authExpiry) {
+                return true;
+            }
+        }
     }
 
-    return 0;
+    return false;
 };
 
 /**
@@ -199,7 +213,7 @@ TransportAuth.prototype.getUrlErrorCount = function(url) {
 TransportAuth.prototype.dispose = function() {
     clearTimeout(this.errorCleanupTimoutId);
     this.errorCleanupTimoutId = null;
-    this.authorizationErrorCount = {};
+    this.authorizationErrors = {};
 
     this.transport.dispose();
 };

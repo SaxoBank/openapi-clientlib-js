@@ -33,7 +33,7 @@ let cacheBreakNum = Date.now();
 export function convertFetchReject(url, body, timerId, error) {
     clearTimeout(timerId);
 
-    log.error(LOG_AREA, 'rejected non-response', {
+    log.debug(LOG_AREA, 'Rejected non-response', {
         url,
         body,
         error,
@@ -71,9 +71,11 @@ export function convertFetchSuccess(url, body, timerId, result) {
                     responseType: 'json',
                 };
             } catch (e) {
+                // We get interrupted downloads causing partial chunks of json
+                // and occasional malformed responses or empty proxy responses
                 log.error(
                     LOG_AREA,
-                    'Received a JSON response from OpenApi that could not be parsed',
+                    'Received a JSON response that could not be parsed',
                     {
                         text,
                         response: result,
@@ -148,7 +150,12 @@ export function convertFetchSuccess(url, body, timerId, result) {
             // Form of correlation header is: {sessionId}#{AppId}#{requestId}#{serverDigits}
             const requestId = correlation.split('#')[2];
 
-            log.error(LOG_AREA, 'rejected server response', {
+            const logFunction =
+                result.status > 499 || result.status < 400
+                    ? log.error
+                    : log.info;
+
+            logFunction(LOG_AREA, 'Rejected server response', {
                 url,
                 body,
                 status: newResult.status,

@@ -27,7 +27,6 @@ describe('openapi Streaming', () => {
     let connectionSlowCallback;
     let startCallback;
     let receivedCallback;
-    let errorCallback;
     let authProvider;
     let mockConnection;
     let subscriptionUpdateSpy;
@@ -57,9 +56,6 @@ describe('openapi Streaming', () => {
         mockConnection.received.mockImplementation((callback) => {
             receivedCallback = callback;
         });
-        mockConnection.error.mockImplementation((callback) => {
-            errorCallback = callback;
-        });
         mockConnection.connectionSlow.mockImplementation((callback) => {
             connectionSlowCallback = callback;
         });
@@ -85,10 +81,6 @@ describe('openapi Streaming', () => {
                 connectionSlowCallback = callback;
             },
         );
-
-        Connection.prototype.setErrorCallback.mockImplementation((callback) => {
-            errorCallback = callback;
-        });
 
         global.$ = {
             connection: jest.fn().mockReturnValue(mockConnection),
@@ -537,11 +529,6 @@ describe('openapi Streaming', () => {
             streaming.on(streaming.EVENT_CONNECTION_SLOW, connectionSlowSpy);
             connectionSlowCallback();
             expect(connectionSlowSpy.mock.calls.length).toEqual(1);
-        });
-        it('handles connection error events', () => {
-            jest.spyOn(log, 'error');
-            errorCallback('error details');
-            expect(log.error.mock.calls.length).toEqual(1);
         });
     });
 

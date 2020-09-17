@@ -30,7 +30,7 @@ function getLogDetails() {
 }
 
 function onTransportFail(error) {
-    log.error(LOG_AREA, 'Transport failed', {
+    log.info(LOG_AREA, 'Transport failed', {
         error,
         ...getLogDetails.call(this),
     });
@@ -40,15 +40,15 @@ function onTransportFail(error) {
 
     if (!this.transport) {
         // No next transport available. Report total failure.
-        log.error(LOG_AREA, 'Next supported Transport not found', {
+        log.warn(LOG_AREA, 'Next supported Transport not found', {
             error,
             ...getLogDetails.call(this),
         });
-        this.failCallback({ message: 'Next supported Transport not found' });
+        this.failCallback();
         return;
     }
 
-    log.debug(LOG_AREA, 'Next supported Transport found.', {
+    log.debug(LOG_AREA, 'Next supported Transport found', {
         name: this.transport.name,
     });
 
@@ -56,7 +56,6 @@ function onTransportFail(error) {
     this.transport.setStateChangedCallback(this.stateChangedCallback);
     this.transport.setUnauthorizedCallback(this.unauthorizedCallback);
     this.transport.setConnectionSlowCallback(this.connectionSlowCallback);
-    this.transport.setErrorCallback(this.errorCallback);
 
     if (this.state === STATE_STARTED) {
         this.transport.updateQuery(this.authToken, this.contextId);
@@ -117,7 +116,6 @@ function Connection(options, baseUrl, failCallback = NOOP) {
     this.stateChangedCallback = NOOP;
     this.receiveCallback = NOOP;
     this.connectionSlowCallback = NOOP;
-    this.errorCallback = NOOP;
 
     // Parameters
     this.baseUrl = baseUrl;
@@ -142,7 +140,7 @@ function Connection(options, baseUrl, failCallback = NOOP) {
             'Supported Transport not found.',
             getLogDetails.call(this),
         );
-        this.failCallback({ message: 'Unable to setup initial transport.' });
+        throw new Error('Unable to setup initial transport.');
     } else {
         log.debug(LOG_AREA, 'Supported Transport found', {
             name: this.transport.name,
@@ -168,13 +166,6 @@ Connection.prototype.setReceivedCallback = function(callback) {
     if (this.transport) {
         this.receiveCallback = callback;
         this.transport.setReceivedCallback(callback);
-    }
-};
-
-Connection.prototype.setErrorCallback = function(callback) {
-    if (this.transport) {
-        this.errorCallback = callback;
-        this.transport.setErrorCallback(callback);
     }
 };
 

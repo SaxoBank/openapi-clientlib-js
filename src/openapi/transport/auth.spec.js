@@ -212,7 +212,7 @@ describe('openapi TransportAuth', () => {
             );
 
             expect(
-                transportAuth.authorizationErrorCount[
+                transportAuth.authorizationErrors[
                     'localhost/openapi/service_group/url'
                 ],
             ).toBe(undefined);
@@ -226,28 +226,29 @@ describe('openapi TransportAuth', () => {
 
             setTimeout(() => {
                 expect(
-                    transportAuth.authorizationErrorCount[
+                    transportAuth.authorizationErrors[
                         'localhost/openapi/service_group/url'
                     ],
-                ).toBe(1);
+                ).toEqual([expect.any(Object)]);
                 done();
             });
         });
 
-        it('blocks re-requesting authorization token after max number of errors occurs', function(done) {
+        it('blocks re-requesting authorization token if auth errors happen on different tokens', function(done) {
             transportAuth = new TransportAuth(
                 'localhost/openapi',
                 authProvider,
             );
 
             expect(
-                transportAuth.authorizationErrorCount[
+                transportAuth.authorizationErrors[
                     'localhost/openapi/service_group/url'
                 ],
             ).toBe(undefined);
 
-            waterfallTimeout([
+            return waterfallTimeout([
                 () => {
+                    authProvider.getExpiry.mockImplementation(() => 1);
                     transportAuth.post('service_group', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
@@ -256,67 +257,29 @@ describe('openapi TransportAuth', () => {
                     });
                 },
                 () => {
-                    transportAuth.post('service_group', 'url').catch(noop);
-                    transportAuth.state = 1;
-                    fetch.resolve(401, {
-                        error: 401,
-                        message: 'Authorization exception',
-                    });
-
                     expect(authProvider.tokenRejected).toHaveBeenCalledTimes(1);
                     expect(
-                        transportAuth.authorizationErrorCount[
+                        transportAuth.authorizationErrors[
                             'localhost/openapi/service_group/url'
                         ],
-                    ).toBe(1);
+                    ).toEqual([expect.any(Object)]);
                 },
                 () => {
+                    authProvider.getExpiry.mockImplementation(() => 2);
                     transportAuth.post('service_group', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
                         message: 'Authorization exception',
                     });
-
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(2);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url'
-                        ],
-                    ).toBe(2);
                 },
                 () => {
-                    transportAuth.post('service_group', 'url').catch(noop);
-                    transportAuth.state = 1;
-                    fetch.resolve(401, {
-                        error: 401,
-                        message: 'Authorization exception',
-                    });
-
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(3);
+                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(1);
                     expect(
-                        transportAuth.authorizationErrorCount[
+                        transportAuth.authorizationErrors[
                             'localhost/openapi/service_group/url'
                         ],
-                    ).toBe(3);
-                },
-                () => {
-                    // Checking if calls after hitting max limit are blocked.
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(3);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url'
-                        ],
-                    ).toBe(3);
-                },
-                () => {
-                    // and the time after the max is still blocked
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(3);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url'
-                        ],
-                    ).toBe(3);
+                    ).toEqual([expect.any(Object), expect.any(Object)]);
 
                     done();
                 },
@@ -330,20 +293,30 @@ describe('openapi TransportAuth', () => {
             );
 
             expect(
-                transportAuth.authorizationErrorCount[
+                transportAuth.authorizationErrors[
                     'localhost/openapi/service_group/url'
                 ],
             ).toBe(undefined);
             expect(
-                transportAuth.authorizationErrorCount[
+                transportAuth.authorizationErrors[
                     'localhost/openapi/service_group/url-2'
                 ],
             ).toBe(undefined);
 
             waterfallTimeout([
-                // First group of failed request for specific endpoint url.
+                // Fail the first endpoint
                 () => {
-                    transportAuth.post('service_group', 'url-2').catch(noop);
+                    authProvider.getExpiry.mockImplementation(() => 1);
+                    transportAuth.post('service_group', 'url').catch(noop);
+                    transportAuth.state = 1;
+                    fetch.resolve(401, {
+                        error: 401,
+                        message: 'Authorization exception',
+                    });
+                },
+                () => {
+                    authProvider.getExpiry.mockImplementation(() => 2);
+                    transportAuth.post('service_group', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -353,11 +326,14 @@ describe('openapi TransportAuth', () => {
                 () => {
                     expect(authProvider.tokenRejected).toHaveBeenCalledTimes(1);
                     expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
+                        transportAuth.authorizationErrors[
+                            'localhost/openapi/service_group/url'
                         ],
-                    ).toBe(1);
-
+                    ).toEqual([expect.any(Object), expect.any(Object)]);
+                },
+                // now have a failure with the new endpoint
+                () => {
+                    authProvider.getExpiry.mockImplementation(() => 3);
                     transportAuth.post('service_group', 'url-2').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
@@ -368,73 +344,10 @@ describe('openapi TransportAuth', () => {
                 () => {
                     expect(authProvider.tokenRejected).toHaveBeenCalledTimes(2);
                     expect(
-                        transportAuth.authorizationErrorCount[
+                        transportAuth.authorizationErrors[
                             'localhost/openapi/service_group/url-2'
                         ],
-                    ).toBe(2);
-
-                    transportAuth.post('service_group', 'url-2').catch(noop);
-                    transportAuth.state = 1;
-                    fetch.resolve(401, {
-                        error: 401,
-                        message: 'Authorization exception',
-                    });
-                },
-                () => {
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(3);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
-                        ],
-                    ).toBe(3);
-                },
-
-                // Second group of failed request for different endpoint. tokenRefreshSpy should still be invoked and counter for new endpoint should start from 0.
-                () => {
-                    transportAuth.post('service_group', 'url').catch(noop);
-                    transportAuth.state = 1;
-                    fetch.resolve(401, {
-                        error: 401,
-                        message: 'Authorization exception',
-                    });
-                },
-                () => {
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(4);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url'
-                        ],
-                    ).toBe(1);
-
-                    transportAuth.post('service_group', 'url').catch(noop);
-                    transportAuth.state = 1;
-                    fetch.resolve(401, {
-                        error: 401,
-                        message: 'Authorization exception',
-                    });
-                },
-                () => {
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(5);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url'
-                        ],
-                    ).toBe(2);
-
-                    transportAuth.post('service_group', 'url').catch(noop);
-                    transportAuth.state = 1;
-                    fetch.resolve(401, {
-                        error: 401,
-                        message: 'Authorization exception',
-                    });
-                },
-                () => {
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(6);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url'
-                        ],
-                    ).toBe(3);
+                    ).toEqual([expect.any(Object)]);
 
                     done();
                 },
@@ -448,20 +361,29 @@ describe('openapi TransportAuth', () => {
             );
 
             expect(
-                transportAuth.authorizationErrorCount[
+                transportAuth.authorizationErrors[
                     'localhost/openapi/service_group/url'
                 ],
             ).toBe(undefined);
             expect(
-                transportAuth.authorizationErrorCount[
+                transportAuth.authorizationErrors[
                     'localhost/openapi/service_group/url-2'
                 ],
             ).toBe(undefined);
 
             waterfallTimeout([
-                // First group of failed request for specific endpoint url.
                 () => {
-                    transportAuth.post('service_group', 'url-2').catch(noop);
+                    authProvider.getExpiry.mockImplementation(() => 1);
+                    transportAuth.post('service_group', 'url').catch(noop);
+                    transportAuth.state = 1;
+                    fetch.resolve(401, {
+                        error: 401,
+                        message: 'Authorization exception',
+                    });
+                },
+                () => {
+                    authProvider.getExpiry.mockImplementation(() => 2);
+                    transportAuth.post('service_group', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -471,48 +393,19 @@ describe('openapi TransportAuth', () => {
                 () => {
                     expect(authProvider.tokenRejected).toHaveBeenCalledTimes(1);
                     expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
+                        transportAuth.authorizationErrors[
+                            'localhost/openapi/service_group/url'
                         ],
-                    ).toBe(1);
-
-                    transportAuth.post('service_group', 'url-2').catch(noop);
-                    transportAuth.state = 1;
-                    fetch.resolve(401, {
-                        error: 401,
-                        message: 'Authorization exception',
-                    });
-                },
-                () => {
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(2);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
-                        ],
-                    ).toBe(2);
-
-                    transportAuth.post('service_group', 'url-2').catch(noop);
-                    transportAuth.state = 1;
-                    fetch.resolve(401, {
-                        error: 401,
-                        message: 'Authorization exception',
-                    });
-                },
-                () => {
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(3);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
-                        ],
-                    ).toBe(3);
+                    ).toEqual(expect.any(Array));
 
                     transportAuth.dispose();
 
                     expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
+                        transportAuth.authorizationErrors[
+                            'localhost/openapi/service_group/url'
                         ],
                     ).toBe(undefined);
+
                     done();
                 },
             ]);
@@ -525,19 +418,20 @@ describe('openapi TransportAuth', () => {
             );
 
             expect(
-                transportAuth.authorizationErrorCount[
+                transportAuth.authorizationErrors[
                     'localhost/openapi/service_group/url'
                 ],
             ).toBe(undefined);
             expect(
-                transportAuth.authorizationErrorCount[
+                transportAuth.authorizationErrors[
                     'localhost/openapi/service_group/url-2'
                 ],
             ).toBe(undefined);
 
             waterfallTimeout([
                 () => {
-                    transportAuth.post('service_group', 'url-2').catch(noop);
+                    authProvider.getExpiry.mockImplementation(() => 1);
+                    transportAuth.post('service_group', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -545,14 +439,10 @@ describe('openapi TransportAuth', () => {
                     });
                 },
                 () => {
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(1);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
-                        ],
-                    ).toBe(1);
+                    tick(10000);
 
-                    transportAuth.post('service_group', 'url-2').catch(noop);
+                    authProvider.getExpiry.mockImplementation(() => 2);
+                    transportAuth.post('service_group', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -561,103 +451,50 @@ describe('openapi TransportAuth', () => {
                 },
                 () => {
                     expect(authProvider.tokenRejected).toHaveBeenCalledTimes(2);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
-                        ],
-                    ).toBe(2);
 
-                    transportAuth.post('service_group', 'url-2').catch(noop);
-                    transportAuth.state = 1;
-                    fetch.resolve(401, {
-                        error: 401,
-                        message: 'Authorization exception',
-                    });
-                },
-                () => {
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(3);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
-                        ],
-                    ).toBe(3);
-
-                    tick(6000);
-
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
-                        ],
-                    ).toBe(undefined);
-
-                    transportAuth.post('service_group', 'url-2').catch(noop);
-                    transportAuth.state = 1;
-                    fetch.resolve(401, {
-                        error: 401,
-                        message: 'Authorization exception',
-                    });
-                },
-                () => {
-                    expect(authProvider.tokenRejected).toHaveBeenCalledTimes(4);
-                    expect(
-                        transportAuth.authorizationErrorCount[
-                            'localhost/openapi/service_group/url-2'
-                        ],
-                    ).toBe(1);
                     done();
                 },
             ]);
         });
     });
 
-    describe('incrementErrorCounter', () => {
-        it('should increment error count for newly used url', () => {
+    describe('areUrlAuthErrorsProblematic', () => {
+        it('should return value for specific url', () => {
             transportAuth = new TransportAuth(
                 'localhost/openapi',
                 authProvider,
             );
 
-            transportAuth.incrementErrorCounter('new-url');
-            expect(transportAuth.authorizationErrorCount['new-url']).toBe(1);
-
-            transportAuth.incrementErrorCounter('new-url');
-            expect(transportAuth.authorizationErrorCount['new-url']).toBe(2);
-
-            transportAuth.incrementErrorCounter('new-url-2');
-            expect(transportAuth.authorizationErrorCount['new-url-2']).toBe(1);
-        });
-    });
-
-    describe('getUrlErrorCount', () => {
-        it('should return error count for specific url', () => {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
-
-            transportAuth.authorizationErrorCount = {
-                'new-url': 5,
-                'new-url-2': 2,
+            transportAuth.authorizationErrors = {
+                'new-url': [{ authExpiry: 1 }],
+                'new-url-2': [{ authExpiry: 1 }, { authExpiry: 2 }],
             };
 
-            expect(transportAuth.getUrlErrorCount('new-url')).toBe(5);
-            expect(transportAuth.getUrlErrorCount('new-url-2')).toBe(2);
+            expect(
+                transportAuth.areUrlAuthErrorsProblematic('new-url', 1),
+            ).toBe(false);
+            expect(
+                transportAuth.areUrlAuthErrorsProblematic('new-url-2', 1),
+            ).toBe(true);
+            expect(
+                transportAuth.areUrlAuthErrorsProblematic('new-url-2', 3),
+            ).toBe(true);
         });
 
-        it('should return 0 for url which is not present in error count map', () => {
+        it('should return true for url which is not present in errors map', () => {
             transportAuth = new TransportAuth(
                 'localhost/openapi',
                 authProvider,
             );
 
-            transportAuth.authorizationErrorCount = {
-                'new-url': 5,
-                'new-url-2': 2,
+            transportAuth.authorizationErrors = {
+                'new-url': [{ authExpiry: 1 }],
+                'new-url-2': [{ authExpiry: 1 }, { authExpiry: 2 }],
             };
 
-            expect(transportAuth.getUrlErrorCount('new-url-2')).toBe(2);
-            expect(transportAuth.getUrlErrorCount('new-url-3')).toBe(0);
-            expect(transportAuth.getUrlErrorCount('new-random-name')).toBe(0);
+            expect(
+                transportAuth.areUrlAuthErrorsProblematic('new-url-1', 1),
+            ).toBe(false);
         });
     });
 });

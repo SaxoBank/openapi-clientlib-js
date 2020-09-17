@@ -170,12 +170,7 @@ describe('openapi WebSocket Transport', () => {
 
                 transport.socket.onmessage({ data: payload.buffer });
                 expect(spyOnFailCallback).toBeCalledTimes(1);
-                expect(spyOnFailCallback).toBeCalledWith(
-                    expect.objectContaining({
-                        payload: illFormattedJson,
-                        payloadSize: 13,
-                    }),
-                );
+
                 done();
             });
         });

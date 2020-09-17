@@ -169,12 +169,11 @@ function parseMessage(rawData) {
 
 /**
  * Handle transport failure.
- * @param { Object } error - The error object with message property.
  */
-function handleFailure(error) {
+function handleFailure() {
     destroySocket.call(this);
     this.stateChangedCallback(constants.CONNECTION_STATE_FAILED);
-    this.failCallback(error);
+    this.failCallback();
 }
 
 function handleSocketOpen() {
@@ -192,12 +191,16 @@ function handleSocketMessage(messageEvent) {
         let parsedMessages;
         try {
             parsedMessages = parseMessage.call(this, messageEvent.data);
-        } catch (e) {
-            handleFailure.call(this, {
-                message: `Error occurred during parsing of plain WebSocket message. Message: ${e.message}`,
-                payload: e.payload,
-                payloadSize: e.payloadSize,
-            });
+        } catch (error) {
+            log.error(
+                'Error occurred during parsing of plain WebSocket message',
+                {
+                    error,
+                    payload: error.payload,
+                    payloadSize: error.payloadSize,
+                },
+            );
+            handleFailure.call(this);
             return;
         }
 
@@ -216,7 +219,7 @@ function handleSocketClose(event) {
 
     if (!this.hasBeenConnected) {
         handleFailure.call(this, {
-            message: `websocket error occured. code: ${event.code}, reason: ${event.reason}`,
+            message: `websocket error occurred. code: ${event.code}, reason: ${event.reason}`,
         });
 
         return;
@@ -224,13 +227,13 @@ function handleSocketClose(event) {
 
     const isCleanDisconnect = event.wasClean === true;
     if (!isCleanDisconnect) {
-        log.warn(LOG_AREA, 'websocket connection closed abruptly', {
+        log.info(LOG_AREA, 'Websocket connection closed abruptly', {
             readyState: this.socket.readyState,
             code: event.code,
             reason: event.reason,
         });
     } else {
-        log.debug(LOG_AREA, 'websocket connection closed');
+        log.debug(LOG_AREA, 'Websocket connection closed');
     }
 
     if (event.code === socketCloseCodes.TOKEN_EXPIRED) {
@@ -290,7 +293,6 @@ function WebsocketTransport(baseUrl, failCallback = NOOP) {
     this.logCallback = NOOP;
     this.stateChangedCallback = NOOP;
     this.receivedCallback = NOOP;
-    this.errorCallback = NOOP;
     this.connectionSlowCallback = NOOP;
     this.startedCallback = NOOP;
     this.closeCallback = NOOP;
@@ -328,14 +330,6 @@ WebsocketTransport.prototype.setStateChangedCallback = function(callback) {
 
 WebsocketTransport.prototype.setReceivedCallback = function(callback) {
     this.receivedCallback = callback;
-};
-
-/**
- * The error callback. If invoked, indicates some error occurred.
- * @param callback
- */
-WebsocketTransport.prototype.setErrorCallback = function(callback) {
-    this.errorCallback = callback;
 };
 
 WebsocketTransport.prototype.setConnectionSlowCallback = function(callback) {
@@ -378,10 +372,20 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
                 resolve(response);
             })
             .catch((error) => {
-                log.error(LOG_AREA, 'Authorization failed', {
-                    contextId,
-                    error,
-                });
+                // if this call was superceded by another one, then ignore this error
+                if (
+                    this.authToken !== authToken ||
+                    this.contextId !== contextId
+                ) {
+                    return;
+                }
+
+                // if a network error occurs, retry
+                if (error && error.isNetworkError) {
+                    return this.getAuthorizePromise(contextId, authToken, true);
+                }
+
+                log.error(LOG_AREA, 'Authorization failed', error);
                 reject(error);
                 handleFailure.call(this, error);
             });
@@ -401,7 +405,7 @@ WebsocketTransport.prototype.start = function(options, callback) {
     }
 
     if (this.socket) {
-        log.warn(LOG_AREA, 'only one socket per connection is allowed');
+        log.warn(LOG_AREA, 'Only one socket per connection is allowed');
         return;
     }
 
