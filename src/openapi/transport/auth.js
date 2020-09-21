@@ -10,12 +10,9 @@ import log from '../../log';
 
 const LOG_AREA = 'TransportAuth';
 
-// Max request limits are used to block infinite loop of authorization requests after transport 401 errors, which my happen if given
-// endpoint for whatever reasons constantly returns 401 error status (despite correct fresh authorization token refresh).
-const DEFAULT_MAX_AUTH_ERRORS = 3;
-
-// Debounce time in milliseconds.
-const DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE = 5000; // ms
+// The default period within which errors on different tokens
+// cause an endpoint auth errors to be ignored.
+const DEFAULT_AUTH_ERRORS_DEBOUNCE_PERIOD = 30000; // ms
 
 // -- Local methods section --
 
@@ -52,7 +49,7 @@ function onTransportError(oldTokenExpiry, result) {
             // behaviour of given endpoint which constantly returns 401 error.
             log.error(
                 LOG_AREA,
-                'Too many authorization errors occurred within specified timeframe for specific endpoint',
+                'Too many authorization errors occurred for different tokens within a specified timeframe for a specific endpoint',
                 result.url,
             );
             return;
@@ -80,16 +77,16 @@ function onTransportError(oldTokenExpiry, result) {
  * @param {Object} [options] - Options for auth and for the core transport. See Transport.
  * @param {string} [options.language] - The language sent as a header if not overridden.
  * @param {boolean} [options.defaultCache=true] - Sets the default caching behaviour if not overridden on a call.
- * @param {number} [options.authErrorsIgnoreDuration] - The timeout (in ms) used for clearing of authorization errors.
+ * @param {number} [options.authErrorsDebouncePeriod] - The period within which errors on different tokens cause an endpoint auth errors to be ignored.
  */
 function TransportAuth(baseUrl, authProvider, options) {
     if (!authProvider) {
         throw new Error('transport auth created without a auth provider');
     }
 
-    this.authErrorsIgnoreDuration =
-        (options && options.authErrorsIgnoreDuration) ||
-        DEFAULT_AUTH_ERRORS_CLEANUP_DEBOUNCE;
+    this.authErrorsDebouncePeriod =
+        (options && options.authErrorsDebouncePeriod) ||
+        DEFAULT_AUTH_ERRORS_DEBOUNCE_PERIOD;
 
     this.transport = new TransportCore(baseUrl, options);
 
@@ -152,7 +149,7 @@ TransportAuth.prototype.options = makeTransportMethod('options');
  * Cleanup of error counter map
  */
 TransportAuth.prototype.cleanupAuthErrors = function() {
-    const cleanThoseBefore = Date.now() - this.authErrorsIgnoreDuration;
+    const cleanThoseBefore = Date.now() - this.authErrorsDebouncePeriod;
 
     for (const url in this.authorizationErrors) {
         if (this.authorizationErrors.hasOwnProperty(url)) {
@@ -188,9 +185,10 @@ TransportAuth.prototype.addAuthError = function(url, authExpiry) {
 };
 
 /**
- * Get error count for specific url/endpoint
- * @param {string} url - The url/endpoint for which error count is returned.
- * @returns {number} The number of errors
+ * Returns if the auth errors for a url are problematic
+ * @param {string} url - The url/endpoint to check
+ * @param {number} authExpiry - The auth expiry of the request to check
+ * @returns {boolean} Whether it is problematic
  */
 TransportAuth.prototype.areUrlAuthErrorsProblematic = function(
     url,
