@@ -10,10 +10,9 @@ import log from '../../../../log';
 import * as uint64utils from '../../../../utils/uint64';
 import fetch from '../../../../utils/fetch';
 import { getRequestId } from '../../../../utils/request';
+import * as streamingTransports from '../../streamingTransports';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
-
-const NAME = 'plainWebSockets';
 
 const socketCloseCodes = {
     NORMAL_CLOSURE: 1000,
@@ -308,7 +307,7 @@ function detectNetworkError() {
  * @constructor
  */
 function WebsocketTransport(baseUrl, failCallback = NOOP) {
-    this.name = NAME;
+    this.name = streamingTransports.PLAIN_WEBSOCKETS;
 
     // WebSocket instance
     this.socket = null;
@@ -354,8 +353,6 @@ function WebsocketTransport(baseUrl, failCallback = NOOP) {
         });
     }
 }
-
-WebsocketTransport.NAME = NAME;
 
 WebsocketTransport.isSupported = function() {
     return (

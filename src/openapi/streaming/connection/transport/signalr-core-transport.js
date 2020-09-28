@@ -1,8 +1,8 @@
 import fetch from '../../../../utils/fetch';
 import log from '../../../../log';
-import * as constants from './../constants';
+import * as streamingTransports from '../../streamingTransports';
+import * as constants from '../constants';
 
-const NAME = 'signalrCore';
 const LOG_AREA = 'SignalrCoreTransport';
 const NOOP = () => {};
 
@@ -69,7 +69,7 @@ function parseMessage(message, utf8Decoder) {
 }
 
 function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
-    this.name = NAME;
+    this.name = streamingTransports.SIGNALR_CORE;
     this.baseUrl = baseUrl;
     this.connection = null;
     this.authToken = null;
