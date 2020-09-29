@@ -50,9 +50,8 @@ function createSocket() {
 
         this.socket = socket;
     } catch (error) {
-        handleFailure.call(this, {
-            message: 'Failed to setup webSocket connection',
-        });
+        log.error(LOG_AREA, 'Failed to setup webSocket connection', error);
+        handleFailure.call(this);
     }
 }
 
@@ -193,6 +192,7 @@ function handleSocketMessage(messageEvent) {
             parsedMessages = parseMessage.call(this, messageEvent.data);
         } catch (error) {
             log.error(
+                LOG_AREA,
                 'Error occurred during parsing of plain WebSocket message',
                 {
                     error,
@@ -200,6 +200,8 @@ function handleSocketMessage(messageEvent) {
                     payloadSize: error.payloadSize,
                 },
             );
+
+            // fallback to next transport
             handleFailure.call(this);
             return;
         }
@@ -218,9 +220,12 @@ function handleSocketClose(event) {
     }
 
     if (!this.hasBeenConnected) {
-        handleFailure.call(this, {
-            message: `websocket error occurred. code: ${event.code}, reason: ${event.reason}`,
+        log.info(LOG_AREA, 'websocket error occurred.', {
+            readyState: this.socket.readyState,
+            code: event.code,
+            reason: event.reason,
         });
+        handleFailure.call(this);
 
         return;
     }
@@ -302,7 +307,7 @@ function WebsocketTransport(baseUrl, failCallback = NOOP) {
         this.utf8Decoder = new window.TextDecoder();
     } catch (e) {
         failCallback({
-            message: `Error occured while initializing text decoder : ${e.message}`,
+            message: `Error occurred while initializing text decoder : ${e.message}`,
         });
     }
 }
@@ -372,7 +377,7 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
                 resolve(response);
             })
             .catch((error) => {
-                // if this call was superceded by another one, then ignore this error
+                // if this call was superseded by another one, then ignore this error
                 if (
                     this.authToken !== authToken ||
                     this.contextId !== contextId
@@ -387,7 +392,7 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
 
                 log.error(LOG_AREA, 'Authorization failed', error);
                 reject(error);
-                handleFailure.call(this, error);
+                handleFailure.call(this);
             });
     });
 
