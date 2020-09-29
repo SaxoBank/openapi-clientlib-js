@@ -167,6 +167,7 @@ function onConnectionStateChanged(nextState) {
     log.debug(LOG_AREA, 'Connection state changed', {
         changedTo: this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
         mechanism: connectionTransport && connectionTransport.name,
+        reconnecting: this.reconnecting,
     });
     this.trigger(this.EVENT_CONNECTION_STATE_CHANGED, this.connectionState);
 
@@ -181,8 +182,7 @@ function onConnectionStateChanged(nextState) {
             this.orphanFinder.stop();
 
             // tell all subscriptions not to do anything
-            // it doesn't matter if they do (they will be reset and either forget the unsubscribe or start a new subscribe),
-            // but it is a waste of network
+            // as we may have lost internet and the subscriptions may not be reset
             for (let i = 0; i < this.subscriptions.length; i++) {
                 this.subscriptions[i].onConnectionUnavailable();
             }
@@ -190,12 +190,22 @@ function onConnectionStateChanged(nextState) {
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
+            log.info(LOG_AREA, 'Connection reconnecting');
+
+            // tell all subscriptions not to do anything
+            // as we may have lost internet and the subscriptions may not be reset
+            for (let i = 0; i < this.subscriptions.length; i++) {
+                this.subscriptions[i].onConnectionUnavailable();
+            }
+
             updateConnectionQuery.call(this);
 
             this.orphanFinder.stop();
             break;
 
         case this.CONNECTION_STATE_CONNECTED:
+            log.info(LOG_AREA, 'Connection connected');
+
             this.retryCount = 0;
             // if *we* are reconnecting (as opposed to transport reconnecting, which we do not need to handle specially)
             if (this.reconnecting) {
