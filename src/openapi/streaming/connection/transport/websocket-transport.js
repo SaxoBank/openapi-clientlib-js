@@ -360,21 +360,21 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
         return Promise.reject(new Error(errorMessage));
     }
 
-    this.authorizePromise = new Promise((resolve, reject) => {
-        const options = {
-            headers: {
-                'X-Request-Id': getRequestId(),
-                Authorization: authToken,
-            },
-        };
-        const url = `${this.authorizeUrl}?contextId=${contextId}`;
+    const options = {
+        headers: {
+            'X-Request-Id': getRequestId(),
+            Authorization: authToken,
+        },
+    };
+    const url = `${this.authorizeUrl}?contextId=${contextId}`;
 
+    this.authorizePromise =
         fetch('PUT', url, options)
             .then((response) => {
                 log.debug(LOG_AREA, 'Authorization completed', {
                     contextId,
                 });
-                resolve(response);
+                return response;
             })
             .catch((error) => {
                 // if this call was superseded by another one, then ignore this error
@@ -382,7 +382,7 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
                     this.authToken !== authToken ||
                     this.contextId !== contextId
                 ) {
-                    return;
+                    return Promise.reject();
                 }
 
                 // if a network error occurs, retry
@@ -391,10 +391,9 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
                 }
 
                 log.error(LOG_AREA, 'Authorization failed', error);
-                reject(error);
                 handleFailure.call(this);
+                throw error;
             });
-    });
 
     return this.authorizePromise;
 };
@@ -425,6 +424,8 @@ WebsocketTransport.prototype.start = function(options, callback) {
         this.startedCallback();
         this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
         createSocket.call(this);
+    }, () => {
+        // we handle everything in authorizePromise, this just stops an unhandled rejection
     });
 };
 
