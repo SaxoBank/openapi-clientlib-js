@@ -76,9 +76,9 @@ StreamingOrphanFinder.prototype.update = function() {
     // if this update is running very late then the chances are the phone is in background mode
     // or has just come out of it. If so, we delay checking
     if (oldNextUpdateIn < -MAX_UPDATE_DELAY) {
-        log.warn(
+        log.info(
             LOG_AREA,
-            'update occurred much later than requested, assuming wake from sleep and will retry',
+            'Update occurred much later than requested, assuming wake from sleep and will retry',
             oldNextUpdateIn,
         );
 

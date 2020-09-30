@@ -6,6 +6,10 @@ export const EVENT_CONNECTION_STATE_CHANGED = 'connectionStateChanged';
  * Event that occurs when the connection is slow.
  */
 export const EVENT_CONNECTION_SLOW = 'connectionSlow';
+/**
+ * Event that occurs when the connection fails.
+ */
+export const EVENT_STREAMING_FAILED = 'streamingFailed';
 
 /**
  * Streaming has been created but has not yet started the connection.

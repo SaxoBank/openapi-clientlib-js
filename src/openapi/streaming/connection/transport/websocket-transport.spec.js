@@ -1,9 +1,15 @@
-import { installClock, uninstallClock, tick } from '../../../../test/utils';
+import {
+    installClock,
+    uninstallClock,
+    tick,
+    setTimeout,
+} from '../../../../test/utils';
 import '../../../../test/mocks/math-random';
 import mockFetch from '../../../../test/mocks/fetch';
 import WebSocketTransport from './websocket-transport';
 import * as constants from './../constants';
 import jsonPayload from './payload.json';
+import * as RequestUtils from '../../../../utils/request';
 
 const CONTEXT_ID = '0000000000';
 const AUTH_TOKEN = 'TOKEN';
@@ -29,6 +35,8 @@ describe('openapi WebSocket Transport', () => {
             on: jest.fn(),
         };
         authProvider.getToken.mockImplementation(() => 'TOKEN');
+
+        RequestUtils.resetCounter();
 
         installClock();
     });
@@ -103,6 +111,104 @@ describe('openapi WebSocket Transport', () => {
         });
     });
 
+    describe('network errors', () => {
+        it('should retry authorization when it gets a network error', (done) => {
+            const options = {};
+            const spyOnStartCallback = jest.fn().mockName('spyStartCallback');
+
+            const transport = new WebSocketTransport(BASE_URL);
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start(options, spyOnStartCallback);
+
+            expect(fetchMock).toBeCalledTimes(1);
+            expect(fetchMock).toBeCalledWith(
+                'testUrl/streamingws/authorize?contextId=0000000000',
+                expect.objectContaining({
+                    headers: { 'X-Request-Id': 1, Authorization: 'TOKEN' },
+                }),
+            );
+            fetchMock.mockClear();
+
+            fetchMock.reject(new Error('network error'));
+            tick(1);
+
+            setTimeout(() => {
+                expect(fetchMock).toBeCalledTimes(1);
+                expect(fetchMock).toBeCalledWith(
+                    'testUrl/streamingws/authorize?contextId=0000000000',
+                    expect.objectContaining({
+                        headers: { 'X-Request-Id': 2, Authorization: 'TOKEN' },
+                    }),
+                );
+                fetchMock.resolve(200, {});
+
+                setTimeout(() => {
+                    expect(spyOnStartCallback).toBeCalledTimes(1);
+
+                    done();
+                });
+            });
+        });
+
+        it.each([
+            [5001, 0, true],
+            [2000, 3001, true],
+            [0, 0, false],
+            [4000, 500, false],
+        ])(
+            'should reconnect if it looks like we are not connected any more - %d,% d',
+            (timeAfterMsg, timeAfterOrphanFound, shouldReconnect, done) => {
+                const options = {};
+                const spyOnStartCallback = jest
+                    .fn()
+                    .mockName('spyStartCallback');
+
+                const transport = new WebSocketTransport(BASE_URL);
+                transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+                transport.start(options, spyOnStartCallback);
+                fetchMock.resolve(200, {});
+
+                setTimeout(() => {
+                    const originalSocket = transport.socket;
+
+                    // we get data
+                    const dataBuffer = new window.TextEncoder().encode(
+                        JSON.stringify(jsonPayload),
+                    );
+                    const payload = new Uint8Array(dataBuffer.length + 17);
+                    payload.set(
+                        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 134, 12, 0, 0],
+                        0,
+                    );
+                    payload.set(dataBuffer, 17);
+
+                    transport.socket.onmessage({ data: payload.buffer });
+
+                    // but now its disconnected.. 5 seconds pass
+                    tick(timeAfterMsg);
+
+                    // a orphan is found
+                    transport.onOrphanFound();
+
+                    tick(timeAfterOrphanFound);
+
+                    expect(transport.socket).toBe(originalSocket);
+
+                    transport.onSubscribeNetworkError();
+
+                    if (shouldReconnect) {
+                        expect(transport.socket).not.toBe(originalSocket);
+                        expect(transport.socket).not.toBeNull();
+                    } else {
+                        expect(transport.socket).toBe(originalSocket);
+                    }
+
+                    done();
+                });
+            },
+        );
+    });
+
     describe('received', () => {
         it('should call received callback upon websocket received being called', (done) => {
             const spyOnReceivedCallback = jest
@@ -170,12 +276,7 @@ describe('openapi WebSocket Transport', () => {
 
                 transport.socket.onmessage({ data: payload.buffer });
                 expect(spyOnFailCallback).toBeCalledTimes(1);
-                expect(spyOnFailCallback).toBeCalledWith(
-                    expect.objectContaining({
-                        payload: illFormattedJson,
-                        payloadSize: 13,
-                    }),
-                );
+
                 done();
             });
         });

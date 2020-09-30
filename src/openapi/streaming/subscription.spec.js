@@ -26,6 +26,7 @@ describe('openapi StreamingSubscription', () => {
     let createdSpy;
     let errorSpy;
     let authManager;
+    let networkErrorSpy;
 
     function sendInitialResponse(response) {
         if (!response) {
@@ -40,6 +41,7 @@ describe('openapi StreamingSubscription', () => {
         updateSpy = jest.fn().mockName('update');
         createdSpy = jest.fn().mockName('create');
         errorSpy = jest.fn().mockName('error');
+        networkErrorSpy = jest.fn().mockName('networkEror');
         authManager = { getAuth: jest.fn() };
         authManager.getAuth.mockImplementation(function() {
             return { token: 'TOKEN' };
@@ -626,6 +628,7 @@ describe('openapi StreamingSubscription', () => {
             subscription.onSubscribe();
             expect(transport.post.mock.calls.length).toEqual(0);
         });
+
         it('does not unsubscribe when the connection is unavailable', (done) => {
             const subscription = new Subscription(
                 '123',
@@ -656,6 +659,7 @@ describe('openapi StreamingSubscription', () => {
                 done();
             });
         });
+
         it('does not unsubscribe if connection becomes unavailable whilst subscribing', (done) => {
             const subscription = new Subscription(
                 '123',
@@ -685,6 +689,7 @@ describe('openapi StreamingSubscription', () => {
                 done();
             });
         });
+
         it('does not subscribe if connection becomes unavailable whilst unsubscribing', (done) => {
             const subscription = new Subscription(
                 '123',
@@ -724,6 +729,7 @@ describe('openapi StreamingSubscription', () => {
                 });
             });
         });
+
         it('does not subscribe if connection becomes available whilst unsubscribing', (done) => {
             const subscription = new Subscription(
                 '123',
@@ -759,6 +765,197 @@ describe('openapi StreamingSubscription', () => {
                     expect(transport.post.mock.calls.length).toEqual(1);
 
                     done();
+                });
+            });
+        });
+
+        it('retries when a network error occurs subscribing', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                {
+                    onUpdate: updateSpy,
+                    onError: errorSpy,
+                    onNetworkError: networkErrorSpy,
+                },
+            );
+            subscription.onSubscribe();
+            expect(transport.post.mock.calls.length).toEqual(1);
+
+            transport.postReject({ isNetworkError: true });
+
+            setTimeout(() => {
+                expect(transport.post.mock.calls.length).toEqual(1);
+                expect(networkErrorSpy).toBeCalledTimes(1);
+
+                tick(5000);
+                expect(transport.post.mock.calls.length).toEqual(2);
+
+                transport.postResolve({
+                    status: 201,
+                    response: { Snapshot: { initial: true } },
+                });
+
+                setTimeout(() => {
+                    expect(errorSpy).not.toBeCalled();
+                    expect(updateSpy).toBeCalledTimes(1);
+                    expect(networkErrorSpy).toBeCalledTimes(1);
+                    done();
+                });
+            });
+        });
+
+        it('does not retry when a network error occurs subscribing but we have unsubscribed', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                {
+                    onUpdate: updateSpy,
+                    onError: errorSpy,
+                    onNetworkError: networkErrorSpy,
+                },
+            );
+            subscription.onSubscribe();
+            expect(transport.post.mock.calls.length).toEqual(1);
+
+            subscription.onUnsubscribe();
+            transport.postReject({ isNetworkError: true });
+
+            setTimeout(() => {
+                expect(transport.post.mock.calls.length).toEqual(1);
+
+                tick(5000);
+                expect(transport.post.mock.calls.length).toEqual(1);
+
+                expect(errorSpy).not.toBeCalled();
+                expect(updateSpy).not.toBeCalled();
+                expect(networkErrorSpy).not.toBeCalled();
+                done();
+            });
+        });
+
+        it('does not retry when a network error occurs subscribing but we afterwards unsubscribe', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                {
+                    onUpdate: updateSpy,
+                    onError: errorSpy,
+                    onNetworkError: networkErrorSpy,
+                },
+            );
+            subscription.onSubscribe();
+            expect(transport.post.mock.calls.length).toEqual(1);
+
+            transport.postReject({ isNetworkError: true });
+
+            setTimeout(() => {
+                expect(transport.post.mock.calls.length).toEqual(1);
+
+                subscription.onUnsubscribe();
+                tick(5000);
+                expect(transport.post.mock.calls.length).toEqual(1);
+
+                expect(errorSpy).not.toBeCalled();
+                expect(updateSpy).not.toBeCalled();
+                expect(networkErrorSpy).toBeCalledTimes(1);
+                done();
+            });
+        });
+
+        it('does not retry when a network error occurs subscribing but we afterwards modify', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                {
+                    onUpdate: updateSpy,
+                    onError: errorSpy,
+                    onNetworkError: networkErrorSpy,
+                },
+            );
+            subscription.onSubscribe();
+            expect(transport.post.mock.calls.length).toEqual(1);
+
+            transport.postReject({ isNetworkError: true });
+
+            setTimeout(() => {
+                expect(transport.post.mock.calls.length).toEqual(1);
+
+                subscription.onModify();
+                tick(5000);
+                expect(transport.post.mock.calls.length).toEqual(2);
+
+                expect(errorSpy).not.toBeCalled();
+                expect(updateSpy).not.toBeCalled();
+                expect(networkErrorSpy).toBeCalledTimes(1);
+                done();
+            });
+        });
+
+        it('waits for a network reconnect if it gets told that it is unavailable', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'serviceGroup',
+                'src/test/resource',
+                {},
+                createdSpy,
+                {
+                    onUpdate: updateSpy,
+                    onError: errorSpy,
+                    onNetworkError: networkErrorSpy,
+                },
+            );
+            subscription.onSubscribe();
+            expect(transport.post.mock.calls.length).toEqual(1);
+
+            transport.postReject({ isNetworkError: true });
+
+            setTimeout(() => {
+                expect(networkErrorSpy).toBeCalledTimes(1);
+                expect(transport.post.mock.calls.length).toEqual(1);
+
+                tick(1000);
+
+                subscription.onConnectionUnavailable();
+
+                tick(100000);
+
+                setTimeout(() => {
+                    expect(transport.post.mock.calls.length).toEqual(1);
+
+                    expect(updateSpy).not.toBeCalled();
+
+                    subscription.onConnectionAvailable();
+
+                    expect(transport.post.mock.calls.length).toEqual(2);
+                    transport.postResolve({
+                        status: 201,
+                        response: { Snapshot: { initial: true } },
+                    });
+
+                    setTimeout(() => {
+                        expect(errorSpy).not.toBeCalled();
+                        expect(updateSpy).toBeCalledTimes(1);
+                        expect(networkErrorSpy).toBeCalledTimes(1);
+                        done();
+                    });
                 });
             });
         });

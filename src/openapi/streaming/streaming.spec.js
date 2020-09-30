@@ -114,6 +114,34 @@ describe('openapi Streaming', () => {
         });
     });
 
+    describe('network issues', () => {
+        it('calls through', () => {
+            // these calls are ignored for signal-r
+            const streaming = new Streaming(
+                transport,
+                'testUrl',
+                authProvider,
+                {},
+            );
+
+            const subscription = streaming.createSubscription(
+                'root',
+                '/test/test',
+                {},
+                subscriptionUpdateSpy,
+                subscriptionErrorSpy,
+            );
+
+            expect(() => {
+                subscription.onNetworkError();
+            }).not.toThrow();
+
+            expect(() => {
+                streaming.orphanFinder.onOrphanFound(subscription);
+            }).not.toThrow();
+        });
+    });
+
     describe('findRetryDelay', () => {
         it('find delay for level 0', () => {
             const mockedLevels = [
@@ -705,11 +733,10 @@ describe('openapi Streaming', () => {
             expect(connectionSlowSpy.mock.calls.length).toEqual(1);
         });
         it('handles connection error events', () => {
-            jest.spyOn(log, 'error');
+            jest.spyOn(log, 'warn');
             errorCallback('error details');
 
-            // One error from transport and second error from streaming.
-            expect(log.error.mock.calls.length).toEqual(2);
+            expect(log.warn.mock.calls.length).toEqual(1);
         });
         it('handles signal-r log calls', () => {
             jest.spyOn(log, 'debug');

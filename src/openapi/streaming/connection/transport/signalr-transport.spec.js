@@ -171,9 +171,9 @@ describe('openapi SignalR Transport', () => {
             expect(connectionSlowSpy.mock.calls.length).toEqual(1);
         });
         it('handles connection error events', () => {
-            jest.spyOn(log, 'error');
+            jest.spyOn(log, 'warn');
             errorCallback('error details');
-            expect(log.error.mock.calls.length).toEqual(1);
+            expect(log.warn.mock.calls.length).toEqual(1);
         });
         it('handles signal-r log calls', () => {
             jest.spyOn(log, 'debug');

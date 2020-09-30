@@ -50,9 +50,8 @@ function createSocket() {
 
         this.socket = socket;
     } catch (error) {
-        handleFailure.call(this, {
-            message: 'Failed to setup webSocket connection',
-        });
+        log.error(LOG_AREA, 'Failed to setup webSocket connection', error);
+        handleFailure.call(this);
     }
 }
 
@@ -70,31 +69,38 @@ function destroySocket() {
     this.socket = null;
 }
 
+function restartConnection() {
+    this.reconnectTimeout = null;
+    this.reconnectCount++;
+
+    createSocket.call(this);
+
+    log.debug(LOG_AREA, 'Transport reconnected');
+}
+
 function reconnect(isImmediate) {
     if (this.reconnectCount >= DEFAULT_RECONNECT_LIMIT) {
         this.stop();
         return;
     }
 
+    if (this.reconnectTimeout && !isImmediate) {
+        log.warn(LOG_AREA, 'Reconnecting when already reconnecting');
+    }
+
     clearTimeout(this.reconnectTimeout);
+    this.reconnectTimeout = null;
     this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
 
-    const restartConnection = () => {
-        this.reconnectCount++;
-
-        destroySocket.call(this);
-        createSocket.call(this);
-
-        log.debug(LOG_AREA, 'Transport reconnected');
-    };
+    destroySocket.call(this);
 
     if (isImmediate) {
-        restartConnection();
+        restartConnection.call(this);
         return;
     }
 
     this.reconnectTimeout = setTimeout(
-        restartConnection,
+        restartConnection.bind(this),
         DEFAULT_RECONNECT_DELAY,
     );
 }
@@ -169,12 +175,11 @@ function parseMessage(rawData) {
 
 /**
  * Handle transport failure.
- * @param { Object } error - The error object with message property.
  */
-function handleFailure(error) {
+function handleFailure() {
     destroySocket.call(this);
     this.stateChangedCallback(constants.CONNECTION_STATE_FAILED);
-    this.failCallback(error);
+    this.failCallback();
 }
 
 function handleSocketOpen() {
@@ -188,16 +193,25 @@ function handleSocketOpen() {
 }
 
 function handleSocketMessage(messageEvent) {
+    this.lastMessageTime = Date.now();
+
     if (messageEvent.data instanceof ArrayBuffer) {
         let parsedMessages;
         try {
             parsedMessages = parseMessage.call(this, messageEvent.data);
-        } catch (e) {
-            handleFailure.call(this, {
-                message: `Error occurred during parsing of plain WebSocket message. Message: ${e.message}`,
-                payload: e.payload,
-                payloadSize: e.payloadSize,
-            });
+        } catch (error) {
+            log.error(
+                LOG_AREA,
+                'Error occurred during parsing of plain WebSocket message',
+                {
+                    error,
+                    payload: error.payload,
+                    payloadSize: error.payloadSize,
+                },
+            );
+
+            // fallback to next transport
+            handleFailure.call(this);
             return;
         }
 
@@ -206,6 +220,10 @@ function handleSocketMessage(messageEvent) {
         });
 
         this.receivedCallback(parsedMessages);
+    } else {
+        log.error(LOG_AREA, 'Received a non-ArrayBuffer message', {
+            payload: messageEvent.data,
+        });
     }
 }
 
@@ -215,22 +233,25 @@ function handleSocketClose(event) {
     }
 
     if (!this.hasBeenConnected) {
-        handleFailure.call(this, {
-            message: `websocket error occured. code: ${event.code}, reason: ${event.reason}`,
+        log.info(LOG_AREA, 'websocket error occurred.', {
+            readyState: this.socket.readyState,
+            code: event.code,
+            reason: event.reason,
         });
+        handleFailure.call(this);
 
         return;
     }
 
     const isCleanDisconnect = event.wasClean === true;
     if (!isCleanDisconnect) {
-        log.warn(LOG_AREA, 'websocket connection closed abruptly', {
+        log.info(LOG_AREA, 'Websocket connection closed abruptly', {
             readyState: this.socket.readyState,
             code: event.code,
             reason: event.reason,
         });
     } else {
-        log.debug(LOG_AREA, 'websocket connection closed');
+        log.debug(LOG_AREA, 'Websocket connection closed');
     }
 
     if (event.code === socketCloseCodes.TOKEN_EXPIRED) {
@@ -242,6 +263,32 @@ function handleSocketClose(event) {
     }
 
     reconnect.call(this);
+}
+
+function detectNetworkError() {
+    const fiveSecondsAgo = Date.now() - 1000 * 5;
+
+    // if we haven't got a message recently
+    // but we found a orphan recently
+    // and got a network error subscribing
+    // and our reconnectCount is 0 so we are not currently reconnecting
+    if (
+        this.lastMessageTime < fiveSecondsAgo &&
+        this.lastOrphanFound > fiveSecondsAgo &&
+        this.lastSubscribeNetworkError > fiveSecondsAgo &&
+        this.reconnectCount === 0
+    ) {
+        log.info(
+            LOG_AREA,
+            'Detected a broken websocket, so attempting to reconnect',
+            {
+                readyState: this.socket.readyState,
+            },
+        );
+
+        // reconnect immediately as no need to wait - this is the initial event
+        reconnect.call(this, true);
+    }
 }
 
 // -- Exported methods section --
@@ -280,6 +327,10 @@ function WebsocketTransport(baseUrl, failCallback = NOOP) {
     this.reconnectTimeout = null;
     this.reconnectCount = 0;
 
+    this.lastOrphanFound = 0;
+    this.lastSubscribeNetworkError = 0;
+    this.lastMessageTime = 0;
+
     this.query = null;
     this.contextId = null;
     this.authorizePromise = null;
@@ -290,7 +341,6 @@ function WebsocketTransport(baseUrl, failCallback = NOOP) {
     this.logCallback = NOOP;
     this.stateChangedCallback = NOOP;
     this.receivedCallback = NOOP;
-    this.errorCallback = NOOP;
     this.connectionSlowCallback = NOOP;
     this.startedCallback = NOOP;
     this.closeCallback = NOOP;
@@ -300,7 +350,7 @@ function WebsocketTransport(baseUrl, failCallback = NOOP) {
         this.utf8Decoder = new window.TextDecoder();
     } catch (e) {
         failCallback({
-            message: `Error occured while initializing text decoder : ${e.message}`,
+            message: `Error occurred while initializing text decoder : ${e.message}`,
         });
     }
 }
@@ -330,14 +380,6 @@ WebsocketTransport.prototype.setReceivedCallback = function(callback) {
     this.receivedCallback = callback;
 };
 
-/**
- * The error callback. If invoked, indicates some error occurred.
- * @param callback
- */
-WebsocketTransport.prototype.setErrorCallback = function(callback) {
-    this.errorCallback = callback;
-};
-
 WebsocketTransport.prototype.setConnectionSlowCallback = function(callback) {
     this.connectionSlowCallback = callback;
 };
@@ -361,31 +403,36 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
         return Promise.reject(new Error(errorMessage));
     }
 
-    this.authorizePromise = new Promise((resolve, reject) => {
-        const options = {
-            headers: {
-                'X-Request-Id': getRequestId(),
-                Authorization: authToken,
-            },
-        };
-        const url = `${this.authorizeUrl}?contextId=${contextId}`;
+    const options = {
+        headers: {
+            'X-Request-Id': getRequestId(),
+            Authorization: authToken,
+        },
+    };
+    const url = `${this.authorizeUrl}?contextId=${contextId}`;
 
-        fetch('PUT', url, options)
-            .then((response) => {
-                log.debug(LOG_AREA, 'Authorization completed', {
-                    contextId,
-                });
-                resolve(response);
-            })
-            .catch((error) => {
-                log.error(LOG_AREA, 'Authorization failed', {
-                    contextId,
-                    error,
-                });
-                reject(error);
-                handleFailure.call(this, error);
+    this.authorizePromise = fetch('PUT', url, options)
+        .then((response) => {
+            log.debug(LOG_AREA, 'Authorization completed', {
+                contextId,
             });
-    });
+            return response;
+        })
+        .catch((error) => {
+            // if this call was superseded by another one, then ignore this error
+            if (this.authToken !== authToken || this.contextId !== contextId) {
+                return Promise.reject();
+            }
+
+            // if a network error occurs, retry
+            if (error && error.isNetworkError) {
+                return this.getAuthorizePromise(contextId, authToken, true);
+            }
+
+            log.error(LOG_AREA, 'Authorization failed', error);
+            handleFailure.call(this);
+            throw error;
+        });
 
     return this.authorizePromise;
 };
@@ -401,7 +448,7 @@ WebsocketTransport.prototype.start = function(options, callback) {
     }
 
     if (this.socket) {
-        log.warn(LOG_AREA, 'only one socket per connection is allowed');
+        log.warn(LOG_AREA, 'Only one socket per connection is allowed');
         return;
     }
 
@@ -412,25 +459,42 @@ WebsocketTransport.prototype.start = function(options, callback) {
         this.authToken,
     );
 
-    authorizePromise.then(() => {
-        this.startedCallback();
-        this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
-        createSocket.call(this);
-    });
+    authorizePromise.then(
+        () => {
+            this.startedCallback();
+            this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
+            createSocket.call(this);
+        },
+        () => {
+            // we handle everything in authorizePromise, this just stops an unhandled rejection
+        },
+    );
 };
 
 WebsocketTransport.prototype.stop = function() {
     destroySocket.call(this);
 
-    clearInterval(this.reconnectTimeout);
+    clearTimeout(this.reconnectTimeout);
     this.reconnectTimeout = null;
     this.contextId = null;
     this.lastMessageId = null;
     this.authorizePromise = null;
     this.reconnectCount = 0;
     this.hasBeenConnected = false;
+    this.lastOrphanFound = 0;
+    this.lastSubscribeNetworkError = 0;
 
     this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
+};
+
+WebsocketTransport.prototype.onOrphanFound = function() {
+    this.lastOrphanFound = Date.now();
+    detectNetworkError.call(this);
+};
+
+WebsocketTransport.prototype.onSubscribeNetworkError = function() {
+    this.lastSubscribeNetworkError = Date.now();
+    detectNetworkError.call(this);
 };
 
 WebsocketTransport.prototype.updateQuery = function(

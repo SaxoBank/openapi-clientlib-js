@@ -39,6 +39,11 @@ function ParserProtobuf(name, engine) {
      */
     this.schemasMap = {};
 
+    /**
+     * Url to schema name map.
+     */
+    this.schemasSourceMap = {};
+
     this.lastSchemaName = null;
 
     /**
@@ -100,6 +105,7 @@ ParserProtobuf.prototype.addSchema = function(schemaData, name) {
         return false;
     }
 
+    this.schemasSourceMap[name] = schemaData;
     this.schemasMap[name] = schema;
     this.lastSchemaName = name;
     return true;
@@ -112,41 +118,69 @@ ParserProtobuf.prototype.addSchema = function(schemaData, name) {
  * @return {Object} - Result of parsing, if successful. Returns null if parsing fails or there is no data.
  */
 ParserProtobuf.prototype.parse = function(data, schemaName) {
+    if (!data) {
+        return null;
+    }
+
     const schemas = this.getSchema(schemaName);
 
-    if (!schemas || !data) {
-        return null;
+    if (!schemas) {
+        log.error(LOG_AREA, 'Protobuf parsing failed - failed to get schemas', {
+            schemaName,
+        });
+        throw new Error('Protobuf parsing failed');
     }
 
     const rootTypeName = schemas.root.getOption(ROOT_OPTION_NAME);
 
     if (!rootTypeName) {
-        log.error('Parsing failed. Missing root message name', rootTypeName);
-        return null;
+        log.error(
+            LOG_AREA,
+            'Protobuf parsing failed - missing root message name',
+            { rootTypeName },
+        );
+        throw new Error('Protobuf parsing failed');
     }
 
     const rootType = this.getSchemaType(schemaName, rootTypeName);
 
     if (!rootType) {
-        log.error('Parsing failed. Root type not found. Name: ', rootTypeName);
-        return null;
+        log.error(
+            LOG_AREA,
+            'Protobuf parsing failed - root type not found. Name: ',
+            { rootTypeName },
+        );
+        throw new Error('Protobuf parsing failed');
     }
 
-    let byteArray;
+    try {
+        let byteArray;
 
-    // With support from raw websocket streaming, it's possible to get raw ArrayBuffer.
-    if (data instanceof Uint8Array) {
-        byteArray = data;
-    } else {
-        byteArray = new Uint8Array(this.protobuf.util.base64.length(data));
-        const offset = 0;
-        this.protobuf.util.base64.decode(data, byteArray, offset);
+        // With support from raw websocket streaming, it's possible to get raw ArrayBuffer.
+        if (data instanceof Uint8Array) {
+            byteArray = data;
+        } else {
+            byteArray = new Uint8Array(this.protobuf.util.base64.length(data));
+            const offset = 0;
+            this.protobuf.util.base64.decode(data, byteArray, offset);
+        }
+
+        const message = rootType.decode(byteArray);
+        const jsonData = message ? message.toJSON() : null;
+
+        return this.metaProcessor.process(message, jsonData);
+    } catch (error) {
+        const base64Data =
+            typeof data === 'string'
+                ? data
+                : this.protobuf.util.base64.encode(data, 0, data.length);
+        log.error('Protobuf parsing failed', {
+            error,
+            base64Data,
+            schema: this.schemasSourceMap[schemaName],
+        });
+        throw new Error('Parsing failed');
     }
-
-    const message = rootType.decode(byteArray);
-    const jsonData = message ? message.toJSON() : null;
-
-    return this.metaProcessor.process(message, jsonData);
 };
 
 ParserProtobuf.prototype.stringify = function(data, schemaName) {

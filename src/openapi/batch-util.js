@@ -79,11 +79,11 @@ function parse(responseText, parentRequestId = 0) {
                     ) {
                         try {
                             currentData.response = JSON.parse(line);
-                        } catch (ex) {
-                            log.warn(
+                        } catch (error) {
+                            log.error(
                                 LOG_AREA,
-                                'Unexpected exception parsing json. Ignoring.',
-                                ex,
+                                'Unexpected error parsing json',
+                                { error, line, requestId },
                             );
                         }
                     }
