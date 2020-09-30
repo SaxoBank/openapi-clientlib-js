@@ -217,6 +217,18 @@ Connection.prototype.getQuery = function() {
     }
 };
 
+Connection.prototype.onOrphanFound = function() {
+    if (this.transport && this.transport.onOrphanFound) {
+        this.transport.onOrphanFound();
+    }
+};
+
+Connection.prototype.onSubscribeNetworkError = function() {
+    if (this.transport && this.transport.onSubscribeNetworkError) {
+        this.transport.onSubscribeNetworkError();
+    }
+};
+
 /**
  * Get underlying transport
  * @returns {*}

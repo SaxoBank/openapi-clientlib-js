@@ -69,31 +69,38 @@ function destroySocket() {
     this.socket = null;
 }
 
+function restartConnection() {
+    this.reconnectTimeout = null;
+    this.reconnectCount++;
+
+    createSocket.call(this);
+
+    log.debug(LOG_AREA, 'Transport reconnected');
+}
+
 function reconnect(isImmediate) {
     if (this.reconnectCount >= DEFAULT_RECONNECT_LIMIT) {
         this.stop();
         return;
     }
 
+    if (this.reconnectTimeout && !isImmediate) {
+        log.warn(LOG_AREA, 'Reconnecting when already reconnecting');
+    }
+
     clearTimeout(this.reconnectTimeout);
+    this.reconnectTimeout = null;
     this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
 
-    const restartConnection = () => {
-        this.reconnectCount++;
-
-        destroySocket.call(this);
-        createSocket.call(this);
-
-        log.debug(LOG_AREA, 'Transport reconnected');
-    };
+    destroySocket.call(this);
 
     if (isImmediate) {
-        restartConnection();
+        restartConnection.call(this);
         return;
     }
 
     this.reconnectTimeout = setTimeout(
-        restartConnection,
+        restartConnection.bind(this),
         DEFAULT_RECONNECT_DELAY,
     );
 }
@@ -186,6 +193,8 @@ function handleSocketOpen() {
 }
 
 function handleSocketMessage(messageEvent) {
+    this.lastMessageTime = Date.now();
+
     if (messageEvent.data instanceof ArrayBuffer) {
         let parsedMessages;
         try {
@@ -211,6 +220,14 @@ function handleSocketMessage(messageEvent) {
         });
 
         this.receivedCallback(parsedMessages);
+    } else {
+        log.error(
+            LOG_AREA,
+            'Received a non-ArrayBuffer message',
+            {
+                payload: messageEvent.data,
+            },
+        );
     }
 }
 
@@ -252,6 +269,23 @@ function handleSocketClose(event) {
     reconnect.call(this);
 }
 
+function detectNetworkError() {
+    const fiveSecondsAgo = Date.now() - (1000 * 5);
+
+    // if we haven't got a message recently
+    // but we found a orphan recently
+    // and got a network error subscribing
+    // and our reconnectCount is 0 so we are not currently reconnecting
+    if (this.lastMessageTime < fiveSecondsAgo &&
+        this.lastOrphanFound > fiveSecondsAgo &&
+        this.lastSubscribeNetworkError > fiveSecondsAgo &&
+        this.reconnectCount === 0) {
+
+        // reconnect immediately as no need to wait - this is the initial event
+        reconnect.call(this, true);
+    }
+}
+
 // -- Exported methods section --
 
 /**
@@ -287,6 +321,10 @@ function WebsocketTransport(baseUrl, failCallback = NOOP) {
     this.lastMessageId = null;
     this.reconnectTimeout = null;
     this.reconnectCount = 0;
+
+    this.lastOrphanFound = 0;
+    this.lastSubscribeNetworkError = 0;
+    this.lastMessageTime = 0;
 
     this.query = null;
     this.contextId = null;
@@ -432,15 +470,27 @@ WebsocketTransport.prototype.start = function(options, callback) {
 WebsocketTransport.prototype.stop = function() {
     destroySocket.call(this);
 
-    clearInterval(this.reconnectTimeout);
+    clearTimeout(this.reconnectTimeout);
     this.reconnectTimeout = null;
     this.contextId = null;
     this.lastMessageId = null;
     this.authorizePromise = null;
     this.reconnectCount = 0;
     this.hasBeenConnected = false;
+    this.lastOrphanFound = 0;
+    this.lastSubscribeNetworkError = 0;
 
     this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
+};
+
+WebsocketTransport.prototype.onOrphanFound = function() {
+    this.lastOrphanFound = Date.now();
+    detectNetworkError.call(this);
+};
+
+WebsocketTransport.prototype.onSubscribeNetworkError = function() {
+    this.lastSubscribeNetworkError = Date.now();
+    detectNetworkError.call(this);
 };
 
 WebsocketTransport.prototype.updateQuery = function(

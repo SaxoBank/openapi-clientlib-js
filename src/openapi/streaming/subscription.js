@@ -142,6 +142,12 @@ function unsubscribeByTagPending() {
  * @param args
  */
 function tryPerformAction(action, args) {
+    if (this.networkErrorSubscribingTimer) {
+        // Clear the timeout - some other external event has happened which overrides the network timeout
+        clearTimeout(this.networkErrorSubscribingTimer);
+        this.networkErrorSubscribingTimer = null;
+    }
+
     if (
         !this.connectionAvailable ||
         this.TRANSITIONING_STATES & this.currentState
@@ -355,6 +361,7 @@ function onSubscribeError(referenceId, response) {
         response.response &&
         response.response.Message ===
             'Subscription Key (Streaming Session, Reference Id) already in use';
+
     if (isDupeRequest) {
         log.error(LOG_AREA, `A duplicate request occurred subscribing`, {
             response,
@@ -429,17 +436,51 @@ function onSubscribeError(referenceId, response) {
         }
     }
 
-    log.error(LOG_AREA, `An error occurred subscribing to ${this.url}`, {
-        response,
-        url: this.url,
-        serviceGroup: this.serviceGroup,
-        ContextId: this.streamingContextId,
-        ReferenceId: this.referenceId,
-        subscriptionData: this.subscriptionData,
-    });
+    const isNetworkError = response && response.isNetworkError;
+    if (!willUnsubscribe && isNetworkError) {
+        // its possible we sent the request before we noticed internet is unavailable
+        // also possible this is a one off
+        // its also possible that the subscribe succeeded - but that is unlikely and hard to handle
+
+        log.debug(LOG_AREA, `A network error occurred subscribing to ${this.url}`, {
+            response,
+            url: this.url,
+            serviceGroup: this.serviceGroup,
+            ContextId: this.streamingContextId,
+            ReferenceId: referenceId,
+            subscriptionData: this.subscriptionData,
+        });
+
+        // let streaming know we got a network error
+        this.networkErrorSubscribingTimer = setTimeout(() => {
+            this.networkErrorSubscribingTimer = null;
+
+            // we did not go offline and we did not receive any commands in the meantime
+            // otherwise this timeout would be cancelled.
+            // so we can assume this was a one off network error and we can try again
+            tryPerformAction.call(this, ACTION_SUBSCRIBE);
+        }, 5000);
+
+        if (this.onNetworkError) {
+            this.onNetworkError();
+        }
+
+        return;
+    }
+
+    if (!isNetworkError) {
+        log.error(LOG_AREA, `An error occurred subscribing to ${this.url}`, {
+            response,
+            url: this.url,
+            serviceGroup: this.serviceGroup,
+            ContextId: this.streamingContextId,
+            ReferenceId: referenceId,
+            subscriptionData: this.subscriptionData,
+        });
+    }
 
     // if we are unsubscribed, do not fire the error handler
-    if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
+    if (!willUnsubscribe) {
         if (this.onError) {
             this.onError(response);
         }
@@ -607,6 +648,7 @@ function Subscription(
     this.onError = options.onError;
     this.onQueueEmpty = options.onQueueEmpty;
     this.headers = options.headers && extend({}, options.headers);
+    this.onNetworkError = options.onNetworkError;
 
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
@@ -837,6 +879,12 @@ Subscription.prototype.dispose = function() {
  */
 Subscription.prototype.onConnectionUnavailable = function() {
     this.connectionAvailable = false;
+    if (this.networkErrorSubscribingTimer) {
+        // we recently received a network error, so now we can just wait until we are online again
+        clearTimeout(this.networkErrorSubscribingTimer);
+        this.networkErrorSubscribingTimer = null;
+        tryPerformAction.call(this, ACTION_SUBSCRIBE);
+    }
 };
 
 /**

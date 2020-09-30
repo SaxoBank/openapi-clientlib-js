@@ -459,6 +459,7 @@ function onOrphanFound(subscription) {
         'Subscription has become orphaned - resetting',
         subscription,
     );
+    this.connection.onOrphanFound();
     subscription.reset();
 }
 
@@ -571,6 +572,10 @@ function removeSubscription(subscription) {
     if (indexOfSubscription >= 0) {
         this.subscriptions.splice(indexOfSubscription, 1);
     }
+}
+
+function onSubscribeNetworkError() {
+    this.connection.onSubscribeNetworkError();
 }
 
 // -- Exported methods section --
@@ -735,6 +740,10 @@ Streaming.prototype.createSubscription = function(
         // Set default format, if target format is not supported.
         normalizedSubscriptionArgs.Format = ParserFacade.getDefaultFormat();
     }
+
+    options = extend({
+        onNetworkError: onSubscribeNetworkError.bind(this),
+    }, options);
 
     const subscription = new Subscription(
         this.contextId,
