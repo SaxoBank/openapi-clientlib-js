@@ -600,6 +600,7 @@ function onSubscribeNetworkError() {
  * @param {Object} [options.parserEngines={}] - The map of subscription parser engines where key is format name and
  *          value is an engine implementation.
  * @param {Array.<string>} [options.transportTypes=['plainWebSockets', 'webSockets', 'longPolling']] - The transports to be used in order by signal-r.
+ * @param {Object} [options.messageProtocol={}] - Message serialization protocol used by signalr core
  */
 function Streaming(transport, baseUrl, authProvider, options) {
     emitter.mixinTo(this);
@@ -627,6 +628,11 @@ function Streaming(transport, baseUrl, authProvider, options) {
             'webSockets',
             'longPolling',
         ],
+        // Message serialization protocol used by signalr core. Its different from protobuf used for each subscription endpoint
+        // Streaming service relays message payload received from publishers as it is, which could be protobuf encoded.
+        // This protocol is used to serialize the message envelope rather than the payload
+        messageSerializationProtocol:
+            options && options.messageSerializationProtocol,
     };
 
     if (options) {

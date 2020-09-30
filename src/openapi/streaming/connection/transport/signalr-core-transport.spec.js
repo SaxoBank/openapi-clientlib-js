@@ -11,7 +11,7 @@ const BASE_URL = 'testUrl';
 
 const NOOP = () => {};
 
-describe('openapi SignalR Transport', () => {
+describe('openapi SignalR core Transport', () => {
     let subscribeNextHandler = NOOP;
     let subscribeErrorHandler = NOOP;
     let startPromiseResolver = NOOP;
@@ -30,22 +30,24 @@ describe('openapi SignalR Transport', () => {
         withUrl() {
             return this;
         }
-
         withHubProtocol() {
             return this;
         }
-
         configureLogging() {
             return this;
         }
-
         build() {
             return mockHubConnection;
         }
     }
 
+    function MockJsonHubProtocol() {
+        this.name = 'json';
+    }
+
     window.signalrCore = {
         HubConnectionBuilder: MockConnectionBuilder,
+        JsonHubProtocol: MockJsonHubProtocol,
     };
 
     beforeEach(() => {
@@ -166,28 +168,62 @@ describe('openapi SignalR Transport', () => {
     });
 
     describe('on message received', () => {
-        it('should parse message correctly', () => {
-            const spyReceivedCallback = jest
-                .fn()
-                .mockName('spyReceivedCallback');
+        let spyReceivedCallback;
+        let startPromise;
+
+        beforeEach(() => {
+            spyReceivedCallback = jest.fn().mockName('spyReceivedCallback');
             const transport = new SignalrCoreTransport(
                 BASE_URL,
                 spyOnTransportFailedCallback,
             );
             transport.setReceivedCallback(spyReceivedCallback);
 
-            transport.handleNextMessage({
-                referenceId: '12',
-                payloadFormat: 1,
-                payload: new window.TextEncoder().encode(
-                    JSON.stringify(jsonPayload),
-                ),
-            });
+            startPromise = transport.start({});
+            startPromiseResolver();
+        });
 
-            expect(spyReceivedCallback).toBeCalledWith({
-                ReferenceId: '12',
-                DataFormat: 0,
-                Data: jsonPayload,
+        it('should parse message correctly', (done) => {
+            startPromise.then(() => {
+                const utf8EncodedPayload = new window.TextEncoder().encode(
+                    JSON.stringify(jsonPayload),
+                );
+
+                const base64Payload = window.btoa(
+                    new Uint8Array(utf8EncodedPayload).reduce(
+                        (data, byte) => data + String.fromCharCode(byte),
+                        '',
+                    ),
+                );
+
+                subscribeNextHandler({
+                    referenceId: '12',
+                    payloadFormat: 1,
+                    payload: base64Payload,
+                });
+
+                expect(spyReceivedCallback).toBeCalledWith({
+                    ReferenceId: '12',
+                    DataFormat: 0,
+                    Data: jsonPayload,
+                });
+
+                done();
+            });
+        });
+
+        it('should fallback to other transport on message parsing failure', (done) => {
+            startPromise.then(() => {
+                subscribeNextHandler({
+                    referenceId: '12',
+                    payloadFormat: 1,
+                    payload: window.btoa(`{ "some-key": 123 `),
+                });
+
+                expect(spyReceivedCallback).not.toBeCalled();
+                expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
+
+                done();
             });
         });
     });

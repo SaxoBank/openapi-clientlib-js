@@ -15,7 +15,7 @@ function handleLog(level, message) {
         return;
     }
 
-    log.error(LOG_AREA, message);
+    log.warn(LOG_AREA, message);
 }
 
 function buildConnection({ baseUrl, contextId, authToken, protocol }) {
@@ -35,19 +35,52 @@ function buildConnection({ baseUrl, contextId, authToken, protocol }) {
         .build();
 }
 
-function parseMessage(message, utf8Decoder) {
-    let dataFormat;
-    let data;
+/*
+ * There are few inconsistencies while using different protocols
+ * It normalizes the messages received for different protocols
+ */
+function normalizeMessage(message, protocol) {
+    // JSON protocol use camel casing and message pack use pascal case
+    const referenceId = message.referenceId || message.ReferenceId;
+    let dataFormat = message.payloadFormat || message.PayloadFormat;
+    let data = message.payload || message.Payload;
 
-    const { referenceId, payloadFormat, payload } = message;
+    // JSON format. Normalized to old streaming format for backward compatibility
+    // Message pack parses the enum and converts it to string
+    if (dataFormat === 1 || dataFormat === 'Json') {
+        dataFormat = 0;
+    }
+
+    // Protobuf format. Normalized to old streaming format for backward compatibility
+    if (dataFormat === 2 || dataFormat === 'Protobuf') {
+        dataFormat = 1;
+    }
+
+    // JSON protocol converts bytes array to base64 encoded string
+    if (protocol.name === 'json' && typeof data === 'string') {
+        data = new Uint8Array(
+            window
+                .atob(data)
+                .split('')
+                .map((char) => char.charCodeAt(0)),
+        );
+    }
+
+    return {
+        ReferenceId: referenceId,
+        DataFormat: dataFormat,
+        Data: data,
+    };
+}
+
+function parseMessage(message, utf8Decoder) {
+    const { ReferenceId, DataFormat } = message;
+    let data = message.Data;
 
     // JSON
-    if (payloadFormat === 1) {
+    if (DataFormat === 0) {
         try {
-            // use old streaming service's data format for backward compatibility
-            dataFormat = 0;
-
-            data = utf8Decoder.decode(new Uint8Array(payload));
+            data = utf8Decoder.decode(data);
             data = JSON.parse(data);
         } catch (e) {
             const error = new Error(e.message);
@@ -55,15 +88,11 @@ function parseMessage(message, utf8Decoder) {
 
             throw error;
         }
-    } else {
-        // Protobuf
-        dataFormat = 1;
-        data = new Uint8Array(payload);
     }
 
     return {
-        ReferenceId: referenceId,
-        DataFormat: dataFormat,
+        ReferenceId,
+        DataFormat,
         Data: data,
     };
 }
@@ -76,6 +105,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     this.contextId = null;
     this.messageStream = null;
     this.hasStreamingStarted = false;
+    this.isStopping = false;
 
     // callbacks
     this.transportFailCallback = transportFailCallback;
@@ -87,7 +117,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     try {
         this.utf8Decoder = new window.TextDecoder();
     } catch (error) {
-        log.error(LOG_AREA, 'Error occured while initializing text decoder', {
+        log.error(LOG_AREA, 'Error occurred while initializing text decoder', {
             error,
         });
 
@@ -95,7 +125,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     }
 }
 
-SignalrCoreTransport.prototype.isSupported = function() {
+SignalrCoreTransport.isSupported = function() {
     return Boolean(window.Uint8Array) && Boolean(window.TextDecoder);
 };
 
@@ -108,12 +138,16 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         return;
     }
 
+    const protocol =
+        options.messageSerializationProtocol ||
+        new window.signalrCore.JsonHubProtocol();
+
     try {
         this.connection = buildConnection({
             baseUrl: this.baseUrl,
             contextId: this.contextId,
             authToken: this.authToken,
-            protocol: options.protocol,
+            protocol,
         });
     } catch (error) {
         this.transportFailCallback(error);
@@ -126,20 +160,23 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
     return this.connection
         .start()
         .then(() => {
-            const messageStream = this.connection.stream('StartStreaming');
+            if (this.isStopping) {
+                return;
+            }
 
+            const messageStream = this.connection.stream('StartStreaming');
             messageStream.subscribe({
-                next: this.handleNextMessage.bind(this),
-                error: this.handleMessageStreamError.bind(this),
+                next: (message) => this.handleNextMessage(message, protocol),
+                error: (error) => this.handleMessageStreamError(error),
             });
+
+            this.messageStream = messageStream;
 
             if (onStartCallback) {
                 onStartCallback();
             }
 
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
-
-            this.messageStream = messageStream;
         })
         .catch((error) => {
             this.transportFailCallback(error);
@@ -152,10 +189,16 @@ SignalrCoreTransport.prototype.stop = function() {
         return;
     }
 
+    this.isStopping = true;
+
     // close message stream before closing connection
-    return this.messageStream
-        .cancelCallback()
-        .then(() => this.connection.stop());
+    if (this.messageStream) {
+        return this.messageStream
+            .cancelCallback()
+            .then(() => this.connection.stop());
+    }
+
+    return this.connection.stop();
 };
 
 SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
@@ -164,6 +207,7 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
     }
 
     this.connection = null;
+    this.isStopping = false;
 
     if (!this.hasStreamingStarted) {
         this.transportFailCallback(error);
@@ -174,14 +218,24 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
     this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
 };
 
-SignalrCoreTransport.prototype.handleNextMessage = function(message) {
+SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
     if (!this.hasStreamingStarted) {
         this.hasStreamingStarted = true;
     }
 
-    const parsedMessage = parseMessage(message, this.utf8Decoder);
+    try {
+        const normalizedMessage = normalizeMessage(message, protocol);
+        const parsedMessage = parseMessage(normalizedMessage, this.utf8Decoder);
 
-    this.receivedCallback(parsedMessage);
+        this.receivedCallback(parsedMessage);
+    } catch (error) {
+        log.error(LOG_AREA, 'Error occurred while parsing message', {
+            error,
+            payload: error.payload,
+        });
+
+        this.transportFailCallback();
+    }
 };
 
 SignalrCoreTransport.prototype.handleMessageStreamError = function(error) {
@@ -189,7 +243,7 @@ SignalrCoreTransport.prototype.handleMessageStreamError = function(error) {
     // or if connection is closed with some error
     // only handle the 1st case since connection closing with error is already handled in onclose handler
     if (!this.hasStreamingStarted) {
-        log.error(LOG_AREA, 'Error occured while starting message streaming', {
+        log.error(LOG_AREA, 'Error occurred while starting message streaming', {
             error,
         });
 
@@ -234,7 +288,7 @@ SignalrCoreTransport.prototype.renewSession = function(authToken, contextId) {
             );
         })
         .catch((error) => {
-            // if this call was superceded by another one, then ignore this error
+            // if this call was superseded by another one, then ignore this error
             if (this.authToken !== authToken) {
                 return;
             }
@@ -251,7 +305,7 @@ SignalrCoreTransport.prototype.renewSession = function(authToken, contextId) {
 
             log.error(
                 LOG_AREA,
-                'Error occured during streaming session renewal',
+                'Error occurred during streaming session renewal',
                 {
                     contextId,
                     error,
