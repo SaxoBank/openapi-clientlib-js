@@ -350,11 +350,38 @@ function onSubscribeSuccess(referenceId, result) {
     onReadyToPerformNextAction.call(this);
 }
 
+function cleanUpLeftOverSubscription(referenceId) {
+    this.transport
+        .delete(this.serviceGroup, this.url + '/{contextId}/{referenceId}', {
+            contextId: this.streamingContextId,
+            referenceId,
+        })
+        .catch((error) => {
+            log.debug(
+                LOG_AREA,
+                'Failed to remove duplicate request subscription',
+                error,
+            );
+        });
+}
+
 /**
  * Called when a subscribe errors
  * @param response
  */
 function onSubscribeError(referenceId, response) {
+    if (referenceId !== this.referenceId) {
+        log.debug(
+            LOG_AREA,
+            'Received an error response for subscribing a subscription that has afterwards been reset - ignoring',
+        );
+        return;
+    }
+
+    const willUnsubscribe = this.queue.peekAction() & ACTION_UNSUBSCRIBE;
+
+    setState.call(this, this.STATE_UNSUBSCRIBED);
+
     // if we are a duplicate response, we should unsubscribe now
     const isDupeRequest =
         response &&
@@ -372,40 +399,13 @@ function onSubscribeError(referenceId, response) {
             subscriptionData: this.subscriptionData,
         });
 
-        this.transport
-            .delete(
-                this.serviceGroup,
-                this.url + '/{contextId}/{referenceId}',
-                {
-                    contextId: this.streamingContextId,
-                    referenceId,
-                },
-            )
-            .catch((error) => {
-                log.debug(
-                    LOG_AREA,
-                    'Failed to remove duplicate request subscription',
-                    error,
-                );
-            });
-    }
+        cleanUpLeftOverSubscription.call(this, referenceId);
 
-    if (referenceId !== this.referenceId) {
-        log.debug(
-            LOG_AREA,
-            'Received an error response for subscribing a subscription that has afterwards been reset - ignoring',
-        );
-        return;
-    }
-
-    const willUnsubscribe = this.queue.peekAction() & ACTION_UNSUBSCRIBE;
-
-    setState.call(this, this.STATE_UNSUBSCRIBED);
-
-    // if a duplicate request we reset as it should pass 2nd time around
-    if (isDupeRequest && !willUnsubscribe) {
-        tryPerformAction.call(this, ACTION_SUBSCRIBE);
-        return;
+        // if a duplicate request we reset as it should pass 2nd time around
+        if (!willUnsubscribe) {
+            tryPerformAction.call(this, ACTION_SUBSCRIBE);
+            return;
+        }
     }
 
     const errorCode =
@@ -437,19 +437,23 @@ function onSubscribeError(referenceId, response) {
     }
 
     const isNetworkError = response && response.isNetworkError;
-    if (!willUnsubscribe && isNetworkError) {
+    if (isNetworkError && !willUnsubscribe) {
         // its possible we sent the request before we noticed internet is unavailable
         // also possible this is a one off
         // its also possible that the subscribe succeeded - but that is unlikely and hard to handle
 
-        log.debug(LOG_AREA, `A network error occurred subscribing to ${this.url}`, {
-            response,
-            url: this.url,
-            serviceGroup: this.serviceGroup,
-            ContextId: this.streamingContextId,
-            ReferenceId: referenceId,
-            subscriptionData: this.subscriptionData,
-        });
+        log.debug(
+            LOG_AREA,
+            `A network error occurred subscribing to ${this.url}`,
+            {
+                response,
+                url: this.url,
+                serviceGroup: this.serviceGroup,
+                ContextId: this.streamingContextId,
+                ReferenceId: referenceId,
+                subscriptionData: this.subscriptionData,
+            },
+        );
 
         // let streaming know we got a network error
         this.networkErrorSubscribingTimer = setTimeout(() => {

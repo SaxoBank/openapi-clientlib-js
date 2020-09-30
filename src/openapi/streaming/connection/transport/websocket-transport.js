@@ -221,13 +221,9 @@ function handleSocketMessage(messageEvent) {
 
         this.receivedCallback(parsedMessages);
     } else {
-        log.error(
-            LOG_AREA,
-            'Received a non-ArrayBuffer message',
-            {
-                payload: messageEvent.data,
-            },
-        );
+        log.error(LOG_AREA, 'Received a non-ArrayBuffer message', {
+            payload: messageEvent.data,
+        });
     }
 }
 
@@ -270,16 +266,25 @@ function handleSocketClose(event) {
 }
 
 function detectNetworkError() {
-    const fiveSecondsAgo = Date.now() - (1000 * 5);
+    const fiveSecondsAgo = Date.now() - 1000 * 5;
 
     // if we haven't got a message recently
     // but we found a orphan recently
     // and got a network error subscribing
     // and our reconnectCount is 0 so we are not currently reconnecting
-    if (this.lastMessageTime < fiveSecondsAgo &&
+    if (
+        this.lastMessageTime < fiveSecondsAgo &&
         this.lastOrphanFound > fiveSecondsAgo &&
         this.lastSubscribeNetworkError > fiveSecondsAgo &&
-        this.reconnectCount === 0) {
+        this.reconnectCount === 0
+    ) {
+        log.info(
+            LOG_AREA,
+            'Detected a broken websocket, so attempting to reconnect',
+            {
+                readyState: this.socket.readyState,
+            },
+        );
 
         // reconnect immediately as no need to wait - this is the initial event
         reconnect.call(this, true);
@@ -406,32 +411,28 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
     };
     const url = `${this.authorizeUrl}?contextId=${contextId}`;
 
-    this.authorizePromise =
-        fetch('PUT', url, options)
-            .then((response) => {
-                log.debug(LOG_AREA, 'Authorization completed', {
-                    contextId,
-                });
-                return response;
-            })
-            .catch((error) => {
-                // if this call was superseded by another one, then ignore this error
-                if (
-                    this.authToken !== authToken ||
-                    this.contextId !== contextId
-                ) {
-                    return Promise.reject();
-                }
-
-                // if a network error occurs, retry
-                if (error && error.isNetworkError) {
-                    return this.getAuthorizePromise(contextId, authToken, true);
-                }
-
-                log.error(LOG_AREA, 'Authorization failed', error);
-                handleFailure.call(this);
-                throw error;
+    this.authorizePromise = fetch('PUT', url, options)
+        .then((response) => {
+            log.debug(LOG_AREA, 'Authorization completed', {
+                contextId,
             });
+            return response;
+        })
+        .catch((error) => {
+            // if this call was superseded by another one, then ignore this error
+            if (this.authToken !== authToken || this.contextId !== contextId) {
+                return Promise.reject();
+            }
+
+            // if a network error occurs, retry
+            if (error && error.isNetworkError) {
+                return this.getAuthorizePromise(contextId, authToken, true);
+            }
+
+            log.error(LOG_AREA, 'Authorization failed', error);
+            handleFailure.call(this);
+            throw error;
+        });
 
     return this.authorizePromise;
 };
@@ -458,13 +459,16 @@ WebsocketTransport.prototype.start = function(options, callback) {
         this.authToken,
     );
 
-    authorizePromise.then(() => {
-        this.startedCallback();
-        this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
-        createSocket.call(this);
-    }, () => {
-        // we handle everything in authorizePromise, this just stops an unhandled rejection
-    });
+    authorizePromise.then(
+        () => {
+            this.startedCallback();
+            this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
+            createSocket.call(this);
+        },
+        () => {
+            // we handle everything in authorizePromise, this just stops an unhandled rejection
+        },
+    );
 };
 
 WebsocketTransport.prototype.stop = function() {

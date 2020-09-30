@@ -439,7 +439,7 @@ describe('openapi TransportAuth', () => {
                     });
                 },
                 () => {
-                    tick(10000);
+                    tick(30001);
 
                     authProvider.getExpiry.mockImplementation(() => 2);
                     transportAuth.post('service_group', 'url').catch(noop);

@@ -114,6 +114,34 @@ describe('openapi Streaming', () => {
         });
     });
 
+    describe('network issues', () => {
+        it('calls through', () => {
+            // these calls are ignored for signal-r
+            const streaming = new Streaming(
+                transport,
+                'testUrl',
+                authProvider,
+                {},
+            );
+
+            const subscription = streaming.createSubscription(
+                'root',
+                '/test/test',
+                {},
+                subscriptionUpdateSpy,
+                subscriptionErrorSpy,
+            );
+
+            expect(() => {
+                subscription.onNetworkError();
+            }).not.toThrow();
+
+            expect(() => {
+                streaming.orphanFinder.onOrphanFound(subscription);
+            }).not.toThrow();
+        });
+    });
+
     describe('findRetryDelay', () => {
         it('find delay for level 0', () => {
             const mockedLevels = [

@@ -741,9 +741,12 @@ Streaming.prototype.createSubscription = function(
         normalizedSubscriptionArgs.Format = ParserFacade.getDefaultFormat();
     }
 
-    options = extend({
-        onNetworkError: onSubscribeNetworkError.bind(this),
-    }, options);
+    options = extend(
+        {
+            onNetworkError: onSubscribeNetworkError.bind(this),
+        },
+        options,
+    );
 
     const subscription = new Subscription(
         this.contextId,

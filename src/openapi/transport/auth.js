@@ -77,7 +77,8 @@ function onTransportError(oldTokenExpiry, result) {
  * @param {Object} [options] - Options for auth and for the core transport. See Transport.
  * @param {string} [options.language] - The language sent as a header if not overridden.
  * @param {boolean} [options.defaultCache=true] - Sets the default caching behaviour if not overridden on a call.
- * @param {number} [options.authErrorsDebouncePeriod] - The period within which errors on different tokens cause an endpoint auth errors to be ignored.
+ * @param {number} [options.authErrorsDebouncePeriod] - The period within which errors on different tokens cause an endpoint auth errors
+ *                                                      to be ignored.
  */
 function TransportAuth(baseUrl, authProvider, options) {
     if (!authProvider) {
