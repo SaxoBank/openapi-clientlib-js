@@ -5,6 +5,7 @@ import * as constants from '../constants';
 
 const LOG_AREA = 'SignalrCoreTransport';
 const NOOP = () => {};
+const RECONNECT_DELAYS = [2000, 2000, 2000, 2000, 2000];
 
 /**
  * Handles any signal-r log, and pipes it through our logging.
@@ -29,6 +30,7 @@ function buildConnection({ baseUrl, contextId, authToken, protocol }) {
             accessTokenFactory,
         })
         .withHubProtocol(protocol)
+        .withAutomaticReconnect(RECONNECT_DELAYS)
         .configureLogging({
             log: handleLog,
         })
@@ -98,7 +100,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     this.contextId = null;
     this.messageStream = null;
     this.hasStreamingStarted = false;
-    this.isStopping = false;
+    this.isDisconnecting = false;
 
     // callbacks
     this.transportFailCallback = transportFailCallback;
@@ -150,24 +152,30 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         this.transportFailCallback();
     }
 
-    this.connection.onclose = this.handleConnectionClosure.bind(this);
+    this.connection.onclose((error) => this.handleConnectionClosure(error));
+    this.connection.onreconnecting((error) => {
+        log.debug(LOG_AREA, 'Attempting to reconnect', {
+            error,
+        });
+
+        this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
+    });
+    this.connection.onreconnected(() => {
+        // recreate message stream
+        this.createMessageStream(protocol);
+        this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+    });
 
     this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
 
     return this.connection
         .start()
         .then(() => {
-            if (this.isStopping) {
+            if (this.isDisconnecting) {
                 return;
             }
 
-            const messageStream = this.connection.stream('StartStreaming');
-            messageStream.subscribe({
-                next: (message) => this.handleNextMessage(message, protocol),
-                error: (error) => this.handleMessageStreamError(error),
-            });
-
-            this.messageStream = messageStream;
+            this.createMessageStream(protocol);
 
             if (onStartCallback) {
                 onStartCallback();
@@ -193,7 +201,7 @@ SignalrCoreTransport.prototype.stop = function() {
         return;
     }
 
-    this.isStopping = true;
+    this.isDisconnecting = true;
 
     // close message stream before closing connection
     if (this.messageStream) {
@@ -205,21 +213,53 @@ SignalrCoreTransport.prototype.stop = function() {
     return this.connection.stop();
 };
 
-SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
-    if (error) {
-        log.error(LOG_AREA, 'connection closed abruptly', { error });
+SignalrCoreTransport.prototype.createMessageStream = function(protocol) {
+    if (!this.connection) {
+        log.warn(
+            LOG_AREA,
+            'Trying to create message stream before creating connection',
+        );
+        return;
     }
 
+    const messageStream = this.connection.stream('StartStreaming');
+    messageStream.subscribe({
+        next: (message) => this.handleNextMessage(message, protocol),
+        error: (error) => this.handleMessageStreamError(error),
+        complete: () => {
+            log.info(
+                LOG_AREA,
+                'Message stream closed gracefully. Closing connection',
+            );
+
+            this.messageStream = null;
+            this.stop();
+        },
+    });
+
+    this.messageStream = messageStream;
+};
+
+SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
     this.connection = null;
-    this.isStopping = false;
+    this.messageStream = null;
+    this.isDisconnecting = false;
 
     if (!this.hasStreamingStarted) {
-        log.error(LOG_AREA, 'Connection closed before streaming could start.', {
-            error,
-        });
+        log.error(
+            LOG_AREA,
+            'Connection closed before message streaming could start.',
+            {
+                error,
+            },
+        );
 
         this.transportFailCallback();
         return;
+    }
+
+    if (error) {
+        log.error(LOG_AREA, 'connection closed abruptly', { error });
     }
 
     this.hasStreamingStarted = false;

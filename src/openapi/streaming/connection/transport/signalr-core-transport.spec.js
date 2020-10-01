@@ -36,6 +36,9 @@ describe('openapi SignalR core Transport', () => {
         configureLogging() {
             return this;
         }
+        withAutomaticReconnect() {
+            return this;
+        }
         build() {
             return mockHubConnection;
         }
@@ -61,12 +64,15 @@ describe('openapi SignalR core Transport', () => {
                     streamCancelPromiseResolver = resolve;
                 }),
         };
+        const closeCallbacks = [];
 
         spyOnMessageStream = jest.fn().mockImplementation(() => mockSubject);
         spyOnConnectionStop = jest
             .fn()
             .mockImplementation(() =>
-                setTimeout(() => mockHubConnection.onclose()),
+                setTimeout(() =>
+                    closeCallbacks.forEach((callback) => callback()),
+                ),
             );
 
         mockHubConnection = {
@@ -77,6 +83,9 @@ describe('openapi SignalR core Transport', () => {
                 }),
             stream: spyOnMessageStream,
             stop: spyOnConnectionStop,
+            onclose: (callback) => closeCallbacks.push(callback),
+            onreconnecting: () => {},
+            onreconnected: () => {},
         };
 
         fetchMock = mockFetch();
