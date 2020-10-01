@@ -1,3 +1,7 @@
+### v.7.1.0
+
+- Add signalr core transport support
+
 ### v7.0.0
 
 - BREAKING - Review all log messages. Most network errors and expected events should not be errors or warnings.
