@@ -235,7 +235,7 @@ describe('openapi SignalR core Transport', () => {
 
             expect(fetchMock).toBeCalledTimes(1);
             expect(fetchMock).toBeCalledWith(
-                'testUrl/oapi/streaming/renewal/renewsession',
+                'testUrl/streaming/renewal/renewsession',
                 expect.objectContaining({
                     headers: { Authorization: 'TOKEN' },
                 }),
@@ -264,7 +264,7 @@ describe('openapi SignalR core Transport', () => {
 
             expect(fetchMock).toBeCalledTimes(1);
             expect(fetchMock).toBeCalledWith(
-                'testUrl/oapi/streaming/renewal/renewsession',
+                'testUrl/streaming/renewal/renewsession',
                 expect.objectContaining({
                     headers: { Authorization: 'TOKEN' },
                 }),

@@ -22,7 +22,7 @@ function buildConnection({ baseUrl, contextId, authToken, protocol }) {
     const accessTokenFactory = () => {
         return authToken.replace('BEARER ', '');
     };
-    const url = `${baseUrl}/oapi/streaming?contextId=${contextId}`;
+    const url = `${baseUrl}/streaming?contextId=${contextId}`;
 
     return new window.signalrCore.HubConnectionBuilder()
         .withUrl(url, {
@@ -275,7 +275,7 @@ SignalrCoreTransport.prototype.renewSession = function(authToken, contextId) {
             Authorization: authToken,
         },
     };
-    const url = `${this.baseUrl}/oapi/streaming/renewal/renewsession`;
+    const url = `${this.baseUrl}/streaming/renewal/renewsession`;
 
     return fetch('POST', url, options)
         .then(() => {
