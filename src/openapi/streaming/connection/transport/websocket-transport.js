@@ -140,7 +140,7 @@ function parseMessage(rawData) {
         // n bytes make up the actual payload. In the case of the payload format being Json, this is a UTF8 encoded string.
         let data;
 
-        if (dataFormat === 0) {
+        if (dataFormat === constants.DATA_FORMAT_JSON) {
             try {
                 const payload = new Uint8Array(rawData, index, payloadSize);
                 data = this.utf8Decoder.decode(payload);

@@ -197,9 +197,9 @@ describe('openapi SignalR core Transport', () => {
                 );
 
                 subscribeNextHandler({
-                    referenceId: '12',
-                    payloadFormat: 1,
-                    payload: base64Payload,
+                    ReferenceId: '12',
+                    PayloadFormat: 1,
+                    Payload: base64Payload,
                 });
 
                 expect(spyReceivedCallback).toBeCalledWith({
@@ -215,9 +215,9 @@ describe('openapi SignalR core Transport', () => {
         it('should fallback to other transport on message parsing failure', (done) => {
             startPromise.then(() => {
                 subscribeNextHandler({
-                    referenceId: '12',
-                    payloadFormat: 1,
-                    payload: window.btoa(`{ "some-key": 123 `),
+                    ReferenceId: '12',
+                    PayloadFormat: 1,
+                    Payload: window.btoa(`{ "some-key": 123 `),
                 });
 
                 expect(spyReceivedCallback).not.toBeCalled();

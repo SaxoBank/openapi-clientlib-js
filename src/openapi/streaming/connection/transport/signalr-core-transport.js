@@ -35,29 +35,24 @@ function buildConnection({ baseUrl, contextId, authToken, protocol }) {
         .build();
 }
 
-/*
- * There are few inconsistencies while using different protocols
- * It normalizes the messages received for different protocols
- */
 function normalizeMessage(message, protocol) {
-    // JSON protocol use camel casing and message pack use pascal case
-    const referenceId = message.referenceId || message.ReferenceId;
-    let dataFormat = message.payloadFormat || message.PayloadFormat;
-    let data = message.payload || message.Payload;
+    const { ReferenceId, PayloadFormat, Payload } = message;
 
-    // JSON format. Normalized to old streaming format for backward compatibility
-    // Message pack parses the enum and converts it to string
-    if (dataFormat === 1 || dataFormat === 'Json') {
-        dataFormat = 0;
+    let dataFormat;
+    // Normalize to old streaming format for backward compatibility
+    if (PayloadFormat === 1) {
+        dataFormat = constants.DATA_FORMAT_JSON;
     }
 
-    // Protobuf format. Normalized to old streaming format for backward compatibility
-    if (dataFormat === 2 || dataFormat === 'Protobuf') {
-        dataFormat = 1;
+    // Normalize to old streaming format for backward compatibility
+    if (PayloadFormat === 2) {
+        dataFormat = constants.DATA_FORMAT_PROTOBUF;
     }
 
+    let data = Payload;
     // JSON protocol converts bytes array to base64 encoded string
-    if (protocol.name === 'json' && typeof data === 'string') {
+    // we need to convert it back to bytes
+    if (protocol.name === 'json') {
         data = new Uint8Array(
             window
                 .atob(data)
@@ -67,7 +62,7 @@ function normalizeMessage(message, protocol) {
     }
 
     return {
-        ReferenceId: referenceId,
+        ReferenceId,
         DataFormat: dataFormat,
         Data: data,
     };
@@ -77,13 +72,11 @@ function parseMessage(message, utf8Decoder) {
     const { ReferenceId, DataFormat } = message;
     let data = message.Data;
 
-    // JSON
-    if (DataFormat === 0) {
+    if (DataFormat === constants.DATA_FORMAT_JSON) {
         try {
             data = utf8Decoder.decode(data);
             data = JSON.parse(data);
-        } catch (e) {
-            const error = new Error(e.message);
+        } catch (error) {
             error.payload = data;
 
             throw error;
@@ -121,7 +114,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
             error,
         });
 
-        transportFailCallback(error);
+        transportFailCallback();
     }
 }
 
@@ -150,7 +143,11 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
             protocol,
         });
     } catch (error) {
-        this.transportFailCallback(error);
+        log.error(LOG_AREA, "Couldn't intialize the connection", {
+            error,
+        });
+
+        this.transportFailCallback();
     }
 
     this.connection.onclose = this.handleConnectionClosure.bind(this);
@@ -179,7 +176,14 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
         })
         .catch((error) => {
-            this.transportFailCallback(error);
+            log.error(
+                LOG_AREA,
+                'Error occurred while connecting to streaming service',
+                {
+                    error,
+                },
+            );
+            this.transportFailCallback();
         });
 };
 
@@ -210,7 +214,11 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
     this.isStopping = false;
 
     if (!this.hasStreamingStarted) {
-        this.transportFailCallback(error);
+        log.error(LOG_AREA, 'Connection closed before streaming could start.', {
+            error,
+        });
+
+        this.transportFailCallback();
         return;
     }
 
@@ -229,10 +237,16 @@ SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
 
         this.receivedCallback(parsedMessage);
     } catch (error) {
-        log.error(LOG_AREA, 'Error occurred while parsing message', {
-            error,
-            payload: error.payload,
-        });
+        const errorMessage = error.message || '';
+        log.error(
+            LOG_AREA,
+            `Error occurred while parsing message. ${errorMessage}`,
+            {
+                error,
+                payload: error.payload,
+                protocol: protocol.name,
+            },
+        );
 
         this.transportFailCallback();
     }
@@ -312,7 +326,7 @@ SignalrCoreTransport.prototype.renewSession = function(authToken, contextId) {
                 },
             );
 
-            this.transportFailCallback(error);
+            this.transportFailCallback();
         });
 };
 

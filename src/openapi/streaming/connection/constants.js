@@ -44,6 +44,9 @@ export const CONNECTION_STATE_DISCONNECTED = 0x20;
  */
 export const CONNECTION_STATE_FAILED = 0x40;
 
+export const DATA_FORMAT_JSON = 0;
+export const DATA_FORMAT_PROTOBUF = 1;
+
 export const READABLE_CONNECTION_STATE_MAP = {
     [CONNECTION_STATE_INITIALIZING]: 'Initializing',
     [CONNECTION_STATE_STARTED]: 'Started',
