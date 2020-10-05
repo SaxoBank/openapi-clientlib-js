@@ -12,6 +12,7 @@ import log from '../../log';
 import { padLeft } from '../../utils/string';
 import Connection from './connection/connection';
 import * as connectionConstants from './connection/constants';
+import * as streamingTransports from './streamingTransports';
 
 // -- Local variables section --
 
@@ -22,6 +23,15 @@ const OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS = '_resetsubscriptions';
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
 
 const LOG_AREA = 'Streaming';
+
+const DEFAULT_STREAMING_OPTIONS = {
+    waitForPageLoad: false,
+    transportTypes: [
+        streamingTransports.LEGACY_SIGNALR_WEBSOCKETS,
+        streamingTransports.LEGACY_SIGNALR_LONG_POLLING,
+    ],
+    connectRetryDelay: DEFAULT_CONNECT_RETRY_DELAY,
+};
 
 // -- Local methods section --
 
@@ -186,7 +196,14 @@ function onConnectionStateChanged(nextState) {
             for (let i = 0; i < this.subscriptions.length; i++) {
                 this.subscriptions[i].onConnectionUnavailable();
             }
-            retryConnection.call(this);
+
+            if (this.isReset) {
+                init.call(this);
+                this.isReset = false;
+            } else {
+                retryConnection.call(this);
+            }
+
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
@@ -611,49 +628,15 @@ function Streaming(transport, baseUrl, authProvider, options) {
     this.authProvider = authProvider;
     this.transport = transport;
     this.subscriptions = [];
+    this.isReset = false;
+
+    this.setOptions(options);
 
     this.authProvider.on(this.authProvider.EVENT_TOKEN_RECEIVED, () => {
         // Forcing authorization request upon new token arrival.
         const forceAuthorizationRequest = true;
         updateConnectionQuery.call(this, forceAuthorizationRequest);
     });
-
-    this.options = {
-        // Faster and does not cause problems after IE8
-        waitForPageLoad: (options && options.waitForPageLoad) || false,
-
-        // Why longPolling: SignalR has a bug in SSE and forever frame is slow
-        // New type: plainWebSockets. This is new approach to streaming with array buffer communication format instead of JSON.
-        transport: (options && options.transportTypes) || [
-            'webSockets',
-            'longPolling',
-        ],
-        // Message serialization protocol used by signalr core. Its different from protobuf used for each subscription endpoint
-        // Streaming service relays message payload received from publishers as it is, which could be protobuf encoded.
-        // This protocol is used to serialize the message envelope rather than the payload
-        messageSerializationProtocol:
-            options && options.messageSerializationProtocol,
-    };
-
-    if (options) {
-        if (typeof options.connectRetryDelay === 'number') {
-            this.retryDelay = options.connectRetryDelay;
-        } else {
-            this.retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
-        }
-
-        if (typeof options.connectRetryDelayLevels === 'object') {
-            this.retryDelayLevels = options.connectRetryDelayLevels;
-        }
-
-        if (options.parserEngines) {
-            ParserFacade.addEngines(options.parserEngines);
-        }
-
-        if (options.parsers) {
-            ParserFacade.addParsers(options.parsers);
-        }
-    }
 
     this.orphanFinder = new StreamingOrphanFinder(
         this.subscriptions,
@@ -879,6 +862,69 @@ Streaming.prototype.getQuery = function() {
     if (this.connection) {
         return this.connection.getQuery();
     }
+};
+
+Streaming.prototype.setOptions = function(
+    options,
+    defaultOptions = DEFAULT_STREAMING_OPTIONS,
+) {
+    options = options || defaultOptions;
+
+    const {
+        waitForPageLoad,
+        transportTypes,
+        transport,
+        messageSerializationProtocol,
+        connectRetryDelay,
+        connectRetryDelayLevels,
+        parserEngines,
+        parsers,
+    } = options;
+
+    this.options = {
+        // Faster and does not cause problems after IE8
+        waitForPageLoad,
+
+        // Why longPolling: SignalR has a bug in SSE and forever frame is slow
+        // New type: plainWebSockets. This is new approach to streaming with array buffer communication format instead of JSON.
+        transport: transportTypes || transport,
+        // Message serialization protocol used by signalr core. Its different from protobuf used for each subscription endpoint
+        // Streaming service relays message payload received from publishers as it is, which could be protobuf encoded.
+        // This protocol is used to serialize the message envelope rather than the payload
+        messageSerializationProtocol,
+    };
+
+    if (typeof connectRetryDelay === 'number') {
+        this.retryDelay = connectRetryDelay;
+    } else {
+        this.retryDelay = defaultOptions.connectRetryDelay;
+    }
+
+    if (typeof connectRetryDelayLevels === 'object') {
+        this.retryDelayLevels = connectRetryDelayLevels;
+    }
+
+    if (parserEngines) {
+        ParserFacade.addEngines(parserEngines);
+    }
+
+    if (parsers) {
+        ParserFacade.addParsers(parsers);
+    }
+};
+
+Streaming.prototype.resetStreaming = function(baseUrl, options = {}) {
+    this.baseUrl = baseUrl;
+    this.setOptions(options, this.options);
+
+    this.isReset = true;
+    this.disconnect();
+};
+
+Streaming.prototype.getActiveTransportName = function() {
+    const activeTransport = this.connection.getTransport();
+
+    return activeTransport && activeTransport.name;
 };
 
 // -- Export section --
