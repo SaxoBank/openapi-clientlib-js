@@ -121,7 +121,12 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
 }
 
 SignalrCoreTransport.isSupported = function() {
-    return Boolean(window.Uint8Array) && Boolean(window.TextDecoder);
+    return (
+        window.signalrCore &&
+        typeof window.signalrCore.HubConnectionBuilder === 'function' &&
+        Boolean(window.Uint8Array) &&
+        Boolean(window.TextDecoder)
+    );
 };
 
 SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
