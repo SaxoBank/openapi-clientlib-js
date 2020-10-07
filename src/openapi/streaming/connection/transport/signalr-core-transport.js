@@ -12,7 +12,7 @@ const RECONNECT_DELAYS = [2000, 3000, 5000, 10000, 20000];
  * @param message
  */
 function handleLog(level, message) {
-    if (level < window.signalrCore.LogLevel.Error) {
+    if (level < window.signalrCore.LogLevel.Warning) {
         return;
     }
 

@@ -199,7 +199,6 @@ function onConnectionStateChanged(nextState) {
 
             if (this.isReset) {
                 init.call(this);
-                this.isReset = false;
             } else {
                 retryConnection.call(this);
             }
@@ -225,9 +224,10 @@ function onConnectionStateChanged(nextState) {
 
             this.retryCount = 0;
             // if *we* are reconnecting (as opposed to transport reconnecting, which we do not need to handle specially)
-            if (this.reconnecting) {
+            if (this.reconnecting || this.isReset) {
                 resetSubscriptions.call(this, this.subscriptions);
                 this.reconnecting = false;
+                this.isReset = false;
             }
 
             for (let i = 0; i < this.subscriptions.length; i++) {
@@ -630,7 +630,7 @@ function Streaming(transport, baseUrl, authProvider, options) {
     this.subscriptions = [];
     this.isReset = false;
 
-    this.setOptions(options);
+    this.setOptions({ ...DEFAULT_STREAMING_OPTIONS, ...options });
 
     this.authProvider.on(this.authProvider.EVENT_TOKEN_RECEIVED, () => {
         // Forcing authorization request upon new token arrival.
@@ -864,11 +864,8 @@ Streaming.prototype.getQuery = function() {
     }
 };
 
-Streaming.prototype.setOptions = function(
-    options,
-    defaultOptions = DEFAULT_STREAMING_OPTIONS,
-) {
-    options = options || defaultOptions;
+Streaming.prototype.setOptions = function(options) {
+    options = options || {};
 
     const {
         waitForPageLoad,
@@ -884,9 +881,6 @@ Streaming.prototype.setOptions = function(
     this.options = {
         // Faster and does not cause problems after IE8
         waitForPageLoad,
-
-        // Why longPolling: SignalR has a bug in SSE and forever frame is slow
-        // New type: plainWebSockets. This is new approach to streaming with array buffer communication format instead of JSON.
         transport: transportTypes || transport,
         // Message serialization protocol used by signalr core. Its different from protobuf used for each subscription endpoint
         // Streaming service relays message payload received from publishers as it is, which could be protobuf encoded.
@@ -897,7 +891,7 @@ Streaming.prototype.setOptions = function(
     if (typeof connectRetryDelay === 'number') {
         this.retryDelay = connectRetryDelay;
     } else {
-        this.retryDelay = defaultOptions.connectRetryDelay;
+        this.retryDelay = DEFAULT_STREAMING_OPTIONS.connectRetryDelay;
     }
 
     if (typeof connectRetryDelayLevels === 'object') {
@@ -915,10 +909,18 @@ Streaming.prototype.setOptions = function(
 
 Streaming.prototype.resetStreaming = function(baseUrl, options = {}) {
     this.baseUrl = baseUrl;
-    this.setOptions(options, this.options);
+    this.setOptions({ ...this.options, ...options });
 
     this.isReset = true;
-    this.disconnect();
+
+    const activeTransport = this.connection.getTransport();
+    if (activeTransport) {
+        this.disconnect();
+    } else {
+        // we might have reset after streaming failed due to unavailability of next transport
+        // this ensures that we reset subscriptions once connected again
+        onConnectionStateChanged.call(this, this.CONNECTION_STATE_DISCONNECTED);
+    }
 };
 
 Streaming.prototype.getActiveTransportName = function() {
