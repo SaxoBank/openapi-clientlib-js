@@ -101,6 +101,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     this.messageStream = null;
     this.hasStreamingStarted = false;
     this.isDisconnecting = false;
+    this.hasTransportError = false;
 
     // callbacks
     this.transportFailCallback = transportFailCallback;
@@ -214,13 +215,16 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         });
 };
 
-SignalrCoreTransport.prototype.stop = function() {
+SignalrCoreTransport.prototype.stop = function(hasTransportError) {
     if (!this.connection) {
         log.warn(LOG_AREA, "connection doesn't exist");
         return;
     }
 
     this.isDisconnecting = true;
+    if (hasTransportError) {
+        this.hasTransportError = true;
+    }
 
     // close message stream before closing connection
     if (this.messageStream) {
@@ -264,12 +268,18 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
         log.error(LOG_AREA, 'connection closed abruptly', { error });
     }
 
+    // Do not trigger disconnect in case of transport fallback to avoid reconnection
+    const shouldTriggerDisconnect = !this.hasTransportError;
+
     this.connection = null;
     this.messageStream = null;
     this.isDisconnecting = false;
     this.hasStreamingStarted = false;
+    this.hasTransportError = false;
 
-    this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
+    if (shouldTriggerDisconnect) {
+        this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
+    }
 };
 
 SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
@@ -294,6 +304,7 @@ SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
             },
         );
 
+        this.stop(true);
         this.transportFailCallback();
     }
 };
@@ -373,6 +384,7 @@ SignalrCoreTransport.prototype.renewSession = function(authToken, contextId) {
                 },
             );
 
+            this.stop(true);
             this.transportFailCallback();
         });
 };

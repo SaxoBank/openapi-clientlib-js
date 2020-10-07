@@ -24,6 +24,7 @@ describe('openapi SignalR core Transport', () => {
     let spyOnStartCallback;
     let spyOnStateChangedCallback;
     let spyOnTransportFailedCallback;
+    let streamCancelPromise;
     let fetchMock;
 
     class MockConnectionBuilder {
@@ -59,16 +60,24 @@ describe('openapi SignalR core Transport', () => {
                 subscribeNextHandler = next;
                 subscribeErrorHandler = error;
             },
-            cancelCallback: () =>
-                new Promise((resolve) => {
+            cancelCallback: () => {
+                streamCancelPromise = new Promise((resolve) => {
                     streamCancelPromiseResolver = resolve;
-                }),
+                });
+
+                return streamCancelPromise;
+            },
         };
         const closeCallbacks = [];
 
-        spyOnMessageStream = jest.fn().mockImplementation(() => mockSubject);
+        spyOnMessageStream = jest
+            .fn()
+            .mockName('spyOnMessageStream')
+            .mockImplementation(() => mockSubject);
+
         spyOnConnectionStop = jest
             .fn()
+            .mockName('spyOnConnectionStop')
             .mockImplementation(() =>
                 setTimeout(() =>
                     closeCallbacks.forEach((callback) => callback()),
@@ -250,13 +259,22 @@ describe('openapi SignalR core Transport', () => {
                 subscribeNextHandler({
                     ReferenceId: '12',
                     PayloadFormat: 1,
-                    Payload: window.btoa(`{ "some-key": 123 `),
+                    Payload: window.btoa('{ "some-key": 123 '),
                 });
 
                 expect(spyReceivedCallback).not.toBeCalled();
                 expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
 
-                done();
+                streamCancelPromiseResolver();
+                streamCancelPromise.then(() => {
+                    expect(spyOnConnectionStop).toBeCalledTimes(1);
+
+                    tick(10);
+                    expect(spyOnStateChangedCallback).not.toBeCalledWith(
+                        constants.CONNECTION_STATE_DISCONNECTED,
+                    );
+                    done();
+                });
             });
         });
     });
@@ -288,6 +306,7 @@ describe('openapi SignalR core Transport', () => {
 
             // update instance variables
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start({});
 
             renewalPromise = transport.renewSession(
                 AUTH_TOKEN,
@@ -309,6 +328,12 @@ describe('openapi SignalR core Transport', () => {
 
             renewalPromise.then(() => {
                 expect(spyOnTransportFailedCallback).toBeCalled();
+                expect(spyOnConnectionStop).toBeCalled();
+
+                tick(10);
+                expect(spyOnStateChangedCallback).not.toBeCalledWith(
+                    constants.CONNECTION_STATE_DISCONNECTED,
+                );
                 done();
             });
         });
@@ -317,6 +342,7 @@ describe('openapi SignalR core Transport', () => {
             // mock before it calls renewSession again
             transport.renewSession = jest
                 .fn()
+                .mockName('spyOnRenewSession')
                 .mockImplementation(() => Promise.resolve());
 
             fetchMock.reject(new Error('Network error'));
@@ -340,7 +366,7 @@ describe('openapi SignalR core Transport', () => {
     });
 
     describe('stop', () => {
-        it('should close message stream before closing connection', (done) => {
+        it.only('should close message stream before closing connection', (done) => {
             const transport = new SignalrCoreTransport(BASE_URL);
             transport.setStateChangedCallback(spyOnStateChangedCallback);
             transport.setReceivedCallback(jest.fn());
@@ -358,7 +384,10 @@ describe('openapi SignalR core Transport', () => {
                 );
 
                 // start message streaming
-                subscribeNextHandler({});
+                subscribeNextHandler({
+                    PayloadFormat: 1,
+                    Payload: window.btoa('{ "a": 2 }'),
+                });
 
                 const stopPromise = transport.stop();
 
