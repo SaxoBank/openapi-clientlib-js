@@ -5,7 +5,7 @@ import * as constants from '../constants';
 
 const LOG_AREA = 'SignalrCoreTransport';
 const NOOP = () => {};
-const RECONNECT_DELAYS = [2000, 2000, 2000, 2000, 2000];
+const RECONNECT_DELAYS = [2000, 3000, 5000, 10000, 20000];
 
 /**
  * Handles any signal-r log, and pipes it through our logging.
@@ -155,6 +155,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         });
 
         this.transportFailCallback();
+        return;
     }
 
     this.connection.onclose((error) => this.handleConnectionClosure(error));
@@ -189,14 +190,27 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
         })
         .catch((error) => {
-            log.error(
-                LOG_AREA,
-                'Error occurred while connecting to streaming service',
-                {
-                    error,
-                },
-            );
-            this.transportFailCallback();
+            if (error.statusCode) {
+                log.error(
+                    LOG_AREA,
+                    'Error occurred while connecting to streaming service',
+                    {
+                        error,
+                    },
+                );
+
+                this.transportFailCallback();
+            } else {
+                log.debug(
+                    LOG_AREA,
+                    'Possible network error occurred while connecting to streaming service',
+                    {
+                        error,
+                    },
+                );
+
+                this.handleConnectionClosure();
+            }
         });
 };
 
@@ -246,28 +260,15 @@ SignalrCoreTransport.prototype.createMessageStream = function(protocol) {
 };
 
 SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
-    this.connection = null;
-    this.messageStream = null;
-    this.isDisconnecting = false;
-
-    if (!this.hasStreamingStarted) {
-        log.error(
-            LOG_AREA,
-            'Connection closed before message streaming could start.',
-            {
-                error,
-            },
-        );
-
-        this.transportFailCallback();
-        return;
-    }
-
     if (error) {
         log.error(LOG_AREA, 'connection closed abruptly', { error });
     }
 
+    this.connection = null;
+    this.messageStream = null;
+    this.isDisconnecting = false;
     this.hasStreamingStarted = false;
+
     this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
 };
 
@@ -301,6 +302,7 @@ SignalrCoreTransport.prototype.handleMessageStreamError = function(error) {
     // It will be called if signalr failed to send message to start streaming
     // or if connection is closed with some error
     // only handle the 1st case since connection closing with error is already handled in onclose handler
+    // It will trigger disconnected state and will eventually try to reconnect again
     if (!this.hasStreamingStarted) {
         log.error(LOG_AREA, 'Error occurred while starting message streaming', {
             error,

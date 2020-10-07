@@ -143,23 +143,46 @@ describe('openapi SignalR core Transport', () => {
             });
         });
 
-        it('should call transport fail callback if handshake request fails', (done) => {
+        it('should call transport fail callback if handshake request fails with valid status code', (done) => {
             expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
                 constants.CONNECTION_STATE_CONNECTING,
             );
 
-            // fail handshake request
-            startPromiseRejector();
+            // fail handshake request with valid server error
+            const error = new Error('Internal server error');
+            error.statusCode = 500;
+            startPromiseRejector(error);
 
             startPromise.then(() => {
-                expect(spyOnStateChangedCallback).toBeCalledTimes(1);
                 expect(spyOnStartCallback).not.toBeCalled();
+                expect(spyOnStateChangedCallback).toBeCalledTimes(1);
                 expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
                 done();
             });
         });
 
-        it('should call transport fail callback if error is received while starting message streaming', (done) => {
+        it('should not call transport fail callback if handshake request fails due to network error', (done) => {
+            expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
+                constants.CONNECTION_STATE_CONNECTING,
+            );
+
+            // fail handshake request with network error
+            const error = new Error();
+            error.statusCode = 0;
+            startPromiseRejector(error);
+
+            startPromise.then(() => {
+                expect(spyOnStartCallback).not.toBeCalled();
+                expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
+                    2,
+                    constants.CONNECTION_STATE_DISCONNECTED,
+                );
+                expect(spyOnTransportFailedCallback).not.toBeCalled();
+                done();
+            });
+        });
+
+        it('should trigger disconnect if error is received while starting message streaming', (done) => {
             // resolve handshake request
             startPromiseResolver();
 
@@ -167,10 +190,11 @@ describe('openapi SignalR core Transport', () => {
                 subscribeErrorHandler(new Error('Streaming error'));
                 tick(10);
 
-                expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
-
-                // should not change state to disconnected
-                expect(spyOnStateChangedCallback).toBeCalledTimes(2);
+                expect(spyOnTransportFailedCallback).toBeCalledTimes(0);
+                expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
+                    3,
+                    constants.CONNECTION_STATE_DISCONNECTED,
+                );
                 done();
             });
         });
