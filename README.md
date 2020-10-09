@@ -1,7 +1,6 @@
 # OpenAPI Client Library
 
 [![Build Status](https://travis-ci.org/SaxoBank/openapi-clientlib-js.svg?branch=master)](https://travis-ci.org/SaxoBank/openapi-clientlib-js)
-[![API Doc](https://doclets.io/SaxoBank/openapi-clientlib-js/master.svg)](https://doclets.io/SaxoBank/openapi-clientlib-js/master)
 
 The OpenApi Client Library a JavaScript library for, among other things, consuming OpenAPI endpoints. 
 The library implements all details regarding security, handshake, heartbeat, endpoint data contracts, subscriptions and batching. 
@@ -63,7 +62,14 @@ The library requires an ES5-compatible browser and requires fetch and promises t
 
 ### Documentation
 
-Documentation for the API is built from the source jsdoc and [available on doclets.io](https://doclets.io/SaxoBank/openapi-clientlib-js/master).
+Documentation for the API is currently built from the source jsdoc. After cloning the repository, you can build and browse the documentation with the following command:
+
+```bash
+npm run build:doc && npx serve doc
+```
+
+This will build the documentation and [serve it on http://localhost:5000](http://localhost:5000).
 
 # Contributing
+
 You want to contribute? Great! Have a look at our [contribution guidelines](CONTRIBUTING.md).
