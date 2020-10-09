@@ -12,6 +12,7 @@ import log from '../../log';
 import { padLeft } from '../../utils/string';
 import Connection from './connection/connection';
 import * as connectionConstants from './connection/constants';
+import * as streamingTransports from './streamingTransports';
 
 // -- Local variables section --
 
@@ -22,6 +23,15 @@ const OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS = '_resetsubscriptions';
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
 
 const LOG_AREA = 'Streaming';
+
+const DEFAULT_STREAMING_OPTIONS = {
+    waitForPageLoad: false,
+    transportTypes: [
+        streamingTransports.LEGACY_SIGNALR_WEBSOCKETS,
+        streamingTransports.LEGACY_SIGNALR_LONG_POLLING,
+    ],
+    connectRetryDelay: DEFAULT_CONNECT_RETRY_DELAY,
+};
 
 // -- Local methods section --
 
@@ -186,7 +196,13 @@ function onConnectionStateChanged(nextState) {
             for (let i = 0; i < this.subscriptions.length; i++) {
                 this.subscriptions[i].onConnectionUnavailable();
             }
-            retryConnection.call(this);
+
+            if (this.isReset) {
+                init.call(this);
+            } else {
+                retryConnection.call(this);
+            }
+
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
@@ -208,9 +224,10 @@ function onConnectionStateChanged(nextState) {
 
             this.retryCount = 0;
             // if *we* are reconnecting (as opposed to transport reconnecting, which we do not need to handle specially)
-            if (this.reconnecting) {
+            if (this.reconnecting || this.isReset) {
                 resetSubscriptions.call(this, this.subscriptions);
                 this.reconnecting = false;
+                this.isReset = false;
             }
 
             for (let i = 0; i < this.subscriptions.length; i++) {
@@ -600,6 +617,7 @@ function onSubscribeNetworkError() {
  * @param {Object} [options.parserEngines={}] - The map of subscription parser engines where key is format name and
  *          value is an engine implementation.
  * @param {Array.<string>} [options.transportTypes=['plainWebSockets', 'webSockets', 'longPolling']] - The transports to be used in order by signal-r.
+ * @param {Object} [options.messageProtocol={}] - Message serialization protocol used by signalr core
  */
 function Streaming(transport, baseUrl, authProvider, options) {
     emitter.mixinTo(this);
@@ -610,44 +628,15 @@ function Streaming(transport, baseUrl, authProvider, options) {
     this.authProvider = authProvider;
     this.transport = transport;
     this.subscriptions = [];
+    this.isReset = false;
+
+    this.setOptions({ ...DEFAULT_STREAMING_OPTIONS, ...options });
 
     this.authProvider.on(this.authProvider.EVENT_TOKEN_RECEIVED, () => {
         // Forcing authorization request upon new token arrival.
         const forceAuthorizationRequest = true;
         updateConnectionQuery.call(this, forceAuthorizationRequest);
     });
-
-    this.options = {
-        // Faster and does not cause problems after IE8
-        waitForPageLoad: (options && options.waitForPageLoad) || false,
-
-        // Why longPolling: SignalR has a bug in SSE and forever frame is slow
-        // New type: plainWebSockets. This is new approach to streaming with array buffer communication format instead of JSON.
-        transport: (options && options.transportTypes) || [
-            'webSockets',
-            'longPolling',
-        ],
-    };
-
-    if (options) {
-        if (typeof options.connectRetryDelay === 'number') {
-            this.retryDelay = options.connectRetryDelay;
-        } else {
-            this.retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
-        }
-
-        if (typeof options.connectRetryDelayLevels === 'object') {
-            this.retryDelayLevels = options.connectRetryDelayLevels;
-        }
-
-        if (options.parserEngines) {
-            ParserFacade.addEngines(options.parserEngines);
-        }
-
-        if (options.parsers) {
-            ParserFacade.addParsers(options.parsers);
-        }
-    }
 
     this.orphanFinder = new StreamingOrphanFinder(
         this.subscriptions,
@@ -873,6 +862,71 @@ Streaming.prototype.getQuery = function() {
     if (this.connection) {
         return this.connection.getQuery();
     }
+};
+
+Streaming.prototype.setOptions = function(options) {
+    options = options || {};
+
+    const {
+        waitForPageLoad,
+        transportTypes,
+        transport,
+        messageSerializationProtocol,
+        connectRetryDelay,
+        connectRetryDelayLevels,
+        parserEngines,
+        parsers,
+    } = options;
+
+    this.options = {
+        // Faster and does not cause problems after IE8
+        waitForPageLoad,
+        transport: transportTypes || transport,
+        // Message serialization protocol used by signalr core. Its different from protobuf used for each subscription endpoint
+        // Streaming service relays message payload received from publishers as it is, which could be protobuf encoded.
+        // This protocol is used to serialize the message envelope rather than the payload
+        messageSerializationProtocol,
+    };
+
+    if (typeof connectRetryDelay === 'number') {
+        this.retryDelay = connectRetryDelay;
+    } else {
+        this.retryDelay = DEFAULT_STREAMING_OPTIONS.connectRetryDelay;
+    }
+
+    if (typeof connectRetryDelayLevels === 'object') {
+        this.retryDelayLevels = connectRetryDelayLevels;
+    }
+
+    if (parserEngines) {
+        ParserFacade.addEngines(parserEngines);
+    }
+
+    if (parsers) {
+        ParserFacade.addParsers(parsers);
+    }
+};
+
+Streaming.prototype.resetStreaming = function(baseUrl, options = {}) {
+    this.baseUrl = baseUrl;
+    this.setOptions({ ...this.options, ...options });
+
+    this.isReset = true;
+
+    const activeTransport = this.connection.getTransport();
+    if (activeTransport) {
+        this.disconnect();
+    } else {
+        // we might have reset after streaming failed due to unavailability of next transport
+        // this ensures that we reset subscriptions once connected again
+        onConnectionStateChanged.call(this, this.CONNECTION_STATE_DISCONNECTED);
+    }
+};
+
+Streaming.prototype.getActiveTransportName = function() {
+    const activeTransport = this.connection.getTransport();
+
+    return activeTransport && activeTransport.name;
 };
 
 // -- Export section --
