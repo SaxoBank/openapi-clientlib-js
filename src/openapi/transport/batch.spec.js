@@ -4,12 +4,12 @@ import {
     installClock,
     uninstallClock,
     tick,
-} from '../../test/utils';
-import mockTransport from '../../test/mocks/transport';
-import * as RequestUtils from '../../utils/request';
+} from 'test/utils';
+import mockTransport from 'test/mocks/transport';
+import * as RequestUtils from 'src/utils/request';
 import TransportBatch from './batch';
 
-jest.mock('../../utils/function', () => {
+jest.mock('src/utils/function', () => {
     return {
         nextTick(fn) {
             global.setTimeout(fn);

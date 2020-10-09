@@ -3,7 +3,7 @@
  * @ignore
  */
 
-import { endsWith, startsWith } from '../utils/string';
+import { endsWith, startsWith } from 'src/utils/string';
 
 // -- Local variables section --
 

@@ -4,10 +4,10 @@
  * @ignore
  */
 
+import NumberFormatting from 'src/number-formatting/number-formatting';
+import { format as formatTemplate } from 'src/utils/string';
 import formatPrice from './format';
 import parsePrice from './parse';
-import NumberFormatting from '../number-formatting/number-formatting';
-import { format as formatTemplate } from '../utils/string';
 import {
     getValidPriceCharacters,
     getValidPriceRegex,

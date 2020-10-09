@@ -1,8 +1,8 @@
-import { installClock, uninstallClock, tick } from '../../../../test/utils';
-import '../../../../test/mocks/math-random';
-import mockFetch from '../../../../test/mocks/fetch';
-import * as constants from './../constants';
-import jsonPayload from './payload.json';
+import { installClock, uninstallClock, tick } from 'test/utils';
+import 'test/mocks/math-random';
+import mockFetch from 'test/mocks/fetch';
+import jsonPayload from 'test/data/payload.json';
+import * as constants from '../constants';
 import SignalrCoreTransport from './signalr-core-transport';
 
 const CONTEXT_ID = '0000000000';

@@ -3,16 +3,16 @@
  * @ignore
  */
 
-import emitter from '../../micro-emitter';
-import { extend } from '../../utils/object';
-import Subscription from './subscription';
-import ParserFacade from './parser/parser-facade';
-import StreamingOrphanFinder from './orphan-finder';
-import log from '../../log';
-import { padLeft } from '../../utils/string';
+import emitter from 'src/micro-emitter';
+import { extend } from 'src/utils/object';
+import log from 'src/log';
+import { padLeft } from 'src/utils/string';
 import Connection from './connection/connection';
 import * as connectionConstants from './connection/constants';
-import * as streamingTransports from './streamingTransports';
+import * as streamingTransports from './connection/transportTypes';
+import ParserFacade from './parser/parser-facade';
+import Subscription from './subscription';
+import StreamingOrphanFinder from './orphan-finder';
 
 // -- Local variables section --
 

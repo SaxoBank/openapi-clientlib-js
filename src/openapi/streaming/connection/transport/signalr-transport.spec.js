@@ -1,8 +1,8 @@
-import { installClock, uninstallClock } from '../../../../test/utils';
-import '../../../../test/mocks/math-random';
-import log from '../../../../log';
+import 'test/mocks/math-random';
+import { installClock, uninstallClock } from 'test/utils';
+import log from 'src/log';
+import * as constants from '../constants';
 import SignalRTransport from './signalr-transport';
-import * as constants from './../constants';
 
 const CONTEXT_ID = '0000000000';
 const AUTH_TOKEN = 'TOKEN';

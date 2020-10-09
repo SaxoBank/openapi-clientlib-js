@@ -2,9 +2,8 @@
  * @module saxo/openapi/transport/putPatchDiagnosticsQueue
  * @ignore
  */
-
+import log from 'src/log';
 import TransportQueue from './queue';
-import log from '../../log';
 
 // -- Local variables section --
 

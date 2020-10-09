@@ -71,7 +71,8 @@
         "regenerator-runtime": "0.13.1",
         "rimraf": "2.6.2",
         "rollup": "2.0.6",
-        "rollup-plugin-babel": "4.4.0"
+        "rollup-plugin-babel": "4.4.0",
+        "rollup-plugin-includepaths": "0.2.4"
     },
     "prettier": {
         "trailingComma": "all",

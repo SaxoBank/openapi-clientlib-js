@@ -1,6 +1,6 @@
+import { FetchResponse } from 'test/mocks/fetch';
+import { installClock, uninstallClock, tick } from 'test/utils';
 import { convertFetchSuccess, convertFetchReject } from './fetch';
-import { FetchResponse } from '../test/mocks/fetch';
-import { installClock, uninstallClock, tick } from '../test/utils';
 
 describe('utils fetch', () => {
     it('images are downloaded as a binary blob', (done) => {

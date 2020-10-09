@@ -2,8 +2,8 @@
  * @module saxo/openapi/streaming/subscription
  * @ignore
  */
-import { extend } from '../../utils/object';
-import log from '../../log';
+import { extend } from 'src/utils/object';
+import log from 'src/log';
 import {
     ACTION_SUBSCRIBE,
     ACTION_UNSUBSCRIBE,

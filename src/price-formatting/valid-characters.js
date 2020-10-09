@@ -3,7 +3,7 @@
  * @ignore
  */
 
-import { extend } from '../utils/object';
+import { extend } from 'src/utils/object';
 import { getModernFractionsSeparator } from './modern-fractions-character';
 
 // -- Local variables section --

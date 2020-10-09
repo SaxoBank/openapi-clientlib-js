@@ -6,7 +6,12 @@
     },
     "plugins": ["import", "destructuring", "switch-case", "promise"],
     "settings": {
-        "import/ignore": ["libs", "node_modules"]
+        "import/ignore": ["libs", "node_modules"],
+        "import/resolver": {
+            "node": {
+                "paths": ["."]
+            }
+        }
     },
     "globals": {
         // define our own globals since the built-in list contains many false negatives like "find" that are non-standard
@@ -393,7 +398,18 @@
             }
         ],
         "import/first": "error",
-        "import/order": "off",
+        "import/order": [
+            "error",
+            {
+                "groups": [
+                    ["builtin", "external"],
+                    "internal",
+                    "parent",
+                    ["sibling", "index"]
+                ],
+                "newlines-between": "ignore"
+            }
+        ],
         "import/newline-after-import": "error",
         "import/prefer-default-export": "off",
         "import/no-unassigned-import": "off",
@@ -420,7 +436,7 @@
     },
     "overrides": [
         {
-            "files": ["*.spec.js", "src/test/**/*"],
+            "files": ["*.spec.js", "test/**/*"],
             "env": {
                 "jest": true
             },

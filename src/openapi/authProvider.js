@@ -5,10 +5,10 @@
 
 // -- Local variables section --
 
-import emitter from '../micro-emitter';
-import log from '../log';
-import { startsWith } from '../utils/string';
-import fetch from '../utils/fetch';
+import emitter from 'src/micro-emitter';
+import log from 'src/log';
+import { startsWith } from 'src/utils/string';
+import fetch from 'src/utils/fetch';
 
 const LOG_AREA = 'AuthProvider';
 
