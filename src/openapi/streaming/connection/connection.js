@@ -1,17 +1,19 @@
 import log from './../../../log';
+import * as streamingTransports from '../streamingTransports';
 import WebsocketTransport from './transport/websocket-transport';
 import SignalrTransport from './transport/signalr-transport';
+import SignalrCoreTransport from './transport/signalr-core-transport';
 
-const LOG_AREA = 'PlainWebSocketsTransport';
+const LOG_AREA = 'Connection';
 const DEFAULT_TRANSPORTS = [WebsocketTransport, SignalrTransport];
 
 const TRANSPORT_NAME_MAP = {
-    // New, plain RAW WebSocket transport.
-    [WebsocketTransport.NAME]: WebsocketTransport,
+    [streamingTransports.SIGNALR_CORE]: SignalrCoreTransport,
+    [streamingTransports.PLAIN_WEBSOCKETS]: WebsocketTransport,
 
-    // Backward compatible mapping to SignalR.
-    webSockets: SignalrTransport,
-    longPolling: SignalrTransport,
+    // Backward compatible mapping to legacy signalR.
+    [streamingTransports.LEGACY_SIGNALR_WEBSOCKETS]: SignalrTransport,
+    [streamingTransports.LEGACY_SIGNALR_LONG_POLLING]: SignalrTransport,
 };
 
 const NOOP = () => {};
@@ -20,24 +22,35 @@ const STATE_CREATED = 'connection-state-created';
 const STATE_STARTED = 'connection-state-started';
 const STATE_STOPPED = 'connection-state-stopped';
 
+function getLogDetails() {
+    return {
+        url: this.baseUrl,
+        index: this.tranportIndex,
+        contextId: this.contextId,
+        enabledTransports: this.options && this.options.transport,
+    };
+}
+
 function onTransportFail(error) {
-    log.error(LOG_AREA, 'Transport failed', { error });
+    log.info(LOG_AREA, 'Transport failed', {
+        error,
+        ...getLogDetails.call(this),
+    });
 
     // Try to create next possible transport.
-    this.transport = createTransport.call(
-        this,
-        this.baseUrl,
-        this.restTransport,
-    );
+    this.transport = createTransport.call(this, this.baseUrl);
 
     if (!this.transport) {
         // No next transport available. Report total failure.
-        log.error(LOG_AREA, 'Next supported Transport not found.');
-        this.failCallback({ message: 'No next fallback transport available.' });
+        log.warn(LOG_AREA, 'Next supported Transport not found', {
+            error,
+            ...getLogDetails.call(this),
+        });
+        this.failCallback();
         return;
     }
 
-    log.debug(LOG_AREA, 'Next supported Transport found.', {
+    log.debug(LOG_AREA, 'Next supported Transport found', {
         name: this.transport.name,
     });
 
@@ -45,7 +58,6 @@ function onTransportFail(error) {
     this.transport.setStateChangedCallback(this.stateChangedCallback);
     this.transport.setUnauthorizedCallback(this.unauthorizedCallback);
     this.transport.setConnectionSlowCallback(this.connectionSlowCallback);
-    this.transport.setErrorCallback(this.errorCallback);
 
     if (this.state === STATE_STARTED) {
         this.transport.updateQuery(this.authToken, this.contextId);
@@ -53,7 +65,7 @@ function onTransportFail(error) {
     }
 }
 
-function createTransport(baseUrl, restTransport) {
+function createTransport(baseUrl) {
     if (this.tranportIndex === null || this.tranportIndex === undefined) {
         this.tranportIndex = 0;
     } else {
@@ -70,14 +82,10 @@ function createTransport(baseUrl, restTransport) {
 
     if (!SelectedTransport.isSupported()) {
         // SelectedTransport transport is not supported by browser. Try to create next possible transport.
-        return createTransport.call(this, baseUrl, restTransport);
+        return createTransport.call(this, baseUrl);
     }
 
-    return new SelectedTransport(
-        baseUrl,
-        restTransport,
-        onTransportFail.bind(this),
-    );
+    return new SelectedTransport(baseUrl, onTransportFail.bind(this));
 }
 
 function getSupportedTransports(transportNames) {
@@ -103,18 +111,16 @@ function getSupportedTransports(transportNames) {
  * - WebSocket
  * - SignalR WebSocket/Long Polling (Legacy/Fallback solution).
  */
-function Connection(options, baseUrl, restTransport, failCallback = NOOP) {
+function Connection(options, baseUrl, failCallback = NOOP) {
     // Callbacks
     this.failCallback = failCallback;
     this.startCallback = NOOP;
     this.stateChangedCallback = NOOP;
     this.receiveCallback = NOOP;
     this.connectionSlowCallback = NOOP;
-    this.errorCallback = NOOP;
 
     // Parameters
     this.baseUrl = baseUrl;
-    this.restTransport = restTransport;
     this.options = options;
     this.authToken = null;
     this.contextId = null;
@@ -127,16 +133,16 @@ function Connection(options, baseUrl, restTransport, failCallback = NOOP) {
 
     // Index of currently used transport. Index corresponds to position in this.transports.
     this.tranportIndex = null;
-    this.transport = createTransport.call(
-        this,
-        this.baseUrl,
-        this.restTransport,
-    );
+    this.transport = createTransport.call(this, this.baseUrl);
 
     if (!this.transport) {
         // No next transport available. Report total failure.
-        log.error(LOG_AREA, 'Supported Transport not found.');
-        this.failCallback({ message: 'Unable to setup initial transport.' });
+        log.error(
+            LOG_AREA,
+            'Supported Transport not found.',
+            getLogDetails.call(this),
+        );
+        throw new Error('Unable to setup initial transport.');
     } else {
         log.debug(LOG_AREA, 'Supported Transport found', {
             name: this.transport.name,
@@ -162,13 +168,6 @@ Connection.prototype.setReceivedCallback = function(callback) {
     if (this.transport) {
         this.receiveCallback = callback;
         this.transport.setReceivedCallback(callback);
-    }
-};
-
-Connection.prototype.setErrorCallback = function(callback) {
-    if (this.transport) {
-        this.errorCallback = callback;
-        this.transport.setErrorCallback(callback);
     }
 };
 
@@ -217,6 +216,18 @@ Connection.prototype.updateQuery = function(
 Connection.prototype.getQuery = function() {
     if (this.transport) {
         return this.transport.getQuery();
+    }
+};
+
+Connection.prototype.onOrphanFound = function() {
+    if (this.transport && this.transport.onOrphanFound) {
+        this.transport.onOrphanFound();
+    }
+};
+
+Connection.prototype.onSubscribeNetworkError = function() {
+    if (this.transport && this.transport.onSubscribeNetworkError) {
+        this.transport.onSubscribeNetworkError();
     }
 };
 

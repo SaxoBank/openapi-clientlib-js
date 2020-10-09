@@ -1,3 +1,37 @@
+### v.7.1.0
+
+- Add signalr core transport support
+
+### v7.0.0
+
+- BREAKING - Review all log messages. Most network errors and expected events should not be errors or warnings.
+- BREAKING - Remove maxAuthErrors from TransportAuth - we now detect multiple auth errors on a endpoint intelligently
+- BREAKING - Rename authErrorsCleanupDebounce to authErrorsIgnoreDuration
+- Retry failed attempts to update websocket authentication
+- Added new EVENT_STREAMING_FAILED when a streaming connection completely fails
+- If a request for a subscription is sent twice, unsubscribe from the subscription that the library did not receive a response for
+- If an error occurs processing a protobuf message, we now reset the subscription so it isn't stuck
+
+### v.6.2.5
+
+- Use fetch instead of openapi transport for authorization
+
+### v.6.2.4
+
+- Use TextDecoder to decode utf8 string payload
+
+### v.6.2.3
+
+- Fix typed array slice method not supported exception in IE11 and old chrome
+
+### v.6.2.2
+
+- Fix stackoverflow exception during JSON payload parsing.
+
+### v.6.2.1
+
+- More detailed error logging for streaming.
+
 ### v.6.2.0
 
 - Refactoring of Plain Websocket Transport reconnecting logic.

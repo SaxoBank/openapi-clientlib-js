@@ -6,6 +6,10 @@ export const EVENT_CONNECTION_STATE_CHANGED = 'connectionStateChanged';
  * Event that occurs when the connection is slow.
  */
 export const EVENT_CONNECTION_SLOW = 'connectionSlow';
+/**
+ * Event that occurs when the connection fails.
+ */
+export const EVENT_STREAMING_FAILED = 'streamingFailed';
 
 /**
  * Streaming has been created but has not yet started the connection.
@@ -39,6 +43,9 @@ export const CONNECTION_STATE_DISCONNECTED = 0x20;
  * @type {number}
  */
 export const CONNECTION_STATE_FAILED = 0x40;
+
+export const DATA_FORMAT_JSON = 0;
+export const DATA_FORMAT_PROTOBUF = 1;
 
 export const READABLE_CONNECTION_STATE_MAP = {
     [CONNECTION_STATE_INITIALIZING]: 'Initializing',

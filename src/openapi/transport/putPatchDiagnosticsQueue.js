@@ -67,11 +67,11 @@ function TransportPutPatchDiagnositicsQueue(transport, transportCore) {
                 transportCore.setUseXHttpMethodOverride(true);
                 log.info(
                     LOG_AREA,
-                    'Diagnostic check for put/patch failed. Fallback to POST used.',
+                    'Diagnostic check for put/patch failed. Fallback to POST used',
                 );
             })
             .then(() => {
-                log.debug(LOG_AREA, 'Diagnostics checks finished, continuing.');
+                log.debug(LOG_AREA, 'Diagnostics checks finished, continuing');
                 this.isQueueing = false;
             }),
     );

@@ -56,7 +56,7 @@ function createTimerForNextToken() {
         if (elapse < 0) {
             log.warn(
                 LOG_AREA,
-                'token has changed, but expiry is less than the token refresh margin.',
+                'Token has changed, but expiry is less than the token refresh margin.',
                 {
                     expiry,
                     tokenRefreshMarginMs: this.tokenRefreshMarginMs,
@@ -79,7 +79,7 @@ function onApiTokenReceived(result) {
         !result.response ||
         !result.response[this.tokenRefreshPropertyNameToken]
     ) {
-        log.warn(
+        log.error(
             LOG_AREA,
             'Token refresh succeeded but no new token was present in response',
             result,
@@ -96,9 +96,26 @@ function onApiTokenReceived(result) {
 }
 
 function onApiTokenReceiveFail(result) {
-    log.warn(LOG_AREA, 'Token refresh failed', result);
+    const currentExpiry = this.getExpiry();
+    const isAuthenticationError =
+        result && (result.status === 401 || result.status === 403);
 
-    if (result && (result.status === 401 || result.status === 403)) {
+    // we only log this as an error if its abnormal e.g. it is not
+    //   1. a network error
+    //   2. a session expiry - if the current time is after the current expiry
+    //      then the token already expired, which should only happen if the session
+    //      was paused (e.g. app in background in phone, laptop hibernated)
+    if (
+        result.isNetworkError ||
+        (isAuthenticationError &&
+            (!currentExpiry || Date.now() > currentExpiry))
+    ) {
+        log.info(LOG_AREA, 'Token refresh failed', result);
+    } else {
+        log.error(LOG_AREA, 'Token refresh failed', result);
+    }
+
+    if (isAuthenticationError) {
         this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
         this.state = STATE_FAILED;
         return;
@@ -263,21 +280,24 @@ AuthProvider.prototype.tokenRejected = function(expiryOfRejectedToken) {
     let shouldRequest;
 
     if (!expiryOfRejectedToken) {
+        const lastTokenFetchTime = this.lastTokenFetchTime;
         // if we do not have the expiry of the current token, we don't know if we have
         // a different token now than the one causing the error. So we give some leeway
         // in order to not be re-requesting tokens in a loop
         shouldRequest =
             !isFetching &&
-            (!this.lastTokenFetchTime ||
-                now - this.lastTokenFetchTime > TRASH_NEW_TOKEN_DELAY_MS);
+            (!lastTokenFetchTime ||
+                now - lastTokenFetchTime > TRASH_NEW_TOKEN_DELAY_MS);
 
         if (shouldRequest) {
             log.warn(
                 LOG_AREA,
-                'Request failed with invalid token before time',
+                'Request failed with invalid token and we are guessing we need a new one',
                 {
+                    lastTokenFetchTime,
                     currentAuthExpiry,
                     now,
+                    isFetching,
                 },
             );
         } else {
@@ -297,7 +317,7 @@ AuthProvider.prototype.tokenRejected = function(expiryOfRejectedToken) {
             currentAuthExpiry > now &&
             expiryOfRejectedToken === currentAuthExpiry;
         const isCurrentTokenExpired = currentAuthExpiry < now;
-        // if we are not in an ok waiting state
+
         shouldRequest =
             (isCurrentTokenNotExpiredButRejected || isCurrentTokenExpired) &&
             !isFetching;
@@ -313,6 +333,7 @@ AuthProvider.prototype.tokenRejected = function(expiryOfRejectedToken) {
                     LOG_AREA,
                     'Unauthorized with a valid token, will fetch a new one',
                     {
+                        expiryOfRejectedToken,
                         currentAuthExpiry,
                         now,
                     },
@@ -320,13 +341,13 @@ AuthProvider.prototype.tokenRejected = function(expiryOfRejectedToken) {
             }
         } else if (isCurrentTokenExpired && !isFetching) {
             const lateBy = now - this.tokenRefreshTimerFireTime;
-            log.error(LOG_AREA, 'Token was not refreshed in time', {
+            log.debug(LOG_AREA, 'Token was not refreshed in time', {
                 currentAuthExpiry,
                 now,
                 lateBy,
             });
         } else {
-            log.info(
+            log.debug(
                 LOG_AREA,
                 'Received an auth error because of an old token.',
                 {

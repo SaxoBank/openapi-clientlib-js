@@ -34,17 +34,18 @@ function emptyQueueIntoServiceGroups() {
 }
 
 function batchCallFailure(callList, batchResponse) {
-    log.error(LOG_AREA, 'Batch request failed', batchResponse);
+    const isAuthFailure = batchResponse && batchResponse.status === 401;
 
-    const status =
-        batchResponse && batchResponse.status === 401 ? 401 : undefined;
+    const logFunction =
+        isAuthFailure || batchResponse.isNetworkError ? log.debug : log.error;
+    logFunction(LOG_AREA, 'Batch request failed', batchResponse);
 
     for (let i = 0; i < callList.length; i++) {
         // pass on the batch response so that if a batch responds with a 401,
         // and queue is before batch, queue will auto retry
         callList[i].reject({
             message: 'batch failed',
-            status,
+            status: isAuthFailure ? 401 : undefined,
             isNetworkError: batchResponse.isNetworkError,
         });
     }
@@ -87,7 +88,7 @@ function batchCallSuccess(callList, batchResult) {
         } else {
             log.error(LOG_AREA, 'A batch response was missing', {
                 index: i,
-                batchResponse: batchResult,
+                ...batchResult,
             });
             call.reject();
         }

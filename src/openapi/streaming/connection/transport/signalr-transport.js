@@ -1,7 +1,7 @@
 import log from '../../../../log';
+import * as streamingTransports from '../../streamingTransports';
 import * as constants from './../constants';
 
-const NAME = 'signalr';
 const LOG_AREA = 'SignalRTransport';
 const NOOP = () => {};
 
@@ -23,7 +23,7 @@ function mapConnectionState(state) {
             return constants.CONNECTION_STATE_RECONNECTING;
 
         default:
-            log.warn(LOG_AREA, 'unrecognised state', state);
+            log.warn(LOG_AREA, 'Unrecognised state', state);
             break;
     }
 
@@ -36,16 +36,13 @@ function mapConnectionState(state) {
  * signal-r attempts to keep the subscription and if it doesn't we will get the normal failed events
  */
 function handleError(errorDetail) {
-    log.error(LOG_AREA, 'Transport error', errorDetail);
+    log.warn(LOG_AREA, 'Transport error', errorDetail);
     if (
         errorDetail &&
         errorDetail.source &&
         errorDetail.source.status === 401
     ) {
         this.unauthorizedCallback();
-    }
-    if (typeof this.errorCallback === 'function') {
-        this.errorCallback(errorDetail);
     }
 }
 
@@ -54,7 +51,7 @@ function handleError(errorDetail) {
  * @param message
  */
 function handleLog(message) {
-    log.debug(LOG_AREA, message);
+    log.debug(LOG_AREA, message.replace(/BEARER[^&]+/i, '[Redacted Token]'));
 }
 
 function handleStateChanged(payload) {
@@ -68,21 +65,18 @@ function handleStateChanged(payload) {
 /**
  * SignalR Transport which supports both webSocket and longPolling with internal fallback mechanism.
  */
-function SignalrTransport(baseUrl) {
-    this.name = NAME;
+function SignalrTransport(baseUrl, failCallback) {
+    this.name = streamingTransports.LEGACY_SIGNALR;
     this.baseUrl = baseUrl;
     this.connectionUrl = `${baseUrl}/streaming/connection`;
     this.connection = $.connection(this.connectionUrl);
     this.transport = null;
     this.stateChangedCallback = NOOP;
-    this.errorCallback = NOOP;
     this.unauthorizedCallback = NOOP;
     this.connection.stateChanged(handleStateChanged.bind(this));
     this.connection.log = handleLog.bind(this);
     this.connection.error(handleError.bind(this));
 }
-
-SignalrTransport.NAME = NAME;
 
 SignalrTransport.isSupported = function() {
     return true;
@@ -100,10 +94,6 @@ SignalrTransport.prototype.setStateChangedCallback = function(callback) {
 
 SignalrTransport.prototype.setReceivedCallback = function(callback) {
     this.connection.received(callback);
-};
-
-SignalrTransport.prototype.setErrorCallback = function(callback) {
-    this.errorCallback = callback;
 };
 
 SignalrTransport.prototype.setConnectionSlowCallback = function(callback) {

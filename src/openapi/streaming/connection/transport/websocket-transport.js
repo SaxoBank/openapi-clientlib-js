@@ -8,10 +8,11 @@
 import * as constants from '../constants';
 import log from '../../../../log';
 import * as uint64utils from '../../../../utils/uint64';
+import fetch from '../../../../utils/fetch';
+import { getRequestId } from '../../../../utils/request';
+import * as streamingTransports from '../../streamingTransports';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
-
-const NAME = 'plainWebSockets';
 
 const socketCloseCodes = {
     NORMAL_CLOSURE: 1000,
@@ -48,9 +49,8 @@ function createSocket() {
 
         this.socket = socket;
     } catch (error) {
-        handleFailure.call(this, {
-            message: 'Failed to setup webSocket connection',
-        });
+        log.error(LOG_AREA, 'Failed to setup webSocket connection', error);
+        handleFailure.call(this);
     }
 }
 
@@ -68,31 +68,38 @@ function destroySocket() {
     this.socket = null;
 }
 
+function restartConnection() {
+    this.reconnectTimeout = null;
+    this.reconnectCount++;
+
+    createSocket.call(this);
+
+    log.debug(LOG_AREA, 'Transport reconnected');
+}
+
 function reconnect(isImmediate) {
     if (this.reconnectCount >= DEFAULT_RECONNECT_LIMIT) {
         this.stop();
         return;
     }
 
+    if (this.reconnectTimeout && !isImmediate) {
+        log.warn(LOG_AREA, 'Reconnecting when already reconnecting');
+    }
+
     clearTimeout(this.reconnectTimeout);
+    this.reconnectTimeout = null;
     this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
 
-    const restartConnection = () => {
-        this.reconnectCount++;
-
-        destroySocket.call(this);
-        createSocket.call(this);
-
-        log.debug(LOG_AREA, 'Transport reconnected');
-    };
+    destroySocket.call(this);
 
     if (isImmediate) {
-        restartConnection();
+        restartConnection.call(this);
         return;
     }
 
     this.reconnectTimeout = setTimeout(
-        restartConnection,
+        restartConnection.bind(this),
         DEFAULT_RECONNECT_DELAY,
     );
 }
@@ -115,7 +122,9 @@ function parseMessage(rawData) {
         index += 1;
         // n bytes make up the reference id. The reference id is an ASCII string.
         const referenceIdBuffer = new Int8Array(
-            rawData.slice(index, index + referenceIdSize),
+            rawData,
+            index,
+            referenceIdSize,
         );
         const referenceId = String.fromCharCode.apply(
             String,
@@ -131,16 +140,21 @@ function parseMessage(rawData) {
         // n bytes make up the actual payload. In the case of the payload format being Json, this is a UTF8 encoded string.
         let data;
 
-        if (dataFormat === 0) {
-            const payloadBuffer = new Uint8Array(
-                rawData.slice(index, index + payloadSize),
-            );
-            data = String.fromCharCode.apply(null, payloadBuffer);
-            data = decodeURIComponent(escape(data));
-            data = JSON.parse(data);
+        if (dataFormat === constants.DATA_FORMAT_JSON) {
+            try {
+                const payload = new Uint8Array(rawData, index, payloadSize);
+                data = this.utf8Decoder.decode(payload);
+                data = JSON.parse(data);
+            } catch (e) {
+                const error = new Error(e.message);
+                error.payload = data;
+                error.payloadSize = payloadSize;
+
+                throw error;
+            }
         } else {
             // Protobuf
-            data = new Uint8Array(rawData.slice(index, index + payloadSize));
+            data = new Uint8Array(rawData, index, payloadSize);
         }
 
         this.lastMessageId = messageId;
@@ -160,12 +174,11 @@ function parseMessage(rawData) {
 
 /**
  * Handle transport failure.
- * @param { Object } error - The error object with message property.
  */
-function handleFailure(error) {
+function handleFailure() {
     destroySocket.call(this);
     this.stateChangedCallback(constants.CONNECTION_STATE_FAILED);
-    this.failCallback(error);
+    this.failCallback();
 }
 
 function handleSocketOpen() {
@@ -179,22 +192,37 @@ function handleSocketOpen() {
 }
 
 function handleSocketMessage(messageEvent) {
+    this.lastMessageTime = Date.now();
+
     if (messageEvent.data instanceof ArrayBuffer) {
         let parsedMessages;
         try {
             parsedMessages = parseMessage.call(this, messageEvent.data);
-        } catch (e) {
-            handleFailure.call(this, {
-                message: `Error occurred during parsing of plain WebSocket message. Message: ${e.message}`,
-            });
+        } catch (error) {
+            log.error(
+                LOG_AREA,
+                'Error occurred during parsing of plain WebSocket message',
+                {
+                    error,
+                    payload: error.payload,
+                    payloadSize: error.payloadSize,
+                },
+            );
+
+            // fallback to next transport
+            handleFailure.call(this);
             return;
         }
 
-        log.debug('Parsed message', {
+        log.debug(LOG_AREA, 'Parsed message', {
             messages: parsedMessages,
         });
 
         this.receivedCallback(parsedMessages);
+    } else {
+        log.error(LOG_AREA, 'Received a non-ArrayBuffer message', {
+            payload: messageEvent.data,
+        });
     }
 }
 
@@ -204,22 +232,25 @@ function handleSocketClose(event) {
     }
 
     if (!this.hasBeenConnected) {
-        handleFailure.call(this, {
-            message: `websocket error occured. code: ${event.code}, reason: ${event.reason}`,
+        log.info(LOG_AREA, 'websocket error occurred.', {
+            readyState: this.socket.readyState,
+            code: event.code,
+            reason: event.reason,
         });
+        handleFailure.call(this);
 
         return;
     }
 
     const isCleanDisconnect = event.wasClean === true;
     if (!isCleanDisconnect) {
-        log.warn(LOG_AREA, 'websocket connection closed abruptly', {
+        log.info(LOG_AREA, 'Websocket connection closed abruptly', {
             readyState: this.socket.readyState,
             code: event.code,
             reason: event.reason,
         });
     } else {
-        log.debug(LOG_AREA, 'websocket connection closed');
+        log.debug(LOG_AREA, 'Websocket connection closed');
     }
 
     if (event.code === socketCloseCodes.TOKEN_EXPIRED) {
@@ -231,6 +262,32 @@ function handleSocketClose(event) {
     }
 
     reconnect.call(this);
+}
+
+function detectNetworkError() {
+    const fiveSecondsAgo = Date.now() - 1000 * 5;
+
+    // if we haven't got a message recently
+    // but we found a orphan recently
+    // and got a network error subscribing
+    // and our reconnectCount is 0 so we are not currently reconnecting
+    if (
+        this.lastMessageTime < fiveSecondsAgo &&
+        this.lastOrphanFound > fiveSecondsAgo &&
+        this.lastSubscribeNetworkError > fiveSecondsAgo &&
+        this.reconnectCount === 0
+    ) {
+        log.info(
+            LOG_AREA,
+            'Detected a broken websocket, so attempting to reconnect',
+            {
+                readyState: this.socket.readyState,
+            },
+        );
+
+        // reconnect immediately as no need to wait - this is the initial event
+        reconnect.call(this, true);
+    }
 }
 
 // -- Exported methods section --
@@ -249,17 +306,15 @@ function handleSocketClose(event) {
  *
  * @constructor
  */
-function WebsocketTransport(baseUrl, restTransport, failCallback = NOOP) {
-    this.name = NAME;
+function WebsocketTransport(baseUrl, failCallback = NOOP) {
+    this.name = streamingTransports.PLAIN_WEBSOCKETS;
 
     // WebSocket instance
     this.socket = null;
 
     // Urls
-    this.baseUrl = baseUrl;
     this.connectionUrl = `${baseUrl}/streamingws/connect`;
-    this.authorizeUrl = 'authorize';
-    this.authorizeServiceGroup = 'streamingws';
+    this.authorizeUrl = `${baseUrl}/streamingws/authorize`;
 
     // If true, indicates that transport had at least once successful connection (received onopen).
     this.hasBeenConnected = false;
@@ -271,30 +326,40 @@ function WebsocketTransport(baseUrl, restTransport, failCallback = NOOP) {
     this.reconnectTimeout = null;
     this.reconnectCount = 0;
 
+    this.lastOrphanFound = 0;
+    this.lastSubscribeNetworkError = 0;
+    this.lastMessageTime = 0;
+
     this.query = null;
-    this.restTransport = restTransport;
     this.contextId = null;
     this.authorizePromise = null;
+    this.authToken = null;
 
     // Callbacks
     this.failCallback = failCallback;
     this.logCallback = NOOP;
     this.stateChangedCallback = NOOP;
     this.receivedCallback = NOOP;
-    this.errorCallback = NOOP;
     this.connectionSlowCallback = NOOP;
     this.startedCallback = NOOP;
     this.closeCallback = NOOP;
     this.unauthorizedCallback = NOOP;
-}
 
-WebsocketTransport.NAME = NAME;
+    try {
+        this.utf8Decoder = new window.TextDecoder();
+    } catch (e) {
+        failCallback({
+            message: `Error occurred while initializing text decoder : ${e.message}`,
+        });
+    }
+}
 
 WebsocketTransport.isSupported = function() {
     return (
         Boolean(window.WebSocket) &&
         Boolean(window.Int8Array) &&
-        Boolean(window.Uint8Array)
+        Boolean(window.Uint8Array) &&
+        Boolean(window.TextDecoder)
     );
 };
 
@@ -312,20 +377,13 @@ WebsocketTransport.prototype.setReceivedCallback = function(callback) {
     this.receivedCallback = callback;
 };
 
-/**
- * The error callback. If invoked, indicates some error occurred.
- * @param callback
- */
-WebsocketTransport.prototype.setErrorCallback = function(callback) {
-    this.errorCallback = callback;
-};
-
 WebsocketTransport.prototype.setConnectionSlowCallback = function(callback) {
     this.connectionSlowCallback = callback;
 };
 
 WebsocketTransport.prototype.getAuthorizePromise = function(
     contextId,
+    authToken,
     forceAuthenticate,
 ) {
     if (!forceAuthenticate && this.authorizePromise) {
@@ -333,27 +391,45 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
         return this.authorizePromise;
     }
 
-    this.authorizePromise = new Promise((resolve, reject) => {
-        this.restTransport
-            .put(
-                this.authorizeServiceGroup,
-                `${this.authorizeUrl}?contextId=${contextId}`,
-            )
-            .then((response) => {
-                log.debug(LOG_AREA, 'Authorization completed', {
-                    contextId,
-                });
-                resolve(response);
-            })
-            .catch((error) => {
-                log.error(LOG_AREA, 'Authorization failed', {
-                    contextId,
-                    error,
-                });
-                reject(error);
-                handleFailure.call(this, error);
+    if (!authToken) {
+        const errorMessage = 'Authorization token is not provided';
+        log.error(LOG_AREA, errorMessage, {
+            contextId,
+        });
+
+        return Promise.reject(new Error(errorMessage));
+    }
+
+    const options = {
+        headers: {
+            'X-Request-Id': getRequestId(),
+            Authorization: authToken,
+        },
+    };
+    const url = `${this.authorizeUrl}?contextId=${contextId}`;
+
+    this.authorizePromise = fetch('PUT', url, options)
+        .then((response) => {
+            log.debug(LOG_AREA, 'Authorization completed', {
+                contextId,
             });
-    });
+            return response;
+        })
+        .catch((error) => {
+            // if this call was superseded by another one, then ignore this error
+            if (this.authToken !== authToken || this.contextId !== contextId) {
+                return Promise.reject();
+            }
+
+            // if a network error occurs, retry
+            if (error && error.isNetworkError) {
+                return this.getAuthorizePromise(contextId, authToken, true);
+            }
+
+            log.error(LOG_AREA, 'Authorization failed', error);
+            handleFailure.call(this);
+            throw error;
+        });
 
     return this.authorizePromise;
 };
@@ -369,33 +445,53 @@ WebsocketTransport.prototype.start = function(options, callback) {
     }
 
     if (this.socket) {
-        log.warn(LOG_AREA, 'only one socket per connection is allowed');
+        log.warn(LOG_AREA, 'Only one socket per connection is allowed');
         return;
     }
 
     log.debug(LOG_AREA, 'Starting transport');
 
-    const authorizePromise = this.getAuthorizePromise(this.contextId);
+    const authorizePromise = this.getAuthorizePromise(
+        this.contextId,
+        this.authToken,
+    );
 
-    authorizePromise.then(() => {
-        this.startedCallback();
-        this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
-        createSocket.call(this);
-    });
+    authorizePromise.then(
+        () => {
+            this.startedCallback();
+            this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
+            createSocket.call(this);
+        },
+        () => {
+            // we handle everything in authorizePromise, this just stops an unhandled rejection
+        },
+    );
 };
 
 WebsocketTransport.prototype.stop = function() {
     destroySocket.call(this);
 
-    clearInterval(this.reconnectTimeout);
+    clearTimeout(this.reconnectTimeout);
     this.reconnectTimeout = null;
     this.contextId = null;
     this.lastMessageId = null;
     this.authorizePromise = null;
     this.reconnectCount = 0;
     this.hasBeenConnected = false;
+    this.lastOrphanFound = 0;
+    this.lastSubscribeNetworkError = 0;
 
     this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
+};
+
+WebsocketTransport.prototype.onOrphanFound = function() {
+    this.lastOrphanFound = Date.now();
+    detectNetworkError.call(this);
+};
+
+WebsocketTransport.prototype.onSubscribeNetworkError = function() {
+    this.lastSubscribeNetworkError = Date.now();
+    detectNetworkError.call(this);
 };
 
 WebsocketTransport.prototype.updateQuery = function(
@@ -421,9 +517,14 @@ WebsocketTransport.prototype.updateQuery = function(
 
     this.query = query;
     this.contextId = contextId;
+    this.authToken = authToken;
 
     if (forceAuth) {
-        const authorizePromise = this.getAuthorizePromise(this.contextId, true);
+        const authorizePromise = this.getAuthorizePromise(
+            this.contextId,
+            authToken,
+            true,
+        );
 
         if (this.isReconnectPending) {
             authorizePromise.then(() => {

@@ -81,7 +81,7 @@ function subscribe() {
 
     normalizeSubscribeData(data);
 
-    log.debug(LOG_AREA, 'starting..', {
+    log.debug(LOG_AREA, 'Posting to create a subscription', {
         serviceGroup: this.serviceGroup,
         url: subscribeUrl,
     });
@@ -142,6 +142,12 @@ function unsubscribeByTagPending() {
  * @param args
  */
 function tryPerformAction(action, args) {
+    if (this.networkErrorSubscribingTimer) {
+        // Clear the timeout - some other external event has happened which overrides the network timeout
+        clearTimeout(this.networkErrorSubscribingTimer);
+        this.networkErrorSubscribingTimer = null;
+    }
+
     if (
         !this.connectionAvailable ||
         this.TRANSITIONING_STATES & this.currentState
@@ -182,10 +188,16 @@ function performAction(queuedAction, isLastQueuedAction) {
                     break;
 
                 default:
-                    log.error(LOG_AREA, 'unanticipated state', {
-                        state: this.currentState,
-                        action,
-                    });
+                    log.error(
+                        LOG_AREA,
+                        'Unanticipated state in performAction Subscribe',
+                        {
+                            state: this.currentState,
+                            action,
+                            url: this.url,
+                            serviceGroup: this.serviceGroup,
+                        },
+                    );
             }
             break;
 
@@ -196,10 +208,14 @@ function performAction(queuedAction, isLastQueuedAction) {
                     break;
 
                 default:
-                    log.error(LOG_AREA, 'unanticipated state', {
-                        state: this.currentState,
-                        action,
-                    });
+                    log.error(
+                        LOG_AREA,
+                        'Unanticipated state in performAction Patch',
+                        {
+                            state: this.currentState,
+                            action,
+                        },
+                    );
             }
             break;
 
@@ -213,10 +229,14 @@ function performAction(queuedAction, isLastQueuedAction) {
                     break;
 
                 default:
-                    log.error(LOG_AREA, 'unanticipated state', {
-                        state: this.currentState,
-                        action,
-                    });
+                    log.error(
+                        LOG_AREA,
+                        'Unanticipated state in performAction Unsubscribe',
+                        {
+                            state: this.currentState,
+                            action,
+                        },
+                    );
             }
             break;
 
@@ -228,10 +248,14 @@ function performAction(queuedAction, isLastQueuedAction) {
                     break;
 
                 default:
-                    log.error(LOG_AREA, 'unanticipated state', {
-                        state: this.currentState,
-                        action,
-                    });
+                    log.error(
+                        LOG_AREA,
+                        'Unanticipated state in performAction UnsubscribeByTagPending',
+                        {
+                            state: this.currentState,
+                            action,
+                        },
+                    );
             }
             break;
 
@@ -268,7 +292,7 @@ function onSubscribeSuccess(referenceId, result) {
     const responseData = result.response;
 
     if (referenceId !== this.referenceId) {
-        log.error(
+        log.info(
             LOG_AREA,
             'Received an Ok subscribe response for subscribing a subscription that has afterwards been reset - ignoring',
         );
@@ -288,7 +312,8 @@ function onSubscribeSuccess(referenceId, result) {
 
     this.inactivityTimeout = responseData.InactivityTimeout || 0;
 
-    if (this.inactivityTimeout === 0) {
+    if (!responseData.InactivityTimeout === 0) {
+        // this mostly happens when there is some other problem e.g. the response cannot be parsed
         log.warn(
             LOG_AREA,
             'inactivity timeout is 0 - interpreting as never timeout. Remove warning if normal.',
@@ -306,10 +331,11 @@ function onSubscribeSuccess(referenceId, result) {
     if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
         try {
             this.processSnapshot(responseData);
-        } catch (ex) {
+        } catch (error) {
             log.error(
                 LOG_AREA,
-                'exception occurred in streaming snapshot update callback',
+                'Exception occurred in streaming snapshot update callback',
+                error,
             );
         }
 
@@ -322,6 +348,21 @@ function onSubscribeSuccess(referenceId, result) {
     this.updatesBeforeSubscribed = null;
 
     onReadyToPerformNextAction.call(this);
+}
+
+function cleanUpLeftOverSubscription(referenceId) {
+    this.transport
+        .delete(this.serviceGroup, this.url + '/{contextId}/{referenceId}', {
+            contextId: this.streamingContextId,
+            referenceId,
+        })
+        .catch((error) => {
+            log.debug(
+                LOG_AREA,
+                'Failed to remove duplicate request subscription',
+                error,
+            );
+        });
 }
 
 /**
@@ -337,14 +378,35 @@ function onSubscribeError(referenceId, response) {
         return;
     }
 
+    const willUnsubscribe = this.queue.peekAction() & ACTION_UNSUBSCRIBE;
+
     setState.call(this, this.STATE_UNSUBSCRIBED);
-    log.error(LOG_AREA, 'An error occurred subscribing', {
-        response,
-        url: this.url,
-        ContextId: this.streamingContextId,
-        ReferenceId: this.referenceId,
-        subscriptionData: this.subscriptionData,
-    });
+
+    // if we are a duplicate response, we should unsubscribe now
+    const isDupeRequest =
+        response &&
+        response.response &&
+        response.response.Message ===
+            'Subscription Key (Streaming Session, Reference Id) already in use';
+
+    if (isDupeRequest) {
+        log.error(LOG_AREA, `A duplicate request occurred subscribing`, {
+            response,
+            url: this.url,
+            serviceGroup: this.serviceGroup,
+            ContextId: this.streamingContextId,
+            ReferenceId: referenceId,
+            subscriptionData: this.subscriptionData,
+        });
+
+        cleanUpLeftOverSubscription.call(this, referenceId);
+
+        // if a duplicate request we reset as it should pass 2nd time around
+        if (!willUnsubscribe) {
+            tryPerformAction.call(this, ACTION_SUBSCRIBE);
+            return;
+        }
+    }
 
     const errorCode =
         response && response.response ? response.response.ErrorCode : null;
@@ -354,6 +416,12 @@ function onSubscribeError(referenceId, response) {
         this.subscriptionData &&
         this.subscriptionData.Format === FORMAT_PROTOBUF
     ) {
+        log.warn(LOG_AREA, `Protobuf is not supported, falling back to JSON`, {
+            response,
+            url: this.url,
+            subscriptionData: this.subscriptionData,
+        });
+
         // Fallback to JSON format if specific endpoint doesn't support PROTOBUF format.
         this.subscriptionData.Format = FORMAT_JSON;
         this.parser = ParserFacade.getParser(
@@ -362,12 +430,61 @@ function onSubscribeError(referenceId, response) {
             this.url,
         );
 
-        tryPerformAction.call(this, ACTION_SUBSCRIBE);
+        if (!willUnsubscribe) {
+            tryPerformAction.call(this, ACTION_SUBSCRIBE);
+            return;
+        }
+    }
+
+    const isNetworkError = response && response.isNetworkError;
+    if (isNetworkError && !willUnsubscribe) {
+        // its possible we sent the request before we noticed internet is unavailable
+        // also possible this is a one off
+        // its also possible that the subscribe succeeded - but that is unlikely and hard to handle
+
+        log.debug(
+            LOG_AREA,
+            `A network error occurred subscribing to ${this.url}`,
+            {
+                response,
+                url: this.url,
+                serviceGroup: this.serviceGroup,
+                ContextId: this.streamingContextId,
+                ReferenceId: referenceId,
+                subscriptionData: this.subscriptionData,
+            },
+        );
+
+        // let streaming know we got a network error
+        this.networkErrorSubscribingTimer = setTimeout(() => {
+            this.networkErrorSubscribingTimer = null;
+
+            // we did not go offline and we did not receive any commands in the meantime
+            // otherwise this timeout would be cancelled.
+            // so we can assume this was a one off network error and we can try again
+            tryPerformAction.call(this, ACTION_SUBSCRIBE);
+        }, 5000);
+
+        if (this.onNetworkError) {
+            this.onNetworkError();
+        }
+
         return;
     }
 
+    if (!isNetworkError) {
+        log.error(LOG_AREA, `An error occurred subscribing to ${this.url}`, {
+            response,
+            url: this.url,
+            serviceGroup: this.serviceGroup,
+            ContextId: this.streamingContextId,
+            ReferenceId: referenceId,
+            subscriptionData: this.subscriptionData,
+        });
+    }
+
     // if we are unsubscribed, do not fire the error handler
-    if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
+    if (!willUnsubscribe) {
         if (this.onError) {
             this.onError(response);
         }
@@ -402,7 +519,7 @@ function onUnsubscribeSuccess(referenceId, response) {
  */
 function onUnsubscribeError(referenceId, response) {
     if (referenceId !== this.referenceId) {
-        log.error(
+        log.debug(
             LOG_AREA,
             'Received an error response for unsubscribing a subscription that has afterwards been reset - ignoring',
         );
@@ -410,7 +527,9 @@ function onUnsubscribeError(referenceId, response) {
     }
 
     setState.call(this, this.STATE_UNSUBSCRIBED);
-    log.error(LOG_AREA, 'An error occurred unsubscribing', {
+
+    // It seems this can happen if the streaming server unsubscribes just before us (e.g. d/c)
+    log.info(LOG_AREA, 'An error occurred unsubscribing', {
         response,
         url: this.url,
     });
@@ -441,7 +560,7 @@ function onModifyPatchSuccess(referenceId, response) {
  */
 function onModifyPatchError(referenceId, response) {
     if (referenceId !== this.referenceId) {
-        log.error(
+        log.debug(
             LOG_AREA,
             'Received an error response for modify patch a subscription that has afterwards been reset - ignoring',
         );
@@ -449,7 +568,7 @@ function onModifyPatchError(referenceId, response) {
     }
 
     setState.call(this, this.STATE_SUBSCRIBED);
-    log.error(LOG_AREA, 'An error occurred patching', {
+    log.error(LOG_AREA, `An error occurred patching ${this.url}`, {
         response,
         url: this.url,
     });
@@ -533,13 +652,14 @@ function Subscription(
     this.onError = options.onError;
     this.onQueueEmpty = options.onQueueEmpty;
     this.headers = options.headers && extend({}, options.headers);
+    this.onNetworkError = options.onNetworkError;
 
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
     } else if (this.subscriptionData.RefreshRate < MIN_REFRESH_RATE_MS) {
         log.warn(
             LOG_AREA,
-            'Low refresh rate. This has been rounded up to the minimum.',
+            'Low refresh rate - this has been rounded up to the minimum',
             { minimumRate: MIN_REFRESH_RATE_MS },
         );
         this.subscriptionData.RefreshRate = MIN_REFRESH_RATE_MS;
@@ -594,9 +714,18 @@ Subscription.prototype.removeStateChangedCallback = function(callback) {
 };
 
 Subscription.prototype.processUpdate = function(message, type) {
-    const nextMessage = extend({}, message, {
-        Data: this.parser.parse(message.Data, this.SchemaName),
-    });
+    let nextMessage;
+    try {
+        nextMessage = extend({}, message, {
+            Data: this.parser.parse(message.Data, this.SchemaName),
+        });
+    } catch (error) {
+        log.error('Error occurred parsing Data', error);
+
+        // if we cannot understand an update we should re-subscribe to make sure we are updated
+        this.reset();
+        return;
+    }
 
     this.onUpdate(nextMessage, type);
 };
@@ -659,7 +788,7 @@ Subscription.prototype.reset = function() {
         default:
             log.error(
                 LOG_AREA,
-                'reset was called but subscription is in an unknown state',
+                'Reset was called but subscription is in an unknown state',
             );
             return;
     }
@@ -754,6 +883,12 @@ Subscription.prototype.dispose = function() {
  */
 Subscription.prototype.onConnectionUnavailable = function() {
     this.connectionAvailable = false;
+    if (this.networkErrorSubscribingTimer) {
+        // we recently received a network error, so now we can just wait until we are online again
+        clearTimeout(this.networkErrorSubscribingTimer);
+        this.networkErrorSubscribingTimer = null;
+        tryPerformAction.call(this, ACTION_SUBSCRIBE);
+    }
 };
 
 /**
@@ -797,7 +932,11 @@ Subscription.prototype.onStreamingData = function(message) {
             break;
 
         default:
-            log.error(LOG_AREA, 'unanticipated state', this.currentState);
+            log.error(LOG_AREA, 'Unanticipated state onStreamingData', {
+                currentState: this.currentState,
+                url: this.url,
+                serviceGroup: this.serviceGroup,
+            });
     }
 
     try {
@@ -805,8 +944,16 @@ Subscription.prototype.onStreamingData = function(message) {
     } catch (error) {
         log.error(
             LOG_AREA,
-            'exception occurred in streaming delta update callback',
-            error,
+            'Exception occurred in streaming delta update callback',
+            {
+                error: {
+                    message: error.message,
+                    stack: error.stack,
+                },
+                payload: message,
+                url: this.url,
+                serviceGroup: this.serviceGroup,
+            },
         );
     }
 };
@@ -817,9 +964,9 @@ Subscription.prototype.onStreamingData = function(message) {
  */
 Subscription.prototype.onHeartbeat = function() {
     if (this.currentState === this.STATE_SUBSCRIBE_REQUESTED) {
-        log.warn(
+        log.debug(
             LOG_AREA,
-            'received heartbeat for a subscription we havent subscribed to yet',
+            'Received heartbeat for a subscription we havent subscribed to yet',
             { url: this.url, serviceGroup: this.serviceGroup },
         );
     }
