@@ -1,5 +1,5 @@
-import 'test/mocks/math-random';
 import { installClock, uninstallClock, tick, setTimeout } from 'test/utils';
+import mockMathRandom from 'test/mocks/math-random';
 import mockTransport from 'test/mocks/transport';
 import mockAuthProvider from 'test/mocks/authProvider';
 import mockFetch from 'test/mocks/fetch';
@@ -66,6 +66,7 @@ describe('openapi Streaming', () => {
         fetchMock = mockFetch();
 
         installClock();
+        mockMathRandom();
     });
     afterEach(() => uninstallClock());
 
@@ -934,7 +935,7 @@ describe('openapi Streaming', () => {
             expect(streaming.orphanFinder.update.mock.calls.length).toEqual(1);
         });
 
-        it('passes on subscribe calls', () => {
+        it('passes on unsubscribe calls', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
             stateChangedCallback({ newState: 1 /* connected */ });
 

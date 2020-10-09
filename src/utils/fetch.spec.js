@@ -96,22 +96,6 @@ describe('utils fetch', () => {
         Promise.resolve(promise);
     });
 
-    it('unknown file types are downloaded as text', (done) => {
-        const contentType = 'unknown/file';
-        const result = new FetchResponse(200, 'this is a string', contentType);
-        const promise = convertFetchSuccess('url', 'body', 0, result);
-
-        promise.then((response) => {
-            expect(response.response).toEqual('this is a string');
-            expect(response.status).toEqual(200);
-            expect(response.headers.get('content-type')).toEqual(contentType);
-            expect(response.responseType).toEqual('text');
-            done();
-        });
-
-        Promise.resolve(promise);
-    });
-
     describe('clearing timers', () => {
         beforeEach(() => {
             installClock();

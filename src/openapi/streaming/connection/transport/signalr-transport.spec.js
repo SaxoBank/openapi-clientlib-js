@@ -1,5 +1,5 @@
-import 'test/mocks/math-random';
 import { installClock, uninstallClock } from 'test/utils';
+import mockMathRandom from 'test/mocks/math-random';
 import log from 'src/log';
 import * as constants from '../constants';
 import SignalRTransport from './signalr-transport';
@@ -54,6 +54,7 @@ describe('openapi SignalR Transport', () => {
         };
 
         installClock();
+        mockMathRandom();
     });
     afterEach(() => uninstallClock());
 

@@ -1,5 +1,5 @@
-import 'test/mocks/math-random';
 import { installClock, uninstallClock, tick, setTimeout } from 'test/utils';
+import mockMathRandom from 'test/mocks/math-random';
 import mockFetch from 'test/mocks/fetch';
 import jsonPayload from 'test/data/payload.json';
 import * as RequestUtils from 'src/utils/request';
@@ -34,6 +34,7 @@ describe('openapi WebSocket Transport', () => {
         RequestUtils.resetCounter();
 
         installClock();
+        mockMathRandom();
     });
     afterEach(() => uninstallClock());
 
