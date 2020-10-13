@@ -1,4 +1,4 @@
-import { en_us, ar_eg } from '../test/locales';
+import { en_us, ar_eg } from 'test/locales';
 import NumberFormatting from './number-formatting';
 
 function formatNumberNoRounding(number, minDecimals, maxDecimals) {

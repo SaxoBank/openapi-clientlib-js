@@ -1,4 +1,4 @@
-import microEmitter from '../../micro-emitter';
+import microEmitter from 'src/micro-emitter';
 
 function mockAuthProvider() {
     const EVENT_TOKEN_RECEIVED = 'testTokenReceived';

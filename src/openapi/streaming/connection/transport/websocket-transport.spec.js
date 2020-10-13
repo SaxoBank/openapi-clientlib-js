@@ -1,15 +1,10 @@
-import {
-    installClock,
-    uninstallClock,
-    tick,
-    setTimeout,
-} from '../../../../test/utils';
-import '../../../../test/mocks/math-random';
-import mockFetch from '../../../../test/mocks/fetch';
+import { installClock, uninstallClock, tick, setTimeout } from 'test/utils';
+import mockMathRandom from 'test/mocks/math-random';
+import mockFetch from 'test/mocks/fetch';
+import jsonPayload from 'test/data/payload.json';
+import * as RequestUtils from 'src/utils/request';
+import * as constants from '../constants';
 import WebSocketTransport from './websocket-transport';
-import * as constants from './../constants';
-import jsonPayload from './payload.json';
-import * as RequestUtils from '../../../../utils/request';
 
 const CONTEXT_ID = '0000000000';
 const AUTH_TOKEN = 'TOKEN';
@@ -39,6 +34,7 @@ describe('openapi WebSocket Transport', () => {
         RequestUtils.resetCounter();
 
         installClock();
+        mockMathRandom();
     });
     afterEach(() => uninstallClock());
 

@@ -1,11 +1,6 @@
-import {
-    setTimeout,
-    installClock,
-    uninstallClock,
-    tick,
-} from '../../test/utils';
-import mockTransport from '../../test/mocks/transport';
-import mockAuthProvider from '../../test/mocks/authProvider';
+import { setTimeout, installClock, uninstallClock, tick } from 'test/utils';
+import mockTransport from 'test/mocks/transport';
+import mockAuthProvider from 'test/mocks/authProvider';
 import TransportQueue from './queue';
 
 describe('openapi TransportQueue', () => {

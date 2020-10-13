@@ -4,7 +4,7 @@
  * @ignore
  */
 
-import * as enumUtils from '../utils/enum';
+import * as enumUtils from 'src/utils/enum';
 
 // -- Local variables section --
 

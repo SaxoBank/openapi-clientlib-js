@@ -3,8 +3,8 @@
  * @ignore
  */
 
-import log from '../log';
-import { getRequestId, globalToLocalRequestId } from '../utils/request';
+import log from 'src/log';
+import { getRequestId, globalToLocalRequestId } from 'src/utils/request';
 
 // -- Local variables section --
 

@@ -3,19 +3,14 @@
 jest.mock('./connection/transport/websocket-transport');
 jest.mock('./connection/connection');
 
-import {
-    installClock,
-    uninstallClock,
-    tick,
-    setTimeout,
-} from '../../test/utils';
-import mockTransport from '../../test/mocks/transport';
+import { installClock, uninstallClock, tick, setTimeout } from 'test/utils';
+import mockMathRandom from 'test/mocks/math-random';
+import mockTransport from 'test/mocks/transport';
+import mockAuthProvider from 'test/mocks/authProvider';
 import WebSocketTransport from './connection/transport/websocket-transport';
 import Connection from './connection/connection';
-import '../../test/mocks/math-random';
-import Streaming from './streaming';
 import * as constants from './connection/constants';
-import mockAuthProvider from '../../test/mocks/authProvider';
+import Streaming from './streaming';
 
 const defaultOptions = {
     transportTypes: ['plainWebSockets', 'webSockets'],
@@ -104,6 +99,7 @@ describe('openapi Streaming', () => {
         subscriptionUpdateSpy = jest.fn().mockName('subscriptionUpdate');
         subscriptionErrorSpy = jest.fn().mockName('subscriptionError');
         installClock();
+        mockMathRandom();
     });
 
     afterEach(() => {

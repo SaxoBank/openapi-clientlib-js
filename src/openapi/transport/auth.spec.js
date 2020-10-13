@@ -4,10 +4,10 @@ import {
     waterfallTimeout,
     installClock,
     uninstallClock,
-} from '../../test/utils';
-import mockFetch from '../../test/mocks/fetch';
+} from 'test/utils';
+import mockFetch from 'test/mocks/fetch';
+import mockAuthProvider from 'test/mocks/authProvider';
 import TransportAuth from './auth';
-import mockAuthProvider from '../../test/mocks/authProvider';
 
 describe('openapi TransportAuth', () => {
     const noop = () => {};

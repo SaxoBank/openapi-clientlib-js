@@ -1,17 +1,12 @@
-import {
-    installClock,
-    uninstallClock,
-    tick,
-    setTimeout,
-} from '../../test/utils';
-import mockTransport from '../../test/mocks/transport';
-import '../../test/mocks/math-random';
-import Streaming, { findRetryDelay } from './streaming';
-import log from '../../log';
-import mockAuthProvider from '../../test/mocks/authProvider';
-import mockFetch from '../../test/mocks/fetch';
+import { installClock, uninstallClock, tick, setTimeout } from 'test/utils';
+import mockMathRandom from 'test/mocks/math-random';
+import mockTransport from 'test/mocks/transport';
+import mockAuthProvider from 'test/mocks/authProvider';
+import mockFetch from 'test/mocks/fetch';
+import log from 'src/log';
 import * as connectionConstants from './connection/constants';
-import * as streamingTransports from './streamingTransports';
+import * as streamingTransports from './connection/transportTypes';
+import Streaming, { findRetryDelay } from './streaming';
 
 describe('openapi Streaming', () => {
     let stateChangedCallback;
@@ -71,6 +66,7 @@ describe('openapi Streaming', () => {
         fetchMock = mockFetch();
 
         installClock();
+        mockMathRandom();
     });
     afterEach(() => uninstallClock());
 
@@ -939,7 +935,7 @@ describe('openapi Streaming', () => {
             expect(streaming.orphanFinder.update.mock.calls.length).toEqual(1);
         });
 
-        it('passes on subscribe calls', () => {
+        it('passes on unsubscribe calls', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
             stateChangedCallback({ newState: 1 /* connected */ });
 

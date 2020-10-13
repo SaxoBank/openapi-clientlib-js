@@ -5,12 +5,12 @@
 
 // -- Local variables section --
 
-import TransportQueue from './queue';
-import { nextTick } from '../../utils/function';
-import { getRequestId } from '../../utils/request';
-import { formatUrl } from '../../utils/string';
+import log from 'src/log';
+import { nextTick } from 'src/utils/function';
+import { getRequestId } from 'src/utils/request';
+import { formatUrl } from 'src/utils/string';
 import { parse as parseBatch, build as buildBatch } from '../batch-util';
-import log from '../../log';
+import TransportQueue from './queue';
 
 const reUrl = /((https?:)?\/\/)?[^/]+(.*)/i;
 
