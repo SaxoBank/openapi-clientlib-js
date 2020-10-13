@@ -1,7 +1,11 @@
-import { installClock, uninstallClock, tick } from '../../../../test/utils';
+import {
+    installClock,
+    uninstallClock,
+    tick,
+    getResolvablePromise,
+} from '../../../../test/utils';
 import mockMathRandom from '../../../../test/mocks/math-random';
-import mockFetch from '../../../../test/mocks/fetch';
-import * as constants from './../constants';
+import * as constants from '../constants';
 import jsonPayload from './payload.json';
 import SignalrCoreTransport from './signalr-core-transport';
 
@@ -14,9 +18,6 @@ const NOOP = () => {};
 describe('openapi SignalR core Transport', () => {
     let subscribeNextHandler = NOOP;
     let subscribeErrorHandler = NOOP;
-    let startPromiseResolver = NOOP;
-    let startPromiseRejector = NOOP;
-    let streamCancelPromiseResolver = NOOP;
 
     let mockHubConnection;
     let spyOnMessageStream;
@@ -24,8 +25,9 @@ describe('openapi SignalR core Transport', () => {
     let spyOnStartCallback;
     let spyOnStateChangedCallback;
     let spyOnTransportFailedCallback;
-    let streamCancelPromise;
-    let fetchMock;
+    let mockStart;
+    let mockStreamCancel;
+    let mockRenewToken;
 
     class MockConnectionBuilder {
         withUrl() {
@@ -61,23 +63,20 @@ describe('openapi SignalR core Transport', () => {
                 subscribeErrorHandler = error;
             },
             cancelCallback: () => {
-                streamCancelPromise = new Promise((resolve) => {
-                    streamCancelPromiseResolver = resolve;
-                });
-
-                return streamCancelPromise;
+                mockStreamCancel = getResolvablePromise();
+                return mockStreamCancel.promise;
             },
         };
         const closeCallbacks = [];
 
         spyOnMessageStream = jest
             .fn()
-            .mockName('spyOnMessageStream')
+            .mockName('message stream')
             .mockImplementation(() => mockSubject);
 
         spyOnConnectionStop = jest
             .fn()
-            .mockName('spyOnConnectionStop')
+            .mockName('connection stop')
             .mockImplementation(() =>
                 setTimeout(() =>
                     closeCallbacks.forEach((callback) => callback()),
@@ -85,26 +84,32 @@ describe('openapi SignalR core Transport', () => {
             );
 
         mockHubConnection = {
-            start: () =>
-                new Promise((resolve, reject) => {
-                    startPromiseResolver = resolve;
-                    startPromiseRejector = reject;
-                }),
+            start: () => {
+                mockStart = getResolvablePromise();
+                return mockStart.promise;
+            },
             stream: spyOnMessageStream,
             stop: spyOnConnectionStop,
+            invoke: (method) => {
+                if (method === 'RenewToken') {
+                    mockRenewToken = getResolvablePromise();
+                    return mockRenewToken.promise;
+                }
+            },
             onclose: (callback) => closeCallbacks.push(callback),
             onreconnecting: () => {},
             onreconnected: () => {},
         };
 
-        fetchMock = mockFetch();
         installClock();
 
-        spyOnStartCallback = jest.fn().mockName('spyStartCallback');
+        spyOnStartCallback = jest.fn().mockName('connection start callback');
         spyOnStateChangedCallback = jest
             .fn()
-            .mockName('spyStateChangedCallback');
-        spyOnTransportFailedCallback = jest.fn().mockName('transportFailed');
+            .mockName('connection state changed callback');
+        spyOnTransportFailedCallback = jest
+            .fn()
+            .mockName('transport failed callback');
 
         mockMathRandom();
     });
@@ -113,9 +118,6 @@ describe('openapi SignalR core Transport', () => {
         uninstallClock();
         subscribeNextHandler = NOOP;
         subscribeErrorHandler = NOOP;
-        startPromiseResolver = NOOP;
-        startPromiseRejector = NOOP;
-        streamCancelPromiseResolver = NOOP;
     });
 
     describe('start', () => {
@@ -140,7 +142,7 @@ describe('openapi SignalR core Transport', () => {
             );
 
             // resolve handshake request
-            startPromiseResolver();
+            mockStart.resolve();
 
             startPromise.then(() => {
                 expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
@@ -162,7 +164,7 @@ describe('openapi SignalR core Transport', () => {
             // fail handshake request with valid server error
             const error = new Error('Internal server error');
             error.statusCode = 500;
-            startPromiseRejector(error);
+            mockStart.reject(error);
 
             startPromise.then(() => {
                 expect(spyOnStartCallback).not.toBeCalled();
@@ -180,7 +182,7 @@ describe('openapi SignalR core Transport', () => {
             // fail handshake request with network error
             const error = new Error();
             error.statusCode = 0;
-            startPromiseRejector(error);
+            mockStart.reject(error);
 
             startPromise.then(() => {
                 expect(spyOnStartCallback).not.toBeCalled();
@@ -195,7 +197,7 @@ describe('openapi SignalR core Transport', () => {
 
         it('should trigger disconnect if error is received while starting message streaming', (done) => {
             // resolve handshake request
-            startPromiseResolver();
+            mockStart.resolve();
 
             startPromise.then(() => {
                 subscribeErrorHandler(new Error('Streaming error'));
@@ -216,7 +218,7 @@ describe('openapi SignalR core Transport', () => {
         let startPromise;
 
         beforeEach(() => {
-            spyReceivedCallback = jest.fn().mockName('spyReceivedCallback');
+            spyReceivedCallback = jest.fn().mockName('received callback');
             const transport = new SignalrCoreTransport(
                 BASE_URL,
                 spyOnTransportFailedCallback,
@@ -224,7 +226,7 @@ describe('openapi SignalR core Transport', () => {
             transport.setReceivedCallback(spyReceivedCallback);
 
             startPromise = transport.start({});
-            startPromiseResolver();
+            mockStart.resolve();
         });
 
         it('should parse message correctly', (done) => {
@@ -267,8 +269,8 @@ describe('openapi SignalR core Transport', () => {
                 expect(spyReceivedCallback).not.toBeCalled();
                 expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
 
-                streamCancelPromiseResolver();
-                streamCancelPromise.then(() => {
+                mockStreamCancel.resolve();
+                mockStreamCancel.promise.then(() => {
                     expect(spyOnConnectionStop).toBeCalledTimes(1);
 
                     tick(10);
@@ -284,27 +286,29 @@ describe('openapi SignalR core Transport', () => {
     describe('updateQuery', () => {
         it('should renew session on token update', () => {
             const transport = new SignalrCoreTransport(BASE_URL);
+            transport.start({});
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID, true);
 
-            expect(fetchMock).toBeCalledTimes(1);
-            expect(fetchMock).toBeCalledWith(
-                'testUrl/streaming/renewal/renewsession',
-                expect.objectContaining({
-                    headers: { Authorization: 'TOKEN' },
-                }),
-            );
+            expect(mockRenewToken).toBeDefined();
         });
     });
 
     describe('when renewal call fails', () => {
         let transport;
         let renewalPromise;
+        let spyOnUnauthorizedCallback;
 
         beforeEach(() => {
+            spyOnUnauthorizedCallback = jest
+                .fn()
+                .mockName('unauthorised callback');
             transport = new SignalrCoreTransport(
                 BASE_URL,
                 spyOnTransportFailedCallback,
             );
+
+            transport.setStateChangedCallback(spyOnStateChangedCallback);
+            transport.setUnauthorizedCallback(spyOnUnauthorizedCallback);
 
             // update instance variables
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
@@ -317,23 +321,17 @@ describe('openapi SignalR core Transport', () => {
             );
         });
 
-        it('should call transport fail callback ', (done) => {
-            expect(fetchMock).toBeCalledTimes(1);
-            expect(fetchMock).toBeCalledWith(
-                'testUrl/streaming/renewal/renewsession',
-                expect.objectContaining({
-                    headers: { Authorization: 'TOKEN' },
-                }),
-            );
+        it('should call disconnect if session is not found', (done) => {
+            expect(mockRenewToken).toBeDefined();
 
-            fetchMock.resolve('404');
+            mockRenewToken.resolve({ Status: 2 });
 
             renewalPromise.then(() => {
-                expect(spyOnTransportFailedCallback).toBeCalled();
+                expect(spyOnTransportFailedCallback).not.toBeCalled();
                 expect(spyOnConnectionStop).toBeCalled();
 
                 tick(10);
-                expect(spyOnStateChangedCallback).not.toBeCalledWith(
+                expect(spyOnStateChangedCallback).toBeCalledWith(
                     constants.CONNECTION_STATE_DISCONNECTED,
                 );
                 done();
@@ -341,31 +339,46 @@ describe('openapi SignalR core Transport', () => {
         });
 
         it('should retry renewal if there is a network error', (done) => {
-            expect(fetchMock).toBeCalledTimes(1);
+            expect(mockRenewToken).toBeDefined();
 
             // mock before it calls renewSession again
             transport.renewSession = jest
                 .fn()
-                .mockName('spyOnRenewSession')
+                .mockName('renew session')
                 .mockImplementation(() => Promise.resolve());
 
-            fetchMock.reject(new Error('Network error'));
+            mockRenewToken.reject(new Error('Network error'));
 
             renewalPromise.then(() => {
                 expect(transport.renewSession).toBeCalledTimes(1);
+                expect(spyOnConnectionStop).not.toBeCalled();
                 expect(spyOnTransportFailedCallback).not.toBeCalled();
                 done();
             });
         });
 
         it('should ignore if token is updated before prev response was received', (done) => {
-            expect(fetchMock).toBeCalledTimes(1);
+            expect(mockRenewToken).toBeDefined();
 
             transport.updateQuery('NEW_TOKEN', CONTEXT_ID);
-            fetchMock.resolve('401');
+            mockRenewToken.resolve({ Status: 1 });
 
             renewalPromise.then(() => {
                 expect(spyOnTransportFailedCallback).not.toBeCalled();
+                expect(spyOnConnectionStop).not.toBeCalled();
+                done();
+            });
+        });
+
+        it('should call unauthorized callback', (done) => {
+            expect(mockRenewToken).toBeDefined();
+
+            mockRenewToken.resolve({ Status: 1 });
+
+            renewalPromise.then(() => {
+                expect(spyOnTransportFailedCallback).not.toBeCalled();
+                expect(spyOnConnectionStop).not.toBeCalled();
+                expect(spyOnUnauthorizedCallback).toBeCalledTimes(1);
                 done();
             });
         });
@@ -381,7 +394,7 @@ describe('openapi SignalR core Transport', () => {
             const startPromise = transport.start({});
 
             // resolve handshake request
-            startPromiseResolver();
+            mockStart.resolve();
 
             startPromise.then(() => {
                 expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
@@ -399,7 +412,7 @@ describe('openapi SignalR core Transport', () => {
 
                 expect(spyOnConnectionStop).not.toBeCalled();
 
-                streamCancelPromiseResolver();
+                mockStreamCancel.resolve();
 
                 stopPromise.then(() => {
                     expect(spyOnConnectionStop).toBeCalledTimes(1);

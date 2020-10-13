@@ -29,7 +29,7 @@ function uninstallClock() {
 const unMockedSetTimeout = global.setTimeout;
 const setTimeout = (fn) => unMockedSetTimeout(fn, 0);
 
-export const waterfallTimeout = (arr, startIndex) => {
+const waterfallTimeout = (arr, startIndex) => {
     unMockedSetTimeout(() => {
         startIndex = startIndex || 0;
         arr[startIndex]();
@@ -39,4 +39,29 @@ export const waterfallTimeout = (arr, startIndex) => {
     }, 0);
 };
 
-export { tick, setTimeout, multiline, installClock, uninstallClock, mockDate };
+const getResolvablePromise = () => {
+    let resolver;
+    let rejecter;
+
+    const promise = new Promise((resolve, reject) => {
+        resolver = resolve;
+        rejecter = reject;
+    });
+
+    return {
+        promise,
+        resolve: resolver,
+        reject: rejecter,
+    };
+};
+
+export {
+    tick,
+    setTimeout,
+    multiline,
+    installClock,
+    uninstallClock,
+    mockDate,
+    waterfallTimeout,
+    getResolvablePromise,
+};
