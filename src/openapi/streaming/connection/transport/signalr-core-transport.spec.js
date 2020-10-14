@@ -174,27 +174,6 @@ describe('openapi SignalR core Transport', () => {
             });
         });
 
-        it('should not call transport fail callback if handshake request fails due to network error', (done) => {
-            expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
-                constants.CONNECTION_STATE_CONNECTING,
-            );
-
-            // fail handshake request with network error
-            const error = new Error();
-            error.statusCode = 0;
-            mockStart.reject(error);
-
-            startPromise.then(() => {
-                expect(spyOnStartCallback).not.toBeCalled();
-                expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
-                    2,
-                    constants.CONNECTION_STATE_DISCONNECTED,
-                );
-                expect(spyOnTransportFailedCallback).not.toBeCalled();
-                done();
-            });
-        });
-
         it('should trigger disconnect if error is received while starting message streaming', (done) => {
             // resolve handshake request
             mockStart.resolve();

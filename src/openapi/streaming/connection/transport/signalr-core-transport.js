@@ -199,27 +199,15 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
         })
         .catch((error) => {
-            if (error.statusCode) {
-                log.error(
-                    LOG_AREA,
-                    'Error occurred while connecting to streaming service',
-                    {
-                        error,
-                    },
-                );
+            log.error(
+                LOG_AREA,
+                'Error occurred while connecting to streaming service',
+                {
+                    error,
+                },
+            );
 
-                this.transportFailCallback();
-            } else {
-                log.debug(
-                    LOG_AREA,
-                    'Possible network error occurred while connecting to streaming service',
-                    {
-                        error,
-                    },
-                );
-
-                this.handleConnectionClosure();
-            }
+            this.transportFailCallback();
         });
 };
 
