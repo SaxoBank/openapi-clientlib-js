@@ -180,7 +180,7 @@ function TransportBatch(transport, baseUrl, options) {
         basePath += '/';
     }
 
-    this.basePath = basePath;
+    this.basePath = basePath + 'openapi/';
 
     if (options && options.host) {
         this.host = options.host;

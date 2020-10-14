@@ -57,7 +57,7 @@ function generateTransportCall(method) {
 
         return this.fetch(
             method,
-            this.baseUrl + '/' + serviceGroup + '/' + url,
+            this.baseUrl + '/openapi/' + serviceGroup + '/' + url,
             {
                 body,
                 headers,
