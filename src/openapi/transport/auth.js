@@ -17,7 +17,7 @@ const DEFAULT_AUTH_ERRORS_DEBOUNCE_PERIOD = 30000; // ms
 // -- Local methods section --
 
 function makeTransportMethod(method) {
-    return function(serviceGroup, urlTemplate, templateArgs, options) {
+    return function(servicePath, urlTemplate, templateArgs, options) {
         const newOptions = {
             ...options,
             headers: {
@@ -27,7 +27,7 @@ function makeTransportMethod(method) {
         };
 
         return this.transport[method](
-            serviceGroup,
+            servicePath,
             urlTemplate,
             templateArgs,
             newOptions,
