@@ -799,10 +799,10 @@ Streaming.prototype.disposeSubscription = function(subscription) {
 };
 
 /**
- * Makes all subscriptions stop at the given servicePath and url with the given tag (can be restarted)
+ * Makes all subscriptions stop at the given service path and url with the given tag (can be restarted)
  * See {@link saxo.openapi.Streaming#disposeSubscriptionByTag} for permanently stopping subscriptions by tag.
  *
- * @param {string} servicePath - the servicePath of the subscriptions to unsubscribe
+ * @param {string} servicePath - the service path of the subscriptions to unsubscribe
  * @param {string} url - the url of the subscriptions to unsubscribe
  * @param {string} tag - the tag of the subscriptions to unsubscribe
  */
@@ -811,9 +811,9 @@ Streaming.prototype.unsubscribeByTag = function(servicePath, url, tag) {
 };
 
 /**
- * Disposes all subscriptions at the given servicePath and url by tag permanently. They will be stopped and not be able to be started.
+ * Disposes all subscriptions at the given service path and url by tag permanently. They will be stopped and not be able to be started.
  *
- * @param {string} servicePath - the servicePath of the subscriptions to unsubscribe
+ * @param {string} servicePath - the service path of the subscriptions to unsubscribe
  * @param {string} url - the url of the subscriptions to unsubscribe
  * @param {string} tag - the tag of the subscriptions to unsubscribe
  */
