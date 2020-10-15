@@ -393,7 +393,18 @@
             }
         ],
         "import/first": "error",
-        "import/order": "off",
+        "import/order": [
+            "error",
+            {
+                "groups": [
+                    ["builtin", "external"],
+                    "internal",
+                    "parent",
+                    ["sibling", "index"]
+                ],
+                "newlines-between": "ignore"
+            }
+        ],
         "import/newline-after-import": "error",
         "import/prefer-default-export": "off",
         "import/no-unassigned-import": "off",
@@ -416,7 +427,19 @@
         "promise/no-promise-in-callback": "error",
         "promise/no-callback-in-promise": "off",
         "promise/prefer-await-to-then": "off",
-        "promise/prefer-await-to-callbacks": "off"
+        "promise/prefer-await-to-callbacks": "off",
+        //Jest plugin
+        "jest/no-focused-tests": "error",
+        "jest/no-disabled-tests": "error",
+        "jest/no-identical-title": "error",
+        "jest/no-commented-out-tests": "error",
+        "jest/valid-describe": "error",
+        "jest/valid-expect": "error",
+        "jest/valid-expect-in-promise": "error",
+        "jest/consistent-test-it": "error",
+        "jest/no-try-expect": "error",
+        "jest/no-standalone-expect": "error",
+        "jest/prefer-hooks-on-top": "error"
     },
     "overrides": [
         {

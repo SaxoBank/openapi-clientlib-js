@@ -5,14 +5,14 @@
 
 import emitter from '../../micro-emitter';
 import { extend } from '../../utils/object';
+import log from '../../log';
+import { padLeft } from '../../utils/string';
 import Subscription from './subscription';
 import ParserFacade from './parser/parser-facade';
 import StreamingOrphanFinder from './orphan-finder';
-import log from '../../log';
-import { padLeft } from '../../utils/string';
 import Connection from './connection/connection';
 import * as connectionConstants from './connection/constants';
-import * as streamingTransports from './streamingTransports';
+import * as streamingTransports from './connection/transportTypes';
 
 // -- Local variables section --
 

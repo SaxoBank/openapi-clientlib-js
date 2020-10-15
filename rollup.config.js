@@ -1,6 +1,6 @@
-﻿const packageConfig = require('./package.json');
-const fs = require('fs');
+﻿const fs = require('fs');
 const babel = require('rollup-plugin-babel');
+const packageConfig = require('./package.json');
 
 const sharedConfig = {
     tmp: '.grunt',

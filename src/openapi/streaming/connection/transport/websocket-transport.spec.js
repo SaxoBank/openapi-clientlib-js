@@ -4,12 +4,12 @@ import {
     tick,
     setTimeout,
 } from '../../../../test/utils';
-import '../../../../test/mocks/math-random';
+import mockMathRandom from '../../../../test/mocks/math-random';
 import mockFetch from '../../../../test/mocks/fetch';
+import * as RequestUtils from '../../../../utils/request';
 import WebSocketTransport from './websocket-transport';
 import * as constants from './../constants';
 import jsonPayload from './payload.json';
-import * as RequestUtils from '../../../../utils/request';
 
 const CONTEXT_ID = '0000000000';
 const AUTH_TOKEN = 'TOKEN';
@@ -39,6 +39,7 @@ describe('openapi WebSocket Transport', () => {
         RequestUtils.resetCounter();
 
         installClock();
+        mockMathRandom();
     });
     afterEach(() => uninstallClock());
 

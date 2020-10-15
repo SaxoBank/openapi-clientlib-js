@@ -1,7 +1,7 @@
+import log from '../../../log';
 import ParserBase from './parser-base';
 import MetaProcessor from './meta/meta-protobuf';
 import wrappers from './wrappers/protobuf-wrappers';
-import log from '../../../log';
 
 const LOG_AREA = 'ParserProtobuf';
 

@@ -3,10 +3,10 @@
  * @ignore
  */
 
+import { extend } from '../utils/object';
 import formatNumber from './format';
 import parseNumber from './parse';
 import shortFormat from './short-format';
-import { extend } from '../utils/object';
 
 // -- Local variables section --
 

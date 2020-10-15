@@ -1,6 +1,6 @@
 import { multiline } from '../test/utils';
-import * as batchUtil from './batch-util';
 import * as RequestUtils from '../utils/request';
+import * as batchUtil from './batch-util';
 
 describe('openapi batchUtil', () => {
     it('parses an empty response', () => {

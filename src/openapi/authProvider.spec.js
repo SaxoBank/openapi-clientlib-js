@@ -167,7 +167,7 @@ describe('openapi AuthProvider', () => {
                 });
             });
 
-            it('fires an event if unauthorized - 401', function(done) {
+            it('fires an event if unauthorized - 403', function(done) {
                 const options = {
                     token: 'TOKEN',
                     expiry: relativeDate(60),

@@ -278,6 +278,7 @@ describe('price-formatting parse', () => {
         );
     });
 
+    // eslint-disable-next-line jest/no-commented-out-tests
     /*
 
     The below tests flags that are not implemented at the moment

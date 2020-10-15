@@ -6,8 +6,8 @@ import {
     uninstallClock,
 } from '../../test/utils';
 import mockFetch from '../../test/mocks/fetch';
-import TransportAuth from './auth';
 import mockAuthProvider from '../../test/mocks/authProvider';
+import TransportAuth from './auth';
 
 describe('openapi TransportAuth', () => {
     const noop = () => {};

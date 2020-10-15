@@ -3,8 +3,8 @@
  * @ignore
  */
 
-import TransportQueue from './queue';
 import log from '../../log';
+import TransportQueue from './queue';
 
 // -- Local variables section --
 

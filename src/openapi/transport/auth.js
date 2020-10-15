@@ -5,8 +5,8 @@
 
 // -- Local variables section --
 
-import TransportCore from './core';
 import log from '../../log';
+import TransportCore from './core';
 
 const LOG_AREA = 'TransportAuth';
 

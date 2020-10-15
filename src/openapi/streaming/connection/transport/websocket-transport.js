@@ -10,7 +10,7 @@ import log from '../../../../log';
 import * as uint64utils from '../../../../utils/uint64';
 import fetch from '../../../../utils/fetch';
 import { getRequestId } from '../../../../utils/request';
-import * as streamingTransports from '../../streamingTransports';
+import * as transportTypes from '../transportTypes';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
 
@@ -307,7 +307,7 @@ function detectNetworkError() {
  * @constructor
  */
 function WebsocketTransport(baseUrl, failCallback = NOOP) {
-    this.name = streamingTransports.PLAIN_WEBSOCKETS;
+    this.name = transportTypes.PLAIN_WEBSOCKETS;
 
     // WebSocket instance
     this.socket = null;

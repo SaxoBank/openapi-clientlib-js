@@ -4,8 +4,8 @@
  */
 
 import * as enumUtils from '../utils/enum';
-import { getModernFractionsSeparator } from './modern-fractions-character';
 import { parseNumberNegativePattern } from '../number-formatting/parse';
+import { getModernFractionsSeparator } from './modern-fractions-character';
 
 // -- Local variables section --
 

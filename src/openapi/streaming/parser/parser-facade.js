@@ -1,5 +1,5 @@
-import ParserJson from './parser-json';
 import { extend } from '../../../utils/object';
+import ParserJson from './parser-json';
 
 const parserCreators = {
     [ParserJson.FORMAT_NAME]: ParserJson,
