@@ -493,14 +493,14 @@ function handleSubscriptionReadyForUnsubscribe(subscriptions, resolve) {
     }
 }
 
-function getSubscriptionsByTag(serviceGroup, url, tag) {
+function getSubscriptionsByTag(servicePath, url, tag) {
     const subscriptionsToRemove = [];
 
     for (let i = 0; i < this.subscriptions.length; i++) {
         const subscription = this.subscriptions[i];
 
         if (
-            subscription.serviceGroup === serviceGroup &&
+            subscription.servicePath === servicePath &&
             subscription.url === url &&
             subscription.subscriptionData.Tag === tag
         ) {
@@ -543,14 +543,14 @@ function getSubscriptionsReadyPromise(
 }
 
 function unsubscribeSubscriptionByTag(
-    serviceGroup,
+    servicePath,
     url,
     tag,
     shouldDisposeSubscription,
 ) {
     const subscriptionsToRemove = getSubscriptionsByTag.call(
         this,
-        serviceGroup,
+        servicePath,
         url,
         tag,
     );
@@ -562,14 +562,14 @@ function unsubscribeSubscriptionByTag(
 
     allSubscriptionsReady.then(() => {
         this.transport
-            .delete(serviceGroup, url + '/{contextId}/?Tag={tag}', {
+            .delete(servicePath, url + '/{contextId}/?Tag={tag}', {
                 contextId: this.contextId,
                 tag,
             })
             .catch((response) =>
                 log.error(LOG_AREA, 'An error occurred unsubscribing by tag', {
                     response,
-                    serviceGroup,
+                    servicePath,
                     url,
                     tag,
                 }),
@@ -701,7 +701,7 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP =
 /**
  * Constructs a new subscription to the given resource.
  *
- * @param {string} serviceGroup - The service group e.g. 'trade'
+ * @param {string} servicePath - The service path e.g. 'trade'
  * @param {string} url - The name of the resource to subscribe to, e.g. '/v1/infoprices/subscriptions'.
  * @param {object} subscriptionArgs - Arguments that detail the subscription.
  * @param {number} [subscriptionArgs.RefreshRate=1000] - The data refresh rate (passed to OpenAPI).
@@ -718,7 +718,7 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP =
  * @returns {saxo.openapi.StreamingSubscription} A subscription object.
  */
 Streaming.prototype.createSubscription = function(
-    serviceGroup,
+    servicePath,
     url,
     subscriptionArgs,
     options,
@@ -740,7 +740,7 @@ Streaming.prototype.createSubscription = function(
     const subscription = new Subscription(
         this.contextId,
         this.transport,
-        serviceGroup,
+        servicePath,
         url,
         normalizedSubscriptionArgs,
         onSubscriptionCreated.bind(this),
@@ -799,30 +799,26 @@ Streaming.prototype.disposeSubscription = function(subscription) {
 };
 
 /**
- * Makes all subscriptions stop at the given serviceGroup and url with the given tag (can be restarted)
+ * Makes all subscriptions stop at the given servicePath and url with the given tag (can be restarted)
  * See {@link saxo.openapi.Streaming#disposeSubscriptionByTag} for permanently stopping subscriptions by tag.
  *
- * @param {string} serviceGroup - the serviceGroup of the subscriptions to unsubscribe
+ * @param {string} servicePath - the servicePath of the subscriptions to unsubscribe
  * @param {string} url - the url of the subscriptions to unsubscribe
  * @param {string} tag - the tag of the subscriptions to unsubscribe
  */
-Streaming.prototype.unsubscribeByTag = function(serviceGroup, url, tag) {
-    unsubscribeSubscriptionByTag.call(this, serviceGroup, url, tag, false);
+Streaming.prototype.unsubscribeByTag = function(servicePath, url, tag) {
+    unsubscribeSubscriptionByTag.call(this, servicePath, url, tag, false);
 };
 
 /**
- * Disposes all subscriptions at the given serviceGroup and url by tag permanently. They will be stopped and not be able to be started.
+ * Disposes all subscriptions at the given servicePath and url by tag permanently. They will be stopped and not be able to be started.
  *
- * @param {string} serviceGroup - the serviceGroup of the subscriptions to unsubscribe
+ * @param {string} servicePath - the servicePath of the subscriptions to unsubscribe
  * @param {string} url - the url of the subscriptions to unsubscribe
  * @param {string} tag - the tag of the subscriptions to unsubscribe
  */
-Streaming.prototype.disposeSubscriptionByTag = function(
-    serviceGroup,
-    url,
-    tag,
-) {
-    unsubscribeSubscriptionByTag.call(this, serviceGroup, url, tag, true);
+Streaming.prototype.disposeSubscriptionByTag = function(servicePath, url, tag) {
+    unsubscribeSubscriptionByTag.call(this, servicePath, url, tag, true);
 };
 
 /**

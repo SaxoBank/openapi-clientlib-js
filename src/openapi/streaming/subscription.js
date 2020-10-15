@@ -82,13 +82,13 @@ function subscribe() {
     normalizeSubscribeData(data);
 
     log.debug(LOG_AREA, 'Posting to create a subscription', {
-        serviceGroup: this.serviceGroup,
+        servicePath: this.servicePath,
         url: subscribeUrl,
     });
     setState.call(this, this.STATE_SUBSCRIBE_REQUESTED);
 
     this.transport
-        .post(this.serviceGroup, subscribeUrl, null, options)
+        .post(this.servicePath, subscribeUrl, null, options)
         .then(onSubscribeSuccess.bind(this, referenceId))
         .catch(onSubscribeError.bind(this, referenceId));
 }
@@ -102,7 +102,7 @@ function unsubscribe() {
     const referenceId = this.referenceId;
 
     this.transport
-        .delete(this.serviceGroup, this.url + '/{contextId}/{referenceId}', {
+        .delete(this.servicePath, this.url + '/{contextId}/{referenceId}', {
             contextId: this.streamingContextId,
             referenceId,
         })
@@ -118,7 +118,7 @@ function modifyPatch(args) {
 
     this.transport
         .patch(
-            this.serviceGroup,
+            this.servicePath,
             this.url + '/{contextId}/{referenceId}',
             {
                 contextId: this.streamingContextId,
@@ -195,7 +195,7 @@ function performAction(queuedAction, isLastQueuedAction) {
                             state: this.currentState,
                             action,
                             url: this.url,
-                            serviceGroup: this.serviceGroup,
+                            servicePath: this.servicePath,
                         },
                     );
             }
@@ -352,7 +352,7 @@ function onSubscribeSuccess(referenceId, result) {
 
 function cleanUpLeftOverSubscription(referenceId) {
     this.transport
-        .delete(this.serviceGroup, this.url + '/{contextId}/{referenceId}', {
+        .delete(this.servicePath, this.url + '/{contextId}/{referenceId}', {
             contextId: this.streamingContextId,
             referenceId,
         })
@@ -393,7 +393,7 @@ function onSubscribeError(referenceId, response) {
         log.error(LOG_AREA, `A duplicate request occurred subscribing`, {
             response,
             url: this.url,
-            serviceGroup: this.serviceGroup,
+            servicePath: this.servicePath,
             ContextId: this.streamingContextId,
             ReferenceId: referenceId,
             subscriptionData: this.subscriptionData,
@@ -426,7 +426,7 @@ function onSubscribeError(referenceId, response) {
         this.subscriptionData.Format = FORMAT_JSON;
         this.parser = ParserFacade.getParser(
             FORMAT_JSON,
-            this.serviceGroup,
+            this.servicePath,
             this.url,
         );
 
@@ -448,7 +448,7 @@ function onSubscribeError(referenceId, response) {
             {
                 response,
                 url: this.url,
-                serviceGroup: this.serviceGroup,
+                servicePath: this.servicePath,
                 ContextId: this.streamingContextId,
                 ReferenceId: referenceId,
                 subscriptionData: this.subscriptionData,
@@ -476,7 +476,7 @@ function onSubscribeError(referenceId, response) {
         log.error(LOG_AREA, `An error occurred subscribing to ${this.url}`, {
             response,
             url: this.url,
-            serviceGroup: this.serviceGroup,
+            servicePath: this.servicePath,
             ContextId: this.streamingContextId,
             ReferenceId: referenceId,
             subscriptionData: this.subscriptionData,
@@ -604,7 +604,7 @@ function setState(state) {
 function Subscription(
     streamingContextId,
     transport,
-    serviceGroup,
+    servicePath,
     url,
     subscriptionArgs,
     onSubscriptionCreated,
@@ -633,14 +633,14 @@ function Subscription(
      */
     this.parser = ParserFacade.getParser(
         subscriptionArgs.Format,
-        serviceGroup,
+        servicePath,
         url,
     );
 
     this.onStateChangedCallbacks = [];
 
     this.transport = transport;
-    this.serviceGroup = serviceGroup;
+    this.servicePath = servicePath;
     this.url = url;
     this.onSubscriptionCreated = onSubscriptionCreated;
     this.subscriptionData = subscriptionArgs;
@@ -752,7 +752,7 @@ Subscription.prototype.processSnapshot = function(response) {
             // In such scenario, falling back to default parser.
             this.parser = ParserFacade.getParser(
                 ParserFacade.getDefaultFormat(),
-                this.serviceGroup,
+                this.servicePath,
                 this.url,
             );
         }
@@ -940,7 +940,7 @@ Subscription.prototype.onStreamingData = function(message) {
             log.error(LOG_AREA, 'Unanticipated state onStreamingData', {
                 currentState: this.currentState,
                 url: this.url,
-                serviceGroup: this.serviceGroup,
+                servicePath: this.servicePath,
             });
     }
 
@@ -957,7 +957,7 @@ Subscription.prototype.onStreamingData = function(message) {
                 },
                 payload: message,
                 url: this.url,
-                serviceGroup: this.serviceGroup,
+                servicePath: this.servicePath,
             },
         );
     }
@@ -972,7 +972,7 @@ Subscription.prototype.onHeartbeat = function() {
         log.debug(
             LOG_AREA,
             'Received heartbeat for a subscription we havent subscribed to yet',
-            { url: this.url, serviceGroup: this.serviceGroup },
+            { url: this.url, servicePath: this.servicePath },
         );
     }
     onActivity.call(this);

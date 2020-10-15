@@ -58,7 +58,7 @@ describe('openapi StreamingSubscription', () => {
             subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 { RefreshRate: 120 },
             );
@@ -94,7 +94,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 { RefreshRate: 120 },
             );
@@ -102,7 +102,7 @@ describe('openapi StreamingSubscription', () => {
 
             expect(transport.post.mock.calls.length).toEqual(1);
             expect(transport.post.mock.calls[0]).toEqual([
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 null,
                 expect.objectContaining({
@@ -114,7 +114,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 { RefreshRate: 1 },
             );
@@ -122,7 +122,7 @@ describe('openapi StreamingSubscription', () => {
 
             expect(transport.post.mock.calls.length).toEqual(1);
             expect(transport.post.mock.calls[0]).toEqual([
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 null,
                 expect.objectContaining({
@@ -135,7 +135,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 { RefreshRate: 120, Top: 10 },
             );
@@ -143,7 +143,7 @@ describe('openapi StreamingSubscription', () => {
 
             expect(transport.post.mock.calls.length).toEqual(1);
             expect(transport.post.mock.calls[0]).toEqual([
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource?$top=10',
                 null,
                 expect.objectContaining({
@@ -156,7 +156,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 null,
@@ -166,7 +166,7 @@ describe('openapi StreamingSubscription', () => {
 
             expect(transport.post.mock.calls.length).toEqual(1);
             expect(transport.post.mock.calls[0]).toEqual([
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 null,
                 expect.objectContaining({ headers: { Header: 'header' } }),
@@ -177,7 +177,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
             );
@@ -185,7 +185,7 @@ describe('openapi StreamingSubscription', () => {
 
             expect(transport.post.mock.calls.length).toEqual(1);
             expect(transport.post.mock.calls[0]).toEqual([
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 null,
                 expect.not.objectContaining({ headers: expect.anything() }),
@@ -197,7 +197,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 null,
@@ -225,7 +225,7 @@ describe('openapi StreamingSubscription', () => {
 
                     expect(transport.post.mock.calls.length).toEqual(2);
                     expect(transport.post.mock.calls[0]).toEqual([
-                        'serviceGroup',
+                        'servicePath',
                         'src/test/resource',
                         null,
                         expect.objectContaining({
@@ -244,7 +244,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -270,7 +270,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -295,7 +295,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -324,7 +324,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'test/resource',
                 { Format: 'application/x-protobuf' },
                 createdSpy,
@@ -358,7 +358,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -396,7 +396,7 @@ describe('openapi StreamingSubscription', () => {
             subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -494,7 +494,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -528,7 +528,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -572,7 +572,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -598,7 +598,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -618,7 +618,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -633,7 +633,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -664,7 +664,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -694,7 +694,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -734,7 +734,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -773,7 +773,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -813,7 +813,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -846,7 +846,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -879,7 +879,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -912,7 +912,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -966,7 +966,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1044,7 +1044,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1075,7 +1075,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1103,7 +1103,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1147,7 +1147,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1203,7 +1203,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1223,7 +1223,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1248,7 +1248,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1290,7 +1290,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1329,7 +1329,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1377,7 +1377,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1425,7 +1425,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1470,7 +1470,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1522,7 +1522,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 args,
                 createdSpy,
@@ -1572,7 +1572,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 args,
                 createdSpy,
@@ -1630,7 +1630,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 args,
                 createdSpy,
@@ -1661,7 +1661,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 args,
                 createdSpy,
@@ -1693,7 +1693,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 args,
                 createdSpy,
@@ -1738,7 +1738,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1780,7 +1780,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1815,7 +1815,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1869,7 +1869,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
@@ -1905,7 +1905,7 @@ describe('openapi StreamingSubscription', () => {
             const subscription = new Subscription(
                 '123',
                 transport,
-                'serviceGroup',
+                'servicePath',
                 'src/test/resource',
                 {},
                 createdSpy,
