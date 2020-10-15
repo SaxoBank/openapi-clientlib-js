@@ -157,7 +157,7 @@ function runBatchCall(serviceGroup, callList) {
  * @param {Object} [options]
  * @param {number} [options.timeoutMs=0] - Timeout after starting to que items before sending a batch request.
  * @param {string} [options.host=global.location.host] - The host to use in the batch request. If not set defaults to global.location.host.
- * @param {object} [options.services]
+ * @param {Object.<string, saxo.ServiceOptions>} [options.services] - Per-service options, keyed by service path.
  */
 function TransportBatch(transport, baseUrl, options) {
     TransportQueue.call(this, transport);

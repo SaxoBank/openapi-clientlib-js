@@ -74,6 +74,13 @@ function generateTransportCall(method) {
 // -- Exported methods section --
 
 /**
+ * Options pertaining to a specific service path.
+ *
+ * @typedef {Object} saxo.ServiceOptions
+ * @property {boolean} [useCloud] - Request from OpenAPI cloud (/oapi)
+ */
+
+/**
  * Handles core transport to the openapi rest service. This is little more than a thin layer on top of fetch, adding
  * cache breaking, language header adding and a convenient mechanism for making transport calls.
  * @class
@@ -82,7 +89,7 @@ function generateTransportCall(method) {
  * @param {object} [options]
  * @param {string} [options.language] - The language sent as a header if not overridden.
  * @param {boolean} [options.defaultCache=true] - Sets the default caching behaviour if not overridden on a call.
- * @param {object} [options.services]
+ * @param {Object.<string, saxo.ServiceOptions>} [options.services] - Per-service options, keyed by service path.
  */
 function Transport(baseUrl, options) {
     if (!baseUrl) {
