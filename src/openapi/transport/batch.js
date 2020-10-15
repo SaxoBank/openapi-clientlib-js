@@ -157,6 +157,7 @@ function runBatchCall(serviceGroup, callList) {
  * @param {Object} [options]
  * @param {number} [options.timeoutMs=0] - Timeout after starting to que items before sending a batch request.
  * @param {string} [options.host=global.location.host] - The host to use in the batch request. If not set defaults to global.location.host.
+ * @param {object} [options.services]
  */
 function TransportBatch(transport, baseUrl, options) {
     TransportQueue.call(this, transport);
@@ -189,6 +190,7 @@ function TransportBatch(transport, baseUrl, options) {
     }
 
     this.timeoutMs = (options && options.timeoutMs) || 0;
+    this.services = (options && options.services) || {};
     this.isQueueing = true;
 }
 TransportBatch.prototype = Object.create(TransportQueue.prototype, {
@@ -220,6 +222,16 @@ TransportBatch.prototype.addToQueue = function(item) {
             );
         }
     }
+};
+
+/**
+ * @private
+ * @param item
+ */
+TransportBatch.prototype.shouldQueue = function(item) {
+    const serviceOptions = this.services[item.serviceGroup] || {};
+
+    return !serviceOptions.useCloud;
 };
 
 /**

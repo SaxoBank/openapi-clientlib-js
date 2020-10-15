@@ -35,7 +35,7 @@ function transportMethod(method) {
                 reject,
             };
 
-            if (this.isQueueing) {
+            if (this.isQueueing && this.shouldQueue(queueItem)) {
                 this.addToQueue(queueItem);
             } else {
                 this.runQueueItem(queueItem);
@@ -207,6 +207,14 @@ TransportQueue.prototype.runQueueItem = function(item) {
  */
 TransportQueue.prototype.addToQueue = function(item) {
     this.queue.push(item);
+};
+
+/**
+ * @protected
+ * @param item
+ */
+TransportQueue.prototype.shouldQueue = function(item) {
+    return true;
 };
 
 /**
