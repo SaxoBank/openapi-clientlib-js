@@ -17,7 +17,7 @@ describe('openapi TransportCore', () => {
 
     describe('parameters', () => {
         it('requires a service group and url', () => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             expect(() => transport.get()).toThrow();
             expect(() => transport.get('', '')).toThrow();
             expect(() => transport.get('service_group', '')).toThrow();
@@ -31,7 +31,7 @@ describe('openapi TransportCore', () => {
 
     describe('url templating', () => {
         it('basically works', () => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.get('service_group', 'account/info/{user}/{account}', {
                 user: 'te',
                 account: 'st',
@@ -58,7 +58,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('includes multiple query params', () => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.get('service_group', 'account/info', null, {
                 queryParams: { a: 1, b: 2 },
             });
@@ -72,7 +72,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('allows query params option and query params in the template', () => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.get('service_group', 'account/info?a=1&b=2', null, {
                 queryParams: { c: 3, d: 4 },
             });
@@ -86,7 +86,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('url encodes template args', () => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.get('service_group', 'account/info/{user}/{account}', {
                 user: 'te ?=!/\\',
                 account: String.fromCharCode(160),
@@ -101,7 +101,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('url encodes queryParams', () => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.get('service_group', 'account/info', null, {
                 queryParams: { a: '&=' },
             });
@@ -117,7 +117,7 @@ describe('openapi TransportCore', () => {
 
     describe('response code', () => {
         it('rejects a 400 response', (done) => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             const getPromise = transport.get(
                 'service_group',
                 'account/info',
@@ -135,7 +135,7 @@ describe('openapi TransportCore', () => {
             });
         });
         it('resolves a 200 response', (done) => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             const getPromise = transport.get(
                 'service_group',
                 'account/info',
@@ -153,7 +153,7 @@ describe('openapi TransportCore', () => {
             });
         });
         it('resolves a 304 response', (done) => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             const getPromise = transport.get(
                 'service_group',
                 'account/info',
@@ -177,7 +177,7 @@ describe('openapi TransportCore', () => {
             // This is quite important test which ensures that we set undefined for body when it's missing for GET requests.
             // Currently EDGE browser will fail if GET requests have for example null body in the request.
 
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.get('service_group', 'account/info/{user}/{account}', {
                 user: 'te',
                 account: 'st',
@@ -198,7 +198,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('allows an object', () => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.post(
                 'service_group',
                 'account/info/{user}/{account}',
@@ -224,7 +224,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('allows a string', () => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.post(
                 'service_group',
                 'account/info/{user}/{account}',
@@ -250,7 +250,7 @@ describe('openapi TransportCore', () => {
             });
             const formData = new window.FormData();
             formData.append('hest', file);
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.post(
                 'platform',
                 'v1/media/{contentLibraryId}',
@@ -276,7 +276,7 @@ describe('openapi TransportCore', () => {
             const file = new window.File(['foo'], 'foo.txt', {
                 type: 'text/plain',
             });
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.post(
                 'platform',
                 'v1/media/{contentLibraryId}',
@@ -301,7 +301,7 @@ describe('openapi TransportCore', () => {
         it('allows a URLSearchParams object', () => {
             const paramsString = 'q=URLUtils.searchParams&topic=api';
             const searchParams = new window.URLSearchParams(paramsString);
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.post(
                 'platform',
                 'v1/media/{contentLibraryId}',
@@ -326,7 +326,7 @@ describe('openapi TransportCore', () => {
 
     describe('response data', () => {
         it('gets text from a multipart/mixed', (done) => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             const getPromise = transport.get(
                 'service_group',
                 'account/info',
@@ -350,7 +350,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('parses a json response', (done) => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             const getPromise = transport.get(
                 'service_group',
                 'account/info',
@@ -380,7 +380,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('parses a json response when a call fails', (done) => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             const getPromise = transport.get(
                 'service_group',
                 'account/info',
@@ -410,7 +410,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('copes with an exception reject', (done) => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             const getPromise = transport.get(
                 'service_group',
                 'account/info',
@@ -429,7 +429,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('parses a json response when a call is resolved, but failed due to response status', (done) => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             const getPromise = transport.get(
                 'service_group',
                 'account/info',
@@ -459,7 +459,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('copes with invalid json', (done) => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             const getPromise = transport.get(
                 'service_group',
                 'account/info',
@@ -505,7 +505,7 @@ describe('openapi TransportCore', () => {
             ]);
         }
         it('defaults to true and can be overridden globally and at each call', () => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             expect(transport.defaultCache).toEqual(true);
 
             transport.get('service_group', 'url', null, {});
@@ -520,7 +520,7 @@ describe('openapi TransportCore', () => {
             expectItWasAllowingCaching();
             fetch.mockClear();
 
-            transport = new TransportCore('localhost/openapi', {
+            transport = new TransportCore('localhost', {
                 defaultCache: false,
             });
             expect(transport.defaultCache).toEqual(false);
@@ -538,7 +538,7 @@ describe('openapi TransportCore', () => {
             expectItWasAllowingCaching();
             fetch.mockClear();
 
-            transport = new TransportCore('localhost/openapi', {
+            transport = new TransportCore('localhost', {
                 defaultCache: true,
             });
             expect(transport.defaultCache).toEqual(true);
@@ -558,7 +558,7 @@ describe('openapi TransportCore', () => {
         });
 
         it('copes with a url that already has a param', () => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             expect(transport.defaultCache).toEqual(true);
 
             transport.get('service_group', 'url?param=true', null, {
@@ -574,7 +574,7 @@ describe('openapi TransportCore', () => {
 
     describe('language', () => {
         beforeEach(() => {
-            transport = new TransportCore('localhost/openapi', {
+            transport = new TransportCore('localhost', {
                 language: 'dk',
             });
         });
@@ -665,7 +665,7 @@ describe('openapi TransportCore', () => {
 
     describe('setUseXHttpMethodOverride', () => {
         beforeEach(() => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
             transport.setUseXHttpMethodOverride(true);
         });
 
@@ -742,7 +742,7 @@ describe('openapi TransportCore', () => {
 
     describe('PATCH body defaulting', () => {
         beforeEach(() => {
-            transport = new TransportCore('localhost/openapi');
+            transport = new TransportCore('localhost');
         });
 
         afterEach(() => transport.dispose());

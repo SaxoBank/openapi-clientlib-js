@@ -45,10 +45,7 @@ describe('openapi TransportAuth', () => {
 
     describe('refreshing', () => {
         it('refreshes the token when a transport call returns a 401', (done) => {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(fetch).not.toBeCalled();
             authProvider.getExpiry.mockImplementation(() => 1);
@@ -67,10 +64,7 @@ describe('openapi TransportAuth', () => {
         });
 
         it('does nothing when a transport call fails with a different error code', (done) => {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(fetch).not.toBeCalled();
             transportAuth.get('service_group', 'url').catch(noop);
@@ -88,10 +82,7 @@ describe('openapi TransportAuth', () => {
 
     describe('transport', function() {
         it('adds on a auth header when methods are called', function() {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(fetch).not.toBeCalled();
             transportAuth.get('service_group', 'url');
@@ -121,10 +112,7 @@ describe('openapi TransportAuth', () => {
         });
 
         it('supports all the http verbs', function() {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             transportAuth.get('service_group', 'url');
             transportAuth.put('service_group', 'url');
@@ -181,10 +169,7 @@ describe('openapi TransportAuth', () => {
         });
 
         it('overrides an auth header if one exists', function() {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(fetch).not.toBeCalled();
             transportAuth.get(
@@ -206,10 +191,7 @@ describe('openapi TransportAuth', () => {
         });
 
         it('counts transport authorization errors', function(done) {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
                 transportAuth.authorizationErrors[
@@ -235,10 +217,7 @@ describe('openapi TransportAuth', () => {
         });
 
         it('blocks re-requesting authorization token if auth errors happen on different tokens', function(done) {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
                 transportAuth.authorizationErrors[
@@ -287,10 +266,7 @@ describe('openapi TransportAuth', () => {
         });
 
         it('doesnt block re-requesting if limit not reached for separate endpoints', function(done) {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
                 transportAuth.authorizationErrors[
@@ -355,10 +331,7 @@ describe('openapi TransportAuth', () => {
         });
 
         it('resets error counters after dispose', function(done) {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
                 transportAuth.authorizationErrors[
@@ -412,10 +385,7 @@ describe('openapi TransportAuth', () => {
         });
 
         it('resets error counters after debounce timeout is reached', function(done) {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
                 transportAuth.authorizationErrors[
@@ -460,10 +430,7 @@ describe('openapi TransportAuth', () => {
 
     describe('areUrlAuthErrorsProblematic', () => {
         it('should return value for specific url', () => {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             transportAuth.authorizationErrors = {
                 'new-url': [{ authExpiry: 1 }],
@@ -482,10 +449,7 @@ describe('openapi TransportAuth', () => {
         });
 
         it('should return true for url which is not present in errors map', () => {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             transportAuth.authorizationErrors = {
                 'new-url': [{ authExpiry: 1 }],
