@@ -55,9 +55,12 @@ function generateTransportCall(method) {
                 (options && options.requestId) || getRequestId();
         }
 
+        const serviceOptions = this.services[serviceGroup] || {};
+        const basePath = serviceOptions.useCloud ? '/oapi' : '/openapi';
+
         return this.fetch(
             method,
-            this.baseUrl + '/openapi/' + serviceGroup + '/' + url,
+            this.baseUrl + basePath + '/' + serviceGroup + '/' + url,
             {
                 body,
                 headers,
@@ -79,6 +82,7 @@ function generateTransportCall(method) {
  * @param {object} [options]
  * @param {string} [options.language] - The language sent as a header if not overridden.
  * @param {boolean} [options.defaultCache=true] - Sets the default caching behaviour if not overridden on a call.
+ * @param {object} [options.services]
  */
 function Transport(baseUrl, options) {
     if (!baseUrl) {
@@ -90,6 +94,7 @@ function Transport(baseUrl, options) {
         options && typeof options.defaultCache === 'boolean'
             ? options.defaultCache
             : DEFAULT_CACHE;
+    this.services = (options && options.services) || {};
 }
 
 /**
