@@ -1,19 +1,19 @@
-import log from 'src/log';
+import log from './../../../log';
+import * as streamingTransports from '../streamingTransports';
 import WebsocketTransport from './transport/websocket-transport';
 import SignalrTransport from './transport/signalr-transport';
 import SignalrCoreTransport from './transport/signalr-core-transport';
-import * as transportTypes from './transportTypes';
 
 const LOG_AREA = 'Connection';
 const DEFAULT_TRANSPORTS = [WebsocketTransport, SignalrTransport];
 
 const TRANSPORT_NAME_MAP = {
-    [transportTypes.SIGNALR_CORE]: SignalrCoreTransport,
-    [transportTypes.PLAIN_WEBSOCKETS]: WebsocketTransport,
+    [streamingTransports.SIGNALR_CORE]: SignalrCoreTransport,
+    [streamingTransports.PLAIN_WEBSOCKETS]: WebsocketTransport,
 
     // Backward compatible mapping to legacy signalR.
-    [transportTypes.LEGACY_SIGNALR_WEBSOCKETS]: SignalrTransport,
-    [transportTypes.LEGACY_SIGNALR_LONG_POLLING]: SignalrTransport,
+    [streamingTransports.LEGACY_SIGNALR_WEBSOCKETS]: SignalrTransport,
+    [streamingTransports.LEGACY_SIGNALR_LONG_POLLING]: SignalrTransport,
 };
 
 const NOOP = () => {};

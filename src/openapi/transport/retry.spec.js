@@ -1,5 +1,10 @@
-﻿import { setTimeout, installClock, uninstallClock, tick } from 'test/utils';
-import mockTransport from 'test/mocks/transport';
+﻿import {
+    setTimeout,
+    installClock,
+    uninstallClock,
+    tick,
+} from '../../test/utils';
+import mockTransport from '../../test/mocks/transport';
 import TransportRetry from './retry';
 
 describe('openapi TransportRetry', () => {
@@ -245,7 +250,7 @@ describe('openapi TransportRetry', () => {
                 tick(1000);
                 expect(transport.delete.mock.calls.length).toEqual(2);
                 expect(transportRetry.retryTimer).toBeNull(); // the global timer is still unset
-                expect(call1.retryTimer).toBeNull(); // the individual timer is unset
+                expect(call1.retryTimer); // the individual timer is unset
                 expect(transportRetry.individualFailedCalls.length).toEqual(0);
                 transport.deleteReject({ status: 500, response: 'test' });
 
@@ -261,7 +266,7 @@ describe('openapi TransportRetry', () => {
                     tick(2000); // now go forward 2 seconds
                     expect(transport.delete.mock.calls.length).toEqual(3);
                     expect(transportRetry.retryTimer).toBeNull(); // the global timer is still unset
-                    expect(call2.retryTimer).toBeNull(); // the individual timer is unset
+                    expect(call2.retryTimer); // the individual timer is unset
                     expect(transportRetry.individualFailedCalls.length).toEqual(
                         0,
                     );
@@ -279,7 +284,7 @@ describe('openapi TransportRetry', () => {
                         tick(5000); // now go forward 5 seconds
                         expect(transport.delete.mock.calls.length).toEqual(4); // 4 delete calls in total
                         expect(transportRetry.retryTimer).toBeNull(); // the global timer is still unset
-                        expect(call3.retryTimer).toBeNull(); // the individual timer is unset
+                        expect(call3.retryTimer); // the individual timer is unset
                         expect(
                             transportRetry.individualFailedCalls.length,
                         ).toEqual(0);

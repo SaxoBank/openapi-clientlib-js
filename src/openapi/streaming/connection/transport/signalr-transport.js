@@ -1,6 +1,6 @@
-import log from 'src/log';
-import * as transportTypes from '../transportTypes';
-import * as constants from '../constants';
+import log from '../../../../log';
+import * as streamingTransports from '../../streamingTransports';
+import * as constants from './../constants';
 
 const LOG_AREA = 'SignalRTransport';
 const NOOP = () => {};
@@ -66,7 +66,7 @@ function handleStateChanged(payload) {
  * SignalR Transport which supports both webSocket and longPolling with internal fallback mechanism.
  */
 function SignalrTransport(baseUrl, failCallback) {
-    this.name = transportTypes.LEGACY_SIGNALR;
+    this.name = streamingTransports.LEGACY_SIGNALR;
     this.baseUrl = baseUrl;
     this.connectionUrl = `${baseUrl}/streaming/connection`;
     this.connection = $.connection(this.connectionUrl);

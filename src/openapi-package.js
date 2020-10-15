@@ -19,7 +19,7 @@ import TransportQueue from './openapi/transport/queue';
 import TransportRetry from './openapi/transport/retry';
 import TransportPutPatchDiagnositicsQueue from './openapi/transport/putPatchDiagnosticsQueue';
 import Streaming from './openapi/streaming/streaming';
-import * as streamingTransports from './openapi/streaming/connection/transportTypes';
+import * as streamingTransports from './openapi/streaming/streamingTransports';
 import AuthProvider from './openapi/authProvider';
 
 export default {

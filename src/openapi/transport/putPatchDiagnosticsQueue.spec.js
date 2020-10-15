@@ -1,5 +1,5 @@
-import { setTimeout, installClock, uninstallClock } from 'test/utils';
-import mockTransport from 'test/mocks/transport';
+import { setTimeout, installClock, uninstallClock } from '../../test/utils';
+import mockTransport from '../../test/mocks/transport';
 import TransportPutPatchDiagnositicsQueue from './putPatchDiagnosticsQueue';
 
 describe('openapi TransportPutPatchDiagnositicsQueue', () => {

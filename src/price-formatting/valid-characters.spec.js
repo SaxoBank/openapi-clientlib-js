@@ -1,4 +1,4 @@
-﻿import { de_ch, da_dk, fr_fr } from 'test/locales';
+﻿import { de_ch, da_dk, fr_fr } from '../test/locales';
 import PriceFormatting from './price-formatting';
 import priceFormatOptions from './format-options';
 

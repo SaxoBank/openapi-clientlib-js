@@ -1,5 +1,5 @@
-import mockFetch from 'test/mocks/fetch';
-import { setTimeout, installClock, uninstallClock } from 'test/utils';
+import mockFetch from '../../test/mocks/fetch';
+import { setTimeout, installClock, uninstallClock } from '../../test/utils';
 import TransportCore from './core';
 
 describe('openapi TransportCore', () => {

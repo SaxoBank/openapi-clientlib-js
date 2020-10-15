@@ -1,4 +1,4 @@
-﻿import { installClock, uninstallClock, tick } from 'test/utils';
+﻿import { installClock, uninstallClock, tick } from '../../test/utils';
 import StreamingOrphanFinder from './orphan-finder';
 
 describe('openapi StreamingOrphanFinder', () => {

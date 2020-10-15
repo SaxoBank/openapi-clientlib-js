@@ -1,4 +1,4 @@
-import { de_ch, da_dk, fr_fr, ar_eg, hi_in } from 'test/locales';
+import { de_ch, da_dk, fr_fr, ar_eg, hi_in } from '../test/locales';
 import PriceFormatting from './price-formatting';
 import priceFormatOptions from './format-options';
 
@@ -278,7 +278,6 @@ describe('price-formatting parse', () => {
         );
     });
 
-    // eslint-disable-next-line jest/no-commented-out-tests
     /*
 
     The below tests flags that are not implemented at the moment

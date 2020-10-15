@@ -9,7 +9,7 @@
  * @ignore
  */
 
-import log from 'src/log';
+import log from '../../log';
 
 // -- Local variables section --
 

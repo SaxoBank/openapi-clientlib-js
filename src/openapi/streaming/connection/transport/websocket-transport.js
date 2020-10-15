@@ -5,12 +5,12 @@
  *
  * Supports simple reconnect mechanism in scenarios when webSocket will be closed.
  */
-import log from 'src/log';
-import * as uint64utils from 'src/utils/uint64';
-import fetch from 'src/utils/fetch';
-import { getRequestId } from 'src/utils/request';
-import * as transportTypes from '../transportTypes';
 import * as constants from '../constants';
+import log from '../../../../log';
+import * as uint64utils from '../../../../utils/uint64';
+import fetch from '../../../../utils/fetch';
+import { getRequestId } from '../../../../utils/request';
+import * as streamingTransports from '../../streamingTransports';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
 
@@ -307,7 +307,7 @@ function detectNetworkError() {
  * @constructor
  */
 function WebsocketTransport(baseUrl, failCallback = NOOP) {
-    this.name = transportTypes.PLAIN_WEBSOCKETS;
+    this.name = streamingTransports.PLAIN_WEBSOCKETS;
 
     // WebSocket instance
     this.socket = null;

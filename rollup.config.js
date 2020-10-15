@@ -1,7 +1,6 @@
-﻿const fs = require('fs');
+﻿const packageConfig = require('./package.json');
+const fs = require('fs');
 const babel = require('rollup-plugin-babel');
-const includePaths = require('rollup-plugin-includepaths');
-const packageConfig = require('./package.json');
 
 const sharedConfig = {
     tmp: '.grunt',
@@ -28,11 +27,6 @@ const outputParts = fs
     .replace("'OUTPUT_VERSION'", packageConfig.version)
     .split('/*SPLIT PLACEHOLDER FOR ROLLUP*/');
 
-const includePathOptions = {
-    paths: ['./'],
-    extensions: ['.js', '.json'],
-};
-
 module.exports = [
     {
         input: './src/openapi-package.js',
@@ -44,6 +38,6 @@ module.exports = [
             banner: outputParts[0],
             footer: outputParts[1],
         },
-        plugins: [babel(), includePaths(includePathOptions)],
+        plugins: [babel()],
     },
 ];

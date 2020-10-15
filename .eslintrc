@@ -6,12 +6,7 @@
     },
     "plugins": ["import", "destructuring", "switch-case", "promise"],
     "settings": {
-        "import/ignore": ["libs", "node_modules"],
-        "import/resolver": {
-            "node": {
-                "paths": ["."]
-            }
-        }
+        "import/ignore": ["libs", "node_modules"]
     },
     "globals": {
         // define our own globals since the built-in list contains many false negatives like "find" that are non-standard
@@ -398,18 +393,7 @@
             }
         ],
         "import/first": "error",
-        "import/order": [
-            "error",
-            {
-                "groups": [
-                    ["builtin", "external"],
-                    "internal",
-                    "parent",
-                    ["sibling", "index"]
-                ],
-                "newlines-between": "ignore"
-            }
-        ],
+        "import/order": "off",
         "import/newline-after-import": "error",
         "import/prefer-default-export": "off",
         "import/no-unassigned-import": "off",
@@ -432,23 +416,11 @@
         "promise/no-promise-in-callback": "error",
         "promise/no-callback-in-promise": "off",
         "promise/prefer-await-to-then": "off",
-        "promise/prefer-await-to-callbacks": "off",
-        //Jest plugin
-        "jest/no-focused-tests": "error",
-        "jest/no-disabled-tests": "error",
-        "jest/no-identical-title": "error",
-        "jest/no-commented-out-tests": "error",
-        "jest/valid-describe": "error",
-        "jest/valid-expect": "error",
-        "jest/valid-expect-in-promise": "error",
-        "jest/consistent-test-it": "error",
-        "jest/no-try-expect": "error",
-        "jest/no-standalone-expect": "error",
-        "jest/prefer-hooks-on-top": "error"
+        "promise/prefer-await-to-callbacks": "off"
     },
     "overrides": [
         {
-            "files": ["*.spec.js", "test/**/*"],
+            "files": ["*.spec.js", "src/test/**/*"],
             "env": {
                 "jest": true
             },
