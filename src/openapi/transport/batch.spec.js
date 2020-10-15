@@ -18,7 +18,7 @@ jest.mock('../../utils/function', () => {
 });
 
 describe('openapi TransportBatch', () => {
-    const validBaseUrl = 'localhost/openapi/';
+    const validBaseUrl = 'localhost/';
     let transport;
     let transportBatch;
 
@@ -67,19 +67,16 @@ describe('openapi TransportBatch', () => {
         }).toThrow();
 
         transportBatch = new TransportBatch(transport, 'localhost');
-        expect(transportBatch.basePath).toEqual('/');
-
-        transportBatch = new TransportBatch(transport, 'localhost/openapi');
         expect(transportBatch.basePath).toEqual('/openapi/');
 
-        transportBatch = new TransportBatch(transport, 'localhost/openapi/');
-        expect(transportBatch.basePath).toEqual('/openapi/');
+        transportBatch = new TransportBatch(transport, 'localhost/foo');
+        expect(transportBatch.basePath).toEqual('/foo/openapi/');
 
-        transportBatch = new TransportBatch(
-            transport,
-            'http://localhost/openapi/',
-        );
-        expect(transportBatch.basePath).toEqual('/openapi/');
+        transportBatch = new TransportBatch(transport, 'localhost/foo/');
+        expect(transportBatch.basePath).toEqual('/foo/openapi/');
+
+        transportBatch = new TransportBatch(transport, 'http://localhost/foo/');
+        expect(transportBatch.basePath).toEqual('/foo/openapi/');
     });
 
     it('defaults to timeout 0', function() {
