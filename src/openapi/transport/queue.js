@@ -27,7 +27,7 @@ function transportMethod(method) {
             const queueItem = {
                 method,
                 args: transportCallArguments,
-                serviceGroup: transportCallArguments[0],
+                servicePath: transportCallArguments[0],
                 urlTemplate: transportCallArguments[1],
                 urlArgs: transportCallArguments[2],
                 options: transportCallArguments[3],

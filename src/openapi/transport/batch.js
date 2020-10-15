@@ -22,7 +22,7 @@ function emptyQueueIntoServiceGroups() {
     const serviceGroupMap = {};
     for (let i = 0; i < this.queue.length; i++) {
         const item = this.queue[i];
-        const serviceGroup = item.serviceGroup;
+        const serviceGroup = item.servicePath;
         let serviceGroupList = serviceGroupMap[serviceGroup];
         if (!serviceGroupList) {
             serviceGroupList = serviceGroupMap[serviceGroup] = [];
@@ -229,7 +229,7 @@ TransportBatch.prototype.addToQueue = function(item) {
  * @param item
  */
 TransportBatch.prototype.shouldQueue = function(item) {
-    const serviceOptions = this.services[item.serviceGroup] || {};
+    const serviceOptions = this.services[item.servicePath] || {};
 
     return !serviceOptions.useCloud;
 };
