@@ -3,9 +3,9 @@
  * @ignore
  */
 
-import { formatUrl } from 'src/utils/string';
-import fetch from 'src/utils/fetch';
-import { getRequestId } from 'src/utils/request';
+import { formatUrl } from '../../utils/string';
+import fetch from '../../utils/fetch';
+import { getRequestId } from '../../utils/request';
 
 // -- Local variables section --
 

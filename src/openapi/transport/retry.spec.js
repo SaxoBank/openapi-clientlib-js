@@ -1,5 +1,10 @@
-﻿import { setTimeout, installClock, uninstallClock, tick } from 'test/utils';
-import mockTransport from 'test/mocks/transport';
+﻿import {
+    setTimeout,
+    installClock,
+    uninstallClock,
+    tick,
+} from '../../test/utils';
+import mockTransport from '../../test/mocks/transport';
 import TransportRetry from './retry';
 
 describe('openapi TransportRetry', () => {

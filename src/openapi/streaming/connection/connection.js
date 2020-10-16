@@ -1,8 +1,8 @@
-import log from 'src/log';
+import log from './../../../log';
+import * as transportTypes from './transportTypes';
 import WebsocketTransport from './transport/websocket-transport';
 import SignalrTransport from './transport/signalr-transport';
 import SignalrCoreTransport from './transport/signalr-core-transport';
-import * as transportTypes from './transportTypes';
 
 const LOG_AREA = 'Connection';
 const DEFAULT_TRANSPORTS = [WebsocketTransport, SignalrTransport];

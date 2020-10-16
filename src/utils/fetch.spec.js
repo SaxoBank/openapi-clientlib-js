@@ -1,5 +1,5 @@
-import { FetchResponse } from 'test/mocks/fetch';
-import { installClock, uninstallClock, tick } from 'test/utils';
+import { FetchResponse } from '../test/mocks/fetch';
+import { installClock, uninstallClock, tick } from '../test/utils';
 import { convertFetchSuccess, convertFetchReject } from './fetch';
 
 describe('utils fetch', () => {

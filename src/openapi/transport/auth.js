@@ -2,10 +2,11 @@
  * @module saxo/openapi/transport/auth
  * @ignore
  */
-import log from 'src/log';
-import TransportCore from './core';
 
 // -- Local variables section --
+
+import log from '../../log';
+import TransportCore from './core';
 
 const LOG_AREA = 'TransportAuth';
 

@@ -3,7 +3,7 @@
  * @ignore
  */
 
-import { extend } from 'src/utils/object';
+import { extend } from '../utils/object';
 import formatNumber from './format';
 import parseNumber from './parse';
 import shortFormat from './short-format';

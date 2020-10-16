@@ -1,8 +1,8 @@
-import { installClock, uninstallClock, tick } from 'test/utils';
-import mockMathRandom from 'test/mocks/math-random';
-import mockFetch from 'test/mocks/fetch';
-import jsonPayload from 'test/data/payload.json';
-import * as constants from '../constants';
+import { installClock, uninstallClock, tick } from '../../../../test/utils';
+import mockMathRandom from '../../../../test/mocks/math-random';
+import mockFetch from '../../../../test/mocks/fetch';
+import * as constants from './../constants';
+import jsonPayload from './payload.json';
 import SignalrCoreTransport from './signalr-core-transport';
 
 const CONTEXT_ID = '0000000000';
@@ -325,6 +325,7 @@ describe('openapi SignalR core Transport', () => {
                     headers: { Authorization: 'TOKEN' },
                 }),
             );
+
             fetchMock.resolve('404');
 
             renewalPromise.then(() => {

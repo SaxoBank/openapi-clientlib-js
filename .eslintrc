@@ -6,12 +6,7 @@
     },
     "plugins": ["import", "destructuring", "switch-case", "promise"],
     "settings": {
-        "import/ignore": ["libs", "node_modules"],
-        "import/resolver": {
-            "node": {
-                "paths": ["."]
-            }
-        }
+        "import/ignore": ["libs", "node_modules"]
     },
     "globals": {
         // define our own globals since the built-in list contains many false negatives like "find" that are non-standard
@@ -448,7 +443,7 @@
     },
     "overrides": [
         {
-            "files": ["*.spec.js", "test/**/*"],
+            "files": ["*.spec.js", "src/test/**/*"],
             "env": {
                 "jest": true
             },

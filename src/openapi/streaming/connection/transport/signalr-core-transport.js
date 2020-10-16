@@ -1,5 +1,5 @@
-import fetch from 'src/utils/fetch';
-import log from 'src/log';
+import fetch from '../../../../utils/fetch';
+import log from '../../../../log';
 import * as transportTypes from '../transportTypes';
 import * as constants from '../constants';
 

@@ -3,8 +3,8 @@
  * @ignore
  */
 
-import * as enumUtils from 'src/utils/enum';
-import { parseNumberNegativePattern } from 'src/number-formatting/parse';
+import * as enumUtils from '../utils/enum';
+import { parseNumberNegativePattern } from '../number-formatting/parse';
 import { getModernFractionsSeparator } from './modern-fractions-character';
 
 // -- Local variables section --

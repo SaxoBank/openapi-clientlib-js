@@ -1,6 +1,6 @@
 import protobuf from 'protobufjs/dist/protobuf';
-import * as mockProtoPrice from 'test/mocks/proto-price';
-import * as mockProtoMeta from 'test/mocks/proto-meta';
+import * as mockProtoPrice from '../../../test/mocks/proto-price';
+import * as mockProtoMeta from '../../../test/mocks/proto-meta';
 import ParserProtobuf from './parser-protobuf';
 
 describe('Parser Protobuf', () => {

@@ -1,10 +1,15 @@
-import { installClock, uninstallClock, tick, setTimeout } from 'test/utils';
-import mockMathRandom from 'test/mocks/math-random';
-import mockFetch from 'test/mocks/fetch';
-import jsonPayload from 'test/data/payload.json';
-import * as RequestUtils from 'src/utils/request';
-import * as constants from '../constants';
+import {
+    installClock,
+    uninstallClock,
+    tick,
+    setTimeout,
+} from '../../../../test/utils';
+import mockMathRandom from '../../../../test/mocks/math-random';
+import mockFetch from '../../../../test/mocks/fetch';
+import * as RequestUtils from '../../../../utils/request';
 import WebSocketTransport from './websocket-transport';
+import * as constants from './../constants';
+import jsonPayload from './payload.json';
 
 const CONTEXT_ID = '0000000000';
 const AUTH_TOKEN = 'TOKEN';

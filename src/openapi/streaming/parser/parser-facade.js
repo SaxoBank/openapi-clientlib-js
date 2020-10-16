@@ -1,4 +1,4 @@
-import { extend } from 'src/utils/object';
+import { extend } from '../../../utils/object';
 import ParserJson from './parser-json';
 
 const parserCreators = {

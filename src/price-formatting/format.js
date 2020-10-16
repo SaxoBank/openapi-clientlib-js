@@ -3,9 +3,9 @@
  * @ignore
  */
 
-import * as enumUtils from 'src/utils/enum';
-import formatNumber from 'src/number-formatting/format';
-import { endsWith, multiply, padLeft } from 'src/utils/string';
+import * as enumUtils from '../utils/enum';
+import formatNumber from '../number-formatting/format';
+import { endsWith, multiply, padLeft } from '../utils/string';
 import { getModernFractionsSeparator } from './modern-fractions-character';
 
 // -- Local variables section --

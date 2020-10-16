@@ -1,8 +1,13 @@
 import protobuf from 'protobufjs/dist/protobuf';
-import { setTimeout, installClock, uninstallClock, tick } from 'test/utils';
-import mockTransport from 'test/mocks/transport';
-import * as mockProtoPrice from 'test/mocks/proto-price';
-import log from 'src/log';
+import {
+    setTimeout,
+    installClock,
+    uninstallClock,
+    tick,
+} from '../../test/utils';
+import mockTransport from '../../test/mocks/transport';
+import * as mockProtoPrice from '../../test/mocks/proto-price';
+import log from '../../log';
 import Subscription from './subscription';
 import ParserProtobuf from './parser/parser-protobuf';
 import ParserFacade from './parser/parser-facade';

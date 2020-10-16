@@ -1,5 +1,5 @@
-import { multiline } from 'test/utils';
-import * as RequestUtils from 'src/utils/request';
+import { multiline } from '../test/utils';
+import * as RequestUtils from '../utils/request';
 import * as batchUtil from './batch-util';
 
 describe('openapi batchUtil', () => {
