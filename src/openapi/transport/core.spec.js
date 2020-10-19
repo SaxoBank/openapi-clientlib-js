@@ -29,6 +29,77 @@ describe('openapi TransportCore', () => {
         });
     });
 
+    describe('base selection for on-prem or cloud', () => {
+        it('assumes on-prem when given no configuration', () => {
+            transport = new TransportCore('localhost');
+
+            transport.get('service_path', 'endpoint');
+
+            expect(fetch).toHaveBeenCalledWith(
+                'localhost/openapi/service_path/endpoint',
+                expect.anything(),
+            );
+        });
+
+        it('assumes on-prem for a service path with no configuration', () => {
+            transport = new TransportCore('localhost', {
+                services: {},
+            });
+
+            transport.get('service_path', 'endpoint');
+
+            expect(fetch).toHaveBeenCalledWith(
+                'localhost/openapi/service_path/endpoint',
+                expect.anything(),
+            );
+        });
+
+        it('assumes on-prem for a service path with no relevant configuration', () => {
+            transport = new TransportCore('localhost', {
+                services: {
+                    service_path: {},
+                },
+            });
+
+            transport.get('service_path', 'endpoint');
+
+            expect(fetch).toHaveBeenCalledWith(
+                'localhost/openapi/service_path/endpoint',
+                expect.anything(),
+            );
+        });
+
+        it('uses on-prem for a service path configured as such', () => {
+            transport = new TransportCore('localhost', {
+                services: {
+                    service_path: { useCloud: false },
+                },
+            });
+
+            transport.get('service_path', 'endpoint');
+
+            expect(fetch).toHaveBeenCalledWith(
+                'localhost/openapi/service_path/endpoint',
+                expect.anything(),
+            );
+        });
+
+        it('uses cloud for a service path configured as such', () => {
+            transport = new TransportCore('localhost', {
+                services: {
+                    service_path: { useCloud: true },
+                },
+            });
+
+            transport.get('service_path', 'endpoint');
+
+            expect(fetch).toHaveBeenCalledWith(
+                'localhost/oapi/service_path/endpoint',
+                expect.anything(),
+            );
+        });
+    });
+
     describe('url templating', () => {
         it('basically works', () => {
             transport = new TransportCore('localhost');
