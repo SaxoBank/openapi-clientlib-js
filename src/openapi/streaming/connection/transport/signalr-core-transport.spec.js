@@ -90,8 +90,12 @@ describe('openapi SignalR core Transport', () => {
             },
             stream: spyOnMessageStream,
             stop: spyOnConnectionStop,
-            invoke: (method) => {
+            invoke: (method, ...args) => {
                 if (method === 'RenewToken') {
+                    if (args[0] === undefined) {
+                        throw Error('Token is required');
+                    }
+
                     mockRenewToken = getResolvablePromise();
                     return mockRenewToken.promise;
                 }
@@ -293,11 +297,7 @@ describe('openapi SignalR core Transport', () => {
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
             transport.start({});
 
-            renewalPromise = transport.renewSession(
-                AUTH_TOKEN,
-                CONTEXT_ID,
-                true,
-            );
+            renewalPromise = transport.renewSession();
         });
 
         it('should call disconnect if session is not found', (done) => {

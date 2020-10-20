@@ -24,10 +24,7 @@ function handleLog(level, message) {
     log.warn(LOG_AREA, message);
 }
 
-function buildConnection({ baseUrl, contextId, authToken, protocol }) {
-    const accessTokenFactory = () => {
-        return authToken;
-    };
+function buildConnection({ baseUrl, contextId, accessTokenFactory, protocol }) {
     const url = `${baseUrl}/streaming?contextId=${contextId}`;
 
     return new window.signalrCore.HubConnectionBuilder()
@@ -153,7 +150,9 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         this.connection = buildConnection({
             baseUrl: this.baseUrl,
             contextId: this.contextId,
-            authToken: this.authToken,
+            accessTokenFactory: () => {
+                return this.authToken;
+            },
             protocol,
         });
     } catch (error) {
@@ -333,14 +332,17 @@ SignalrCoreTransport.prototype.updateQuery = function(
     this.authToken = authToken.replace('BEARER ', '');
 
     if (forceAuth) {
-        this.renewSession(this.authToken, contextId);
+        this.renewSession();
     }
 };
 
-SignalrCoreTransport.prototype.renewSession = function(authToken, contextId) {
+SignalrCoreTransport.prototype.renewSession = function() {
     if (!this.connection || this.isReconnecting) {
         return;
     }
+
+    const authToken = this.authToken;
+    const contextId = this.contextId;
 
     return this.connection
         .invoke('RenewToken', authToken)
@@ -398,7 +400,7 @@ SignalrCoreTransport.prototype.renewSession = function(authToken, contextId) {
                 return;
             }
 
-            log.info(
+            log.warn(
                 LOG_AREA,
                 'Failed to renew token possibly due to network issues',
                 {
