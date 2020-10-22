@@ -181,6 +181,7 @@ function TransportBatch(transport, baseUrl, options) {
         basePath += '/';
     }
 
+    // Batching is a service group level facility, so isn't applicable/available for /oapi
     this.basePath = basePath + 'openapi/';
 
     if (options && options.host) {
