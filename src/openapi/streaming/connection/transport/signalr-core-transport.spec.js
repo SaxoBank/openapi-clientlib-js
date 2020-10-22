@@ -28,9 +28,13 @@ describe('openapi SignalR core Transport', () => {
     let mockStart;
     let mockStreamCancel;
     let mockRenewToken;
+    let mockReconnect;
+    let tokenFactory;
 
     class MockConnectionBuilder {
-        withUrl() {
+        withUrl(url, options) {
+            tokenFactory = options.accessTokenFactory;
+
             return this;
         }
         withHubProtocol() {
@@ -68,6 +72,7 @@ describe('openapi SignalR core Transport', () => {
             },
         };
         const closeCallbacks = [];
+        const reconnectedCallbacks = [];
 
         spyOnMessageStream = jest
             .fn()
@@ -85,6 +90,9 @@ describe('openapi SignalR core Transport', () => {
 
         mockHubConnection = {
             start: () => {
+                // mock token use
+                tokenFactory();
+
                 mockStart = getResolvablePromise();
                 return mockStart.promise;
             },
@@ -102,7 +110,15 @@ describe('openapi SignalR core Transport', () => {
             },
             onclose: (callback) => closeCallbacks.push(callback),
             onreconnecting: () => {},
-            onreconnected: () => {},
+            onreconnected: (callback) => reconnectedCallbacks.push(callback),
+        };
+
+        mockReconnect = () => {
+            // mock token use
+            tokenFactory();
+            setTimeout(() => {
+                reconnectedCallbacks.forEach((callback) => callback());
+            }, 0);
         };
 
         installClock();
@@ -122,13 +138,17 @@ describe('openapi SignalR core Transport', () => {
         uninstallClock();
         subscribeNextHandler = NOOP;
         subscribeErrorHandler = NOOP;
+        mockStart = null;
+        mockStreamCancel = null;
+        mockRenewToken = undefined;
     });
 
     describe('start', () => {
         let startPromise;
+        let transport;
 
         beforeEach(() => {
-            const transport = new SignalrCoreTransport(
+            transport = new SignalrCoreTransport(
                 BASE_URL,
                 spyOnTransportFailedCallback,
             );
@@ -156,6 +176,29 @@ describe('openapi SignalR core Transport', () => {
                 expect(spyOnStartCallback).toBeCalledTimes(1);
                 expect(spyOnMessageStream).toBeCalledTimes(1);
 
+                done();
+            });
+        });
+
+        it('should renew session with new token if token was updated while response was in flight', (done) => {
+            expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
+                1,
+                constants.CONNECTION_STATE_CONNECTING,
+            );
+
+            // mock token update
+            transport.updateQuery('NEW_TOKEN', CONTEXT_ID);
+
+            // resolve handshake request
+            mockStart.resolve();
+
+            startPromise.then(() => {
+                expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
+                    2,
+                    constants.CONNECTION_STATE_CONNECTED,
+                );
+
+                expect(mockRenewToken).toBeDefined();
                 done();
             });
         });
@@ -405,6 +448,39 @@ describe('openapi SignalR core Transport', () => {
                     done();
                 });
             });
+        });
+    });
+
+    describe('reconnect', () => {
+        let transport;
+
+        beforeEach(() => {
+            transport = new SignalrCoreTransport(BASE_URL);
+            transport.setStateChangedCallback(spyOnStateChangedCallback);
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start({});
+        });
+
+        it('should create new message stream on reconnection', () => {
+            mockReconnect();
+            tick(10);
+
+            expect(spyOnMessageStream).toBeCalledTimes(1);
+            expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
+                constants.CONNECTION_STATE_CONNECTED,
+            );
+        });
+
+        it('should renew with new token if token was updated while reconnect response was in flight', () => {
+            mockReconnect();
+
+            // token is updated
+            transport.updateQuery('NEW_TOKEN', CONTEXT_ID);
+
+            tick(10);
+
+            expect(spyOnMessageStream).toBeCalledTimes(1);
+            expect(mockRenewToken).toBeDefined();
         });
     });
 });

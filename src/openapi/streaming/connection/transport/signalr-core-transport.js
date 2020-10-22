@@ -142,6 +142,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         return;
     }
 
+    let lastUsedToken = null;
     const protocol =
         options.messageSerializationProtocol ||
         new window.signalrCore.JsonHubProtocol();
@@ -151,6 +152,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
             baseUrl: this.baseUrl,
             contextId: this.contextId,
             accessTokenFactory: () => {
+                lastUsedToken = this.authToken;
                 return this.authToken;
             },
             protocol,
@@ -178,6 +180,11 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         // recreate message stream
         this.createMessageStream(protocol);
         this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+
+        // Token might have been updated while reconnect response was in flight
+        if (lastUsedToken !== this.authToken) {
+            this.renewSession();
+        }
     });
 
     this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
@@ -196,6 +203,11 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
             }
 
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+
+            // Token might have been updated while reconnect response was in flight
+            if (lastUsedToken !== this.authToken) {
+                this.renewSession();
+            }
         })
         .catch((error) => {
             log.error(
