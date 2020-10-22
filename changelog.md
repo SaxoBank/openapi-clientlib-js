@@ -1,3 +1,7 @@
+### v.7.2.0
+
+- Update signalr core auth to use websocket for session renewal
+
 ### v.7.1.0
 
 - Add signalr core transport support

@@ -1,4 +1,3 @@
-import fetch from '../../../../utils/fetch';
 import log from '../../../../log';
 import * as transportTypes from '../transportTypes';
 import * as constants from '../constants';
@@ -6,6 +5,12 @@ import * as constants from '../constants';
 const LOG_AREA = 'SignalrCoreTransport';
 const NOOP = () => {};
 const RECONNECT_DELAYS = [2000, 3000, 5000, 10000, 20000];
+
+const renewStatus = {
+    SUCCESS: 0,
+    INVALID_TOKEN: 1,
+    SESSION_NOT_FOUND: 2,
+};
 
 /**
  * Handles any signal-r log, and pipes it through our logging.
@@ -19,10 +24,7 @@ function handleLog(level, message) {
     log.warn(LOG_AREA, message);
 }
 
-function buildConnection({ baseUrl, contextId, authToken, protocol }) {
-    const accessTokenFactory = () => {
-        return authToken.replace('BEARER ', '');
-    };
+function buildConnection({ baseUrl, contextId, accessTokenFactory, protocol }) {
     const url = `${baseUrl}/streaming?contextId=${contextId}`;
 
     return new window.signalrCore.HubConnectionBuilder()
@@ -102,6 +104,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     this.hasStreamingStarted = false;
     this.isDisconnecting = false;
     this.hasTransportError = false;
+    this.isReconnecting = false;
 
     // callbacks
     this.transportFailCallback = transportFailCallback;
@@ -139,6 +142,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         return;
     }
 
+    let lastUsedToken = null;
     const protocol =
         options.messageSerializationProtocol ||
         new window.signalrCore.JsonHubProtocol();
@@ -147,7 +151,10 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         this.connection = buildConnection({
             baseUrl: this.baseUrl,
             contextId: this.contextId,
-            authToken: this.authToken,
+            accessTokenFactory: () => {
+                lastUsedToken = this.authToken;
+                return this.authToken;
+            },
             protocol,
         });
     } catch (error) {
@@ -165,12 +172,19 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
             error,
         });
 
+        this.isReconnecting = true;
         this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
     });
     this.connection.onreconnected(() => {
+        this.isReconnecting = false;
         // recreate message stream
         this.createMessageStream(protocol);
         this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+
+        // Token might have been updated while reconnect response was in flight
+        if (lastUsedToken !== this.authToken) {
+            this.renewSession();
+        }
     });
 
     this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
@@ -189,29 +203,22 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
             }
 
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+
+            // Token might have been updated while reconnect response was in flight
+            if (lastUsedToken !== this.authToken) {
+                this.renewSession();
+            }
         })
         .catch((error) => {
-            if (error.statusCode) {
-                log.error(
-                    LOG_AREA,
-                    'Error occurred while connecting to streaming service',
-                    {
-                        error,
-                    },
-                );
+            log.error(
+                LOG_AREA,
+                'Error occurred while connecting to streaming service',
+                {
+                    error,
+                },
+            );
 
-                this.transportFailCallback();
-            } else {
-                log.debug(
-                    LOG_AREA,
-                    'Possible network error occurred while connecting to streaming service',
-                    {
-                        error,
-                    },
-                );
-
-                this.handleConnectionClosure();
-            }
+            this.transportFailCallback();
         });
 };
 
@@ -334,58 +341,87 @@ SignalrCoreTransport.prototype.updateQuery = function(
     });
 
     this.contextId = contextId;
-    this.authToken = authToken;
+    this.authToken = authToken.replace('BEARER ', '');
 
     if (forceAuth) {
-        this.renewSession(authToken, contextId);
+        this.renewSession();
     }
 };
 
-SignalrCoreTransport.prototype.renewSession = function(authToken, contextId) {
-    const options = {
-        headers: {
-            Authorization: authToken,
-        },
-    };
-    const url = `${this.baseUrl}/streaming/renewal/renewsession`;
+SignalrCoreTransport.prototype.renewSession = function() {
+    if (!this.connection || this.isReconnecting) {
+        return;
+    }
 
-    return fetch('POST', url, options)
-        .then(() => {
-            log.debug(
-                LOG_AREA,
-                'Streaming session is successfully renewed with new token',
-                {
-                    contextId,
-                },
-            );
+    const authToken = this.authToken;
+    const contextId = this.contextId;
+
+    return this.connection
+        .invoke('RenewToken', authToken)
+        .then(({ Status }) => {
+            switch (Status) {
+                case renewStatus.SUCCESS:
+                    log.info(
+                        LOG_AREA,
+                        'Successfully renewed token for session',
+                        {
+                            contextId,
+                        },
+                    );
+                    return;
+
+                case renewStatus.INVALID_TOKEN:
+                    // if this call was superseded by another one, then ignore this error
+                    // else let auth provider know of invalid token
+                    if (this.authToken === authToken) {
+                        this.unauthorizedCallback();
+                    }
+
+                    return;
+
+                case renewStatus.SESSION_NOT_FOUND:
+                    log.warn(
+                        LOG_AREA,
+                        'Session not found while renewing session',
+                        {
+                            contextId,
+                        },
+                    );
+
+                    // should try to reconnect with different context id
+                    this.stop();
+                    return;
+
+                default:
+                    log.error(
+                        LOG_AREA,
+                        'Unknown status received while renewing session',
+                        {
+                            status: Status,
+                            contextId,
+                        },
+                    );
+
+                    this.stop(true);
+                    this.transportFailCallback();
+            }
         })
         .catch((error) => {
-            // if this call was superseded by another one, then ignore this error
-            if (this.authToken !== authToken) {
+            // Invocation could get cancelled due to connection being closed
+            if (!this.connection || this.isReconnecting) {
                 return;
             }
 
-            // if a network error occurs, retry
-            if (error && error.isNetworkError) {
-                return this.renewSession(authToken, contextId);
-            }
-
-            if (error.status === 401) {
-                this.unauthorizedCallback();
-                return;
-            }
-
-            log.error(
+            log.warn(
                 LOG_AREA,
-                'Error occurred during streaming session renewal',
+                'Failed to renew token possibly due to network issues',
                 {
-                    contextId,
                     error,
                 },
             );
 
-            this.stop(true);
-            this.transportFailCallback();
+            // Retry
+            this.renewSession();
         });
 };
 
