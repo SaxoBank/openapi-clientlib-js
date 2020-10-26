@@ -1,8 +1,12 @@
-### v.7.2.0
+### v7.2.1
+
+- Fix some log messages not passing LOG_AREA and add more details to a parsing error
+
+### v7.2.0
 
 - Update signalr core auth to use websocket for session renewal
 
-### v.7.1.0
+### v7.1.0
 
 - Add signalr core transport support
 
@@ -16,32 +20,32 @@
 - If a request for a subscription is sent twice, unsubscribe from the subscription that the library did not receive a response for
 - If an error occurs processing a protobuf message, we now reset the subscription so it isn't stuck
 
-### v.6.2.5
+### v6.2.5
 
 - Use fetch instead of openapi transport for authorization
 
-### v.6.2.4
+### v6.2.4
 
 - Use TextDecoder to decode utf8 string payload
 
-### v.6.2.3
+### v6.2.3
 
 - Fix typed array slice method not supported exception in IE11 and old chrome
 
-### v.6.2.2
+### v6.2.2
 
 - Fix stackoverflow exception during JSON payload parsing.
 
-### v.6.2.1
+### v6.2.1
 
 - More detailed error logging for streaming.
 
-### v.6.2.0
+### v6.2.0
 
 - Refactoring of Plain Websocket Transport reconnecting logic.
 - Fixed Plain Websocket Transport error with null contextId.
 
-### v.6.1.0
+### v6.1.0
 
 - Add TransportPutPatchDiagnositicsQueue which waits on any put/patch until a diagnostics call has been made to check if a proxy rejects it and revert to POST instead.
 
