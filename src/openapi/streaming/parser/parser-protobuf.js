@@ -174,7 +174,7 @@ ParserProtobuf.prototype.parse = function(data, schemaName) {
             typeof data === 'string'
                 ? data
                 : this.protobuf.util.base64.encode(data, 0, data.length);
-        log.error('Protobuf parsing failed', {
+        log.error(LOG_AREA, 'Protobuf parsing failed', {
             error,
             base64Data,
             schema: this.schemasSourceMap[schemaName],

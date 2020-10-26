@@ -720,7 +720,11 @@ Subscription.prototype.processUpdate = function(message, type) {
             Data: this.parser.parse(message.Data, this.SchemaName),
         });
     } catch (error) {
-        log.error('Error occurred parsing Data', error);
+        log.error(LOG_AREA, 'Error occurred parsing Data', {
+            error,
+            serviceGroup: this.serviceGroup,
+            url: this.url,
+        });
 
         // if we cannot understand an update we should re-subscribe to make sure we are updated
         this.reset();
@@ -862,6 +866,7 @@ Subscription.prototype.onModify = function(newArgs, options) {
 Subscription.prototype.onUnsubscribe = function() {
     if (this.isDisposed) {
         log.warn(
+            LOG_AREA,
             'Unsubscribing a disposed subscription - this is not necessary',
         );
     }
