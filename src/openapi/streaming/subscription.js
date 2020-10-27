@@ -722,7 +722,7 @@ Subscription.prototype.processUpdate = function(message, type) {
     } catch (error) {
         log.error(LOG_AREA, 'Error occurred parsing Data', {
             error,
-            serviceGroup: this.serviceGroup,
+            servicePath: this.servicePath,
             url: this.url,
         });
 
