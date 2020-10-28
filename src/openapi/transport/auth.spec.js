@@ -45,14 +45,11 @@ describe('openapi TransportAuth', () => {
 
     describe('refreshing', () => {
         it('refreshes the token when a transport call returns a 401', (done) => {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(fetch).not.toBeCalled();
             authProvider.getExpiry.mockImplementation(() => 1);
-            transportAuth.get('service_group', 'url').catch(noop);
+            transportAuth.get('service_path', 'url').catch(noop);
             expect(fetch).toBeCalledTimes(1);
             fetch.mockClear();
 
@@ -67,13 +64,10 @@ describe('openapi TransportAuth', () => {
         });
 
         it('does nothing when a transport call fails with a different error code', (done) => {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(fetch).not.toBeCalled();
-            transportAuth.get('service_group', 'url').catch(noop);
+            transportAuth.get('service_path', 'url').catch(noop);
             expect(fetch).toBeCalledTimes(1);
             fetch.mockClear();
 
@@ -88,13 +82,10 @@ describe('openapi TransportAuth', () => {
 
     describe('transport', function() {
         it('adds on a auth header when methods are called', function() {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(fetch).not.toBeCalled();
-            transportAuth.get('service_group', 'url');
+            transportAuth.get('service_path', 'url');
             expect(fetch).toBeCalledTimes(1);
             expect(fetch).toHaveBeenCalledWith(
                 expect.anything(),
@@ -107,7 +98,7 @@ describe('openapi TransportAuth', () => {
             );
             fetch.mockClear();
 
-            transportAuth.get('service_group', 'url', {}, {});
+            transportAuth.get('service_path', 'url', {}, {});
             expect(fetch).toBeCalledTimes(1);
             expect(fetch).toHaveBeenCalledWith(
                 expect.anything(),
@@ -121,16 +112,13 @@ describe('openapi TransportAuth', () => {
         });
 
         it('supports all the http verbs', function() {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
-            transportAuth.get('service_group', 'url');
-            transportAuth.put('service_group', 'url');
-            transportAuth.post('service_group', 'url');
-            transportAuth.patch('service_group', 'url');
-            transportAuth.delete('service_group', 'url');
+            transportAuth.get('service_path', 'url');
+            transportAuth.put('service_path', 'url');
+            transportAuth.post('service_path', 'url');
+            transportAuth.patch('service_path', 'url');
+            transportAuth.delete('service_path', 'url');
             expect(fetch).toBeCalledTimes(5);
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
@@ -181,14 +169,11 @@ describe('openapi TransportAuth', () => {
         });
 
         it('overrides an auth header if one exists', function() {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(fetch).not.toBeCalled();
             transportAuth.get(
-                'service_group',
+                'service_path',
                 'url',
                 {},
                 { headers: { Authorization: 'MYTOKEN' } },
@@ -206,18 +191,15 @@ describe('openapi TransportAuth', () => {
         });
 
         it('counts transport authorization errors', function(done) {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
                 transportAuth.authorizationErrors[
-                    'localhost/openapi/service_group/url'
+                    'localhost/openapi/service_path/url'
                 ],
             ).toBe(undefined);
 
-            transportAuth.post('service_group', 'url').catch(noop);
+            transportAuth.post('service_path', 'url').catch(noop);
             transportAuth.state = 1;
             fetch.resolve(401, {
                 error: 401,
@@ -227,7 +209,7 @@ describe('openapi TransportAuth', () => {
             setTimeout(() => {
                 expect(
                     transportAuth.authorizationErrors[
-                        'localhost/openapi/service_group/url'
+                        'localhost/openapi/service_path/url'
                     ],
                 ).toEqual([expect.any(Object)]);
                 done();
@@ -235,21 +217,18 @@ describe('openapi TransportAuth', () => {
         });
 
         it('blocks re-requesting authorization token if auth errors happen on different tokens', function(done) {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
                 transportAuth.authorizationErrors[
-                    'localhost/openapi/service_group/url'
+                    'localhost/openapi/service_path/url'
                 ],
             ).toBe(undefined);
 
             return waterfallTimeout([
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 1);
-                    transportAuth.post('service_group', 'url').catch(noop);
+                    transportAuth.post('service_path', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -260,13 +239,13 @@ describe('openapi TransportAuth', () => {
                     expect(authProvider.tokenRejected).toHaveBeenCalledTimes(1);
                     expect(
                         transportAuth.authorizationErrors[
-                            'localhost/openapi/service_group/url'
+                            'localhost/openapi/service_path/url'
                         ],
                     ).toEqual([expect.any(Object)]);
                 },
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 2);
-                    transportAuth.post('service_group', 'url').catch(noop);
+                    transportAuth.post('service_path', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -277,7 +256,7 @@ describe('openapi TransportAuth', () => {
                     expect(authProvider.tokenRejected).toHaveBeenCalledTimes(1);
                     expect(
                         transportAuth.authorizationErrors[
-                            'localhost/openapi/service_group/url'
+                            'localhost/openapi/service_path/url'
                         ],
                     ).toEqual([expect.any(Object), expect.any(Object)]);
 
@@ -287,19 +266,16 @@ describe('openapi TransportAuth', () => {
         });
 
         it('doesnt block re-requesting if limit not reached for separate endpoints', function(done) {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
                 transportAuth.authorizationErrors[
-                    'localhost/openapi/service_group/url'
+                    'localhost/openapi/service_path/url'
                 ],
             ).toBe(undefined);
             expect(
                 transportAuth.authorizationErrors[
-                    'localhost/openapi/service_group/url-2'
+                    'localhost/openapi/service_path/url-2'
                 ],
             ).toBe(undefined);
 
@@ -307,7 +283,7 @@ describe('openapi TransportAuth', () => {
                 // Fail the first endpoint
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 1);
-                    transportAuth.post('service_group', 'url').catch(noop);
+                    transportAuth.post('service_path', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -316,7 +292,7 @@ describe('openapi TransportAuth', () => {
                 },
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 2);
-                    transportAuth.post('service_group', 'url').catch(noop);
+                    transportAuth.post('service_path', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -327,14 +303,14 @@ describe('openapi TransportAuth', () => {
                     expect(authProvider.tokenRejected).toHaveBeenCalledTimes(1);
                     expect(
                         transportAuth.authorizationErrors[
-                            'localhost/openapi/service_group/url'
+                            'localhost/openapi/service_path/url'
                         ],
                     ).toEqual([expect.any(Object), expect.any(Object)]);
                 },
                 // now have a failure with the new endpoint
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 3);
-                    transportAuth.post('service_group', 'url-2').catch(noop);
+                    transportAuth.post('service_path', 'url-2').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -345,7 +321,7 @@ describe('openapi TransportAuth', () => {
                     expect(authProvider.tokenRejected).toHaveBeenCalledTimes(2);
                     expect(
                         transportAuth.authorizationErrors[
-                            'localhost/openapi/service_group/url-2'
+                            'localhost/openapi/service_path/url-2'
                         ],
                     ).toEqual([expect.any(Object)]);
 
@@ -355,26 +331,23 @@ describe('openapi TransportAuth', () => {
         });
 
         it('resets error counters after dispose', function(done) {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
                 transportAuth.authorizationErrors[
-                    'localhost/openapi/service_group/url'
+                    'localhost/openapi/service_path/url'
                 ],
             ).toBe(undefined);
             expect(
                 transportAuth.authorizationErrors[
-                    'localhost/openapi/service_group/url-2'
+                    'localhost/openapi/service_path/url-2'
                 ],
             ).toBe(undefined);
 
             waterfallTimeout([
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 1);
-                    transportAuth.post('service_group', 'url').catch(noop);
+                    transportAuth.post('service_path', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -383,7 +356,7 @@ describe('openapi TransportAuth', () => {
                 },
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 2);
-                    transportAuth.post('service_group', 'url').catch(noop);
+                    transportAuth.post('service_path', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -394,7 +367,7 @@ describe('openapi TransportAuth', () => {
                     expect(authProvider.tokenRejected).toHaveBeenCalledTimes(1);
                     expect(
                         transportAuth.authorizationErrors[
-                            'localhost/openapi/service_group/url'
+                            'localhost/openapi/service_path/url'
                         ],
                     ).toEqual(expect.any(Array));
 
@@ -402,7 +375,7 @@ describe('openapi TransportAuth', () => {
 
                     expect(
                         transportAuth.authorizationErrors[
-                            'localhost/openapi/service_group/url'
+                            'localhost/openapi/service_path/url'
                         ],
                     ).toBe(undefined);
 
@@ -412,26 +385,23 @@ describe('openapi TransportAuth', () => {
         });
 
         it('resets error counters after debounce timeout is reached', function(done) {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
                 transportAuth.authorizationErrors[
-                    'localhost/openapi/service_group/url'
+                    'localhost/openapi/service_path/url'
                 ],
             ).toBe(undefined);
             expect(
                 transportAuth.authorizationErrors[
-                    'localhost/openapi/service_group/url-2'
+                    'localhost/openapi/service_path/url-2'
                 ],
             ).toBe(undefined);
 
             waterfallTimeout([
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 1);
-                    transportAuth.post('service_group', 'url').catch(noop);
+                    transportAuth.post('service_path', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -442,7 +412,7 @@ describe('openapi TransportAuth', () => {
                     tick(30001);
 
                     authProvider.getExpiry.mockImplementation(() => 2);
-                    transportAuth.post('service_group', 'url').catch(noop);
+                    transportAuth.post('service_path', 'url').catch(noop);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -460,10 +430,7 @@ describe('openapi TransportAuth', () => {
 
     describe('areUrlAuthErrorsProblematic', () => {
         it('should return value for specific url', () => {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             transportAuth.authorizationErrors = {
                 'new-url': [{ authExpiry: 1 }],
@@ -482,10 +449,7 @@ describe('openapi TransportAuth', () => {
         });
 
         it('should return true for url which is not present in errors map', () => {
-            transportAuth = new TransportAuth(
-                'localhost/openapi',
-                authProvider,
-            );
+            transportAuth = new TransportAuth('localhost', authProvider);
 
             transportAuth.authorizationErrors = {
                 'new-url': [{ authExpiry: 1 }],

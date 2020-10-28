@@ -18,16 +18,14 @@ const DEFAULT_CACHE = true;
  * @param method
  */
 function generateTransportCall(method) {
-    return function(serviceGroup, urlTemplate, templateArgs, options) {
+    return function(servicePath, urlTemplate, templateArgs, options) {
         let body;
         let headers = {};
         let cache = this.defaultCache;
         let queryParams;
 
-        if (!serviceGroup || !urlTemplate) {
-            throw new Error(
-                'Transport calls require a service group and a URL',
-            );
+        if (!servicePath || !urlTemplate) {
+            throw new Error('Transport calls require a service path and a URL');
         }
 
         if (options) {
@@ -55,9 +53,12 @@ function generateTransportCall(method) {
                 (options && options.requestId) || getRequestId();
         }
 
+        const serviceOptions = this.services[servicePath] || {};
+        const basePath = serviceOptions.useCloud ? '/oapi' : '/openapi';
+
         return this.fetch(
             method,
-            this.baseUrl + '/' + serviceGroup + '/' + url,
+            this.baseUrl + basePath + '/' + servicePath + '/' + url,
             {
                 body,
                 headers,
@@ -71,6 +72,13 @@ function generateTransportCall(method) {
 // -- Exported methods section --
 
 /**
+ * Options pertaining to a specific service path.
+ *
+ * @typedef {Object} saxo.ServiceOptions
+ * @property {boolean} [useCloud] - Request from OpenAPI cloud (/oapi)
+ */
+
+/**
  * Handles core transport to the openapi rest service. This is little more than a thin layer on top of fetch, adding
  * cache breaking, language header adding and a convenient mechanism for making transport calls.
  * @class
@@ -79,6 +87,7 @@ function generateTransportCall(method) {
  * @param {object} [options]
  * @param {string} [options.language] - The language sent as a header if not overridden.
  * @param {boolean} [options.defaultCache=true] - Sets the default caching behaviour if not overridden on a call.
+ * @param {Object.<string, saxo.ServiceOptions>} [options.services] - Per-service options, keyed by service path.
  */
 function Transport(baseUrl, options) {
     if (!baseUrl) {
@@ -90,13 +99,14 @@ function Transport(baseUrl, options) {
         options && typeof options.defaultCache === 'boolean'
             ? options.defaultCache
             : DEFAULT_CACHE;
+    this.services = (options && options.services) || {};
 }
 
 /**
  * Does a get request against open api.
  * @function
- * @param {string} serviceGroup - The servicegroup to make the call on
- * @param {string} urlTemplate - The url path template which follows on from the serviceGroup to describe the path for the request.
+ * @param {string} servicePath - The service path to make the call on
+ * @param {string} urlTemplate - The url path template which follows on from the service path to describe the path for the request.
  * @param {Object} templateArgs - An object containing fields matched to the template or null if there are no templateArgs.
  * @param {Object} [options]
  * @param {Object.<string:string>} [options.headers] - A object map of headers, header key to header value
@@ -147,8 +157,8 @@ Transport.prototype.get = generateTransportCall('GET');
 /**
  * Does a put request against open api.
  * @function
- * @param {string} serviceGroup - The servicegroup to make the call on
- * @param {string} urlTemplate - The url path template which follows on from the serviceGroup to describe the path for the request.
+ * @param {string} servicePath - The service path to make the call on
+ * @param {string} urlTemplate - The url path template which follows on from the service path to describe the path for the request.
  * @param {Object} templateArgs - An object containing fields matched to the template or null if there are no templateArgs.
  * @param {Object} [options]
  * @param {Object.<string:string>} [options.headers] - A object map of headers, header key to header value
@@ -201,8 +211,8 @@ Transport.prototype.put = generateTransportCall('PUT');
 /**
  * Does a delete request against open api.
  * @function
- * @param {string} serviceGroup - The servicegroup to make the call on
- * @param {string} urlTemplate - The url path template which follows on from the serviceGroup to describe the path for the request.
+ * @param {string} servicePath - The service path to make the call on
+ * @param {string} urlTemplate - The url path template which follows on from the service path to describe the path for the request.
  * @param {Object} templateArgs - An object containing fields matched to the template or null if there are no templateArgs.
  * @param {Object} [options]
  * @param {Object.<string:string>} [options.headers] - A object map of headers, header key to header value
@@ -253,8 +263,8 @@ Transport.prototype.delete = generateTransportCall('DELETE');
 /**
  * Does a post request against open api.
  * @function
- * @param {string} serviceGroup - The servicegroup to make the call on
- * @param {string} urlTemplate - The url path template which follows on from the serviceGroup to describe the path for the request.
+ * @param {string} servicePath - The service path to make the call on
+ * @param {string} urlTemplate - The url path template which follows on from the service path to describe the path for the request.
  * @param {Object} templateArgs - An object containing fields matched to the template or null if there are no templateArgs.
  * @param {Object} [options]
  * @param {Object.<string:string>} [options.headers] - A object map of headers, header key to header value
@@ -307,8 +317,8 @@ Transport.prototype.post = generateTransportCall('POST');
 /**
  * Does a patch request against open api.
  * @function
- * @param {string} serviceGroup - The servicegroup to make the call on
- * @param {string} urlTemplate - The url path template which follows on from the serviceGroup to describe the path for the request.
+ * @param {string} servicePath - The service path to make the call on
+ * @param {string} urlTemplate - The url path template which follows on from the service path to describe the path for the request.
  * @param {Object} templateArgs - An object containing fields matched to the template or null if there are no templateArgs.
  * @param {Object} [options]
  * @param {Object.<string:string>} [options.headers] - A object map of headers, header key to header value
@@ -361,8 +371,8 @@ Transport.prototype.patch = generateTransportCall('PATCH');
 /**
  * Does a head request against open api.
  * @function
- * @param {string} serviceGroup - The servicegroup to make the call on
- * @param {string} urlTemplate - The url path template which follows on from the serviceGroup to describe the path for the request.
+ * @param {string} servicePath - The service path to make the call on
+ * @param {string} urlTemplate - The url path template which follows on from the service path to describe the path for the request.
  * @param {Object} templateArgs - An object containing fields matched to the template or null if there are no templateArgs.
  * @param {Object} [options]
  * @param {Object.<string:string>} [options.headers] - A object map of headers, header key to header value
@@ -414,8 +424,8 @@ Transport.prototype.head = generateTransportCall('HEAD');
 /**
  * Does an options request against open api.
  * @function
- * @param {string} serviceGroup - The servicegroup to make the call on
- * @param {string} urlTemplate - The url path template which follows on from the serviceGroup to describe the path for the request.
+ * @param {string} servicePath - The service path to make the call on
+ * @param {string} urlTemplate - The url path template which follows on from the service path to describe the path for the request.
  * @param {Object} templateArgs - An object containing fields matched to the template or null if there are no templateArgs.
  * @param {Object} [options]
  * @param {Object.<string:string>} [options.headers] - A object map of headers, header key to header value

@@ -19,14 +19,14 @@ const parsersMap = {};
 
 const defaultParser = ParserJson;
 
-const getId = (format, serviceGroup, url) => {
+const getId = (format, servicePath, url) => {
     if (format === ParserJson.FORMAT_NAME || !format) {
         // Makes sure that all JSON formats share same single parser.
         return ParserJson.FORMAT_NAME;
     }
 
     // Ensures that other formats ie. protobuf, have parser per endpoint.
-    return `${format}.${serviceGroup}.${url}`;
+    return `${format}.${servicePath}.${url}`;
 };
 
 /**
@@ -70,18 +70,18 @@ ParserFacade.isFormatSupported = function(format) {
 };
 
 /**
- * Get parser for given format name, service group and url.
+ * Get parser for given format name, service path and url.
  * Parsers are mapped per name, service and url, to keep schemas per endpoints.
  * Such approach is required as schemas are currently not namespaced and reuse similar message names with different structures.
  * Due to that, we need to keep per endpoint parsers for protobuf parsing type.
  *
  * @param {String} format - The format name. ie. "application/json"
- * @param {String} serviceGroup - The service group
+ * @param {String} servicePath - The service path
  * @param {String} url - The url for given endpoint
  * @return {Object} Parser
  */
-ParserFacade.getParser = function(format, serviceGroup, url) {
-    const id = getId.call(this, format, serviceGroup, url);
+ParserFacade.getParser = function(format, servicePath, url) {
+    const id = getId.call(this, format, servicePath, url);
 
     if (parsersMap[id]) {
         return parsersMap[id];

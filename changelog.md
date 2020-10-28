@@ -1,3 +1,6 @@
+### v8.0.0
+- BREAKING - Add support for cloud /oapi services. The baseUrl used when constructing transports should no longer include "/openapi"; this is now added by the library.
+
 ### v7.2.1
 
 - Fix some log messages not passing LOG_AREA and add more details to a parsing error

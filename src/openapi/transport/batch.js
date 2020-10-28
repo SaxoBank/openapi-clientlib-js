@@ -22,7 +22,7 @@ function emptyQueueIntoServiceGroups() {
     const serviceGroupMap = {};
     for (let i = 0; i < this.queue.length; i++) {
         const item = this.queue[i];
-        const serviceGroup = item.serviceGroup;
+        const serviceGroup = item.servicePath;
         let serviceGroupList = serviceGroupMap[serviceGroup];
         if (!serviceGroupList) {
             serviceGroupList = serviceGroupMap[serviceGroup] = [];
@@ -157,6 +157,7 @@ function runBatchCall(serviceGroup, callList) {
  * @param {Object} [options]
  * @param {number} [options.timeoutMs=0] - Timeout after starting to que items before sending a batch request.
  * @param {string} [options.host=global.location.host] - The host to use in the batch request. If not set defaults to global.location.host.
+ * @param {Object.<string, saxo.ServiceOptions>} [options.services] - Per-service options, keyed by service path.
  */
 function TransportBatch(transport, baseUrl, options) {
     TransportQueue.call(this, transport);
@@ -180,7 +181,8 @@ function TransportBatch(transport, baseUrl, options) {
         basePath += '/';
     }
 
-    this.basePath = basePath;
+    // Batching is a service group level facility, so isn't applicable/available for /oapi
+    this.basePath = basePath + 'openapi/';
 
     if (options && options.host) {
         this.host = options.host;
@@ -189,6 +191,7 @@ function TransportBatch(transport, baseUrl, options) {
     }
 
     this.timeoutMs = (options && options.timeoutMs) || 0;
+    this.services = (options && options.services) || {};
     this.isQueueing = true;
 }
 TransportBatch.prototype = Object.create(TransportQueue.prototype, {
@@ -220,6 +223,16 @@ TransportBatch.prototype.addToQueue = function(item) {
             );
         }
     }
+};
+
+/**
+ * @private
+ * @param item
+ */
+TransportBatch.prototype.shouldQueue = function(item) {
+    const serviceOptions = this.services[item.servicePath] || {};
+
+    return !serviceOptions.useCloud;
 };
 
 /**

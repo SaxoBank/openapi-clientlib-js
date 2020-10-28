@@ -1,4 +1,5 @@
 node_modules
 libs
 dist
+doc
 output-template.js

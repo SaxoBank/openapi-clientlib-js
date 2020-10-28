@@ -829,14 +829,14 @@ describe('openapi Streaming', () => {
                     .fn()
                     .mockName('onUnsubscribeByTagPending'),
                 url: 'url',
-                serviceGroup: 'serviceGroup',
+                servicePath: 'servicePath',
                 subscriptionData: {
                     Tag: 'tag',
                 },
                 addStateChangedCallback: () => {},
             });
 
-            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+            streaming.unsubscribeByTag('servicePath', 'url', 'tag');
 
             setTimeout(() => {
                 expect(
@@ -852,14 +852,14 @@ describe('openapi Streaming', () => {
                     .fn()
                     .mockName('onUnsubscribeByTagPending'),
                 url: 'url',
-                serviceGroup: 'serviceGroup',
+                servicePath: 'servicePath',
                 subscriptionData: {
                     Tag: 'tag',
                 },
                 addStateChangedCallback: () => {},
             });
 
-            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag2');
+            streaming.unsubscribeByTag('servicePath', 'url', 'tag2');
             setTimeout(() => {
                 expect(
                     streaming.subscriptions[0].onUnsubscribeByTagPending,
@@ -874,14 +874,14 @@ describe('openapi Streaming', () => {
                     .fn()
                     .mockName('onUnsubscribeByTagPending'),
                 url: 'url',
-                serviceGroup: 'serviceGroup',
+                servicePath: 'servicePath',
                 subscriptionData: {
                     Tag: 'tag',
                 },
                 addStateChangedCallback: () => {},
             });
 
-            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+            streaming.unsubscribeByTag('servicePath', 'url', 'tag');
 
             setTimeout(() => {
                 expect(transport.delete).not.toHaveBeenCalled();
@@ -898,7 +898,7 @@ describe('openapi Streaming', () => {
                         .fn()
                         .mockName('onUnsubscribeByTagPending'),
                     url: 'url',
-                    serviceGroup: 'serviceGroup',
+                    servicePath: 'servicePath',
                     subscriptionData: {
                         Tag: 'tag',
                     },
@@ -912,7 +912,7 @@ describe('openapi Streaming', () => {
                         .fn()
                         .mockName('onUnsubscribeByTagPending'),
                     url: 'url',
-                    serviceGroup: 'serviceGroup',
+                    servicePath: 'servicePath',
                     subscriptionData: {
                         Tag: 'tag',
                     },
@@ -921,7 +921,7 @@ describe('openapi Streaming', () => {
                 },
             );
 
-            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+            streaming.unsubscribeByTag('servicePath', 'url', 'tag');
             subscriptionStateChangedCallback();
 
             setTimeout(() => {
@@ -939,7 +939,7 @@ describe('openapi Streaming', () => {
                         .fn()
                         .mockName('onUnsubscribeByTagPending'),
                     url: 'url',
-                    serviceGroup: 'serviceGroup',
+                    servicePath: 'servicePath',
                     subscriptionData: {
                         Tag: 'tag',
                     },
@@ -957,7 +957,7 @@ describe('openapi Streaming', () => {
                         .fn()
                         .mockName('onUnsubscribeByTagPending'),
                     url: 'url',
-                    serviceGroup: 'serviceGroup',
+                    servicePath: 'servicePath',
                     subscriptionData: {
                         Tag: 'tag',
                     },
@@ -970,7 +970,7 @@ describe('openapi Streaming', () => {
                 },
             );
 
-            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+            streaming.unsubscribeByTag('servicePath', 'url', 'tag');
             subscriptionStateChangedCallback();
 
             setTimeout(() => {
@@ -990,7 +990,7 @@ describe('openapi Streaming', () => {
                     .fn()
                     .mockName('onUnsubscribeByTagPending'),
                 url: 'url',
-                serviceGroup: 'serviceGroup',
+                servicePath: 'servicePath',
                 subscriptionData: {
                     Tag: 'tag',
                 },
@@ -1006,7 +1006,7 @@ describe('openapi Streaming', () => {
                     .mockName('onUnsubscribeByTagComplete'),
             });
 
-            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+            streaming.unsubscribeByTag('servicePath', 'url', 'tag');
             subscriptionStateChangedCallback();
 
             setTimeout(() => {
@@ -1029,7 +1029,7 @@ describe('openapi Streaming', () => {
                     .fn()
                     .mockName('onUnsubscribeByTagPending'),
                 url: 'url',
-                serviceGroup: 'serviceGroup',
+                servicePath: 'servicePath',
                 subscriptionData: {
                     Tag: 'tag',
                 },
@@ -1045,7 +1045,7 @@ describe('openapi Streaming', () => {
                     .mockName('onUnsubscribeByTagComplete'),
             });
 
-            streaming.unsubscribeByTag('serviceGroup', 'url', 'tag');
+            streaming.unsubscribeByTag('servicePath', 'url', 'tag');
             subscriptionStateChangedCallback();
 
             setTimeout(() => {

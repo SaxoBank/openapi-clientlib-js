@@ -18,7 +18,7 @@ jest.mock('../../utils/function', () => {
 });
 
 describe('openapi TransportBatch', () => {
-    const validBaseUrl = 'localhost/openapi/';
+    const validBaseUrl = 'localhost/';
     let transport;
     let transportBatch;
 
@@ -67,19 +67,16 @@ describe('openapi TransportBatch', () => {
         }).toThrow();
 
         transportBatch = new TransportBatch(transport, 'localhost');
-        expect(transportBatch.basePath).toEqual('/');
-
-        transportBatch = new TransportBatch(transport, 'localhost/openapi');
         expect(transportBatch.basePath).toEqual('/openapi/');
 
-        transportBatch = new TransportBatch(transport, 'localhost/openapi/');
-        expect(transportBatch.basePath).toEqual('/openapi/');
+        transportBatch = new TransportBatch(transport, 'localhost/foo');
+        expect(transportBatch.basePath).toEqual('/foo/openapi/');
 
-        transportBatch = new TransportBatch(
-            transport,
-            'http://localhost/openapi/',
-        );
-        expect(transportBatch.basePath).toEqual('/openapi/');
+        transportBatch = new TransportBatch(transport, 'localhost/foo/');
+        expect(transportBatch.basePath).toEqual('/foo/openapi/');
+
+        transportBatch = new TransportBatch(transport, 'http://localhost/foo/');
+        expect(transportBatch.basePath).toEqual('/foo/openapi/');
     });
 
     it('defaults to timeout 0', function() {
@@ -111,6 +108,33 @@ describe('openapi TransportBatch', () => {
 
         expect(transport.get.mock.calls.length).toEqual(1);
         expect(transport.post.mock.calls.length).toEqual(0);
+    });
+
+    it('does not batch calls to services configured to use cloud', function() {
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            services: {
+                'usersettings/v2': { useCloud: true },
+            },
+        });
+
+        transportBatch.get('usersettings/v2', 'common');
+
+        expect(transport.get.mock.calls.length).toEqual(1);
+    });
+
+    it('batches calls to services configured to use on-prem', function() {
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
+            services: {
+                'usersettings/v2': { useCloud: false },
+            },
+        });
+
+        transportBatch.get('usersettings/v2', 'common');
+        expect(transport.get.mock.calls.length).toEqual(0);
+
+        tick(1);
+        expect(transport.get.mock.calls.length).toEqual(1);
     });
 
     it('queues up calls immediately if timeout is 0', function() {
