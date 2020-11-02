@@ -128,7 +128,7 @@ ParserProtobuf.prototype.parse = function(data, schemaName) {
         log.error(LOG_AREA, 'Protobuf parsing failed - failed to get schemas', {
             schemaName,
         });
-        throw new Error('Protobuf parsing failed');
+        throw new Error('Protobuf parsing failed - failed to get schemas');
     }
 
     const rootTypeName = schemas.root.getOption(ROOT_OPTION_NAME);
@@ -136,21 +136,20 @@ ParserProtobuf.prototype.parse = function(data, schemaName) {
     if (!rootTypeName) {
         log.error(
             LOG_AREA,
-            'Protobuf parsing failed - missing root message name',
-            { rootTypeName },
+            'Protobuf parsing failed - missing root type name',
+            { schemaName },
         );
-        throw new Error('Protobuf parsing failed');
+        throw new Error('Protobuf parsing failed - missing root type name');
     }
 
     const rootType = this.getSchemaType(schemaName, rootTypeName);
 
     if (!rootType) {
-        log.error(
-            LOG_AREA,
-            'Protobuf parsing failed - root type not found. Name: ',
-            { rootTypeName },
-        );
-        throw new Error('Protobuf parsing failed');
+        log.error(LOG_AREA, 'Protobuf parsing failed - root type not found', {
+            schemaName,
+            rootTypeName,
+        });
+        throw new Error('Protobuf parsing failed - root type not found');
     }
 
     try {

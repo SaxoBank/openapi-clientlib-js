@@ -214,10 +214,6 @@ function handleSocketMessage(messageEvent) {
             return;
         }
 
-        log.debug(LOG_AREA, 'Parsed message', {
-            messages: parsedMessages,
-        });
-
         this.receivedCallback(parsedMessages);
     } else {
         log.error(LOG_AREA, 'Received a non-ArrayBuffer message', {
