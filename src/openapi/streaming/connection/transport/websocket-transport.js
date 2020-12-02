@@ -257,7 +257,11 @@ function handleSocketClose(event) {
         return;
     }
 
-    reconnect.call(this);
+    reconnect.call(
+        this,
+        // if this is the first time, try immediately to prevent delay
+        this.reconnectCount === 0,
+    );
 }
 
 function detectNetworkError() {

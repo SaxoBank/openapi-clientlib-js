@@ -1,3 +1,6 @@
+### v8.0.2
+- Pure websockets - reconnect immediately on first disconnect
+
 ### v8.0.1
 - Some tweaks to protobuf logging messages and data
 
