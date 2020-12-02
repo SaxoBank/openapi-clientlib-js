@@ -151,6 +151,44 @@ describe('openapi WebSocket Transport', () => {
             });
         });
 
+        it('should reconnect immediately and then after initial time, after 2000ms', (done) => {
+            const transport = new WebSocketTransport(BASE_URL);
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start({}, () => {});
+            fetchMock.resolve(200, {});
+
+            transport.authorizePromise.then(() => {
+                expect(global.WebSocket).toBeCalledTimes(1);
+
+                transport.socket.readyState = 1; // WebSocket internal state equal open
+                transport.socket.onopen();
+
+                transport.socket.readyState = 3; // WebSocket internal state equal closed
+                transport.socket.onclose({ code: 1001 });
+
+                // assert we retry immediately
+                expect(global.WebSocket).toBeCalledTimes(2);
+
+                transport.socket.readyState = 3; // WebSocket internal state equal closed
+                transport.socket.onclose({ code: 1001 });
+
+                // assert we do not retry immediately
+                expect(global.WebSocket).toBeCalledTimes(2);
+
+                tick(1000);
+
+                // after 1s we still haven't retried
+                expect(global.WebSocket).toBeCalledTimes(2);
+
+                tick(1000);
+
+                // after 2s - now we retry
+                expect(global.WebSocket).toBeCalledTimes(3);
+
+                done();
+            });
+        });
+
         it.each([
             [5001, 0, true],
             [2000, 3001, true],
