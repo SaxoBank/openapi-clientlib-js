@@ -4,7 +4,7 @@ import * as constants from '../constants';
 
 const LOG_AREA = 'SignalrCoreTransport';
 const NOOP = () => {};
-const RECONNECT_DELAYS = [2000, 3000, 5000, 10000, 20000];
+const RECONNECT_DELAYS = [0, 2000, 3000, 5000, 10000, 20000];
 
 const renewStatus = {
     SUCCESS: 0,
@@ -24,8 +24,19 @@ function handleLog(level, message) {
     log.warn(LOG_AREA, message);
 }
 
-function buildConnection({ baseUrl, contextId, accessTokenFactory, protocol }) {
-    const url = `${baseUrl}/streaming?contextId=${contextId}`;
+function buildConnection({
+    baseUrl,
+    contextId,
+    messageId,
+    accessTokenFactory,
+    protocol,
+}) {
+    let queryString = `contextId=${contextId}`;
+    if (messageId) {
+        queryString = `${queryString}&&messageId=${messageId}`;
+    }
+
+    const url = `${baseUrl}/streaming?${queryString}`;
 
     return new window.signalrCore.HubConnectionBuilder()
         .withUrl(url, {
@@ -40,7 +51,7 @@ function buildConnection({ baseUrl, contextId, accessTokenFactory, protocol }) {
 }
 
 function normalizeMessage(message, protocol) {
-    const { ReferenceId, PayloadFormat, Payload } = message;
+    const { ReferenceId, PayloadFormat, Payload, MessageId } = message;
 
     let dataFormat;
     // Normalize to old streaming format for backward compatibility
@@ -67,13 +78,14 @@ function normalizeMessage(message, protocol) {
 
     return {
         ReferenceId,
+        MessageId,
         DataFormat: dataFormat,
         Data: data,
     };
 }
 
 function parseMessage(message, utf8Decoder) {
-    const { ReferenceId, DataFormat } = message;
+    const { ReferenceId, DataFormat, MessageId } = message;
     let data = message.Data;
 
     if (DataFormat === constants.DATA_FORMAT_JSON) {
@@ -89,9 +101,98 @@ function parseMessage(message, utf8Decoder) {
 
     return {
         ReferenceId,
+        MessageId,
         DataFormat,
         Data: data,
     };
+}
+
+function getNextRetryDelay(retryIndex) {
+    if (retryIndex < 0 || retryIndex > RECONNECT_DELAYS.length - 1) {
+        return null;
+    }
+
+    return RECONNECT_DELAYS[retryIndex];
+}
+
+function connect() {
+    let lastUsedToken = null;
+
+    this.connection = buildConnection({
+        baseUrl: this.baseUrl,
+        contextId: this.contextId,
+        messageId: this.lastMessageId,
+        accessTokenFactory: () => {
+            lastUsedToken = this.authToken;
+            return this.authToken;
+        },
+        protocol: this.protocol,
+    });
+
+    return this.connection.start().then(() => {
+        if (this.isDisconnecting) {
+            return;
+        }
+
+        this.createMessageStream(this.protocol);
+
+        this.connection.onclose((error) => {
+            // Do not try to re-connect if connection is explicitely closed or encountered error while starting streaming.
+            if (this.hasStreamingStarted && !this.isDisconnecting) {
+                reconnect.call(this, error);
+                return;
+            }
+
+            this.handleConnectionClosure(error);
+        });
+
+        // Token might have been updated while connect response was in flight
+        if (lastUsedToken !== this.authToken) {
+            this.renewSession();
+        }
+    });
+}
+
+function reconnect(error) {
+    this.isReconnecting = true;
+    this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
+
+    log.debug(LOG_AREA, 'Attempting to reconnect', {
+        error,
+    });
+
+    // eslint-disable-next-line promise/no-promise-in-callback
+    retryConnection
+        .call(this, 0)
+        .then(() => {
+            this.isReconnecting = false;
+            this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+        })
+        .catch((err) => {
+            log.debug(LOG_AREA, 'Failed to reconnect', {
+                error: err,
+            });
+
+            this.handleConnectionClosure();
+        });
+}
+
+function retryConnection(retryIndex, prevError) {
+    const nextDelay = getNextRetryDelay(retryIndex);
+    if (nextDelay === null) {
+        return Promise.reject(prevError);
+    }
+
+    let reconnectPromiseResolver = () => {};
+
+    this.retryTimer = setTimeout(() => {
+        this.retryTimer = null;
+        reconnectPromiseResolver();
+    }, nextDelay);
+
+    return new Promise((resolve) => (reconnectPromiseResolver = resolve))
+        .then(() => connect.call(this))
+        .catch((error) => retryConnection.call(this, ++retryIndex, error));
 }
 
 function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
@@ -100,7 +201,10 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     this.connection = null;
     this.authToken = null;
     this.contextId = null;
+    this.protocol = new window.signalrCore.JsonHubProtocol();
     this.messageStream = null;
+    this.lastMessageId = null;
+    this.retryTimer = null;
     this.hasStreamingStarted = false;
     this.isDisconnecting = false;
     this.hasTransportError = false;
@@ -142,72 +246,20 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         return;
     }
 
-    let lastUsedToken = null;
-    const protocol =
-        options.messageSerializationProtocol ||
-        new window.signalrCore.JsonHubProtocol();
-
-    try {
-        this.connection = buildConnection({
-            baseUrl: this.baseUrl,
-            contextId: this.contextId,
-            accessTokenFactory: () => {
-                lastUsedToken = this.authToken;
-                return this.authToken;
-            },
-            protocol,
-        });
-    } catch (error) {
-        log.error(LOG_AREA, "Couldn't intialize the connection", {
-            error,
-        });
-
-        this.transportFailCallback();
-        return;
+    if (options.messageSerializationProtocol) {
+        this.protocol = options.messageSerializationProtocol;
     }
-
-    this.connection.onclose((error) => this.handleConnectionClosure(error));
-    this.connection.onreconnecting((error) => {
-        log.debug(LOG_AREA, 'Attempting to reconnect', {
-            error,
-        });
-
-        this.isReconnecting = true;
-        this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
-    });
-    this.connection.onreconnected(() => {
-        this.isReconnecting = false;
-        // recreate message stream
-        this.createMessageStream(protocol);
-        this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
-
-        // Token might have been updated while reconnect response was in flight
-        if (lastUsedToken !== this.authToken) {
-            this.renewSession();
-        }
-    });
 
     this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
 
-    return this.connection
-        .start()
+    return connect
+        .call(this)
         .then(() => {
-            if (this.isDisconnecting) {
-                return;
-            }
-
-            this.createMessageStream(protocol);
-
             if (onStartCallback) {
                 onStartCallback();
             }
 
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
-
-            // Token might have been updated while reconnect response was in flight
-            if (lastUsedToken !== this.authToken) {
-                this.renewSession();
-            }
         })
         .catch((error) => {
             log.error(
@@ -231,6 +283,11 @@ SignalrCoreTransport.prototype.stop = function(hasTransportError) {
     this.isDisconnecting = true;
     if (hasTransportError) {
         this.hasTransportError = true;
+    }
+
+    if (this.retryTimer) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
     }
 
     // close message stream before closing connection
@@ -280,6 +337,7 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
 
     this.connection = null;
     this.messageStream = null;
+    this.lastMessageId = null;
     this.isDisconnecting = false;
     this.hasStreamingStarted = false;
     this.hasTransportError = false;
@@ -299,6 +357,7 @@ SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
         const parsedMessage = parseMessage(normalizedMessage, this.utf8Decoder);
 
         this.receivedCallback(parsedMessage);
+        this.lastMessageId = parseMessage.MessageId;
     } catch (error) {
         const errorMessage = error.message || '';
         log.error(
