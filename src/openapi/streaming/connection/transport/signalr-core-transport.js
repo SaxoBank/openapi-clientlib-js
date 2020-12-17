@@ -354,10 +354,10 @@ SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
 
     try {
         const normalizedMessage = normalizeMessage(message, protocol);
-        const parsedMessage = parseMessage(normalizedMessage, this.utf8Decoder);
+        const data = parseMessage(normalizedMessage, this.utf8Decoder);
 
-        this.receivedCallback(parsedMessage);
-        this.lastMessageId = parseMessage.MessageId;
+        this.lastMessageId = data.MessageId;
+        this.receivedCallback(data);
     } catch (error) {
         const errorMessage = error.message || '';
         log.error(

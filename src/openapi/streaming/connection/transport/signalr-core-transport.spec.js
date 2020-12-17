@@ -30,10 +30,12 @@ describe('openapi SignalR core Transport', () => {
     let mockRenewToken;
     let mockConnectionClose;
     let tokenFactory;
+    let streamingUrl;
 
     class MockConnectionBuilder {
         withUrl(url, options) {
             tokenFactory = options.accessTokenFactory;
+            streamingUrl = url;
 
             return this;
         }
@@ -463,6 +465,7 @@ describe('openapi SignalR core Transport', () => {
     });
 
     describe('reconnect', () => {
+        const messageId = 10;
         let transport;
         let startPromise;
 
@@ -474,6 +477,7 @@ describe('openapi SignalR core Transport', () => {
                 subscribeNextHandler({
                     PayloadFormat: 1,
                     Payload: window.btoa('{ "a": 2 }'),
+                    MessageId: messageId,
                 }),
             );
 
@@ -484,6 +488,9 @@ describe('openapi SignalR core Transport', () => {
         it('should reconnect on connection close', (done) => {
             startPromise
                 .then(() => {
+                    expect(streamingUrl).toBe(
+                        `${BASE_URL}/streaming?contextId=${CONTEXT_ID}`,
+                    );
                     expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
                         constants.CONNECTION_STATE_CONNECTED,
                     );
@@ -504,6 +511,10 @@ describe('openapi SignalR core Transport', () => {
                     return new Promise((resolve) => setImmediate(resolve));
                 })
                 .then(() => {
+                    expect(streamingUrl).toBe(
+                        `${BASE_URL}/streaming?contextId=${CONTEXT_ID}&&messageId=${messageId}`,
+                    );
+
                     expect(spyOnStateChangedCallback).toHaveBeenLastCalledWith(
                         constants.CONNECTION_STATE_CONNECTED,
                     );
