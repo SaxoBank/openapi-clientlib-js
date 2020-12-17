@@ -28,14 +28,14 @@ describe('openapi SignalR core Transport', () => {
     let mockStart;
     let mockStreamCancel;
     let mockRenewToken;
-    let mockConnectionClose;
+    let mockReconnect;
+    let mockReconnecting;
     let tokenFactory;
-    let streamingUrl;
 
     class MockConnectionBuilder {
         withUrl(url, options) {
             tokenFactory = options.accessTokenFactory;
-            streamingUrl = url;
+            mockHubConnection.baseUrl = url;
 
             return this;
         }
@@ -74,6 +74,8 @@ describe('openapi SignalR core Transport', () => {
             },
         };
         const closeCallbacks = [];
+        const reconnectedCallbacks = [];
+        const reconnectingCallbacks = [];
 
         spyOnMessageStream = jest
             .fn()
@@ -110,10 +112,20 @@ describe('openapi SignalR core Transport', () => {
                 }
             },
             onclose: (callback) => closeCallbacks.push(callback),
+            onreconnecting: (callback) => reconnectingCallbacks.push(callback),
+            onreconnected: (callback) => reconnectedCallbacks.push(callback),
         };
 
-        mockConnectionClose = () => {
-            closeCallbacks.forEach((callback) => callback());
+        mockReconnect = () => {
+            // mock token use
+            tokenFactory();
+            setTimeout(() => {
+                reconnectedCallbacks.forEach((callback) => callback());
+            }, 0);
+        };
+
+        mockReconnecting = () => {
+            reconnectingCallbacks.forEach((callback) => callback());
         };
 
         installClock();
@@ -316,7 +328,7 @@ describe('openapi SignalR core Transport', () => {
 
     describe('when renewal call fails', () => {
         let transport;
-        let startPromise;
+        let renewalPromise;
         let spyOnUnauthorizedCallback;
 
         beforeEach(() => {
@@ -333,89 +345,71 @@ describe('openapi SignalR core Transport', () => {
 
             // update instance variables
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
-            startPromise = transport.start({});
-            mockStart.resolve();
+            transport.start({});
+
+            renewalPromise = transport.renewSession();
         });
 
         it('should call disconnect if session is not found', (done) => {
-            startPromise
-                .then(() => {
-                    const renewalPromise = transport.renewSession();
-                    mockRenewToken.resolve({ Status: 2 });
+            expect(mockRenewToken).toBeDefined();
 
-                    return renewalPromise;
-                })
-                .then(() => {
-                    mockStreamCancel.resolve();
-                    return mockStreamCancel.promise;
-                })
-                .then(() => {
-                    expect(spyOnTransportFailedCallback).not.toBeCalled();
-                    expect(spyOnConnectionStop).toBeCalled();
+            mockRenewToken.resolve({ Status: 2 });
 
-                    tick(10);
-                    expect(spyOnStateChangedCallback).toBeCalledWith(
-                        constants.CONNECTION_STATE_DISCONNECTED,
-                    );
-                    done();
-                });
+            renewalPromise.then(() => {
+                expect(spyOnTransportFailedCallback).not.toBeCalled();
+                expect(spyOnConnectionStop).toBeCalled();
+
+                tick(10);
+                expect(spyOnStateChangedCallback).toBeCalledWith(
+                    constants.CONNECTION_STATE_DISCONNECTED,
+                );
+                done();
+            });
         });
 
         it('should retry renewal if there is a network error', (done) => {
-            startPromise
-                .then(() => {
-                    const renewalPromise = transport.renewSession();
+            expect(mockRenewToken).toBeDefined();
 
-                    // mock before it calls renewSession again
-                    transport.renewSession = jest
-                        .fn()
-                        .mockName('renew session')
-                        .mockImplementation(() => Promise.resolve());
+            // mock before it calls renewSession again
+            transport.renewSession = jest
+                .fn()
+                .mockName('renew session')
+                .mockImplementation(() => Promise.resolve());
 
-                    mockRenewToken.reject(new Error('Network error'));
+            mockRenewToken.reject(new Error('Network error'));
 
-                    return renewalPromise;
-                })
-                .then(() => {
-                    expect(transport.renewSession).toBeCalledTimes(1);
-                    expect(spyOnConnectionStop).not.toBeCalled();
-                    expect(spyOnTransportFailedCallback).not.toBeCalled();
-                    done();
-                });
+            renewalPromise.then(() => {
+                expect(transport.renewSession).toBeCalledTimes(1);
+                expect(spyOnConnectionStop).not.toBeCalled();
+                expect(spyOnTransportFailedCallback).not.toBeCalled();
+                done();
+            });
         });
 
         it('should ignore if token is updated before prev response was received', (done) => {
-            startPromise
-                .then(() => {
-                    const renewalPromise = transport.renewSession();
+            expect(mockRenewToken).toBeDefined();
 
-                    transport.updateQuery('NEW_TOKEN', CONTEXT_ID);
-                    mockRenewToken.resolve({ Status: 1 });
+            transport.updateQuery('NEW_TOKEN', CONTEXT_ID);
+            mockRenewToken.resolve({ Status: 1 });
 
-                    return renewalPromise;
-                })
-                .then(() => {
-                    expect(spyOnTransportFailedCallback).not.toBeCalled();
-                    expect(spyOnConnectionStop).not.toBeCalled();
-                    done();
-                });
+            renewalPromise.then(() => {
+                expect(spyOnTransportFailedCallback).not.toBeCalled();
+                expect(spyOnConnectionStop).not.toBeCalled();
+                done();
+            });
         });
 
         it('should call unauthorized callback', (done) => {
-            startPromise
-                .then(() => {
-                    const renewalPromise = transport.renewSession();
+            expect(mockRenewToken).toBeDefined();
 
-                    mockRenewToken.resolve({ Status: 1 });
+            mockRenewToken.resolve({ Status: 1 });
 
-                    return renewalPromise;
-                })
-                .then(() => {
-                    expect(spyOnTransportFailedCallback).not.toBeCalled();
-                    expect(spyOnConnectionStop).not.toBeCalled();
-                    expect(spyOnUnauthorizedCallback).toBeCalledTimes(1);
-                    done();
-                });
+            renewalPromise.then(() => {
+                expect(spyOnTransportFailedCallback).not.toBeCalled();
+                expect(spyOnConnectionStop).not.toBeCalled();
+                expect(spyOnUnauthorizedCallback).toBeCalledTimes(1);
+                done();
+            });
         });
     });
 
@@ -473,77 +467,69 @@ describe('openapi SignalR core Transport', () => {
             transport = new SignalrCoreTransport(BASE_URL);
             transport.setStateChangedCallback(spyOnStateChangedCallback);
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
-            startPromise = transport.start({}).then(() =>
+            startPromise = transport.start({}).then(() => {
+                // start message streaming
                 subscribeNextHandler({
                     PayloadFormat: 1,
                     Payload: window.btoa('{ "a": 2 }'),
                     MessageId: messageId,
-                }),
-            );
+                });
+            });
 
-            // resolve handshake request
             mockStart.resolve();
         });
 
-        it('should reconnect on connection close', (done) => {
-            startPromise
-                .then(() => {
-                    expect(streamingUrl).toBe(
-                        `${BASE_URL}/streaming?contextId=${CONTEXT_ID}`,
-                    );
-                    expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
-                        constants.CONNECTION_STATE_CONNECTED,
-                    );
+        it('should set last message id as query string param before trying reconnection', (done) => {
+            startPromise.then(() => {
+                mockReconnecting();
 
-                    mockConnectionClose();
+                expect(mockHubConnection.baseUrl).toBe(
+                    `${BASE_URL}/streaming?contextId=${CONTEXT_ID}&messageId=${messageId}`,
+                );
+                expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
+                    constants.CONNECTION_STATE_RECONNECTING,
+                );
 
-                    expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
-                        constants.CONNECTION_STATE_RECONNECTING,
-                    );
+                mockReconnect();
+                tick(10);
 
-                    // flush pending promises
-                    tick(10);
-                    return new Promise((resolve) => setImmediate(resolve));
-                })
-                .then(() => {
-                    // resolve connection and flush pending promises
-                    mockStart.resolve();
-                    return new Promise((resolve) => setImmediate(resolve));
-                })
-                .then(() => {
-                    expect(streamingUrl).toBe(
-                        `${BASE_URL}/streaming?contextId=${CONTEXT_ID}&messageId=${messageId}`,
-                    );
-
-                    expect(spyOnStateChangedCallback).toHaveBeenLastCalledWith(
-                        constants.CONNECTION_STATE_CONNECTED,
-                    );
-                    done();
+                const newMessageId = 23;
+                subscribeNextHandler({
+                    PayloadFormat: 1,
+                    Payload: window.btoa('{ "a": 32 }'),
+                    MessageId: newMessageId,
                 });
+
+                mockReconnecting();
+
+                expect(mockHubConnection.baseUrl).toBe(
+                    `${BASE_URL}/streaming?contextId=${CONTEXT_ID}&messageId=${newMessageId}`,
+                );
+
+                done();
+            });
         });
 
-        it('should not reconnect on explicit connection close', (done) => {
-            startPromise
-                .then(() => {
-                    // explicitely close connection
-                    const stopPromise = transport.stop();
-                    mockStreamCancel.resolve();
+        it('should create new message stream on reconnection', () => {
+            mockReconnect();
+            tick(10);
 
-                    return stopPromise;
-                })
-                .then(() => {
-                    // mock close handler call
-                    tick(10);
+            expect(spyOnMessageStream).toBeCalledTimes(2);
+            expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
+                constants.CONNECTION_STATE_CONNECTED,
+            );
+        });
 
-                    expect(spyOnStateChangedCallback).not.toHaveBeenCalledWith(
-                        constants.CONNECTION_STATE_RECONNECTING,
-                    );
-                    expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
-                        constants.CONNECTION_STATE_DISCONNECTED,
-                    );
+        it('should renew with new token if token was updated while reconnect response was in flight', () => {
+            mockReconnect();
 
-                    done();
-                });
+            // token is updated
+            transport.updateQuery('NEW_TOKEN', CONTEXT_ID);
+
+            tick(10);
+
+            expect(spyOnMessageStream).toBeCalledTimes(2);
+            expect(mockRenewToken).toBeDefined();
         });
     });
 });

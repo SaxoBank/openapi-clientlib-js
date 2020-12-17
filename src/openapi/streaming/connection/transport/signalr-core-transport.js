@@ -24,19 +24,8 @@ function handleLog(level, message) {
     log.warn(LOG_AREA, message);
 }
 
-function buildConnection({
-    baseUrl,
-    contextId,
-    messageId,
-    accessTokenFactory,
-    protocol,
-}) {
-    let queryString = `contextId=${contextId}`;
-    if (messageId) {
-        queryString = `${queryString}&messageId=${messageId}`;
-    }
-
-    const url = `${baseUrl}/streaming?${queryString}`;
+function buildConnection({ baseUrl, contextId, accessTokenFactory, protocol }) {
+    const url = `${baseUrl}/streaming?contextId=${contextId}`;
 
     return new window.signalrCore.HubConnectionBuilder()
         .withUrl(url, {
@@ -107,104 +96,14 @@ function parseMessage(message, utf8Decoder) {
     };
 }
 
-function getNextRetryDelay(retryIndex) {
-    if (retryIndex < 0 || retryIndex > RECONNECT_DELAYS.length - 1) {
-        return null;
-    }
-
-    return RECONNECT_DELAYS[retryIndex];
-}
-
-function connect() {
-    let lastUsedToken = null;
-
-    this.connection = buildConnection({
-        baseUrl: this.baseUrl,
-        contextId: this.contextId,
-        messageId: this.lastMessageId,
-        accessTokenFactory: () => {
-            lastUsedToken = this.authToken;
-            return this.authToken;
-        },
-        protocol: this.protocol,
-    });
-
-    return this.connection.start().then(() => {
-        if (this.isDisconnecting) {
-            return;
-        }
-
-        this.createMessageStream(this.protocol);
-
-        this.connection.onclose((error) => {
-            // Do not try to re-connect if connection is explicitely closed or encountered error while starting streaming.
-            if (this.hasStreamingStarted && !this.isDisconnecting) {
-                reconnect.call(this, error);
-                return;
-            }
-
-            this.handleConnectionClosure(error);
-        });
-
-        // Token might have been updated while connect response was in flight
-        if (lastUsedToken !== this.authToken) {
-            this.renewSession();
-        }
-    });
-}
-
-function reconnect(error) {
-    this.isReconnecting = true;
-    this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
-
-    log.debug(LOG_AREA, 'Attempting to reconnect', {
-        error,
-    });
-
-    // eslint-disable-next-line promise/no-promise-in-callback
-    retryConnection
-        .call(this, 0)
-        .then(() => {
-            this.isReconnecting = false;
-            this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
-        })
-        .catch((err) => {
-            log.debug(LOG_AREA, 'Failed to reconnect', {
-                error: err,
-            });
-
-            this.handleConnectionClosure();
-        });
-}
-
-function retryConnection(retryIndex, prevError) {
-    const nextDelay = getNextRetryDelay(retryIndex);
-    if (nextDelay === null) {
-        return Promise.reject(prevError);
-    }
-
-    let reconnectPromiseResolver = () => {};
-
-    this.retryTimer = setTimeout(() => {
-        this.retryTimer = null;
-        reconnectPromiseResolver();
-    }, nextDelay);
-
-    return new Promise((resolve) => (reconnectPromiseResolver = resolve))
-        .then(() => connect.call(this))
-        .catch((error) => retryConnection.call(this, ++retryIndex, error));
-}
-
 function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     this.name = transportTypes.SIGNALR_CORE;
     this.baseUrl = baseUrl;
     this.connection = null;
     this.authToken = null;
     this.contextId = null;
-    this.protocol = new window.signalrCore.JsonHubProtocol();
     this.messageStream = null;
     this.lastMessageId = null;
-    this.retryTimer = null;
     this.hasStreamingStarted = false;
     this.isDisconnecting = false;
     this.hasTransportError = false;
@@ -246,20 +145,80 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         return;
     }
 
-    if (options.messageSerializationProtocol) {
-        this.protocol = options.messageSerializationProtocol;
+    let lastUsedToken = null;
+    const protocol =
+        options.messageSerializationProtocol ||
+        new window.signalrCore.JsonHubProtocol();
+
+    try {
+        this.connection = buildConnection({
+            baseUrl: this.baseUrl,
+            contextId: this.contextId,
+            accessTokenFactory: () => {
+                lastUsedToken = this.authToken;
+                return this.authToken;
+            },
+            protocol,
+        });
+    } catch (error) {
+        log.error(LOG_AREA, "Couldn't intialize the connection", {
+            error,
+        });
+
+        this.transportFailCallback();
+        return;
     }
+
+    this.connection.onclose((error) => this.handleConnectionClosure(error));
+    this.connection.onreconnecting((error) => {
+        log.debug(LOG_AREA, 'Attempting to reconnect', {
+            error,
+        });
+
+        this.isReconnecting = true;
+        this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
+
+        if (this.lastMessageId) {
+            const baseUrl = this.connection.baseUrl.replace(
+                /&messageId=\d+/,
+                '',
+            );
+            this.connection.baseUrl = `${baseUrl}&messageId=${this.lastMessageId}`;
+        }
+    });
+    this.connection.onreconnected(() => {
+        this.isReconnecting = false;
+        // recreate message stream
+        this.createMessageStream(protocol);
+        this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+
+        // Token might have been updated while reconnect response was in flight
+        if (lastUsedToken !== this.authToken) {
+            this.renewSession();
+        }
+    });
 
     this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
 
-    return connect
-        .call(this)
+    return this.connection
+        .start()
         .then(() => {
+            if (this.isDisconnecting) {
+                return;
+            }
+
+            this.createMessageStream(protocol);
+
             if (onStartCallback) {
                 onStartCallback();
             }
 
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+
+            // Token might have been updated while reconnect response was in flight
+            if (lastUsedToken !== this.authToken) {
+                this.renewSession();
+            }
         })
         .catch((error) => {
             log.error(
@@ -283,11 +242,6 @@ SignalrCoreTransport.prototype.stop = function(hasTransportError) {
     this.isDisconnecting = true;
     if (hasTransportError) {
         this.hasTransportError = true;
-    }
-
-    if (this.retryTimer) {
-        clearTimeout(this.retryTimer);
-        this.retryTimer = null;
     }
 
     // close message stream before closing connection
