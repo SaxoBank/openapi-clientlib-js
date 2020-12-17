@@ -33,7 +33,7 @@ function buildConnection({
 }) {
     let queryString = `contextId=${contextId}`;
     if (messageId) {
-        queryString = `${queryString}&&messageId=${messageId}`;
+        queryString = `${queryString}&messageId=${messageId}`;
     }
 
     const url = `${baseUrl}/streaming?${queryString}`;

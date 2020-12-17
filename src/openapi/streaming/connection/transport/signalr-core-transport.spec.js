@@ -512,7 +512,7 @@ describe('openapi SignalR core Transport', () => {
                 })
                 .then(() => {
                     expect(streamingUrl).toBe(
-                        `${BASE_URL}/streaming?contextId=${CONTEXT_ID}&&messageId=${messageId}`,
+                        `${BASE_URL}/streaming?contextId=${CONTEXT_ID}&messageId=${messageId}`,
                     );
 
                     expect(spyOnStateChangedCallback).toHaveBeenLastCalledWith(
