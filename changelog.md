@@ -1,3 +1,6 @@
+### v8.0.3
+- Signalr core - send last received message id while reconnecting
+
 ### v8.0.2
 - Pure websockets - reconnect immediately on first disconnect
 
