@@ -4,7 +4,7 @@ import * as constants from '../constants';
 
 const LOG_AREA = 'SignalrCoreTransport';
 const NOOP = () => {};
-const RECONNECT_DELAYS = [2000, 3000, 5000, 10000, 20000];
+const RECONNECT_DELAYS = [0, 2000, 3000, 5000, 10000, 20000];
 
 const renewStatus = {
     SUCCESS: 0,
@@ -40,7 +40,7 @@ function buildConnection({ baseUrl, contextId, accessTokenFactory, protocol }) {
 }
 
 function normalizeMessage(message, protocol) {
-    const { ReferenceId, PayloadFormat, Payload } = message;
+    const { ReferenceId, PayloadFormat, Payload, MessageId } = message;
 
     let dataFormat;
     // Normalize to old streaming format for backward compatibility
@@ -67,13 +67,14 @@ function normalizeMessage(message, protocol) {
 
     return {
         ReferenceId,
+        MessageId,
         DataFormat: dataFormat,
         Data: data,
     };
 }
 
 function parseMessage(message, utf8Decoder) {
-    const { ReferenceId, DataFormat } = message;
+    const { ReferenceId, DataFormat, MessageId } = message;
     let data = message.Data;
 
     if (DataFormat === constants.DATA_FORMAT_JSON) {
@@ -89,6 +90,7 @@ function parseMessage(message, utf8Decoder) {
 
     return {
         ReferenceId,
+        MessageId,
         DataFormat,
         Data: data,
     };
@@ -101,6 +103,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     this.authToken = null;
     this.contextId = null;
     this.messageStream = null;
+    this.lastMessageId = null;
     this.hasStreamingStarted = false;
     this.isDisconnecting = false;
     this.hasTransportError = false;
@@ -174,6 +177,14 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
 
         this.isReconnecting = true;
         this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
+
+        if (this.lastMessageId) {
+            const baseUrl = this.connection.baseUrl.replace(
+                /&messageId=\d+/,
+                '',
+            );
+            this.connection.baseUrl = `${baseUrl}&messageId=${this.lastMessageId}`;
+        }
     });
     this.connection.onreconnected(() => {
         this.isReconnecting = false;
@@ -280,6 +291,7 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
 
     this.connection = null;
     this.messageStream = null;
+    this.lastMessageId = null;
     this.isDisconnecting = false;
     this.hasStreamingStarted = false;
     this.hasTransportError = false;
@@ -296,9 +308,10 @@ SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
 
     try {
         const normalizedMessage = normalizeMessage(message, protocol);
-        const parsedMessage = parseMessage(normalizedMessage, this.utf8Decoder);
+        const data = parseMessage(normalizedMessage, this.utf8Decoder);
 
-        this.receivedCallback(parsedMessage);
+        this.lastMessageId = data.MessageId;
+        this.receivedCallback(data);
     } catch (error) {
         const errorMessage = error.message || '';
         log.error(

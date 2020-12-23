@@ -29,11 +29,13 @@ describe('openapi SignalR core Transport', () => {
     let mockStreamCancel;
     let mockRenewToken;
     let mockReconnect;
+    let mockReconnecting;
     let tokenFactory;
 
     class MockConnectionBuilder {
         withUrl(url, options) {
             tokenFactory = options.accessTokenFactory;
+            mockHubConnection.baseUrl = url;
 
             return this;
         }
@@ -73,6 +75,7 @@ describe('openapi SignalR core Transport', () => {
         };
         const closeCallbacks = [];
         const reconnectedCallbacks = [];
+        const reconnectingCallbacks = [];
 
         spyOnMessageStream = jest
             .fn()
@@ -109,7 +112,7 @@ describe('openapi SignalR core Transport', () => {
                 }
             },
             onclose: (callback) => closeCallbacks.push(callback),
-            onreconnecting: () => {},
+            onreconnecting: (callback) => reconnectingCallbacks.push(callback),
             onreconnected: (callback) => reconnectedCallbacks.push(callback),
         };
 
@@ -119,6 +122,10 @@ describe('openapi SignalR core Transport', () => {
             setTimeout(() => {
                 reconnectedCallbacks.forEach((callback) => callback());
             }, 0);
+        };
+
+        mockReconnecting = () => {
+            reconnectingCallbacks.forEach((callback) => callback());
         };
 
         installClock();
@@ -452,20 +459,62 @@ describe('openapi SignalR core Transport', () => {
     });
 
     describe('reconnect', () => {
+        const messageId = 10;
         let transport;
+        let startPromise;
 
         beforeEach(() => {
             transport = new SignalrCoreTransport(BASE_URL);
             transport.setStateChangedCallback(spyOnStateChangedCallback);
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
-            transport.start({});
+            startPromise = transport.start({}).then(() => {
+                // start message streaming
+                subscribeNextHandler({
+                    PayloadFormat: 1,
+                    Payload: window.btoa('{ "a": 2 }'),
+                    MessageId: messageId,
+                });
+            });
+
+            mockStart.resolve();
+        });
+
+        it('should set last message id as query string param before trying reconnection', (done) => {
+            startPromise.then(() => {
+                mockReconnecting();
+
+                expect(mockHubConnection.baseUrl).toBe(
+                    `${BASE_URL}/streaming?contextId=${CONTEXT_ID}&messageId=${messageId}`,
+                );
+                expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
+                    constants.CONNECTION_STATE_RECONNECTING,
+                );
+
+                mockReconnect();
+                tick(10);
+
+                const newMessageId = 23;
+                subscribeNextHandler({
+                    PayloadFormat: 1,
+                    Payload: window.btoa('{ "a": 32 }'),
+                    MessageId: newMessageId,
+                });
+
+                mockReconnecting();
+
+                expect(mockHubConnection.baseUrl).toBe(
+                    `${BASE_URL}/streaming?contextId=${CONTEXT_ID}&messageId=${newMessageId}`,
+                );
+
+                done();
+            });
         });
 
         it('should create new message stream on reconnection', () => {
             mockReconnect();
             tick(10);
 
-            expect(spyOnMessageStream).toBeCalledTimes(1);
+            expect(spyOnMessageStream).toBeCalledTimes(2);
             expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
                 constants.CONNECTION_STATE_CONNECTED,
             );
@@ -479,7 +528,7 @@ describe('openapi SignalR core Transport', () => {
 
             tick(10);
 
-            expect(spyOnMessageStream).toBeCalledTimes(1);
+            expect(spyOnMessageStream).toBeCalledTimes(2);
             expect(mockRenewToken).toBeDefined();
         });
     });

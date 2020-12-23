@@ -19,6 +19,7 @@ import * as streamingTransports from './connection/transportTypes';
 const OPENAPI_CONTROL_MESSAGE_PREFIX = '_';
 const OPENAPI_CONTROL_MESSAGE_HEARTBEAT = '_heartbeat';
 const OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS = '_resetsubscriptions';
+const OPENAPI_CONTROL_MESSAGE_RECONNECT = '_reconnect';
 
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
 
@@ -362,6 +363,11 @@ function handleControlMessage(message) {
                 this,
                 getTargetReferenceIds(message),
             );
+            break;
+
+        case OPENAPI_CONTROL_MESSAGE_RECONNECT:
+            // try reconnecting with new context id
+            this.disconnect();
             break;
 
         default:
