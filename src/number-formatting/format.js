@@ -99,7 +99,6 @@ function expandNumber(number, precision, options) {
 
 function roundNumber(number, decimals) {
     // Shift with exponential notation to avoid floating-point issues.
-    // See [MDN](https://mdn.io/round#Examples) for more details.
     let pair = `${number}e`.split('e');
     const value = Math.round(`${pair[0]}e${Number(pair[1]) + decimals}`);
     pair = `${value}e`.split('e');
