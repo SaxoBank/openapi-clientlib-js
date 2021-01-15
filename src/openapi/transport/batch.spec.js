@@ -384,6 +384,69 @@ describe('openapi TransportBatch', () => {
         expect(transport.put.mock.calls.length).toEqual(0);
     });
 
+    it('appends extended asset types header if found in at least one subrequest', function() {
+        transportBatch = new TransportBatch(transport, validBaseUrl, null, {
+            timeoutMs: 0,
+        });
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518824, Type: 'CfdOnFutures' },
+            { headers: { MyHeader: true } },
+        );
+        transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            { InstrumentId: 1518825, Type: 'CfdOnFutures' },
+            { headers: { Pragma: 'oapi-x-extasset' } },
+        );
+
+        expect(transport.put.mock.calls.length).toEqual(0);
+        expect(transport.post.mock.calls.length).toEqual(0);
+
+        tick(1);
+
+        expect(transport.post.mock.calls.length).toEqual(1);
+
+        expect(transport.post.mock.calls[0]).toEqual([
+            'port',
+            'batch',
+            null,
+            {
+                headers: {
+                    'Content-Type': 'multipart/mixed; boundary="+"',
+                    Pragma: 'oapi-x-extasset',
+                },
+                body: multiline(
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'GET /openapi/port/ref/v1/instruments/details/1518824/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:2',
+                    'MyHeader:true',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+',
+                    'Content-Type:application/http; msgtype=request',
+                    '',
+                    'GET /openapi/port/ref/v1/instruments/details/1518825/CfdOnFutures HTTP/1.1',
+                    'X-Request-Id:3',
+                    'Pragma:oapi-x-extasset',
+                    'Host:localhost',
+                    '',
+                    '',
+                    '--+--',
+                    '',
+                ),
+                cache: false,
+                requestId: 1,
+            },
+        ]);
+
+        expect(transport.get.mock.calls.length).toEqual(0);
+    });
+
     it('allows not having any authentication passed in and picks it up off the calls', function() {
         transportBatch = new TransportBatch(transport, validBaseUrl, null, {
             timeoutMs: 0,

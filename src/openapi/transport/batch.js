@@ -107,6 +107,7 @@ function runBatchCall(serviceGroup, callList) {
     const parentRequestId = getRequestId();
 
     const subRequests = [];
+    let subRequestHasExtendedAssetTypeHeader = false;
     for (let i = 0; i < callList.length; i++) {
         const call = callList[i];
         const headers = call.options && call.options.headers;
@@ -114,6 +115,11 @@ function runBatchCall(serviceGroup, callList) {
         if (typeof body !== 'string') {
             body = JSON.stringify(body);
         }
+
+        if (headers && headers['Pragma'] === 'oapi-x-extasset') {
+            subRequestHasExtendedAssetTypeHeader = true;
+        }
+
         subRequests.push({
             method: call.method,
             headers,
@@ -132,11 +138,15 @@ function runBatchCall(serviceGroup, callList) {
 
     const { body, boundary } = buildBatch(subRequests, this.host);
 
+    let headers = {};
+    headers['Content-Type'] = 'multipart/mixed; boundary="' + boundary + '"';
+    if (subRequestHasExtendedAssetTypeHeader) {
+        headers.Pragma = 'oapi-x-extasset';
+    }
+
     this.transport
         .post(serviceGroup, 'batch', null, {
-            headers: {
-                'Content-Type': 'multipart/mixed; boundary="' + boundary + '"',
-            },
+            headers,
             body,
             cache: false,
             requestId: parentRequestId,
