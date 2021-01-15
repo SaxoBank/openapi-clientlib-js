@@ -1,3 +1,6 @@
+### v8.0.5
+- Fix rounding function that was sometimes inaccurate
+
 ### v8.0.4
 - Propogate extended asset types header to batch requests
 
