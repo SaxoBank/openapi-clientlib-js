@@ -1,3 +1,6 @@
+### v8.0.4
+- Propogate extended asset types header to batch requests
+
 ### v8.0.3
 - Signalr core - send last received message id while reconnecting
 

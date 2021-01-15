@@ -138,8 +138,9 @@ function runBatchCall(serviceGroup, callList) {
 
     const { body, boundary } = buildBatch(subRequests, this.host);
 
-    let headers = {};
-    headers['Content-Type'] = 'multipart/mixed; boundary="' + boundary + '"';
+    const headers = {
+        'Content-Type': 'multipart/mixed; boundary="' + boundary + '"',
+    };
     if (subRequestHasExtendedAssetTypeHeader) {
         headers.Pragma = 'oapi-x-extasset';
     }
