@@ -1,3 +1,7 @@
+### v8.1.1
+- Signalr core - Fixes exception in IE11 if abortController polyfill is not provided
+- Signalr core - Add guard to avoid token renewal request before connection is established
+
 ### v8.1.0
 - Allow `useCloud` option to be a function
 
