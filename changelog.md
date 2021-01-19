@@ -1,3 +1,6 @@
+### v8.1.0
+- Allow `useCloud` option to be a function
+
 ### v8.0.6
 - Revert rounding fix introduced in v8.0.5
 

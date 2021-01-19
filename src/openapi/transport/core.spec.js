@@ -98,6 +98,34 @@ describe('openapi TransportCore', () => {
                 expect.anything(),
             );
         });
+
+        it.only('allows useCloud configuration to be dynamic', () => {
+            const useCloud = jest.fn();
+            transport = new TransportCore('localhost', {
+                services: {
+                    service_path: { useCloud },
+                },
+            });
+
+            useCloud.mockReturnValue(false);
+            transport.get('service_path', 'endpoint');
+
+            expect(useCloud).toHaveBeenCalled();
+            expect(fetch).toHaveBeenCalledWith(
+                'localhost/openapi/service_path/endpoint',
+                expect.anything(),
+            );
+
+            fetch.mockClear();
+            useCloud.mockReturnValue(true);
+            transport.get('service_path', 'endpoint');
+
+            expect(useCloud).toHaveBeenCalled();
+            expect(fetch).toHaveBeenCalledWith(
+                'localhost/oapi/service_path/endpoint',
+                expect.anything(),
+            );
+        });
     });
 
     describe('url templating', () => {

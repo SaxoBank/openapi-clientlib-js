@@ -6,6 +6,7 @@
 import { formatUrl } from '../../utils/string';
 import fetch from '../../utils/fetch';
 import { getRequestId } from '../../utils/request';
+import { shouldUseCloud } from './options';
 
 // -- Local variables section --
 
@@ -53,8 +54,7 @@ function generateTransportCall(method) {
                 (options && options.requestId) || getRequestId();
         }
 
-        const serviceOptions = this.services[servicePath] || {};
-        const basePath = serviceOptions.useCloud ? '/oapi' : '/openapi';
+        const basePath = shouldUseCloud(this.services[servicePath]) ? '/oapi' : '/openapi';
 
         return this.fetch(
             method,
@@ -75,7 +75,7 @@ function generateTransportCall(method) {
  * Options pertaining to a specific service path.
  *
  * @typedef {Object} saxo.ServiceOptions
- * @property {boolean} [useCloud] - Request from OpenAPI cloud (/oapi)
+ * @property {boolean|function} [useCloud] - Request from OpenAPI cloud (/oapi)
  */
 
 /**
