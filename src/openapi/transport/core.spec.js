@@ -99,7 +99,7 @@ describe('openapi TransportCore', () => {
             );
         });
 
-        it.only('allows useCloud configuration to be dynamic', () => {
+        it('allows useCloud configuration to be dynamic', () => {
             const useCloud = jest.fn();
             transport = new TransportCore('localhost', {
                 services: {
