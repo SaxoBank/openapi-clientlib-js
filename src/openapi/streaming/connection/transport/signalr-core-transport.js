@@ -107,7 +107,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     this.hasStreamingStarted = false;
     this.isDisconnecting = false;
     this.hasTransportError = false;
-    this.isReconnecting = false;
+    this.state = constants.CONNECTION_STATE_DISCONNECTED;
 
     // callbacks
     this.transportFailCallback = transportFailCallback;
@@ -131,8 +131,12 @@ SignalrCoreTransport.isSupported = function() {
     return (
         window.signalrCore &&
         typeof window.signalrCore.HubConnectionBuilder === 'function' &&
-        Boolean(window.Uint8Array) &&
-        Boolean(window.TextDecoder)
+        typeof window.Uint8Array === 'function' &&
+        typeof window.TextDecoder === 'function' &&
+        // This check can be removed once signalr team resolves below issue
+        // https://github.com/dotnet/aspnetcore/issues/29424
+        (typeof fetch === 'undefined' ||
+            typeof window.AbortController === 'function')
     );
 };
 
@@ -175,8 +179,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
             error,
         });
 
-        this.isReconnecting = true;
-        this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
+        this.setState(constants.CONNECTION_STATE_RECONNECTING);
 
         if (this.lastMessageId) {
             const baseUrl = this.connection.baseUrl.replace(
@@ -187,10 +190,9 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         }
     });
     this.connection.onreconnected(() => {
-        this.isReconnecting = false;
         // recreate message stream
         this.createMessageStream(protocol);
-        this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+        this.setState(constants.CONNECTION_STATE_CONNECTED);
 
         // Token might have been updated while reconnect response was in flight
         if (lastUsedToken !== this.authToken) {
@@ -198,7 +200,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         }
     });
 
-    this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
+    this.setState(constants.CONNECTION_STATE_CONNECTING);
 
     return this.connection
         .start()
@@ -213,7 +215,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
                 onStartCallback();
             }
 
-            this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+            this.setState(constants.CONNECTION_STATE_CONNECTED);
 
             // Token might have been updated while reconnect response was in flight
             if (lastUsedToken !== this.authToken) {
@@ -297,7 +299,7 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
     this.hasTransportError = false;
 
     if (shouldTriggerDisconnect) {
-        this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
+        this.setState(constants.CONNECTION_STATE_DISCONNECTED);
     }
 };
 
@@ -362,7 +364,10 @@ SignalrCoreTransport.prototype.updateQuery = function(
 };
 
 SignalrCoreTransport.prototype.renewSession = function() {
-    if (!this.connection || this.isReconnecting) {
+    if (
+        !this.connection ||
+        this.state !== constants.CONNECTION_STATE_CONNECTED
+    ) {
         return;
     }
 
@@ -421,21 +426,25 @@ SignalrCoreTransport.prototype.renewSession = function() {
         })
         .catch((error) => {
             // Invocation could get cancelled due to connection being closed
-            if (!this.connection || this.isReconnecting) {
+            if (
+                !this.connection ||
+                this.state !== constants.CONNECTION_STATE_CONNECTED
+            ) {
                 return;
             }
 
-            log.warn(
-                LOG_AREA,
-                'Failed to renew token possibly due to network issues',
-                {
-                    error,
-                },
-            );
+            log.warn(LOG_AREA, 'Failed to renew token', {
+                error,
+            });
 
             // Retry
             this.renewSession();
         });
+};
+
+SignalrCoreTransport.prototype.setState = function(state) {
+    this.state = state;
+    this.stateChangedCallback(state);
 };
 
 SignalrCoreTransport.prototype.setStateChangedCallback = function(callback) {
