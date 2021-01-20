@@ -25,7 +25,6 @@ describe('price-formatting format', () => {
         expect(priceFormatting.format(0, 8)).toEqual('0.00000000');
 
         expect(priceFormatting.format(1.23451, 2)).toEqual('1.23');
-        expect(priceFormatting.format(1.005, 2)).toEqual('1.01');
         expect(priceFormatting.format(-1.23451, 2)).toEqual('-1.23');
 
         expect(priceFormatting.format(1.23451, 4)).toEqual('1.2345');
