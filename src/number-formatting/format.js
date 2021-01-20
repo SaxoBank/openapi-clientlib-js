@@ -11,6 +11,11 @@ function formatNegativeNumber(str, options) {
     return options.negativePattern.replace('{0}', str);
 }
 
+function isScientificNotation(number) {
+    const numberString = String(number);
+    return /\d+\.?\d*e[+-]*\d+/i.test(numberString);
+}
+
 /**
  * converts a number to a decimal string if it is on scientific notation
  * @param number
@@ -19,7 +24,7 @@ function convertNumbertToString(number, precision) {
     let numberString = String(number);
 
     // if the number is in scientific notation, convert to decimal
-    if (/\d+\.?\d*e[+-]*\d+/i.test(numberString)) {
+    if (isScientificNotation(number)) {
         numberString = number.toFixed(precision).trim('0');
     }
 
@@ -97,14 +102,21 @@ function expandNumber(number, precision, options) {
     return numberString.slice(0, stringIndex + 1) + groupSeparator + ret + right;
 }
 
+// Does AwayFromZero rounding as per C# - see MidpointRound.AwayFromZero
+// When a number is halfway between two others, it is rounded toward the nearest number that is away from zero.
+// We do this by rounding the absolute number, so it always goes away from zero.
 function roundNumber(number, decimals) {
-    // Shift with exponential notation to avoid floating-point issues.
-    // See [MDN](https://mdn.io/round#Examples) for more details.
-    let pair = `${number}e`.split('e');
-    const value = Math.round(`${pair[0]}e${Number(pair[1]) + decimals}`);
-    pair = `${value}e`.split('e');
+    const factor = Math.pow(10, decimals);
+    const absoluteNumber = Math.abs(number);
+    const isScientificNotationNumber = isScientificNotation(absoluteNumber);
 
-    return Number(`${pair[0]}e${Number(pair[1]) - decimals}`);
+    // for not exponential numbers we use exponential rounding to avoid binary floating-point issue like 1.005 * 100 !== 100.5
+    if (isScientificNotationNumber) {
+        return Math.round(absoluteNumber * factor) / factor;
+    }
+    const roundedNumber = Math.round(`${absoluteNumber}e${decimals}`);
+
+    return Number(`${roundedNumber}e-${decimals}`);
 }
 
 // -- Exported methods section --
@@ -114,16 +126,12 @@ function formatNumber(inputNumber, decimals, options) {
         return '';
     }
 
-    // Does AwayFromZero rounding as per C# - see MidpointRound.AwayFromZero
-    // When a number is halfway between two others, it is rounded toward the nearest number that is away from zero.
-    // We do this by rounding the absolute number, so it always goes away from zero.
-    const absoluteNumber = Math.abs(inputNumber);
-    const roundedNumber = roundNumber(absoluteNumber, decimals);
+    const absoluteNumber = roundNumber(inputNumber, decimals);
 
-    let formattedNumber = expandNumber(Math.abs(roundedNumber), decimals, options);
+    let formattedNumber = expandNumber(Math.abs(absoluteNumber), decimals, options);
 
     // if the original is negative and it hasn't been rounded to 0
-    if (inputNumber < 0 && roundedNumber !== 0) {
+    if (inputNumber < 0 && absoluteNumber !== 0) {
         formattedNumber = formatNegativeNumber(formattedNumber, options);
     }
 
