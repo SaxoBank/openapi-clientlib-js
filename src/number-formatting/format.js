@@ -33,7 +33,12 @@ function convertNumbertToString(number, precision) {
  * @param { groupSizes, groupSeparator, decimalSeparator, isHideZeroTail } options
  */
 function expandNumber(number, precision, options) {
-    const { groupSizes, groupSeparator, decimalSeparator, isHideZeroTail } = options;
+    const {
+        groupSizes,
+        groupSeparator,
+        decimalSeparator,
+        isHideZeroTail,
+    } = options;
     let curSize = groupSizes[0];
     let curGroupIndex = 1;
     let numberString = convertNumbertToString(number, precision);
@@ -71,7 +76,10 @@ function expandNumber(number, precision, options) {
         if (curSize === 0 || curSize > stringIndex) {
             if (ret.length > 0) {
                 return (
-                    numberString.slice(0, stringIndex + 1) + groupSeparator + ret + right
+                    numberString.slice(0, stringIndex + 1) +
+                    groupSeparator +
+                    ret +
+                    right
                 );
             }
 
@@ -84,7 +92,10 @@ function expandNumber(number, precision, options) {
                 groupSeparator +
                 ret;
         } else {
-            ret = numberString.slice(stringIndex - curSize + 1, stringIndex + 1);
+            ret = numberString.slice(
+                stringIndex - curSize + 1,
+                stringIndex + 1,
+            );
         }
 
         stringIndex -= curSize;
@@ -94,16 +105,9 @@ function expandNumber(number, precision, options) {
             curGroupIndex++;
         }
     }
-    return numberString.slice(0, stringIndex + 1) + groupSeparator + ret + right;
-}
-
-function roundNumber(number, decimals) {
-    // Shift with exponential notation to avoid floating-point issues.
-    let pair = `${number}e`.split('e');
-    const value = Math.round(`${pair[0]}e${Number(pair[1]) + decimals}`);
-    pair = `${value}e`.split('e');
-
-    return Number(`${pair[0]}e${Number(pair[1]) - decimals}`);
+    return (
+        numberString.slice(0, stringIndex + 1) + groupSeparator + ret + right
+    );
 }
 
 // -- Exported methods section --
@@ -116,13 +120,18 @@ function formatNumber(inputNumber, decimals, options) {
     // Does AwayFromZero rounding as per C# - see MidpointRound.AwayFromZero
     // When a number is halfway between two others, it is rounded toward the nearest number that is away from zero.
     // We do this by rounding the absolute number, so it always goes away from zero.
-    const absoluteNumber = Math.abs(inputNumber);
-    const roundedNumber = roundNumber(absoluteNumber, decimals);
+    const factor = Math.pow(10, decimals);
+    let absoluteNumber = Math.abs(inputNumber);
+    absoluteNumber = Math.round(absoluteNumber * factor) / factor;
 
-    let formattedNumber = expandNumber(Math.abs(roundedNumber), decimals, options);
+    let formattedNumber = expandNumber(
+        Math.abs(absoluteNumber),
+        decimals,
+        options,
+    );
 
     // if the original is negative and it hasn't been rounded to 0
-    if (inputNumber < 0 && roundedNumber !== 0) {
+    if (inputNumber < 0 && absoluteNumber !== 0) {
         formattedNumber = formatNegativeNumber(formattedNumber, options);
     }
 
