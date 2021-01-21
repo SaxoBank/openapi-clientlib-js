@@ -10,6 +10,7 @@ import { getRequestId } from '../../utils/request';
 import { formatUrl } from '../../utils/string';
 import { parse as parseBatch, build as buildBatch } from '../batch-util';
 import log from '../../log';
+import { shouldUseCloud } from './options';
 import TransportQueue from './queue';
 
 const reUrl = /((https?:)?\/\/)?[^/]+(.*)/i;
@@ -241,9 +242,7 @@ TransportBatch.prototype.addToQueue = function(item) {
  * @param item
  */
 TransportBatch.prototype.shouldQueue = function(item) {
-    const serviceOptions = this.services[item.servicePath] || {};
-
-    return !serviceOptions.useCloud;
+    return !shouldUseCloud(this.services[item.servicePath]);
 };
 
 /**
