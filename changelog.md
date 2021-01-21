@@ -1,3 +1,6 @@
+### v8.0.6
+- Revert rounding fix introduced in v8.0.5
+
 ### v8.0.5
 - Fix rounding function that was sometimes inaccurate
 
