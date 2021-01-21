@@ -317,17 +317,23 @@ describe('openapi SignalR core Transport', () => {
     });
 
     describe('updateQuery', () => {
-        it('should renew session on token update', () => {
+        it('should renew session on token update', (done) => {
             const transport = new SignalrCoreTransport(BASE_URL);
-            transport.start({});
-            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID, true);
+            const startPromise = transport.start({});
+            mockStart.resolve();
 
-            expect(mockRenewToken).toBeDefined();
+            startPromise.then(() => {
+                transport.updateQuery(AUTH_TOKEN, CONTEXT_ID, true);
+
+                expect(mockRenewToken).toBeDefined();
+                done();
+            });
         });
     });
 
     describe('when renewal call fails', () => {
         let transport;
+        let startPromise;
         let renewalPromise;
         let spyOnUnauthorizedCallback;
 
@@ -345,38 +351,48 @@ describe('openapi SignalR core Transport', () => {
 
             // update instance variables
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
-            transport.start({});
-
-            renewalPromise = transport.renewSession();
+            startPromise = transport.start({});
+            // wait for state to change to connected
+            renewalPromise = startPromise.then(() => transport.renewSession());
+            mockStart.resolve();
         });
 
         it('should call disconnect if session is not found', (done) => {
-            expect(mockRenewToken).toBeDefined();
+            startPromise.then(() => {
+                expect(mockRenewToken).toBeDefined();
 
-            mockRenewToken.resolve({ Status: 2 });
-
-            renewalPromise.then(() => {
-                expect(spyOnTransportFailedCallback).not.toBeCalled();
-                expect(spyOnConnectionStop).toBeCalled();
-
-                tick(10);
-                expect(spyOnStateChangedCallback).toBeCalledWith(
-                    constants.CONNECTION_STATE_DISCONNECTED,
-                );
-                done();
+                mockRenewToken.resolve({ Status: 2 });
             });
+
+            renewalPromise
+                .then(() => {
+                    mockStreamCancel.resolve();
+                    return mockStreamCancel.promise;
+                })
+                .then(() => {
+                    expect(spyOnTransportFailedCallback).not.toBeCalled();
+                    expect(spyOnConnectionStop).toBeCalled();
+
+                    tick(10);
+                    expect(spyOnStateChangedCallback).toBeCalledWith(
+                        constants.CONNECTION_STATE_DISCONNECTED,
+                    );
+                    done();
+                });
         });
 
         it('should retry renewal if there is a network error', (done) => {
-            expect(mockRenewToken).toBeDefined();
+            startPromise.then(() => {
+                expect(mockRenewToken).toBeDefined();
 
-            // mock before it calls renewSession again
-            transport.renewSession = jest
-                .fn()
-                .mockName('renew session')
-                .mockImplementation(() => Promise.resolve());
+                // mock before it calls renewSession again
+                transport.renewSession = jest
+                    .fn()
+                    .mockName('renew session')
+                    .mockImplementation(() => Promise.resolve());
 
-            mockRenewToken.reject(new Error('Network error'));
+                mockRenewToken.reject(new Error('Network error'));
+            });
 
             renewalPromise.then(() => {
                 expect(transport.renewSession).toBeCalledTimes(1);
@@ -387,10 +403,12 @@ describe('openapi SignalR core Transport', () => {
         });
 
         it('should ignore if token is updated before prev response was received', (done) => {
-            expect(mockRenewToken).toBeDefined();
+            startPromise.then(() => {
+                expect(mockRenewToken).toBeDefined();
 
-            transport.updateQuery('NEW_TOKEN', CONTEXT_ID);
-            mockRenewToken.resolve({ Status: 1 });
+                transport.updateQuery('NEW_TOKEN', CONTEXT_ID);
+                mockRenewToken.resolve({ Status: 1 });
+            });
 
             renewalPromise.then(() => {
                 expect(spyOnTransportFailedCallback).not.toBeCalled();
@@ -400,9 +418,11 @@ describe('openapi SignalR core Transport', () => {
         });
 
         it('should call unauthorized callback', (done) => {
-            expect(mockRenewToken).toBeDefined();
+            startPromise.then(() => {
+                expect(mockRenewToken).toBeDefined();
 
-            mockRenewToken.resolve({ Status: 1 });
+                mockRenewToken.resolve({ Status: 1 });
+            });
 
             renewalPromise.then(() => {
                 expect(spyOnTransportFailedCallback).not.toBeCalled();
