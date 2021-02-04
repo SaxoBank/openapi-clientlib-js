@@ -31,13 +31,19 @@ function makeTransportMethod(method) {
             urlTemplate,
             templateArgs,
             newOptions,
-        ).catch(onTransportError.bind(this, this.authProvider.getExpiry()));
+        ).catch(
+            onTransportError.bind(
+                this,
+                this.authProvider.getExpiry(),
+                Date.now(),
+            ),
+        );
     };
 }
 
-function onTransportError(oldTokenExpiry, result) {
+function onTransportError(oldTokenExpiry, timeRequested, result) {
     if (result && result.status === 401) {
-        this.addAuthError(result.url, oldTokenExpiry);
+        this.addAuthError(result.url, oldTokenExpiry, timeRequested);
         this.cleanupAuthErrors();
         const areUrlAuthErrorsProblematic = this.areUrlAuthErrorsProblematic(
             result.url,
@@ -52,7 +58,12 @@ function onTransportError(oldTokenExpiry, result) {
                 'Too many authorization errors occurred for different tokens within a specified timeframe for a specific endpoint',
                 result.url,
             );
-            return;
+            throw {
+                message: 'Auth overload',
+                // obscure the real status code so that the queue does not keep retrying
+                status: 500,
+                isNetworkError: false,
+            };
         }
 
         log.debug(LOG_AREA, 'Authentication failure', result);
@@ -173,15 +184,20 @@ TransportAuth.prototype.cleanupAuthErrors = function() {
  * Add a authentication error to the error map
  * @param {string} url - The url/endpoint at which a auth error occurred
  * @param {number} authExpiry - The expiry of the token that was rejected
+ * @param {number} timeRequested - The time the request was made
  */
-TransportAuth.prototype.addAuthError = function(url, authExpiry) {
+TransportAuth.prototype.addAuthError = function(
+    url,
+    authExpiry,
+    timeRequested,
+) {
     if (this.authorizationErrors.hasOwnProperty(url)) {
         this.authorizationErrors[url].push({
             authExpiry,
-            added: Date.now(),
+            added: timeRequested,
         });
     } else {
-        this.authorizationErrors[url] = [{ authExpiry, added: Date.now() }];
+        this.authorizationErrors[url] = [{ authExpiry, added: timeRequested }];
     }
 };
 

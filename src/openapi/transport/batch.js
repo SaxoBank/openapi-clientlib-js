@@ -36,9 +36,10 @@ function emptyQueueIntoServiceGroups() {
 
 function batchCallFailure(callList, batchResponse) {
     const isAuthFailure = batchResponse && batchResponse.status === 401;
+    const isNetworkError =
+        !batchResponse || batchResponse.isNetworkError || !batchResponse.status;
 
-    const logFunction =
-        isAuthFailure || batchResponse.isNetworkError ? log.debug : log.error;
+    const logFunction = isAuthFailure || isNetworkError ? log.debug : log.error;
     logFunction(LOG_AREA, 'Batch request failed', batchResponse);
 
     for (let i = 0; i < callList.length; i++) {
@@ -47,7 +48,7 @@ function batchCallFailure(callList, batchResponse) {
         callList[i].reject({
             message: 'batch failed',
             status: isAuthFailure ? 401 : undefined,
-            isNetworkError: batchResponse.isNetworkError,
+            isNetworkError,
         });
     }
 }
@@ -63,8 +64,9 @@ function getParentRequestId(batchResult) {
 }
 
 function batchCallSuccess(callList, batchResult) {
-    // not sure why this occurs, but logs indicate it does
+    // Previously occurred due to a bug in the auth transport
     if (!(batchResult && batchResult.response)) {
+        log.error('Received success call without response', batchResult);
         batchCallFailure(callList, batchResult);
         return;
     }

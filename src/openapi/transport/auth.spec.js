@@ -225,10 +225,12 @@ describe('openapi TransportAuth', () => {
                 ],
             ).toBe(undefined);
 
+            const catchError = jest.fn();
+
             return waterfallTimeout([
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 1);
-                    transportAuth.post('service_path', 'url').catch(noop);
+                    transportAuth.post('service_path', 'url').catch(catchError);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -245,7 +247,7 @@ describe('openapi TransportAuth', () => {
                 },
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 2);
-                    transportAuth.post('service_path', 'url').catch(noop);
+                    transportAuth.post('service_path', 'url').catch(catchError);
                     transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
@@ -259,6 +261,33 @@ describe('openapi TransportAuth', () => {
                             'localhost/openapi/service_path/url'
                         ],
                     ).toEqual([expect.any(Object), expect.any(Object)]);
+                    expect(catchError).toHaveBeenCalledTimes(2);
+                    expect(catchError.mock.calls).toMatchInlineSnapshot(`
+                        Array [
+                          Array [
+                            Object {
+                              "headers": Object {
+                                "get": [Function],
+                              },
+                              "response": Object {
+                                "error": 401,
+                                "message": "Authorization exception",
+                              },
+                              "responseType": "json",
+                              "size": 49,
+                              "status": 401,
+                              "url": "localhost/openapi/service_path/url",
+                            },
+                          ],
+                          Array [
+                            Object {
+                              "isNetworkError": false,
+                              "message": "Auth overload",
+                              "status": 500,
+                            },
+                          ],
+                        ]
+                    `);
 
                     done();
                 },

@@ -143,7 +143,10 @@ export function convertFetchSuccess(url, body, timerId, result) {
             });
     }
 
-    if ((result.status < 200 || result.status > 299) && result.status !== 304) {
+    if (
+        !result.status ||
+        ((result.status < 200 || result.status > 299) && result.status !== 304)
+    ) {
         convertedPromise = convertedPromise.then((newResult) => {
             const correlation = result.headers.get('x-correlation') || '';
 
