@@ -7,7 +7,6 @@ import log from '../../log';
 import {
     ACTION_SUBSCRIBE,
     ACTION_UNSUBSCRIBE,
-    ACTION_MODIFY_SUBSCRIBE,
     ACTION_MODIFY_PATCH,
     ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
 } from './subscription-actions';
@@ -178,12 +177,12 @@ function performAction(queuedAction, isLastQueuedAction) {
 
     switch (action) {
         case ACTION_SUBSCRIBE:
-        case ACTION_MODIFY_SUBSCRIBE:
             switch (this.currentState) {
                 case this.STATE_SUBSCRIBED:
                     break;
 
                 case this.STATE_UNSUBSCRIBED:
+                    this.queue.clearPatches();
                     subscribe.call(this);
                     break;
 
@@ -763,31 +762,44 @@ Subscription.prototype.processSnapshot = function(response) {
 };
 
 /**
- * This assumes the subscription is dead and subscribes again. If unsubscribed or awaiting a unsubscribe, this is ignored.
- * It should be used in the case of errors, such as the subscription becoming orphaned and when the server asks us to reset a subscription.
+ * Reset happens when the server notices that a publisher is dead or when
+ * it misses some messages so it doesn't know who is dead (reset all)
+ * This may be called with a burst of messages. The intent is that we queue
+ * an operation to unsubscribe, wait for that to finish and then subscribe
+ * This waiting means that if we get further resets whilst unsubscribing, we
+ * can ignore them. It also ensures that we don't hit the subscription limit
+ * because the subscribe manages to get to the server before the unsubscribe.
  * @private
  */
 Subscription.prototype.reset = function() {
     switch (this.currentState) {
         case this.STATE_UNSUBSCRIBED:
         case this.STATE_UNSUBSCRIBE_REQUESTED:
-            // do not do anything if we are on our way to unsubscribed unless the next action would be to subscribe
-            if (this.queue.peekAction() & ACTION_SUBSCRIBE) {
-                break;
-            }
+            // do not do anything - even if the next action is to subscribe, we can go ahead and do that when the unsubscribe response comes back
             return;
 
         case this.STATE_SUBSCRIBE_REQUESTED:
-            // we could have been in the process of subscribing when disconnected. we would need to subscribe with a new streamingContextId
+        case this.STATE_SUBSCRIBED:
+            // we could have been in the process of subscribing when we got a reset. We can only assume that the new thing we are subscribing to
+            // was also reset. or we are subscribed / patch requested.. either way we now need to unsubscribe.
+            // if it was in process of subscribing it will now unusbscribe once the subscribe returns.
+
+            // If we are going to unsubscribe next already, we can ignore this reset
+            if (this.queue.peekAction() & ACTION_UNSUBSCRIBE) {
+                return;
+            }
+            this.onUnsubscribe(true);
             break;
 
-        case this.STATE_SUBSCRIBED:
         case this.STATE_PATCH_REQUESTED:
-            this.onUnsubscribe();
+            // we can ignore the patch we are doing and just go ahead and unsubscribe
+            setState.call(this, this.STATE_SUBSCRIBED);
+            this.onUnsubscribe(true);
             break;
 
         case this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG:
-            break;
+            // We are about to unsubscribe by tag, so no need to do anything
+            return;
 
         default:
             log.error(
@@ -797,17 +809,7 @@ Subscription.prototype.reset = function() {
             return;
     }
 
-    this.queue.reset();
-
-    // do not unsubscribe because a reset happens when the existing subscription is broken
-    //  * on a new connection (new context id, subscription will be cleaned up)
-    //  * server reset instruction (server is telling us subscription is broken)
-    //  * subscription is orphaned (meaning subscription is dead).
-
-    // set the state to unsubscribed, since that is what we are now assuming
-    setState.call(this, this.STATE_UNSUBSCRIBED);
-
-    // subscribe... because the state is unsubscribed this will go ahead unless the connection is unavailable
+    // subscribe... this will go ahead unless the connection is unavailable, after unsubscribe has occurred
     this.onSubscribe();
 };
 
@@ -817,17 +819,14 @@ Subscription.prototype.reset = function() {
  *                           If true, any unsubscribe before subscribe will be kept. Otherwise they are dropped.
  * @private
  */
-Subscription.prototype.onSubscribe = function(modify) {
+Subscription.prototype.onSubscribe = function() {
     if (this.isDisposed) {
         throw new Error(
             'Subscribing a disposed subscription - you will not get data',
         );
     }
 
-    tryPerformAction.call(
-        this,
-        modify ? ACTION_MODIFY_SUBSCRIBE : ACTION_SUBSCRIBE,
-    );
+    tryPerformAction.call(this, ACTION_SUBSCRIBE);
 };
 
 /**
@@ -854,8 +853,8 @@ Subscription.prototype.onModify = function(newArgs, options) {
         );
     } else {
         // resubscribe with new arguments
-        this.onUnsubscribe();
-        this.onSubscribe(true);
+        this.onUnsubscribe(true);
+        this.onSubscribe();
     }
 };
 
@@ -863,7 +862,7 @@ Subscription.prototype.onModify = function(newArgs, options) {
  * Try to unsubscribe.
  * @private
  */
-Subscription.prototype.onUnsubscribe = function() {
+Subscription.prototype.onUnsubscribe = function(forceUnsubscribe) {
     if (this.isDisposed) {
         log.warn(
             LOG_AREA,
@@ -871,7 +870,9 @@ Subscription.prototype.onUnsubscribe = function() {
         );
     }
 
-    tryPerformAction.call(this, ACTION_UNSUBSCRIBE);
+    tryPerformAction.call(this, ACTION_UNSUBSCRIBE, {
+        force: Boolean(forceUnsubscribe),
+    });
 };
 
 /**
