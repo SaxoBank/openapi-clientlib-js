@@ -60,8 +60,6 @@ function onTransportError(oldTokenExpiry, timeRequested, result) {
             );
             throw {
                 message: 'Auth overload',
-                // obscure the real status code so that the queue does not keep retrying
-                status: 500,
                 isNetworkError: false,
             };
         }

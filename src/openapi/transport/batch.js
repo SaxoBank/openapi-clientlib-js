@@ -37,7 +37,11 @@ function emptyQueueIntoServiceGroups() {
 function batchCallFailure(callList, batchResponse) {
     const isAuthFailure = batchResponse && batchResponse.status === 401;
     const isNetworkError =
-        !batchResponse || batchResponse.isNetworkError || !batchResponse.status;
+        !batchResponse ||
+        // Some responses same to be in error but not have isNetworkError defined
+        (typeof batchResponse.isNetworkError === 'boolean'
+            ? batchResponse.isNetworkError
+            : !batchResponse.status);
 
     const logFunction = isAuthFailure || isNetworkError ? log.debug : log.error;
     logFunction(LOG_AREA, 'Batch request failed', batchResponse);

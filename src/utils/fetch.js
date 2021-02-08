@@ -44,7 +44,7 @@ export function convertFetchReject(url, body, timerId, error) {
         isNetworkError: true,
     };
 
-    throw networkError;
+    return Promise.reject(networkError);
 }
 
 /**
@@ -164,6 +164,7 @@ export function convertFetchSuccess(url, body, timerId, result) {
                 status: newResult.status,
                 response: newResult.response,
                 requestId: requestId || null,
+                isNetworkError: false,
             });
 
             throw newResult;
@@ -252,10 +253,9 @@ function localFetch(method, url, options) {
         });
     }, 30000);
 
-    return fetch(url, { headers, method, body, credentials }).then(
-        convertFetchSuccess.bind(null, url, body, timerId),
-        convertFetchReject.bind(null, url, body, timerId),
-    );
+    return fetch(url, { headers, method, body, credentials })
+        .catch(convertFetchReject.bind(null, url, body, timerId))
+        .then(convertFetchSuccess.bind(null, url, body, timerId));
 }
 
 // Check for handled type: https://fetch.spec.whatwg.org/#bodyinit

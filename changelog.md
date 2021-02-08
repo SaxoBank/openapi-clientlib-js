@@ -1,3 +1,6 @@
+### v8.1.2
+- Better setting of isNetworkError property when fetch fails due to excessive auth errors
+
 ### v8.1.1
 - Signalr core - Fixes exception in IE11 if abortController polyfill is not provided
 - Signalr core - Add guard to avoid token renewal request before connection is established

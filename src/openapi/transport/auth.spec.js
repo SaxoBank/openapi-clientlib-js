@@ -283,7 +283,6 @@ describe('openapi TransportAuth', () => {
                             Object {
                               "isNetworkError": false,
                               "message": "Auth overload",
-                              "status": 500,
                             },
                           ],
                         ]
