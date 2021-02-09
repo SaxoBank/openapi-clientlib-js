@@ -22,6 +22,27 @@ describe('openapi SubscriptionQueue', () => {
             );
             expect(queue.isEmpty()).toBe(false);
         });
+    });
+
+    describe('enqueue & dequeue', () => {
+        beforeEach(() => {
+            queue = new SubscriptionQueue();
+        });
+
+        const tests = [
+            [
+                'should merge same actions - subscribe',
+                [
+                    SubscriptionActions.ACTION_SUBSCRIBE,
+                    SubscriptionActions.ACTION_SUBSCRIBE,
+                ],
+                [SubscriptionActions.ACTION_SUBSCRIBE],
+            ],
+        ];
+
+        tests.forEach(([title, actionsToQueue, expectedActions]) => {
+            it(title, () => {});
+        });
 
         it('should merge same actions', () => {
             queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
@@ -451,12 +472,6 @@ describe('openapi SubscriptionQueue', () => {
                 SubscriptionActions.ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
             );
             expect(queue.isEmpty()).toBe(true);
-        });
-    });
-
-    describe('dequeue', () => {
-        beforeEach(() => {
-            queue = new SubscriptionQueue();
         });
 
         it('should dequeue first and only action and leave queue empty', () => {
