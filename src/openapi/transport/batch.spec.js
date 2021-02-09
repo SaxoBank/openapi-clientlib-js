@@ -723,27 +723,124 @@ describe('openapi TransportBatch', () => {
             // put in here in case it changes and we decide to reject with something
             expect(getCatch.mock.calls.length).toEqual(1);
             expect(getCatch.mock.calls[0]).toEqual([
-                { message: 'batch failed' },
+                { message: 'batch failed', isNetworkError: false },
             ]);
 
             expect(putCatch.mock.calls.length).toEqual(1);
             expect(putCatch.mock.calls[0]).toEqual([
-                { message: 'batch failed' },
+                { message: 'batch failed', isNetworkError: false },
             ]);
 
             expect(postCatch.mock.calls.length).toEqual(1);
             expect(postCatch.mock.calls[0]).toEqual([
-                { message: 'batch failed' },
+                { message: 'batch failed', isNetworkError: false },
             ]);
 
             expect(deleteCatch.mock.calls.length).toEqual(1);
             expect(deleteCatch.mock.calls[0]).toEqual([
-                { message: 'batch failed' },
+                { message: 'batch failed', isNetworkError: false },
             ]);
 
             expect(patchCatch.mock.calls.length).toEqual(1);
             expect(patchCatch.mock.calls[0]).toEqual([
-                { message: 'batch failed' },
+                { message: 'batch failed', isNetworkError: false },
+            ]);
+
+            done();
+        });
+    });
+
+    it('passes on network errors', function(done) {
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            timeoutMs: 0,
+        });
+        const getPromise = transportBatch.get(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            {
+                InstrumentId: 1518824,
+                Type: 'CfdOnFutures',
+            },
+        );
+        const putPromise = transportBatch.put(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            {
+                InstrumentId: 1518824,
+                Type: 'CfdOnFutures',
+            },
+        );
+        const postPromise = transportBatch.post(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            {
+                InstrumentId: 1518824,
+                Type: 'CfdOnFutures',
+            },
+        );
+        const deletePromise = transportBatch.delete(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            {
+                InstrumentId: 1518824,
+                Type: 'CfdOnFutures',
+            },
+        );
+        const patchPromise = transportBatch.patch(
+            'port',
+            'ref/v1/instruments/details/{InstrumentId}/{Type}',
+            {
+                InstrumentId: 1518824,
+                Type: 'CfdOnFutures',
+            },
+        );
+
+        tick(1);
+
+        expect(transport.post.mock.calls.length).toEqual(1);
+
+        transport.postReject({ isNetworkError: true });
+
+        const getCatch = jest.fn().mockName('getCatch');
+        const putCatch = jest.fn().mockName('putCatch');
+        const postCatch = jest.fn().mockName('postCatch');
+        const deleteCatch = jest.fn().mockName('deleteCatch');
+        const patchCatch = jest.fn().mockName('patchCatch');
+
+        getPromise.catch(getCatch);
+        putPromise.catch(putCatch);
+        postPromise.catch(postCatch);
+        deletePromise.catch(deleteCatch);
+        patchPromise.catch(patchCatch);
+
+        tick(1);
+
+        setTimeout(() => {
+            // we reject the promise with nothing, which somes through as undefined.
+            // put in here in case it changes and we decide to reject with something
+            expect(getCatch.mock.calls.length).toEqual(1);
+            expect(getCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed', isNetworkError: true },
+            ]);
+
+            expect(putCatch.mock.calls.length).toEqual(1);
+            expect(putCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed', isNetworkError: true },
+            ]);
+
+            expect(postCatch.mock.calls.length).toEqual(1);
+            expect(postCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed', isNetworkError: true },
+            ]);
+
+            expect(deleteCatch.mock.calls.length).toEqual(1);
+            expect(deleteCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed', isNetworkError: true },
+            ]);
+
+            expect(patchCatch.mock.calls.length).toEqual(1);
+            expect(patchCatch.mock.calls[0]).toEqual([
+                { message: 'batch failed', isNetworkError: true },
             ]);
 
             done();
@@ -806,27 +903,27 @@ describe('openapi TransportBatch', () => {
         setTimeout(() => {
             expect(getCatch.mock.calls.length).toEqual(1);
             expect(getCatch.mock.calls[0]).toEqual([
-                { message: 'batch failed' },
+                { message: 'batch failed', isNetworkError: false },
             ]);
 
             expect(putCatch.mock.calls.length).toEqual(1);
             expect(deleteCatch.mock.calls[0]).toEqual([
-                { message: 'batch failed' },
+                { message: 'batch failed', isNetworkError: false },
             ]);
 
             expect(postCatch.mock.calls.length).toEqual(1);
             expect(postCatch.mock.calls[0]).toEqual([
-                { message: 'batch failed' },
+                { message: 'batch failed', isNetworkError: false },
             ]);
 
             expect(deleteCatch.mock.calls.length).toEqual(1);
             expect(deleteCatch.mock.calls[0]).toEqual([
-                { message: 'batch failed' },
+                { message: 'batch failed', isNetworkError: false },
             ]);
 
             expect(patchCatch.mock.calls.length).toEqual(1);
             expect(patchCatch.mock.calls[0]).toEqual([
-                { message: 'batch failed' },
+                { message: 'batch failed', isNetworkError: false },
             ]);
 
             done();
