@@ -246,14 +246,24 @@ SignalrCoreTransport.prototype.stop = function(hasTransportError) {
         this.hasTransportError = true;
     }
 
+    const sendCloseMessage = () =>
+        this.connection.invoke('CloseConnection').catch((err) => {
+            log.warn(
+                LOG_AREA,
+                'Error occurred while invoking CloseConnection',
+                err,
+            );
+        });
+
     // close message stream before closing connection
     if (this.messageStream) {
         return this.messageStream
             .cancelCallback()
+            .then(sendCloseMessage)
             .then(() => this.connection.stop());
     }
 
-    return this.connection.stop();
+    return sendCloseMessage().then(() => this.connection.stop());
 };
 
 SignalrCoreTransport.prototype.createMessageStream = function(protocol) {
