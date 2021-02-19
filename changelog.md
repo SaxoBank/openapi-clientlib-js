@@ -1,3 +1,7 @@
+### v8.2.0
+- Handle disconnect control message
+- Stops subscriptions and send disconnect requested event to consumer
+
 ### v8.1.2
 - Better setting of isNetworkError property when fetch fails due to excessive auth errors
 
