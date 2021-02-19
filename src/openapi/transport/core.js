@@ -54,7 +54,9 @@ function generateTransportCall(method) {
                 (options && options.requestId) || getRequestId();
         }
 
-        const basePath = shouldUseCloud(this.services[servicePath]) ? '/oapi' : '/openapi';
+        const basePath = shouldUseCloud(this.services[servicePath])
+            ? '/oapi'
+            : '/openapi';
 
         return this.fetch(
             method,

@@ -20,6 +20,7 @@ const OPENAPI_CONTROL_MESSAGE_PREFIX = '_';
 const OPENAPI_CONTROL_MESSAGE_HEARTBEAT = '_heartbeat';
 const OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS = '_resetsubscriptions';
 const OPENAPI_CONTROL_MESSAGE_RECONNECT = '_reconnect';
+const OPENAPI_CONTROL_MESSAGE_DISCONNECT = '_disconnect';
 
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
 
@@ -370,6 +371,10 @@ function handleControlMessage(message) {
             this.disconnect();
             break;
 
+        case OPENAPI_CONTROL_MESSAGE_DISCONNECT:
+            handleControlMessageDisconnect.call(this);
+            break;
+
         default:
             log.warn(LOG_AREA, 'Unrecognised control message', message);
             break;
@@ -443,6 +448,22 @@ function handleControlMessageResetSubscriptions(referenceIdList) {
         }
     }
     resetSubscriptions(subscriptionsToReset);
+}
+
+/**
+ * Handles the control message to disconnect,
+ * Notify subscriptions about connect unavailability
+ * Fire disconnect requested event
+ * @param {Array.<string>} referenceIdList
+ */
+function handleControlMessageDisconnect() {
+    // tell all subscriptions not to do anything
+    // as we may have lost internet and the subscriptions may not be reset
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        this.subscriptions[i].onConnectionUnavailable();
+    }
+
+    this.trigger(this.EVENT_DISCONNECT_REQUESTED);
 }
 
 /**
@@ -668,6 +689,12 @@ Streaming.prototype.EVENT_CONNECTION_SLOW =
  */
 Streaming.prototype.EVENT_STREAMING_FAILED =
     connectionConstants.EVENT_STREAMING_FAILED;
+
+/**
+ * Event that occurs when server sends _disconnect control message.
+ */
+Streaming.prototype.EVENT_DISCONNECT_REQUESTED =
+    connectionConstants.EVENT_DISCONNECT_REQUESTED;
 
 /**
  * Streaming has been created but has not yet started the connection.

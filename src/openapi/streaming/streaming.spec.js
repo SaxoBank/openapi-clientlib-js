@@ -819,6 +819,22 @@ describe('openapi Streaming', () => {
             expect(subscription.reset.mock.calls.length).toEqual(1);
             expect(subscription.reset.mock.calls[0]).toEqual([]);
         });
+        it('handles disconnect control message', () => {
+            const disconnectRequestedSpy = jest
+                .fn()
+                .mockName('spyOnDisconnectRequested');
+
+            streaming.on(
+                streaming.EVENT_DISCONNECT_REQUESTED,
+                disconnectRequestedSpy,
+            );
+            receivedCallback([{ ReferenceId: '_disconnect' }]);
+
+            expect(
+                subscription.onConnectionUnavailable.mock.calls.length,
+            ).toEqual(1);
+            expect(disconnectRequestedSpy).toHaveBeenCalledTimes(1);
+        });
         it('handles an unknown control event', () => {
             receivedCallback([
                 { ReferenceId: '_foo', TargetReferenceIds: ['MySpy'] },
