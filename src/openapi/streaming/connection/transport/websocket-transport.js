@@ -56,6 +56,8 @@ function createSocket() {
 
 function destroySocket() {
     const socket = this.socket;
+    this.socket = null;
+
     if (!socket) {
         return;
     }
@@ -64,8 +66,6 @@ function destroySocket() {
     socket.onmessage = null;
     socket.onclose = null;
     socket.close(socketCloseCodes.NORMAL_CLOSURE, CLOSE_REASON_DESTROY);
-
-    this.socket = null;
 }
 
 function restartConnection() {

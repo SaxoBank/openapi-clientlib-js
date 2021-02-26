@@ -181,7 +181,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
 
         this.setState(constants.CONNECTION_STATE_RECONNECTING);
 
-        if (this.lastMessageId) {
+        if (this.lastMessageId !== undefined) {
             const baseUrl = this.connection.baseUrl.replace(
                 /&messageId=\d+/,
                 '',

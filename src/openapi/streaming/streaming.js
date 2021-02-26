@@ -192,15 +192,19 @@ function onConnectionStateChanged(nextState) {
 
             this.orphanFinder.stop();
 
-            // tell all subscriptions not to do anything
-            // as we may have lost internet and the subscriptions may not be reset
-            for (let i = 0; i < this.subscriptions.length; i++) {
-                this.subscriptions[i].onConnectionUnavailable();
-            }
-
             if (this.isReset) {
+                this.allSubscriptionsUnsubscribedPromise = getSubscriptionsUnsubscribedPromise(
+                    this.subscriptions,
+                );
+
                 init.call(this);
             } else {
+                // tell all subscriptions not to do anything
+                // as we may have lost internet and the subscriptions may not be reset
+                for (let i = 0; i < this.subscriptions.length; i++) {
+                    this.subscriptions[i].onConnectionUnavailable();
+                }
+
                 retryConnection.call(this);
             }
 
@@ -225,9 +229,20 @@ function onConnectionStateChanged(nextState) {
 
             this.retryCount = 0;
             // if *we* are reconnecting (as opposed to transport reconnecting, which we do not need to handle specially)
-            if (this.reconnecting || this.isReset) {
+            if (this.reconnecting) {
                 resetSubscriptions.call(this, this.subscriptions);
                 this.reconnecting = false;
+            }
+
+            // During streaming service switching, wait for all subscriptions to unsubscribe before resubscribing again
+            // to avoid hitting throttling limit on subscriptions
+            if (this.isReset) {
+                this.allSubscriptionsUnsubscribedPromise.then(() => {
+                    for (let i = 0; i < this.subscriptions.length; i++) {
+                        this.subscriptions[i].onSubscribe();
+                    }
+                });
+
                 this.isReset = false;
             }
 
@@ -486,7 +501,7 @@ function onOrphanFound(subscription) {
     subscription.reset();
 }
 
-function handleSubscriptionReadyForUnsubscribe(subscriptions, resolve) {
+function handleSubscriptionReadyForUnsubscribe(subscriptions) {
     let allSubscriptionsReady = true;
     for (let i = 0; i < subscriptions.length && allSubscriptionsReady; i++) {
         if (!subscriptions[i].isReadyForUnsubscribeByTag()) {
@@ -494,9 +509,7 @@ function handleSubscriptionReadyForUnsubscribe(subscriptions, resolve) {
         }
     }
 
-    if (allSubscriptionsReady) {
-        resolve();
-    }
+    return allSubscriptionsReady;
 }
 
 function getSubscriptionsByTag(servicePath, url, tag) {
@@ -517,32 +530,58 @@ function getSubscriptionsByTag(servicePath, url, tag) {
     return subscriptionsToRemove;
 }
 
+function getSubscriptionsUnsubscribedPromise(subscriptionsToUnsubscribe) {
+    const promiseResolver = (subscriptions) => {
+        let allSubscriptionsUnsubscribed = true;
+        for (
+            let i = 0;
+            i < subscriptions.length && allSubscriptionsUnsubscribed;
+            i++
+        ) {
+            if (!subscriptions[i].isUnsubscribed()) {
+                allSubscriptionsUnsubscribed = false;
+            }
+        }
+
+        return allSubscriptionsUnsubscribed;
+    };
+
+    return getSubscriptionsReadyPromise(
+        subscriptionsToUnsubscribe,
+        (subscribe) => subscribe.onUnsubscribe(),
+        promiseResolver,
+    );
+}
+
 function getSubscriptionsReadyPromise(
-    subscriptionsToRemove,
-    shouldDisposeSubscription,
+    subscriptionsToWatch,
+    performAction,
+    stateChangeHandler,
 ) {
     let onStateChanged;
 
     return new Promise((resolve) => {
-        onStateChanged = handleSubscriptionReadyForUnsubscribe.bind(
-            this,
-            subscriptionsToRemove,
-            resolve,
-        );
+        onStateChanged = (state) => {
+            const shouldResolvePromise = stateChangeHandler(
+                subscriptionsToWatch,
+                state,
+            );
 
-        for (let i = 0; i < subscriptionsToRemove.length; i++) {
-            const subscription = subscriptionsToRemove[i];
+            if (shouldResolvePromise) {
+                resolve();
+            }
+        };
+
+        for (let i = 0; i < subscriptionsToWatch.length; i++) {
+            const subscription = subscriptionsToWatch[i];
 
             subscription.addStateChangedCallback(onStateChanged);
-            subscription.onUnsubscribeByTagPending();
 
-            if (shouldDisposeSubscription) {
-                removeSubscription.call(this, subscription);
-            }
+            performAction(subscription);
         }
     }).then(() => {
-        for (let i = 0; i < subscriptionsToRemove.length; i++) {
-            const subscription = subscriptionsToRemove[i];
+        for (let i = 0; i < subscriptionsToWatch.length; i++) {
+            const subscription = subscriptionsToWatch[i];
             subscription.removeStateChangedCallback(onStateChanged);
         }
     });
@@ -560,10 +599,20 @@ function unsubscribeSubscriptionByTag(
         url,
         tag,
     );
+
+    const unsubscribeAndRemove = (subscription) => {
+        subscription.onUnsubscribeByTagPending();
+
+        if (shouldDisposeSubscription) {
+            removeSubscription.call(this, subscription);
+        }
+    };
+
     const allSubscriptionsReady = getSubscriptionsReadyPromise.call(
         this,
         subscriptionsToRemove,
-        shouldDisposeSubscription,
+        unsubscribeAndRemove,
+        handleSubscriptionReadyForUnsubscribe.bind(this, subscriptionsToRemove),
     );
 
     allSubscriptionsReady.then(() => {
