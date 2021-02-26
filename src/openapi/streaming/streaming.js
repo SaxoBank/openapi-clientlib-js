@@ -382,7 +382,7 @@ function handleControlMessage(message) {
             break;
 
         case OPENAPI_CONTROL_MESSAGE_RECONNECT:
-            // try reconnecting with new context id
+            this.isReset = true;
             this.disconnect();
             break;
 
