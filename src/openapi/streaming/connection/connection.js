@@ -31,6 +31,20 @@ function getLogDetails() {
     };
 }
 
+function ensureValidState(callback, expectedTransport, callbackType, ...args) {
+    if (expectedTransport !== this.transport.name) {
+        log.warn(LOG_AREA, 'callback called after transport was changed', {
+            callback: callbackType,
+            transport: expectedTransport,
+            currentTransport: this.transport.name,
+            connectionState: this.state,
+        });
+        return;
+    }
+
+    callback(...args);
+}
+
 function onTransportFail(error) {
     log.info(LOG_AREA, 'Transport failed', {
         error,
@@ -157,29 +171,49 @@ function Connection(options, baseUrl, failCallback = NOOP) {
 
 Connection.prototype.setUnauthorizedCallback = function(callback) {
     if (this.transport) {
-        this.unauthorizedCallback = callback;
-        this.transport.setUnauthorizedCallback(callback);
+        this.unauthorizedCallback = ensureValidState.bind(
+            this,
+            callback,
+            this.transport.name,
+            'unauthorizedCallback',
+        );
+        this.transport.setUnauthorizedCallback(this.unauthorizedCallback);
     }
 };
 
 Connection.prototype.setStateChangedCallback = function(callback) {
     if (this.transport) {
-        this.stateChangedCallback = callback;
-        this.transport.setStateChangedCallback(callback);
+        this.stateChangedCallback = ensureValidState.bind(
+            this,
+            callback,
+            this.transport.name,
+            'stateChangedCallback',
+        );
+        this.transport.setStateChangedCallback(this.stateChangedCallback);
     }
 };
 
 Connection.prototype.setReceivedCallback = function(callback) {
     if (this.transport) {
-        this.receiveCallback = callback;
-        this.transport.setReceivedCallback(callback);
+        this.receiveCallback = ensureValidState.bind(
+            this,
+            callback,
+            this.transport.name,
+            'receivedCallback',
+        );
+        this.transport.setReceivedCallback(this.receiveCallback);
     }
 };
 
 Connection.prototype.setConnectionSlowCallback = function(callback) {
     if (this.transport) {
-        this.connectionSlowCallback = callback;
-        this.transport.setConnectionSlowCallback(callback);
+        this.connectionSlowCallback = ensureValidState.bind(
+            this,
+            callback,
+            this.transport.name,
+            'connectionSlowCallback',
+        );
+        this.transport.setConnectionSlowCallback(this.connectionSlowCallback);
     }
 };
 
@@ -188,7 +222,6 @@ Connection.prototype.start = function(callback) {
         this.state = STATE_STARTED;
         this.startCallback = callback;
         this.transport.start(this.options, this.startCallback);
-        log.debug(LOG_AREA, 'Connection started');
     }
 };
 
@@ -196,7 +229,6 @@ Connection.prototype.stop = function() {
     if (this.transport) {
         this.state = STATE_STOPPED;
         this.transport.stop();
-        log.debug(LOG_AREA, 'Connection stopped');
     }
 };
 
@@ -212,7 +244,7 @@ Connection.prototype.updateQuery = function(
 
     log.debug(LOG_AREA, 'Connection update query', {
         contextId,
-        authToken,
+        authExpiry,
     });
 
     if (this.transport) {

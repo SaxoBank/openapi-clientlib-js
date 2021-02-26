@@ -34,6 +34,16 @@ function getRetryPolicy() {
                 return null;
             }
 
+            // If messages were not received before connection close, don't retry
+            // instead create a new connection with different context id
+            // Server relies on this to determine wheter its reconnection or not
+            if (
+                this.lastMessageId === undefined ||
+                this.lastMessageId === null
+            ) {
+                return null;
+            }
+
             return RECONNECT_DELAYS[retryContext.previousRetryCount];
         },
     };
@@ -204,13 +214,8 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
 
         this.setState(constants.CONNECTION_STATE_RECONNECTING);
 
-        if (this.lastMessageId !== null && this.lastMessageId !== undefined) {
-            const baseUrl = this.connection.baseUrl.replace(
-                /&messageId=\d+/,
-                '',
-            );
-            this.connection.baseUrl = `${baseUrl}&messageId=${this.lastMessageId}`;
-        }
+        const baseUrl = this.connection.baseUrl.replace(/&messageId=\d+/, '');
+        this.connection.baseUrl = `${baseUrl}&messageId=${this.lastMessageId}`;
     });
     this.connection.onreconnected(() => {
         // recreate message stream
@@ -338,6 +343,11 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
 
 SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
     if (!this.connection) {
+        log.warn(
+            LOG_AREA,
+            'Message received after connection was closed',
+            message,
+        );
         return;
     }
 
@@ -378,7 +388,8 @@ SignalrCoreTransport.prototype.handleMessageStreamError = function(error) {
             error,
         });
 
-        this.connection.stop();
+        this.messageStream = null;
+        this.stop();
     }
 };
 
@@ -388,10 +399,6 @@ SignalrCoreTransport.prototype.updateQuery = function(
     authExpiry,
     forceAuth = false,
 ) {
-    if (!this.connection) {
-        return;
-    }
-
     log.debug(LOG_AREA, 'Updated query', {
         contextId,
         forceAuth,
@@ -473,6 +480,14 @@ SignalrCoreTransport.prototype.renewSession = function() {
                 !this.connection ||
                 this.state !== constants.CONNECTION_STATE_CONNECTED
             ) {
+                log.debug(
+                    LOG_AREA,
+                    'Token renewal failed. Either connection was closed or not connected',
+                    {
+                        state: this.state,
+                    },
+                );
+
                 return;
             }
 

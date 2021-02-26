@@ -175,12 +175,18 @@ function retryConnection() {
 function onConnectionStateChanged(nextState) {
     this.connectionState = nextState;
 
-    const connectionTransport = this.connection.getTransport();
-    log.debug(LOG_AREA, 'Connection state changed', {
-        changedTo: this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
-        mechanism: connectionTransport && connectionTransport.name,
-        reconnecting: this.reconnecting,
-    });
+    const connectionTransport = this.getActiveTransportName();
+    log.info(
+        LOG_AREA,
+        'Connection state changed',
+        {
+            changedTo: this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
+            mechanism: connectionTransport,
+            reconnecting: this.reconnecting,
+        },
+        { persist: true },
+    );
+
     this.trigger(this.EVENT_CONNECTION_STATE_CHANGED, this.connectionState);
 
     if (this.disposed) {
@@ -189,8 +195,6 @@ function onConnectionStateChanged(nextState) {
 
     switch (this.connectionState) {
         case this.CONNECTION_STATE_DISCONNECTED:
-            log.info(LOG_AREA, 'Connection disconnected');
-
             this.orphanFinder.stop();
 
             if (this.isReset) {
@@ -212,8 +216,6 @@ function onConnectionStateChanged(nextState) {
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
-            log.info(LOG_AREA, 'Connection reconnecting');
-
             // tell all subscriptions not to do anything
             // as we may have lost internet and the subscriptions may not be reset
             for (let i = 0; i < this.subscriptions.length; i++) {
@@ -226,8 +228,6 @@ function onConnectionStateChanged(nextState) {
             break;
 
         case this.CONNECTION_STATE_CONNECTED:
-            log.info(LOG_AREA, 'Connection connected');
-
             this.retryCount = 0;
             // if *we* are reconnecting (as opposed to transport reconnecting, which we do not need to handle specially)
             if (this.reconnecting) {
@@ -382,8 +382,7 @@ function handleControlMessage(message) {
             break;
 
         case OPENAPI_CONTROL_MESSAGE_RECONNECT:
-            this.isReset = true;
-            this.disconnect();
+            handleControlMessageReconnect.call(this);
             break;
 
         case OPENAPI_CONTROL_MESSAGE_DISCONNECT:
@@ -475,10 +474,16 @@ function handleControlMessageResetSubscriptions(referenceIdList) {
  * @param {Array.<string>} referenceIdList
  */
 function handleControlMessageDisconnect() {
-    log.warn(LOG_AREA, 'disconnect control message received', {
-        message,
-        transport: this.getActiveTransportName(),
-    });
+    log.info(
+        LOG_AREA,
+        'disconnect control message received',
+        {
+            transport: this.getActiveTransportName(),
+        },
+        {
+            persist: true,
+        },
+    );
 
     // tell all subscriptions not to do anything
     for (let i = 0; i < this.subscriptions.length; i++) {
@@ -486,6 +491,22 @@ function handleControlMessageDisconnect() {
     }
 
     this.trigger(this.EVENT_DISCONNECT_REQUESTED);
+}
+
+function handleControlMessageReconnect() {
+    log.info(
+        LOG_AREA,
+        'reconnect control message received',
+        {
+            transport: this.getActiveTransportName(),
+        },
+        {
+            persist: true,
+        },
+    );
+
+    this.isReset = true;
+    this.disconnect();
 }
 
 /**

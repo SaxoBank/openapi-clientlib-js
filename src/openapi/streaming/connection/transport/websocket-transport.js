@@ -228,7 +228,7 @@ function handleSocketClose(event) {
     }
 
     if (!this.hasBeenConnected) {
-        log.info(LOG_AREA, 'websocket error occurred.', {
+        log.error(LOG_AREA, 'websocket error occurred.', {
             readyState: this.socket.readyState,
             code: event.code,
             reason: event.reason,
@@ -438,9 +438,9 @@ WebsocketTransport.prototype.start = function(options, callback) {
     this.startedCallback = callback || NOOP;
 
     if (!this.isSupported()) {
-        handleFailure.call(this, {
-            message: 'WebSocket Transport is not supported.',
-        });
+        log.error(LOG_AREA, 'WebSocket Transport is not supported');
+
+        handleFailure.call(this);
         return;
     }
 
