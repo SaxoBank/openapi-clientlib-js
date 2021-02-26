@@ -60,7 +60,11 @@ function onTransportFail(error) {
     this.transport.setConnectionSlowCallback(this.connectionSlowCallback);
 
     if (this.state === STATE_STARTED) {
-        this.transport.updateQuery(this.authToken, this.contextId);
+        this.transport.updateQuery(
+            this.authToken,
+            this.contextId,
+            this.authExpiry,
+        );
         this.transport.start(this.options, this.startCallback);
     }
 }
@@ -123,6 +127,7 @@ function Connection(options, baseUrl, failCallback = NOOP) {
     this.baseUrl = baseUrl;
     this.options = options;
     this.authToken = null;
+    this.authExpiry = null;
     this.contextId = null;
     this.transports = getSupportedTransports.call(
         this,
@@ -198,10 +203,12 @@ Connection.prototype.stop = function() {
 Connection.prototype.updateQuery = function(
     authToken,
     contextId,
+    authExpiry,
     forceAuth = false,
 ) {
     this.authToken = authToken;
     this.contextId = contextId;
+    this.authExpiry = authExpiry;
 
     log.debug(LOG_AREA, 'Connection update query', {
         contextId,
@@ -209,7 +216,12 @@ Connection.prototype.updateQuery = function(
     });
 
     if (this.transport) {
-        this.transport.updateQuery(this.authToken, this.contextId, forceAuth);
+        this.transport.updateQuery(
+            this.authToken,
+            this.contextId,
+            this.authExpiry,
+            forceAuth,
+        );
     }
 };
 

@@ -391,7 +391,10 @@ function handleControlMessage(message) {
             break;
 
         default:
-            log.warn(LOG_AREA, 'Unrecognised control message', message);
+            log.warn(LOG_AREA, 'Unrecognised control message', {
+                message,
+                transport: this.getActiveTransportName(),
+            });
             break;
     }
 }
@@ -472,6 +475,11 @@ function handleControlMessageResetSubscriptions(referenceIdList) {
  * @param {Array.<string>} referenceIdList
  */
 function handleControlMessageDisconnect() {
+    log.warn(LOG_AREA, 'disconnect control message received', {
+        message,
+        transport: this.getActiveTransportName(),
+    });
+
     // tell all subscriptions not to do anything
     for (let i = 0; i < this.subscriptions.length; i++) {
         this.subscriptions[i].onConnectionUnavailable();
@@ -495,6 +503,7 @@ function updateConnectionQuery(forceAuth = false) {
     this.connection.updateQuery(
         this.authProvider.getToken(),
         this.contextId,
+        this.authProvider.getExpiry(),
         forceAuth,
     );
 }

@@ -4,7 +4,7 @@ import * as constants from '../constants';
 
 const LOG_AREA = 'SignalrCoreTransport';
 const NOOP = () => {};
-const RECONNECT_DELAYS = [0, 2000, 3000, 5000, 10000, 20000];
+const RECONNECT_DELAYS = [0, 2000, 3000, 5000, 10000, null];
 
 const renewStatus = {
     SUCCESS: 0,
@@ -24,7 +24,28 @@ function handleLog(level, message) {
     log.warn(LOG_AREA, message);
 }
 
-function buildConnection({ baseUrl, contextId, accessTokenFactory, protocol }) {
+function getRetryPolicy() {
+    return {
+        nextRetryDelayInMilliseconds(retryContext) {
+            if (this.authExpiry < Date.now()) {
+                log.warn(LOG_AREA, 'Token expired while trying to reconnect');
+
+                // stop retrying and call close handler
+                return null;
+            }
+
+            return RECONNECT_DELAYS[retryContext.previousRetryCount];
+        },
+    };
+}
+
+function buildConnection({
+    baseUrl,
+    contextId,
+    accessTokenFactory,
+    protocol,
+    retryPolicy,
+}) {
     const url = `${baseUrl}/streaming?contextId=${contextId}`;
 
     return new window.signalrCore.HubConnectionBuilder()
@@ -32,7 +53,7 @@ function buildConnection({ baseUrl, contextId, accessTokenFactory, protocol }) {
             accessTokenFactory,
         })
         .withHubProtocol(protocol)
-        .withAutomaticReconnect(RECONNECT_DELAYS)
+        .withAutomaticReconnect(retryPolicy)
         .configureLogging({
             log: handleLog,
         })
@@ -101,6 +122,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     this.baseUrl = baseUrl;
     this.connection = null;
     this.authToken = null;
+    this.authExpiry = null;
     this.contextId = null;
     this.messageStream = null;
     this.lastMessageId = null;
@@ -163,6 +185,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
                 return this.authToken;
             },
             protocol,
+            retryPolicy: getRetryPolicy.call(this),
         });
     } catch (error) {
         log.error(LOG_AREA, "Couldn't intialize the connection", {
@@ -314,6 +337,10 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
 };
 
 SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
+    if (!this.connection) {
+        return;
+    }
+
     if (!this.hasStreamingStarted) {
         this.hasStreamingStarted = true;
     }
@@ -358,14 +385,20 @@ SignalrCoreTransport.prototype.handleMessageStreamError = function(error) {
 SignalrCoreTransport.prototype.updateQuery = function(
     authToken,
     contextId,
+    authExpiry,
     forceAuth = false,
 ) {
+    if (!this.connection) {
+        return;
+    }
+
     log.debug(LOG_AREA, 'Updated query', {
         contextId,
         forceAuth,
     });
 
     this.contextId = contextId;
+    this.authExpiry = authExpiry;
     this.authToken = authToken.replace('BEARER ', '');
 
     if (forceAuth) {

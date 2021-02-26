@@ -497,6 +497,7 @@ WebsocketTransport.prototype.onSubscribeNetworkError = function() {
 WebsocketTransport.prototype.updateQuery = function(
     authToken,
     contextId,
+    authExpiry,
     forceAuth = false,
 ) {
     let query = `?contextId=${encodeURIComponent(
