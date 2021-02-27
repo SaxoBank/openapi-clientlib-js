@@ -24,10 +24,10 @@ function handleLog(level, message) {
     log.warn(LOG_AREA, message);
 }
 
-function getRetryPolicy() {
+function getRetryPolicy(transport) {
     return {
         nextRetryDelayInMilliseconds(retryContext) {
-            if (this.authExpiry < Date.now()) {
+            if (transport.authExpiry < Date.now()) {
                 log.warn(LOG_AREA, 'Token expired while trying to reconnect');
 
                 // stop retrying and call close handler
@@ -38,8 +38,8 @@ function getRetryPolicy() {
             // instead create a new connection with different context id
             // Server relies on this to determine wheter its reconnection or not
             if (
-                this.lastMessageId === undefined ||
-                this.lastMessageId === null
+                transport.lastMessageId === undefined ||
+                transport.lastMessageId === null
             ) {
                 return null;
             }
@@ -195,7 +195,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
                 return this.authToken;
             },
             protocol,
-            retryPolicy: getRetryPolicy.call(this),
+            retryPolicy: getRetryPolicy(this),
         });
     } catch (error) {
         log.error(LOG_AREA, "Couldn't intialize the connection", {
