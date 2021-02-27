@@ -158,10 +158,11 @@ function Connection(options, baseUrl, failCallback = NOOP) {
         // No next transport available. Report total failure.
         log.error(
             LOG_AREA,
-            'Supported Transport not found.',
+            'Unable to setup initial transport. Supported Transport not found.',
             getLogDetails.call(this),
         );
-        throw new Error('Unable to setup initial transport.');
+
+        failCallback();
     } else {
         log.debug(LOG_AREA, 'Supported Transport found', {
             name: this.transport.name,

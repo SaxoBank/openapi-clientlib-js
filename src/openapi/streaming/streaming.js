@@ -62,7 +62,10 @@ function init() {
 }
 
 function onStreamingFailed() {
-    this.trigger(this.EVENT_STREAMING_FAILED);
+    // Let consumer setup event handlers in case of steaming failure during initial setup
+    setTimeout(() => {
+        this.trigger(this.EVENT_STREAMING_FAILED);
+    });
 }
 
 /**
