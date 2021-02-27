@@ -480,6 +480,7 @@ WebsocketTransport.prototype.stop = function() {
     this.hasBeenConnected = false;
     this.lastOrphanFound = 0;
     this.lastSubscribeNetworkError = 0;
+    this.isReconnectPending = false;
 
     this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
 };
@@ -527,12 +528,12 @@ WebsocketTransport.prototype.updateQuery = function(
             true,
         );
 
-        if (this.isReconnectPending) {
-            authorizePromise.then(() => {
+        authorizePromise.then(() => {
+            if (this.isReconnectPending) {
                 this.isReconnectPending = false;
                 reconnect.call(this, true);
-            });
-        }
+            }
+        });
     }
 };
 

@@ -76,7 +76,24 @@ describe('openapi Streaming', () => {
     afterEach(() => uninstallClock());
 
     function mockSubscription() {
+        function changeState(state) {
+            this.stateChangedCallback.forEach((callback) => callback(state));
+        }
+
+        function addStateChangedCallback(callback) {
+            this.stateChangedCallback.push(callback);
+        }
+
+        function removeStateChangedCallback(callback) {
+            const index = this.stateChangedCallback.indexOf(callback);
+            if (index > -1) {
+                this.stateChangedCallback.splice(index, 1);
+            }
+        }
+
         return {
+            stateChangedCallback: [],
+            changeState,
             onStreamingData: jest.fn(),
             onHeartbeat: jest.fn(),
             onConnectionUnavailable: jest.fn(),
@@ -87,6 +104,8 @@ describe('openapi Streaming', () => {
             onModify: jest.fn(),
             dispose: jest.fn(),
             timeTillOrphaned: jest.fn(),
+            addStateChangedCallback,
+            removeStateChangedCallback,
         };
     }
 
@@ -1309,7 +1328,12 @@ describe('openapi Streaming', () => {
                     .mockImplementation(() => {
                         signalrCoreStartPromise = new Promise(
                             (resolve) =>
-                                (resolveSignalrCoreStartPromise = resolve),
+                                (resolveSignalrCoreStartPromise = () => {
+                                    streamingStateChangedCallback(
+                                        connectionConstants.CONNECTION_STATE_CONNECTED,
+                                    );
+                                    resolve();
+                                }),
                         );
                         return signalrCoreStartPromise;
                     }),
@@ -1349,9 +1373,7 @@ describe('openapi Streaming', () => {
             fetchMock.resolve(200);
 
             plainWebsocketStartPromise.then(() => {
-                expect(
-                    subscription.onConnectionUnavailable,
-                ).not.toHaveBeenCalled();
+                expect(subscription.onUnsubscribe).not.toHaveBeenCalled();
 
                 streaming.resetStreaming('newStreamingUrl', {
                     transportTypes: [streamingTransports.SIGNALR_CORE],
@@ -1359,20 +1381,30 @@ describe('openapi Streaming', () => {
 
                 expect(spySocketClose).toHaveBeenCalledTimes(1);
                 expect(streaming.retryCount).toBe(0);
-                expect(
-                    subscription.onConnectionUnavailable,
-                ).toHaveBeenCalledTimes(1);
+                expect(subscription.onUnsubscribe).toHaveBeenCalledTimes(1);
                 expect(mockHubConnection.start).toHaveBeenCalledTimes(1);
 
                 resolveSignalrCoreStartPromise();
 
-                signalrCoreStartPromise.then(() => {
-                    expect(
-                        subscription.onConnectionAvailable,
-                    ).toHaveBeenCalledTimes(1);
+                signalrCoreStartPromise
+                    .then(() => {
+                        // should wait for unsubscribe
+                        expect(subscription.onSubscribe).not.toHaveBeenCalled();
 
-                    done();
-                });
+                        // resolve unsubscribe pending promise
+                        subscription.isUnsubscribed = () => true;
+                        subscription.changeState();
+
+                        return streaming.allUnsubscribePendingPromise;
+                    })
+                    .then(() => {
+                        // should wait for unsubscribe
+                        expect(subscription.onSubscribe).toHaveBeenCalledTimes(
+                            1,
+                        );
+
+                        done();
+                    });
             });
         });
     });

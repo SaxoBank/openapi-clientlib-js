@@ -435,7 +435,13 @@ describe('openapi WebSocket Transport', () => {
                 expect(spyOnunauthorizedCallback).toBeCalledTimes(1);
 
                 // simulate token update
-                transport.updateQuery('NEW-TOKEN', CONTEXT_ID, true);
+                const authExpiry = Date.now() + 1000;
+                transport.updateQuery(
+                    'NEW-TOKEN',
+                    CONTEXT_ID,
+                    authExpiry,
+                    true,
+                );
                 fetchMock.resolve(200, {});
 
                 // should re-cpnnect after authorization

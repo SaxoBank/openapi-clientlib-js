@@ -198,10 +198,6 @@ function onConnectionStateChanged(nextState) {
             this.orphanFinder.stop();
 
             if (this.isReset) {
-                this.allSubscriptionsUnsubscribedPromise = getSubscriptionsUnsubscribedPromise(
-                    this.subscriptions,
-                );
-
                 init.call(this);
             } else {
                 // tell all subscriptions not to do anything
@@ -235,10 +231,10 @@ function onConnectionStateChanged(nextState) {
                 this.reconnecting = false;
             }
 
-            // During streaming service switching, wait for all subscriptions to unsubscribe before resubscribing again
+            // During streaming service switching or reconnect, wait for all subscriptions to unsubscribe before resubscribing again
             // to avoid hitting throttling limit on subscriptions
             if (this.isReset) {
-                this.allSubscriptionsUnsubscribedPromise.then(() => {
+                this.allUnsubscribePendingPromise.then(() => {
                     for (let i = 0; i < this.subscriptions.length; i++) {
                         this.subscriptions[i].onSubscribe();
                     }
@@ -506,6 +502,11 @@ function handleControlMessageReconnect() {
     );
 
     this.isReset = true;
+
+    this.allUnsubscribePendingPromise = getAllUnsubscribePendingPromise(
+        this.subscriptions,
+    );
+
     this.disconnect();
 }
 
@@ -580,7 +581,7 @@ function getSubscriptionsByTag(servicePath, url, tag) {
     return subscriptionsToRemove;
 }
 
-function getSubscriptionsUnsubscribedPromise(subscriptionsToUnsubscribe) {
+function getAllUnsubscribePendingPromise(subscriptionsToUnsubscribe) {
     const promiseResolver = (subscriptions) => {
         let allSubscriptionsUnsubscribed = true;
         for (
@@ -1018,14 +1019,18 @@ Streaming.prototype.resetStreaming = function(baseUrl, options = {}) {
     this.baseUrl = baseUrl;
     this.setOptions({ ...this.options, ...options });
 
+    // create new connection and resubscribe all subscriptions
     this.isReset = true;
+
+    this.allUnsubscribePendingPromise = getAllUnsubscribePendingPromise(
+        this.subscriptions,
+    );
 
     const activeTransport = this.connection.getTransport();
     if (activeTransport) {
         this.disconnect();
     } else {
-        // we might have reset after streaming failed due to unavailability of next transport
-        // this ensures that we reset subscriptions once connected again
+        // This triggers when streaming fails due to unavailability of next transport
         onConnectionStateChanged.call(this, this.CONNECTION_STATE_DISCONNECTED);
     }
 };
