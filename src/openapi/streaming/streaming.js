@@ -76,7 +76,7 @@ function onUnauthorized() {
 /**
  * Reconnects the streaming socket when it is disconnected
  */
-function connect() {
+function connect(isReconnection) {
     if (
         this.connectionState !== this.CONNECTION_STATE_DISCONNECTED &&
         this.connectionState !== this.CONNECTION_STATE_INITIALIZING
@@ -100,11 +100,22 @@ function connect() {
     if (expiry < Date.now()) {
         // in case the refresh timer has disappeared, ensure authProvider is
         // fetching a new token
+        const transport = this.getActiveTransportName();
         this.authProvider.refreshOpenApiToken();
-        this.authProvider.one(
-            this.authProvider.EVENT_TOKEN_RECEIVED,
-            startConnection,
-        );
+        this.authProvider.one(this.authProvider.EVENT_TOKEN_RECEIVED, () => {
+            if (isReconnection && !this.reconnecting) {
+                log.debug(
+                    LOG_AREA,
+                    'ResetStreaming called while waiting for token during reconnection',
+                    {
+                        transport,
+                    },
+                );
+                return;
+            }
+
+            startConnection();
+        });
     } else {
         startConnection();
     }
@@ -166,7 +177,7 @@ function retryConnection() {
 
     this.retryCount++;
     this.reconnecting = true;
-    setTimeout(connect.bind(this), delay);
+    this.reconnectTimer = setTimeout(connect.bind(this, true), delay);
 }
 
 /**
@@ -1022,17 +1033,28 @@ Streaming.prototype.resetStreaming = function(baseUrl, options = {}) {
     // create new connection and resubscribe all subscriptions
     this.isReset = true;
 
+    this.orphanFinder.stop();
+
     this.allUnsubscribePendingPromise = getAllUnsubscribePendingPromise(
         this.subscriptions,
     );
 
-    const activeTransport = this.connection.getTransport();
-    if (activeTransport) {
-        this.disconnect();
-    } else {
-        // This triggers when streaming fails due to unavailability of next transport
-        onConnectionStateChanged.call(this, this.CONNECTION_STATE_DISCONNECTED);
+    if (this.reconnecting) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnecting = false;
+        this.retryCount = 0;
     }
+
+    const activeTransport = this.connection.getTransport();
+    if (
+        !activeTransport ||
+        this.connectionState === this.CONNECTION_STATE_DISCONNECTED
+    ) {
+        init.call(this);
+        return;
+    }
+
+    this.disconnect();
 };
 
 Streaming.prototype.getActiveTransportName = function() {
