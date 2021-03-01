@@ -1,3 +1,8 @@
+### v8.2.0
+- Handle disconnect and reconnect correctly
+- Send close message frame when switching between on-premise and cloud streaming services
+- Add more logs and guards
+
 ### v8.1.3
 - Handle reset messages better
 
