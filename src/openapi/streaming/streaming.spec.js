@@ -864,10 +864,18 @@ describe('openapi Streaming', () => {
             expect(disconnectRequestedSpy).toHaveBeenCalledTimes(1);
         });
         it('handles reconnect control message', (done) => {
+            let startPromiseResolver;
+            const startPromise = new Promise((resolve) => {
+                startPromiseResolver = resolve;
+            });
+
             mockConnection.start.mockImplementation(() => {
                 if (stateChangedCallback) {
-                    stateChangedCallback({
-                        newState: legacySignalrConnectionState.connected,
+                    setTimeout(() => {
+                        stateChangedCallback({
+                            newState: legacySignalrConnectionState.connected,
+                        });
+                        startPromiseResolver();
                     });
                 }
             });
@@ -882,15 +890,12 @@ describe('openapi Streaming', () => {
 
             receivedCallback([{ ReferenceId: '_reconnect' }]);
 
-            expect(subscription.onUnsubscribe.mock.calls.length).toEqual(1);
+            expect(
+                subscription.onConnectionUnavailable.mock.calls.length,
+            ).toEqual(1);
 
-            // resolve unsubscribe pending promise
-            subscription.isUnsubscribed = () => true;
-            subscription.changeState();
-
-            // should wait for unsubscribe
-            streaming.allUnsubscribePendingPromise.then(() => {
-                expect(subscription.onSubscribe.mock.calls.length).toEqual(1);
+            startPromise.then(() => {
+                expect(subscription.reset.mock.calls.length).toEqual(1);
                 done();
             });
         });
@@ -1356,10 +1361,11 @@ describe('openapi Streaming', () => {
             });
 
             global.WebSocket = jest.fn().mockImplementation(() => {
-                resolvePlainWebsocketStartPromise();
                 streamingStateChangedCallback(
                     connectionConstants.CONNECTION_STATE_CONNECTED,
                 );
+
+                resolvePlainWebsocketStartPromise();
 
                 return {
                     close: spySocketClose,
@@ -1418,40 +1424,30 @@ describe('openapi Streaming', () => {
 
             fetchMock.resolve(200);
 
-            plainWebsocketStartPromise.then(() => {
-                expect(subscription.onUnsubscribe).not.toHaveBeenCalled();
+            plainWebsocketStartPromise
+                .then(() => {
+                    expect(subscription.onUnsubscribe).not.toHaveBeenCalled();
 
-                streaming.resetStreaming('newStreamingUrl', {
-                    transportTypes: [streamingTransports.SIGNALR_CORE],
-                });
-
-                expect(spySocketClose).toHaveBeenCalledTimes(1);
-                expect(streaming.retryCount).toBe(0);
-                expect(subscription.onUnsubscribe).toHaveBeenCalledTimes(1);
-                expect(mockHubConnection.start).toHaveBeenCalledTimes(1);
-
-                resolveSignalrCoreStartPromise();
-
-                signalrCoreStartPromise
-                    .then(() => {
-                        // should wait for unsubscribe
-                        expect(subscription.onSubscribe).not.toHaveBeenCalled();
-
-                        // resolve unsubscribe pending promise
-                        subscription.isUnsubscribed = () => true;
-                        subscription.changeState();
-
-                        // should wait for unsubscribe
-                        return streaming.allUnsubscribePendingPromise;
-                    })
-                    .then(() => {
-                        expect(subscription.onSubscribe).toHaveBeenCalledTimes(
-                            1,
-                        );
-
-                        done();
+                    streaming.resetStreaming('newStreamingUrl', {
+                        transportTypes: [streamingTransports.SIGNALR_CORE],
                     });
-            });
+
+                    expect(spySocketClose).toHaveBeenCalledTimes(1);
+                    expect(streaming.retryCount).toBe(0);
+                    expect(
+                        subscription.onConnectionUnavailable,
+                    ).toHaveBeenCalledTimes(1);
+                    expect(mockHubConnection.start).toHaveBeenCalledTimes(1);
+
+                    resolveSignalrCoreStartPromise();
+
+                    return signalrCoreStartPromise;
+                })
+                .then(() => {
+                    expect(subscription.reset).toHaveBeenCalled();
+
+                    done();
+                });
         });
 
         it('should reset streaming when there is no active transport', (done) => {
@@ -1475,27 +1471,13 @@ describe('openapi Streaming', () => {
             streamingStateChangedCallback =
                 streaming.connection.stateChangedCallback;
 
-            expect(subscription.onUnsubscribe).toHaveBeenCalledTimes(1);
-
             fetchMock.resolve(200);
 
-            plainWebsocketStartPromise
-                .then(() => {
-                    // should wait for unsubscribe
-                    expect(subscription.onSubscribe).not.toHaveBeenCalled();
+            plainWebsocketStartPromise.then(() => {
+                expect(subscription.reset).toHaveBeenCalled();
 
-                    // resolve unsubscribe pending promise
-                    subscription.isUnsubscribed = () => true;
-                    subscription.changeState();
-
-                    // should wait for unsubscribe
-                    return streaming.allUnsubscribePendingPromise;
-                })
-                .then(() => {
-                    expect(subscription.onSubscribe).toHaveBeenCalledTimes(1);
-
-                    done();
-                });
+                done();
+            });
         });
 
         it('should clear reconnection timer while resetting streaming', () => {

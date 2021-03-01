@@ -995,13 +995,6 @@ Subscription.prototype.onUnsubscribeByTagComplete = function() {
 };
 
 /**
- * Returns whether this subscription is in unsubscribed state.
- */
-Subscription.prototype.isUnsubscribed = function() {
-    return this.currentState === this.STATE_UNSUBSCRIBED;
-};
-
-/**
  * Returns whether this subscription is ready to be unsubscribed by tag after it has been requested.
  */
 Subscription.prototype.isReadyForUnsubscribeByTag = function() {

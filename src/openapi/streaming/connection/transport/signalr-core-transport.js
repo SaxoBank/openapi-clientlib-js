@@ -4,6 +4,8 @@ import * as constants from '../constants';
 
 const LOG_AREA = 'SignalrCoreTransport';
 const NOOP = () => {};
+
+// null at the end means stop trying and close the connection
 const RECONNECT_DELAYS = [0, 2000, 3000, 5000, 10000, null];
 
 const renewStatus = {
