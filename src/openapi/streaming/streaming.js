@@ -44,6 +44,11 @@ const DEFAULT_STREAMING_OPTIONS = {
  * then follows the Connection state model.
  */
 function init() {
+    // cleanup old connection if any
+    if (this.connection) {
+        this.connection.dispose();
+    }
+
     this.connection = new Connection(
         this.options,
         this.baseUrl,

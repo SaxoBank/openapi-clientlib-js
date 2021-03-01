@@ -21,6 +21,7 @@ const NOOP = () => {};
 const STATE_CREATED = 'connection-state-created';
 const STATE_STARTED = 'connection-state-started';
 const STATE_STOPPED = 'connection-state-stopped';
+const STATE_DISPOSED = 'connection-state-disposed';
 
 function getLogDetails() {
     return {
@@ -32,12 +33,22 @@ function getLogDetails() {
 }
 
 function ensureValidState(callback, expectedTransport, callbackType, ...args) {
+    if (this.state === STATE_DISPOSED) {
+        log.warn(LOG_AREA, 'callback called after transport was disposed', {
+            callback: callbackType,
+            transport: this.transport.name,
+            contextId: this.contextId,
+        });
+        return;
+    }
+
     if (expectedTransport !== this.transport.name) {
         log.warn(LOG_AREA, 'callback called after transport was changed', {
             callback: callbackType,
             transport: expectedTransport,
             currentTransport: this.transport.name,
             connectionState: this.state,
+            contextId: this.contextId,
         });
         return;
     }
@@ -231,6 +242,10 @@ Connection.prototype.stop = function() {
         this.state = STATE_STOPPED;
         this.transport.stop();
     }
+};
+
+Connection.prototype.dispose = function() {
+    this.state = STATE_DISPOSED;
 };
 
 Connection.prototype.updateQuery = function(

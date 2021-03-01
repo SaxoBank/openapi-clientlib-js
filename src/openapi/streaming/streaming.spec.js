@@ -1432,6 +1432,9 @@ describe('openapi Streaming', () => {
                         transportTypes: [streamingTransports.SIGNALR_CORE],
                     });
 
+                    streamingStateChangedCallback =
+                        streaming.connection.stateChangedCallback;
+
                     expect(spySocketClose).toHaveBeenCalledTimes(1);
                     expect(streaming.retryCount).toBe(0);
                     expect(
