@@ -1,3 +1,6 @@
+### v8.1.3
+- Handle reset messages better
+
 ### v8.1.2
 - Better setting of isNetworkError property when fetch fails due to excessive auth errors
 
