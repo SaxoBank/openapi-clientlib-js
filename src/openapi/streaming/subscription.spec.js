@@ -1367,13 +1367,111 @@ describe('openapi StreamingSubscription', () => {
 
                     expect(transport.post.mock.calls.length).toEqual(0);
                     expect(transport.delete.mock.calls.length).toEqual(0);
+                    expect(errorSpy.mock.calls.length).toEqual(0);
 
                     done();
                 });
             });
         });
 
-        it('subscribes if in the process of subscribing', (done) => {
+        it('does nothing if unsubscribed or unsubscribing when subscribing afterwards', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                createdSpy,
+                updateSpy,
+            );
+
+            subscription.reset(); // reset before subscribed
+
+            expect(transport.post.mock.calls.length).toEqual(0);
+            expect(transport.delete.mock.calls.length).toEqual(0);
+
+            subscription.onSubscribe();
+
+            sendInitialResponse({ InactivityTimeout: 100, Snapshot: {} });
+            setTimeout(() => {
+                subscription.onUnsubscribe();
+                subscription.onSubscribe();
+
+                expect(transport.post.mock.calls.length).toEqual(1);
+                transport.post.mockClear();
+                expect(transport.delete.mock.calls.length).toEqual(1);
+                transport.delete.mockClear();
+
+                let oldReferenceId = subscription.referenceId;
+                subscription.reset(); // reset when trying to unsubscribe
+                expect(oldReferenceId).toEqual(subscription.referenceId); // don't need to change as not subscribing
+
+                expect(transport.post.mock.calls.length).toEqual(0);
+                expect(transport.delete.mock.calls.length).toEqual(0);
+
+                transport.deleteResolve({ status: 200 });
+                setTimeout(() => {
+                    oldReferenceId = subscription.referenceId;
+                    expect(oldReferenceId).toEqual(subscription.referenceId); // don't need to change as not subscribing
+
+                    expect(transport.post.mock.calls.length).toEqual(1);
+                    expect(transport.delete.mock.calls.length).toEqual(0);
+
+                    done();
+                });
+            });
+        });
+
+        it('does nothing if going to unsubscribe anyway', () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                createdSpy,
+                updateSpy,
+            );
+
+            expect(transport.post.mock.calls.length).toEqual(0);
+            expect(transport.delete.mock.calls.length).toEqual(0);
+
+            subscription.onSubscribe();
+            subscription.onUnsubscribe();
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+            expect(subscription.queue).toMatchInlineSnapshot(`
+                SubscriptionQueue {
+                  "items": Array [
+                    Object {
+                      "action": 2,
+                      "args": Object {
+                        "force": false,
+                      },
+                    },
+                  ],
+                }
+            `);
+            subscription.reset();
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+            expect(subscription.queue).toMatchInlineSnapshot(`
+                SubscriptionQueue {
+                  "items": Array [
+                    Object {
+                      "action": 2,
+                      "args": Object {
+                        "force": false,
+                      },
+                    },
+                  ],
+                }
+            `);
+        });
+
+        it('unsubscribes if in the process of subscribing and then subscribes', (done) => {
             const subscription = new Subscription(
                 '123',
                 transport,
@@ -1389,35 +1487,66 @@ describe('openapi StreamingSubscription', () => {
             expect(transport.post.mock.calls.length).toEqual(1);
             transport.post.mockClear();
             expect(transport.delete.mock.calls.length).toEqual(0);
-            const resolveToInitialSubscribe = transport.postResolve;
 
             const oldReferenceId = subscription.referenceId;
             subscription.reset(); // reset before subscribe response
-            expect(oldReferenceId).not.toEqual(subscription.referenceId);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+            expect(subscription.queue).toMatchInlineSnapshot(`
+                SubscriptionQueue {
+                  "items": Array [
+                    Object {
+                      "action": 2,
+                      "args": Object {
+                        "force": true,
+                      },
+                    },
+                    Object {
+                      "action": 1,
+                      "args": undefined,
+                    },
+                  ],
+                }
+                `);
 
-            expect(transport.post.mock.calls.length).toEqual(1);
-            transport.post.mockClear();
+            expect(transport.post.mock.calls.length).toEqual(0);
             expect(transport.delete.mock.calls.length).toEqual(0);
-
-            resolveToInitialSubscribe({
-                status: 201,
-                response: { Snapshot: { initial: true } },
-            });
 
             sendInitialResponse({
                 InactivityTimeout: 100,
                 Snapshot: { resetResponse: true },
             });
             setTimeout(() => {
+                expect(transport.delete.mock.calls.length).toEqual(1);
                 expect(errorSpy.mock.calls.length).toEqual(0);
+                expect(updateSpy.mock.calls.length).toEqual(0);
+                expect(transport.post.mock.calls.length).toEqual(0);
+                transport.deleteResolve({ status: 200 });
 
-                expect(updateSpy.mock.calls.length).toEqual(1);
-                expect(updateSpy.mock.calls[0]).toEqual([
-                    { resetResponse: true },
-                    subscription.UPDATE_TYPE_SNAPSHOT,
-                ]);
+                setTimeout(() => {
+                    expect(transport.delete.mock.calls.length).toEqual(1);
+                    expect(transport.post.mock.calls.length).toEqual(1);
+                    expect(updateSpy.mock.calls.length).toEqual(0);
+                    expect(oldReferenceId).not.toEqual(
+                        subscription.referenceId,
+                    );
+                    sendInitialResponse({
+                        InactivityTimeout: 100,
+                        Snapshot: { resetResponse: true },
+                    });
+                    setTimeout(() => {
+                        expect(errorSpy.mock.calls.length).toEqual(0);
+                        expect(transport.post.mock.calls.length).toEqual(1);
+                        expect(updateSpy.mock.calls.length).toEqual(1);
+                        expect(updateSpy.mock.calls[0]).toEqual([
+                            { resetResponse: true },
+                            subscription.UPDATE_TYPE_SNAPSHOT,
+                        ]);
 
-                done();
+                        done();
+                    });
+                });
             });
         });
 
@@ -1437,36 +1566,59 @@ describe('openapi StreamingSubscription', () => {
             expect(transport.post.mock.calls.length).toEqual(1);
             transport.post.mockClear();
             expect(transport.delete.mock.calls.length).toEqual(0);
-            const rejectToInitialSubscribe = transport.postReject;
 
             const oldReferenceId = subscription.referenceId;
             subscription.reset(); // reset before subscribe response
-            expect(oldReferenceId).not.toEqual(subscription.referenceId);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+            expect(subscription.queue).toMatchInlineSnapshot(`
+                SubscriptionQueue {
+                  "items": Array [
+                    Object {
+                      "action": 2,
+                      "args": Object {
+                        "force": true,
+                      },
+                    },
+                    Object {
+                      "action": 1,
+                      "args": undefined,
+                    },
+                  ],
+                }
+                `);
 
-            expect(transport.post.mock.calls.length).toEqual(1);
-            transport.post.mockClear();
+            expect(transport.post.mock.calls.length).toEqual(0);
             expect(transport.delete.mock.calls.length).toEqual(0);
 
-            rejectToInitialSubscribe({ status: 401 });
-
-            sendInitialResponse({
-                InactivityTimeout: 100,
-                Snapshot: { resetResponse: true },
-            });
+            transport.postReject({ status: '404' });
             setTimeout(() => {
+                expect(transport.delete.mock.calls.length).toEqual(0);
+                expect(updateSpy.mock.calls.length).toEqual(0);
                 expect(errorSpy.mock.calls.length).toEqual(0);
+                expect(transport.post.mock.calls.length).toEqual(1);
+                expect(updateSpy.mock.calls.length).toEqual(0);
+                expect(oldReferenceId).not.toEqual(subscription.referenceId);
+                sendInitialResponse({
+                    InactivityTimeout: 100,
+                    Snapshot: { resetResponse: true },
+                });
+                setTimeout(() => {
+                    expect(errorSpy.mock.calls.length).toEqual(0);
+                    expect(transport.post.mock.calls.length).toEqual(1);
+                    expect(updateSpy.mock.calls.length).toEqual(1);
+                    expect(updateSpy.mock.calls[0]).toEqual([
+                        { resetResponse: true },
+                        subscription.UPDATE_TYPE_SNAPSHOT,
+                    ]);
 
-                expect(updateSpy.mock.calls.length).toEqual(1);
-                expect(updateSpy.mock.calls[0]).toEqual([
-                    { resetResponse: true },
-                    subscription.UPDATE_TYPE_SNAPSHOT,
-                ]);
-
-                done();
+                    done();
+                });
             });
         });
 
-        it('subscribes if currently subscribed', (done) => {
+        it('re-subscribes if currently subscribed', (done) => {
             const subscription = new Subscription(
                 '123',
                 transport,
@@ -1499,14 +1651,64 @@ describe('openapi StreamingSubscription', () => {
                 expect(transport.delete.mock.calls[0][2].referenceId).toEqual(
                     oldReferenceId,
                 );
+                expect(transport.post.mock.calls.length).toEqual(0);
+                transport.deleteResolve({ status: 200 });
+                setTimeout(() => {
+                    expect(oldReferenceId).not.toEqual(
+                        subscription.referenceId,
+                    );
+                    // now sent off a new subscribe request
+                    expect(transport.post.mock.calls.length).toEqual(1);
 
-                expect(oldReferenceId).not.toEqual(subscription.referenceId);
+                    done();
+                });
+            });
+        });
 
-                // sent off another new request for a subscription
-                expect(transport.post.mock.calls.length).toEqual(1);
-                transport.post.mockClear();
+        it('re-subscribes if currently subscribed and unsubscribe fails', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
 
-                done();
+            subscription.onSubscribe();
+
+            expect(transport.post.mock.calls.length).toEqual(1);
+            transport.post.mockClear();
+            expect(transport.delete.mock.calls.length).toEqual(0);
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            setTimeout(() => {
+                // normally subscribed
+
+                const oldReferenceId = subscription.referenceId;
+                subscription.reset();
+
+                // sends delete request for old subscription
+                expect(transport.delete.mock.calls.length).toEqual(1);
+                expect(transport.delete.mock.calls[0][2].referenceId).toEqual(
+                    oldReferenceId,
+                );
+                expect(transport.post.mock.calls.length).toEqual(0);
+                transport.deleteReject({ status: 404 });
+                setTimeout(() => {
+                    expect(oldReferenceId).not.toEqual(
+                        subscription.referenceId,
+                    );
+                    // now sent off a new subscribe request
+                    expect(transport.post.mock.calls.length).toEqual(1);
+
+                    done();
+                });
             });
         });
     });
@@ -1865,7 +2067,7 @@ describe('openapi StreamingSubscription', () => {
             });
         });
 
-        it('does not set state back to STATE_SUBSCRIBED after reset', (done) => {
+        it('handles modify patch success and then reset', (done) => {
             const subscription = new Subscription(
                 '123',
                 transport,
@@ -1883,25 +2085,41 @@ describe('openapi StreamingSubscription', () => {
             });
 
             setTimeout(() => {
-                const stateBeforeModify = subscription.currentState;
                 const patchArgsDelta = { argsDelta: 'argsDelta' };
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_SUBSCRIBED,
+                );
+
                 subscription.onModify(
                     { newArgs: 'test' },
                     { isPatch: true, patchArgsDelta },
                 );
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_PATCH_REQUESTED,
+                );
                 subscription.reset();
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_UNSUBSCRIBE_REQUESTED,
+                );
 
-                transport.patchResolve({ status: '200', response: '' });
+                // patch comes back successful
+                transport.patchReject({
+                    status: '200',
+                    response: '',
+                });
+                // delete done at the same time comes back
+                transport.deleteResolve({ status: '200', response: '' });
                 setTimeout(() => {
-                    expect(subscription.currentState).not.toEqual(
-                        stateBeforeModify,
+                    expect(subscription.currentState).toEqual(
+                        subscription.STATE_SUBSCRIBE_REQUESTED,
                     );
+
                     done();
                 });
             });
         });
 
-        it('does not set state back to STATE_SUBSCRIBED after reset on modify patch error', (done) => {
+        it('handles modify patch error and then reset', (done) => {
             const subscription = new Subscription(
                 '123',
                 transport,
@@ -1909,7 +2127,7 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                { onUpdate: updateSpy },
+                updateSpy,
             );
             subscription.onSubscribe();
 
@@ -1919,22 +2137,35 @@ describe('openapi StreamingSubscription', () => {
             });
 
             setTimeout(() => {
-                const stateBeforeModify = subscription.currentState;
                 const patchArgsDelta = { argsDelta: 'argsDelta' };
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_SUBSCRIBED,
+                );
+
                 subscription.onModify(
                     { newArgs: 'test' },
                     { isPatch: true, patchArgsDelta },
                 );
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_PATCH_REQUESTED,
+                );
                 subscription.reset();
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_UNSUBSCRIBE_REQUESTED,
+                );
 
+                // patch comes back
                 transport.patchReject({
                     status: '500',
-                    response: 'patch failed',
+                    response: 'Subscription no longer exists!',
                 });
+                // delete done at the same time comes back
+                transport.deleteResolve({ status: '200', response: '' });
                 setTimeout(() => {
-                    expect(subscription.currentState).not.toEqual(
-                        stateBeforeModify,
+                    expect(subscription.currentState).toEqual(
+                        subscription.STATE_SUBSCRIBE_REQUESTED,
                     );
+
                     done();
                 });
             });
