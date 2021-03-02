@@ -26,6 +26,13 @@ describe('openapi Streaming', () => {
     let transport;
     let fetchMock;
 
+    const legacySignalrConnectionState = {
+        connecting: 0,
+        connected: 1,
+        reconnecting: 2,
+        disconnected: 4,
+    };
+
     beforeEach(() => {
         mockConnection = {
             stateChanged: jest.fn(),
@@ -54,14 +61,10 @@ describe('openapi Streaming', () => {
         global.$ = {
             connection: jest.fn().mockReturnValue(mockConnection),
             signalR: {
-                connectionState: {
-                    connecting: 0,
-                    connected: 1,
-                    reconnecting: 2,
-                    disconnected: 4,
-                },
+                connectionState: legacySignalrConnectionState,
             },
         };
+
         transport = mockTransport();
         authProvider = mockAuthProvider();
 
@@ -76,7 +79,24 @@ describe('openapi Streaming', () => {
     afterEach(() => uninstallClock());
 
     function mockSubscription() {
+        function changeState(state) {
+            this.stateChangedCallback.forEach((callback) => callback(state));
+        }
+
+        function addStateChangedCallback(callback) {
+            this.stateChangedCallback.push(callback);
+        }
+
+        function removeStateChangedCallback(callback) {
+            const index = this.stateChangedCallback.indexOf(callback);
+            if (index > -1) {
+                this.stateChangedCallback.splice(index, 1);
+            }
+        }
+
         return {
+            stateChangedCallback: [],
+            changeState,
             onStreamingData: jest.fn(),
             onHeartbeat: jest.fn(),
             onConnectionUnavailable: jest.fn(),
@@ -87,6 +107,8 @@ describe('openapi Streaming', () => {
             onModify: jest.fn(),
             dispose: jest.fn(),
             timeTillOrphaned: jest.fn(),
+            addStateChangedCallback,
+            removeStateChangedCallback,
         };
     }
 
@@ -825,6 +847,58 @@ describe('openapi Streaming', () => {
             ]);
             expect(subscription.reset.mock.calls.length).toEqual(0);
         });
+        it('handles disconnect control message', () => {
+            const disconnectRequestedSpy = jest
+                .fn()
+                .mockName('spyOnDisconnectRequested');
+
+            streaming.on(
+                streaming.EVENT_DISCONNECT_REQUESTED,
+                disconnectRequestedSpy,
+            );
+            receivedCallback([{ ReferenceId: '_disconnect' }]);
+
+            expect(
+                subscription.onConnectionUnavailable.mock.calls.length,
+            ).toEqual(1);
+            expect(disconnectRequestedSpy).toHaveBeenCalledTimes(1);
+        });
+        it('handles reconnect control message', (done) => {
+            let startPromiseResolver;
+            const startPromise = new Promise((resolve) => {
+                startPromiseResolver = resolve;
+            });
+
+            mockConnection.start.mockImplementation(() => {
+                if (stateChangedCallback) {
+                    setTimeout(() => {
+                        stateChangedCallback({
+                            newState: legacySignalrConnectionState.connected,
+                        });
+                        startPromiseResolver();
+                    });
+                }
+            });
+
+            mockConnection.stop.mockImplementation(() => {
+                if (stateChangedCallback) {
+                    stateChangedCallback({
+                        newState: legacySignalrConnectionState.disconnected,
+                    });
+                }
+            });
+
+            receivedCallback([{ ReferenceId: '_reconnect' }]);
+
+            expect(
+                subscription.onConnectionUnavailable.mock.calls.length,
+            ).toEqual(1);
+
+            startPromise.then(() => {
+                expect(subscription.reset.mock.calls.length).toEqual(1);
+                done();
+            });
+        });
     });
 
     describe('dispose', () => {
@@ -1287,10 +1361,11 @@ describe('openapi Streaming', () => {
             });
 
             global.WebSocket = jest.fn().mockImplementation(() => {
-                resolvePlainWebsocketStartPromise();
                 streamingStateChangedCallback(
                     connectionConstants.CONNECTION_STATE_CONNECTED,
                 );
+
+                resolvePlainWebsocketStartPromise();
 
                 return {
                     close: spySocketClose,
@@ -1309,18 +1384,19 @@ describe('openapi Streaming', () => {
                     .mockImplementation(() => {
                         signalrCoreStartPromise = new Promise(
                             (resolve) =>
-                                (resolveSignalrCoreStartPromise = resolve),
+                                (resolveSignalrCoreStartPromise = () => {
+                                    streamingStateChangedCallback(
+                                        connectionConstants.CONNECTION_STATE_CONNECTED,
+                                    );
+                                    resolve();
+                                }),
                         );
                         return signalrCoreStartPromise;
                     }),
                 stream: jest.fn(),
                 stop: jest.fn().mockImplementation(() => {
-                    setTimeout(
-                        () =>
-                            streamingStateChangedCallback(
-                                connectionConstants.CONNECTION_STATE_DISCONNECTED,
-                            ),
-                        0,
+                    streamingStateChangedCallback(
+                        connectionConstants.CONNECTION_STATE_DISCONNECTED,
                     );
                 }),
                 onclose: jest.fn(),
@@ -1348,32 +1424,92 @@ describe('openapi Streaming', () => {
 
             fetchMock.resolve(200);
 
-            plainWebsocketStartPromise.then(() => {
-                expect(
-                    subscription.onConnectionUnavailable,
-                ).not.toHaveBeenCalled();
+            plainWebsocketStartPromise
+                .then(() => {
+                    expect(subscription.onUnsubscribe).not.toHaveBeenCalled();
 
-                streaming.resetStreaming('newStreamingUrl', {
-                    transportTypes: [streamingTransports.SIGNALR_CORE],
-                });
+                    streaming.resetStreaming('newStreamingUrl', {
+                        transportTypes: [streamingTransports.SIGNALR_CORE],
+                    });
 
-                expect(spySocketClose).toHaveBeenCalledTimes(1);
-                expect(streaming.retryCount).toBe(0);
-                expect(
-                    subscription.onConnectionUnavailable,
-                ).toHaveBeenCalledTimes(1);
-                expect(mockHubConnection.start).toHaveBeenCalledTimes(1);
+                    streamingStateChangedCallback =
+                        streaming.connection.stateChangedCallback;
 
-                resolveSignalrCoreStartPromise();
-
-                signalrCoreStartPromise.then(() => {
+                    expect(spySocketClose).toHaveBeenCalledTimes(1);
+                    expect(streaming.retryCount).toBe(0);
                     expect(
-                        subscription.onConnectionAvailable,
+                        subscription.onConnectionUnavailable,
                     ).toHaveBeenCalledTimes(1);
+                    expect(mockHubConnection.start).toHaveBeenCalledTimes(1);
+
+                    resolveSignalrCoreStartPromise();
+
+                    return signalrCoreStartPromise;
+                })
+                .then(() => {
+                    expect(subscription.reset).toHaveBeenCalled();
 
                     done();
                 });
+        });
+
+        it('should reset streaming when there is no active transport', (done) => {
+            const streaming = new Streaming(
+                transport,
+                'testUrl',
+                authProvider,
+                {
+                    transportTypes: [],
+                },
+            );
+
+            const subscription = mockSubscription();
+            subscription.referenceId = 'testSubscription';
+            streaming.subscriptions.push(subscription);
+
+            streaming.resetStreaming('newStreamingUrl', {
+                transportTypes: [streamingTransports.PLAIN_WEBSOCKETS],
             });
+
+            streamingStateChangedCallback =
+                streaming.connection.stateChangedCallback;
+
+            fetchMock.resolve(200);
+
+            plainWebsocketStartPromise.then(() => {
+                expect(subscription.reset).toHaveBeenCalled();
+
+                done();
+            });
+        });
+
+        it('should clear reconnection timer while resetting streaming', () => {
+            const streaming = new Streaming(
+                transport,
+                'testUrl',
+                authProvider,
+                {
+                    transportTypes: [streamingTransports.SIGNALR_CORE],
+                },
+            );
+
+            streamingStateChangedCallback =
+                streaming.connection.stateChangedCallback;
+
+            const subscription = mockSubscription();
+            subscription.referenceId = 'testSubscription';
+            streaming.subscriptions.push(subscription);
+
+            // should trigger reconnection
+            mockHubConnection.stop();
+
+            expect(streaming.retryCount).toEqual(1);
+
+            streaming.resetStreaming('newStreamingUrl', {
+                transportTypes: [streamingTransports.PLAIN_WEBSOCKETS],
+            });
+
+            expect(streaming.retryCount).toEqual(0);
         });
     });
 });

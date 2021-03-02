@@ -86,6 +86,7 @@ function subscribe() {
     });
     setState.call(this, this.STATE_SUBSCRIBE_REQUESTED);
 
+    this.currentStreamingContextId = this.streamingContextId;
     this.transport
         .post(this.servicePath, subscribeUrl, null, options)
         .then(onSubscribeSuccess.bind(this, referenceId))
@@ -102,7 +103,7 @@ function unsubscribe() {
 
     this.transport
         .delete(this.servicePath, this.url + '/{contextId}/{referenceId}', {
-            contextId: this.streamingContextId,
+            contextId: this.currentStreamingContextId,
             referenceId,
         })
         .then(onUnsubscribeSuccess.bind(this, referenceId))
@@ -120,7 +121,7 @@ function modifyPatch(args) {
             this.servicePath,
             this.url + '/{contextId}/{referenceId}',
             {
-                contextId: this.streamingContextId,
+                contextId: this.currentStreamingContextId,
                 referenceId: this.referenceId,
             },
             { body: args },
@@ -352,7 +353,7 @@ function onSubscribeSuccess(referenceId, result) {
 function cleanUpLeftOverSubscription(referenceId) {
     this.transport
         .delete(this.servicePath, this.url + '/{contextId}/{referenceId}', {
-            contextId: this.streamingContextId,
+            contextId: this.currentStreamingContextId,
             referenceId,
         })
         .catch((error) => {
@@ -393,7 +394,7 @@ function onSubscribeError(referenceId, response) {
             response,
             url: this.url,
             servicePath: this.servicePath,
-            ContextId: this.streamingContextId,
+            ContextId: this.currentStreamingContextId,
             ReferenceId: referenceId,
             subscriptionData: this.subscriptionData,
         });
@@ -448,7 +449,7 @@ function onSubscribeError(referenceId, response) {
                 response,
                 url: this.url,
                 servicePath: this.servicePath,
-                ContextId: this.streamingContextId,
+                ContextId: this.currentStreamingContextId,
                 ReferenceId: referenceId,
                 subscriptionData: this.subscriptionData,
             },
@@ -476,7 +477,7 @@ function onSubscribeError(referenceId, response) {
             response,
             url: this.url,
             servicePath: this.servicePath,
-            ContextId: this.streamingContextId,
+            ContextId: this.currentStreamingContextId,
             ReferenceId: referenceId,
             subscriptionData: this.subscriptionData,
         });
@@ -610,10 +611,17 @@ function Subscription(
     options = {},
 ) {
     /**
-     * The streaming context id identifies the particular streaming connection that this subscription will use.
+     * The streaming context id identifies the particular streaming connection that this subscription will use to subscribe.
+     * It is updated while reconnecting with new connection or switching between on-premise and cloud streaming
      * @type {string}
      */
     this.streamingContextId = streamingContextId;
+
+    /**
+     * This will be set when subscribed and will be used to unsubscribe
+     * @type {string}
+     */
+    this.currentStreamingContextId = null;
 
     /**
      * The reference id is used to identify this subscription.
