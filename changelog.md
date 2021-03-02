@@ -2,9 +2,7 @@
 - Handle disconnect and reconnect correctly
 - Send close message frame when switching between on-premise and cloud streaming services
 - Add more logs and guards
-
-### v8.1.3
-- Handle reset messages better
+- Handle reset messages better - don't spam the server if they spam us
 
 ### v8.1.2
 - Better setting of isNetworkError property when fetch fails due to excessive auth errors
