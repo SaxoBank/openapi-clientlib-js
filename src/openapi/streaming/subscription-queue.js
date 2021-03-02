@@ -36,6 +36,7 @@ function SubscriptionQueue() {
  *
  * @param {Object} queuedItem - action with arguments to add to the queue.
  */
+/* eslint-disable-next-line complexity */
 SubscriptionQueue.prototype.enqueue = function(queuedItem) {
     if (!queuedItem.action) {
         throw new Error('Subscription queued action is invalid');

@@ -5,12 +5,12 @@ import {
     getResolvablePromise,
 } from '../../../../test/utils';
 import mockMathRandom from '../../../../test/mocks/math-random';
+import mockAuthProvider from '../../../../test/mocks/authProvider';
 import * as constants from '../constants';
 import jsonPayload from './payload.json';
 import SignalrCoreTransport from './signalr-core-transport';
 
 const CONTEXT_ID = '0000000000';
-const AUTH_TOKEN = 'TOKEN';
 const BASE_URL = 'testUrl';
 
 const NOOP = () => {};
@@ -30,7 +30,9 @@ describe('openapi SignalR core Transport', () => {
     let mockRenewToken;
     let mockReconnect;
     let mockReconnecting;
+    let mockCloseConnection;
     let tokenFactory;
+    let authprovider;
 
     class MockConnectionBuilder {
         withUrl(url, options) {
@@ -110,6 +112,11 @@ describe('openapi SignalR core Transport', () => {
                     mockRenewToken = getResolvablePromise();
                     return mockRenewToken.promise;
                 }
+
+                if (method === 'CloseConnection') {
+                    mockCloseConnection = getResolvablePromise();
+                    return mockCloseConnection.promise;
+                }
             },
             onclose: (callback) => closeCallbacks.push(callback),
             onreconnecting: (callback) => reconnectingCallbacks.push(callback),
@@ -139,6 +146,8 @@ describe('openapi SignalR core Transport', () => {
             .mockName('transport failed callback');
 
         mockMathRandom();
+
+        authprovider = mockAuthProvider();
     });
 
     afterEach(() => {
@@ -148,6 +157,7 @@ describe('openapi SignalR core Transport', () => {
         mockStart = null;
         mockStreamCancel = null;
         mockRenewToken = undefined;
+        mockCloseConnection = undefined;
     });
 
     describe('start', () => {
@@ -161,7 +171,11 @@ describe('openapi SignalR core Transport', () => {
             );
             transport.setStateChangedCallback(spyOnStateChangedCallback);
 
-            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.updateQuery(
+                authprovider.getToken(),
+                CONTEXT_ID,
+                authprovider.getExpiry(),
+            );
             startPromise = transport.start({}, spyOnStartCallback);
         });
 
@@ -232,17 +246,22 @@ describe('openapi SignalR core Transport', () => {
             // resolve handshake request
             mockStart.resolve();
 
-            startPromise.then(() => {
-                subscribeErrorHandler(new Error('Streaming error'));
-                tick(10);
+            startPromise
+                .then(() => {
+                    subscribeErrorHandler(new Error('Streaming error'));
+                    mockCloseConnection.resolve();
+                    return mockCloseConnection.promise;
+                })
+                .then(() => {
+                    tick(10);
 
-                expect(spyOnTransportFailedCallback).toBeCalledTimes(0);
-                expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
-                    3,
-                    constants.CONNECTION_STATE_DISCONNECTED,
-                );
-                done();
-            });
+                    expect(spyOnTransportFailedCallback).toBeCalledTimes(0);
+                    expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
+                        3,
+                        constants.CONNECTION_STATE_DISCONNECTED,
+                    );
+                    done();
+                });
         });
     });
 
@@ -303,15 +322,20 @@ describe('openapi SignalR core Transport', () => {
                 expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
 
                 mockStreamCancel.resolve();
-                mockStreamCancel.promise.then(() => {
-                    expect(spyOnConnectionStop).toBeCalledTimes(1);
+                mockStreamCancel.promise
+                    .then(() => {
+                        mockCloseConnection.resolve();
+                        return mockCloseConnection.promise;
+                    })
+                    .then(() => {
+                        expect(spyOnConnectionStop).toBeCalledTimes(1);
 
-                    tick(10);
-                    expect(spyOnStateChangedCallback).not.toBeCalledWith(
-                        constants.CONNECTION_STATE_DISCONNECTED,
-                    );
-                    done();
-                });
+                        tick(10);
+                        expect(spyOnStateChangedCallback).not.toBeCalledWith(
+                            constants.CONNECTION_STATE_DISCONNECTED,
+                        );
+                        done();
+                    });
             });
         });
     });
@@ -323,7 +347,12 @@ describe('openapi SignalR core Transport', () => {
             mockStart.resolve();
 
             startPromise.then(() => {
-                transport.updateQuery(AUTH_TOKEN, CONTEXT_ID, true);
+                transport.updateQuery(
+                    authprovider.getToken(),
+                    CONTEXT_ID,
+                    authprovider.getExpiry(),
+                    true,
+                );
 
                 expect(mockRenewToken).toBeDefined();
                 done();
@@ -350,7 +379,11 @@ describe('openapi SignalR core Transport', () => {
             transport.setUnauthorizedCallback(spyOnUnauthorizedCallback);
 
             // update instance variables
-            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.updateQuery(
+                authprovider.getToken(),
+                CONTEXT_ID,
+                authprovider.getExpiry(),
+            );
             startPromise = transport.start({});
             // wait for state to change to connected
             renewalPromise = startPromise.then(() => transport.renewSession());
@@ -368,6 +401,10 @@ describe('openapi SignalR core Transport', () => {
                 .then(() => {
                     mockStreamCancel.resolve();
                     return mockStreamCancel.promise;
+                })
+                .then(() => {
+                    mockCloseConnection.resolve();
+                    return mockCloseConnection.promise;
                 })
                 .then(() => {
                     expect(spyOnTransportFailedCallback).not.toBeCalled();
@@ -434,34 +471,84 @@ describe('openapi SignalR core Transport', () => {
     });
 
     describe('stop', () => {
-        it('should close message stream before closing connection', (done) => {
-            const transport = new SignalrCoreTransport(BASE_URL);
+        let transport;
+        let startPromise;
+
+        beforeEach(() => {
+            transport = new SignalrCoreTransport(BASE_URL);
             transport.setStateChangedCallback(spyOnStateChangedCallback);
             transport.setReceivedCallback(jest.fn());
 
-            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
-            const startPromise = transport.start({});
+            transport.updateQuery(
+                authprovider.getToken(),
+                CONTEXT_ID,
+                authprovider.getExpiry(),
+            );
+            startPromise = transport.start({});
 
             // resolve handshake request
             mockStart.resolve();
 
+            startPromise.then(() => {
+                // start message streaming
+                subscribeNextHandler({
+                    PayloadFormat: 1,
+                    Payload: window.btoa('{ "a": 2 }'),
+                });
+            });
+        });
+
+        it('should close message stream and invoke CloseConnection before closing connection', (done) => {
             startPromise.then(() => {
                 expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
                     2,
                     constants.CONNECTION_STATE_CONNECTED,
                 );
 
-                // start message streaming
-                subscribeNextHandler({
-                    PayloadFormat: 1,
-                    Payload: window.btoa('{ "a": 2 }'),
-                });
-
                 const stopPromise = transport.stop();
 
                 expect(spyOnConnectionStop).not.toBeCalled();
 
                 mockStreamCancel.resolve();
+
+                // send close message before closing connection
+                mockStreamCancel.promise.then(() => {
+                    expect(spyOnConnectionStop).not.toBeCalled();
+
+                    mockCloseConnection.resolve();
+                });
+
+                stopPromise.then(() => {
+                    expect(spyOnConnectionStop).toBeCalledTimes(1);
+
+                    tick(10);
+
+                    expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
+                        3,
+                        constants.CONNECTION_STATE_DISCONNECTED,
+                    );
+                    done();
+                });
+            });
+        });
+
+        it('should close connection even if CloseConnection invocation fails', (done) => {
+            startPromise.then(() => {
+                expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
+                    2,
+                    constants.CONNECTION_STATE_CONNECTED,
+                );
+
+                const stopPromise = transport.stop();
+
+                mockStreamCancel.resolve();
+                // send close message before closing connection
+                mockStreamCancel.promise.then(() => {
+                    expect(spyOnConnectionStop).not.toBeCalled();
+
+                    // simuate CloseConnection invocation failure
+                    mockCloseConnection.reject();
+                });
 
                 stopPromise.then(() => {
                     expect(spyOnConnectionStop).toBeCalledTimes(1);
@@ -486,7 +573,11 @@ describe('openapi SignalR core Transport', () => {
         beforeEach(() => {
             transport = new SignalrCoreTransport(BASE_URL);
             transport.setStateChangedCallback(spyOnStateChangedCallback);
-            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.updateQuery(
+                authprovider.getToken(),
+                CONTEXT_ID,
+                authprovider.getExpiry(),
+            );
             startPromise = transport.start({}).then(() => {
                 // start message streaming
                 subscribeNextHandler({

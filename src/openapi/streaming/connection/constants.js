@@ -10,6 +10,10 @@ export const EVENT_CONNECTION_SLOW = 'connectionSlow';
  * Event that occurs when the connection fails.
  */
 export const EVENT_STREAMING_FAILED = 'streamingFailed';
+/**
+ * Event that occurs when the _disconnect control message is received from server.
+ */
+export const EVENT_DISCONNECT_REQUESTED = 'streamingDisconnectRequested';
 
 /**
  * Streaming has been created but has not yet started the connection.

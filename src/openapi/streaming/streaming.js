@@ -20,6 +20,7 @@ const OPENAPI_CONTROL_MESSAGE_PREFIX = '_';
 const OPENAPI_CONTROL_MESSAGE_HEARTBEAT = '_heartbeat';
 const OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS = '_resetsubscriptions';
 const OPENAPI_CONTROL_MESSAGE_RECONNECT = '_reconnect';
+const OPENAPI_CONTROL_MESSAGE_DISCONNECT = '_disconnect';
 
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
 
@@ -43,6 +44,11 @@ const DEFAULT_STREAMING_OPTIONS = {
  * then follows the Connection state model.
  */
 function init() {
+    // cleanup old connection if any
+    if (this.connection) {
+        this.connection.dispose();
+    }
+
     this.connection = new Connection(
         this.options,
         this.baseUrl,
@@ -61,7 +67,10 @@ function init() {
 }
 
 function onStreamingFailed() {
-    this.trigger(this.EVENT_STREAMING_FAILED);
+    // Let consumer setup event handlers in case of steaming failure during initial setup
+    setTimeout(() => {
+        this.trigger(this.EVENT_STREAMING_FAILED);
+    });
 }
 
 /**
@@ -75,7 +84,7 @@ function onUnauthorized() {
 /**
  * Reconnects the streaming socket when it is disconnected
  */
-function connect() {
+function connect(isReconnection) {
     if (
         this.connectionState !== this.CONNECTION_STATE_DISCONNECTED &&
         this.connectionState !== this.CONNECTION_STATE_INITIALIZING
@@ -99,11 +108,22 @@ function connect() {
     if (expiry < Date.now()) {
         // in case the refresh timer has disappeared, ensure authProvider is
         // fetching a new token
+        const transport = this.getActiveTransportName();
         this.authProvider.refreshOpenApiToken();
-        this.authProvider.one(
-            this.authProvider.EVENT_TOKEN_RECEIVED,
-            startConnection,
-        );
+        this.authProvider.one(this.authProvider.EVENT_TOKEN_RECEIVED, () => {
+            if (isReconnection && !this.reconnecting) {
+                log.debug(
+                    LOG_AREA,
+                    'ResetStreaming called while waiting for token during reconnection',
+                    {
+                        transport,
+                    },
+                );
+                return;
+            }
+
+            startConnection();
+        });
     } else {
         startConnection();
     }
@@ -165,21 +185,39 @@ function retryConnection() {
 
     this.retryCount++;
     this.reconnecting = true;
-    setTimeout(connect.bind(this), delay);
+    this.reconnectTimer = setTimeout(connect.bind(this, true), delay);
 }
 
 /**
  * Handles connection state change
  */
 function onConnectionStateChanged(nextState) {
+    const connectionTransport = this.getActiveTransportName();
+
+    if (nextState === this.connectionState) {
+        log.warn(LOG_AREA, 'Tring to set same state as current one', {
+            connectionState: this.READABLE_CONNECTION_STATE_MAP[
+                this.connectionState
+            ],
+            mechanism: connectionTransport,
+            reconnecting: this.reconnecting,
+        });
+        return;
+    }
+
     this.connectionState = nextState;
 
-    const connectionTransport = this.connection.getTransport();
-    log.debug(LOG_AREA, 'Connection state changed', {
-        changedTo: this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
-        mechanism: connectionTransport && connectionTransport.name,
-        reconnecting: this.reconnecting,
-    });
+    log.info(
+        LOG_AREA,
+        'Connection state changed',
+        {
+            changedTo: this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
+            mechanism: connectionTransport,
+            reconnecting: this.reconnecting,
+        },
+        { persist: connectionTransport === streamingTransports.SIGNALR_CORE },
+    );
+
     this.trigger(this.EVENT_CONNECTION_STATE_CHANGED, this.connectionState);
 
     if (this.disposed) {
@@ -188,27 +226,23 @@ function onConnectionStateChanged(nextState) {
 
     switch (this.connectionState) {
         case this.CONNECTION_STATE_DISCONNECTED:
-            log.info(LOG_AREA, 'Connection disconnected');
-
             this.orphanFinder.stop();
-
-            // tell all subscriptions not to do anything
-            // as we may have lost internet and the subscriptions may not be reset
-            for (let i = 0; i < this.subscriptions.length; i++) {
-                this.subscriptions[i].onConnectionUnavailable();
-            }
 
             if (this.isReset) {
                 init.call(this);
             } else {
+                // tell all subscriptions not to do anything
+                // as we may have lost internet and the subscriptions may not be reset
+                for (let i = 0; i < this.subscriptions.length; i++) {
+                    this.subscriptions[i].onConnectionUnavailable();
+                }
+
                 retryConnection.call(this);
             }
 
             break;
 
         case this.CONNECTION_STATE_RECONNECTING:
-            log.info(LOG_AREA, 'Connection reconnecting');
-
             // tell all subscriptions not to do anything
             // as we may have lost internet and the subscriptions may not be reset
             for (let i = 0; i < this.subscriptions.length; i++) {
@@ -221,8 +255,6 @@ function onConnectionStateChanged(nextState) {
             break;
 
         case this.CONNECTION_STATE_CONNECTED:
-            log.info(LOG_AREA, 'Connection connected');
-
             this.retryCount = 0;
             // if *we* are reconnecting (as opposed to transport reconnecting, which we do not need to handle specially)
             if (this.reconnecting || this.isReset) {
@@ -366,12 +398,18 @@ function handleControlMessage(message) {
             break;
 
         case OPENAPI_CONTROL_MESSAGE_RECONNECT:
-            // try reconnecting with new context id
-            this.disconnect();
+            handleControlMessageReconnect.call(this);
+            break;
+
+        case OPENAPI_CONTROL_MESSAGE_DISCONNECT:
+            handleControlMessageDisconnect.call(this);
             break;
 
         default:
-            log.warn(LOG_AREA, 'Unrecognised control message', message);
+            log.warn(LOG_AREA, 'Unrecognised control message', {
+                message,
+                transport: this.getActiveTransportName(),
+            });
             break;
     }
 }
@@ -446,6 +484,54 @@ function handleControlMessageResetSubscriptions(referenceIdList) {
 }
 
 /**
+ * Handles the control message to disconnect,
+ * Notify subscriptions about connect unavailability
+ * Fire disconnect requested event
+ * @param {Array.<string>} referenceIdList
+ */
+function handleControlMessageDisconnect() {
+    log.info(
+        LOG_AREA,
+        'disconnect control message received',
+        {
+            transport: this.getActiveTransportName(),
+        },
+        {
+            persist: true,
+        },
+    );
+
+    // tell all subscriptions not to do anything
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        this.subscriptions[i].onConnectionUnavailable();
+    }
+
+    this.trigger(this.EVENT_DISCONNECT_REQUESTED);
+}
+
+function handleControlMessageReconnect() {
+    log.info(
+        LOG_AREA,
+        'reconnect control message received',
+        {
+            transport: this.getActiveTransportName(),
+        },
+        {
+            persist: true,
+        },
+    );
+
+    this.isReset = true;
+
+    // tell all subscriptions not to do anything
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        this.subscriptions[i].onConnectionUnavailable();
+    }
+
+    this.disconnect();
+}
+
+/**
  * handles the connection slow event from SignalR. Happens when a keep-alive is missed.
  */
 function onConnectionSlow() {
@@ -460,6 +546,7 @@ function updateConnectionQuery(forceAuth = false) {
     this.connection.updateQuery(
         this.authProvider.getToken(),
         this.contextId,
+        this.authProvider.getExpiry(),
         forceAuth,
     );
 }
@@ -534,6 +621,7 @@ function getSubscriptionsReadyPromise(
             const subscription = subscriptionsToRemove[i];
 
             subscription.addStateChangedCallback(onStateChanged);
+
             subscription.onUnsubscribeByTagPending();
 
             if (shouldDisposeSubscription) {
@@ -560,6 +648,7 @@ function unsubscribeSubscriptionByTag(
         url,
         tag,
     );
+
     const allSubscriptionsReady = getSubscriptionsReadyPromise.call(
         this,
         subscriptionsToRemove,
@@ -668,6 +757,12 @@ Streaming.prototype.EVENT_CONNECTION_SLOW =
  */
 Streaming.prototype.EVENT_STREAMING_FAILED =
     connectionConstants.EVENT_STREAMING_FAILED;
+
+/**
+ * Event that occurs when server sends _disconnect control message.
+ */
+Streaming.prototype.EVENT_DISCONNECT_REQUESTED =
+    connectionConstants.EVENT_DISCONNECT_REQUESTED;
 
 /**
  * Streaming has been created but has not yet started the connection.
@@ -915,14 +1010,29 @@ Streaming.prototype.resetStreaming = function(baseUrl, options = {}) {
 
     this.isReset = true;
 
-    const activeTransport = this.connection.getTransport();
-    if (activeTransport) {
-        this.disconnect();
-    } else {
-        // we might have reset after streaming failed due to unavailability of next transport
-        // this ensures that we reset subscriptions once connected again
-        onConnectionStateChanged.call(this, this.CONNECTION_STATE_DISCONNECTED);
+    this.orphanFinder.stop();
+
+    if (this.reconnecting) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnecting = false;
+        this.retryCount = 0;
     }
+
+    const activeTransport = this.connection.getTransport();
+    if (
+        !activeTransport ||
+        this.connectionState === this.CONNECTION_STATE_DISCONNECTED
+    ) {
+        init.call(this);
+        return;
+    }
+
+    // tell all subscriptions not to do anything
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        this.subscriptions[i].onConnectionUnavailable();
+    }
+
+    this.disconnect();
 };
 
 Streaming.prototype.getActiveTransportName = function() {

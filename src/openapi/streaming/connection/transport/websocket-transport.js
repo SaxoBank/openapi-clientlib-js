@@ -56,6 +56,8 @@ function createSocket() {
 
 function destroySocket() {
     const socket = this.socket;
+    this.socket = null;
+
     if (!socket) {
         return;
     }
@@ -64,8 +66,6 @@ function destroySocket() {
     socket.onmessage = null;
     socket.onclose = null;
     socket.close(socketCloseCodes.NORMAL_CLOSURE, CLOSE_REASON_DESTROY);
-
-    this.socket = null;
 }
 
 function restartConnection() {
@@ -228,7 +228,7 @@ function handleSocketClose(event) {
     }
 
     if (!this.hasBeenConnected) {
-        log.info(LOG_AREA, 'websocket error occurred.', {
+        log.error(LOG_AREA, 'websocket error occurred.', {
             readyState: this.socket.readyState,
             code: event.code,
             reason: event.reason,
@@ -438,9 +438,9 @@ WebsocketTransport.prototype.start = function(options, callback) {
     this.startedCallback = callback || NOOP;
 
     if (!this.isSupported()) {
-        handleFailure.call(this, {
-            message: 'WebSocket Transport is not supported.',
-        });
+        log.error(LOG_AREA, 'WebSocket Transport is not supported');
+
+        handleFailure.call(this);
         return;
     }
 
@@ -480,6 +480,7 @@ WebsocketTransport.prototype.stop = function() {
     this.hasBeenConnected = false;
     this.lastOrphanFound = 0;
     this.lastSubscribeNetworkError = 0;
+    this.isReconnectPending = false;
 
     this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
 };
@@ -497,6 +498,7 @@ WebsocketTransport.prototype.onSubscribeNetworkError = function() {
 WebsocketTransport.prototype.updateQuery = function(
     authToken,
     contextId,
+    authExpiry,
     forceAuth = false,
 ) {
     let query = `?contextId=${encodeURIComponent(
@@ -526,12 +528,12 @@ WebsocketTransport.prototype.updateQuery = function(
             true,
         );
 
-        if (this.isReconnectPending) {
-            authorizePromise.then(() => {
+        authorizePromise.then(() => {
+            if (this.isReconnectPending) {
                 this.isReconnectPending = false;
                 reconnect.call(this, true);
-            });
-        }
+            }
+        });
     }
 };
 
