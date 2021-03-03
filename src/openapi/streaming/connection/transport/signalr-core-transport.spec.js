@@ -319,7 +319,6 @@ describe('openapi SignalR core Transport', () => {
                 });
 
                 expect(spyReceivedCallback).not.toBeCalled();
-                expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
 
                 mockStreamCancel.resolve();
                 mockStreamCancel.promise
@@ -334,6 +333,8 @@ describe('openapi SignalR core Transport', () => {
                         expect(spyOnStateChangedCallback).not.toBeCalledWith(
                             constants.CONNECTION_STATE_DISCONNECTED,
                         );
+
+                        expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
                         done();
                     });
             });
