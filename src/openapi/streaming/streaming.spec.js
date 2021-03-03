@@ -3,6 +3,7 @@ import {
     uninstallClock,
     tick,
     setTimeout,
+    getResolvablePromise,
 } from '../../test/utils';
 import mockTransport from '../../test/mocks/transport';
 import mockMathRandom from '../../test/mocks/math-random';
@@ -1327,11 +1328,14 @@ describe('openapi Streaming', () => {
     describe('resetStreaming', () => {
         let spySocketClose;
         let mockHubConnection;
-        let streamingStateChangedCallback;
         let resolveSignalrCoreStartPromise;
         let signalrCoreStartPromise;
         let resolvePlainWebsocketStartPromise;
         let plainWebsocketStartPromise;
+        let mockSignalMessageReceivedHandler;
+        let mockStreamCancel;
+        let mockCloseConnection;
+        let streaming;
 
         class MockConnectionBuilder {
             withUrl() {
@@ -1361,7 +1365,7 @@ describe('openapi Streaming', () => {
             });
 
             global.WebSocket = jest.fn().mockImplementation(() => {
-                streamingStateChangedCallback(
+                streaming.connection.transport.stateChangedCallback(
                     connectionConstants.CONNECTION_STATE_CONNECTED,
                 );
 
@@ -1377,6 +1381,17 @@ describe('openapi Streaming', () => {
                 JsonHubProtocol,
             };
 
+            const mockSubject = {
+                subscribe: ({ next }) => {
+                    mockSignalMessageReceivedHandler = next;
+                },
+                cancelCallback: () => {
+                    mockStreamCancel = getResolvablePromise();
+                    return mockStreamCancel.promise;
+                },
+            };
+
+            const closeCallbacks = [];
             mockHubConnection = {
                 start: jest
                     .fn()
@@ -1385,7 +1400,7 @@ describe('openapi Streaming', () => {
                         signalrCoreStartPromise = new Promise(
                             (resolve) =>
                                 (resolveSignalrCoreStartPromise = () => {
-                                    streamingStateChangedCallback(
+                                    streaming.connection.transport.stateChangedCallback(
                                         connectionConstants.CONNECTION_STATE_CONNECTED,
                                     );
                                     resolve();
@@ -1393,30 +1408,35 @@ describe('openapi Streaming', () => {
                         );
                         return signalrCoreStartPromise;
                     }),
-                stream: jest.fn(),
+                stream: jest
+                    .fn()
+                    .mockName('message stream')
+                    .mockImplementation(() => mockSubject),
                 stop: jest.fn().mockImplementation(() => {
-                    streamingStateChangedCallback(
-                        connectionConstants.CONNECTION_STATE_DISCONNECTED,
-                    );
+                    closeCallbacks.forEach((callback) => {
+                        callback();
+                    });
                 }),
-                onclose: jest.fn(),
+                invoke: (method, ...args) => {
+                    if (method === 'CloseConnection') {
+                        mockCloseConnection = getResolvablePromise();
+                        return mockCloseConnection.promise;
+                    }
+
+                    return Promise.resolve();
+                },
+                onclose: jest.fn().mockImplementation((callback) => {
+                    closeCallbacks.push(callback);
+                }),
                 onreconnecting: jest.fn(),
                 onreconnected: jest.fn(),
             };
         });
 
         it('should reset streaming with new url and options', (done) => {
-            const streaming = new Streaming(
-                transport,
-                'testUrl',
-                authProvider,
-                {
-                    transportTypes: [streamingTransports.PLAIN_WEBSOCKETS],
-                },
-            );
-
-            streamingStateChangedCallback =
-                streaming.connection.stateChangedCallback;
+            streaming = new Streaming(transport, 'testUrl', authProvider, {
+                transportTypes: [streamingTransports.PLAIN_WEBSOCKETS],
+            });
 
             const subscription = mockSubscription();
             subscription.referenceId = 'testSubscription';
@@ -1431,9 +1451,6 @@ describe('openapi Streaming', () => {
                     streaming.resetStreaming('newStreamingUrl', {
                         transportTypes: [streamingTransports.SIGNALR_CORE],
                     });
-
-                    streamingStateChangedCallback =
-                        streaming.connection.stateChangedCallback;
 
                     expect(spySocketClose).toHaveBeenCalledTimes(1);
                     expect(streaming.retryCount).toBe(0);
@@ -1454,14 +1471,9 @@ describe('openapi Streaming', () => {
         });
 
         it('should reset streaming when there is no active transport', (done) => {
-            const streaming = new Streaming(
-                transport,
-                'testUrl',
-                authProvider,
-                {
-                    transportTypes: [],
-                },
-            );
+            streaming = new Streaming(transport, 'testUrl', authProvider, {
+                transportTypes: [],
+            });
 
             const subscription = mockSubscription();
             subscription.referenceId = 'testSubscription';
@@ -1470,9 +1482,6 @@ describe('openapi Streaming', () => {
             streaming.resetStreaming('newStreamingUrl', {
                 transportTypes: [streamingTransports.PLAIN_WEBSOCKETS],
             });
-
-            streamingStateChangedCallback =
-                streaming.connection.stateChangedCallback;
 
             fetchMock.resolve(200);
 
@@ -1483,18 +1492,69 @@ describe('openapi Streaming', () => {
             });
         });
 
-        it('should clear reconnection timer while resetting streaming', () => {
-            const streaming = new Streaming(
-                transport,
-                'testUrl',
-                authProvider,
-                {
-                    transportTypes: [streamingTransports.SIGNALR_CORE],
-                },
-            );
+        it('should fallback to on-premise streaming service if cloud streaming fails', (done) => {
+            streaming = new Streaming(transport, 'testUrl', authProvider, {
+                transportTypes: [streamingTransports.SIGNALR_CORE],
+            });
 
-            streamingStateChangedCallback =
-                streaming.connection.stateChangedCallback;
+            const subscription = mockSubscription();
+            subscription.referenceId = 'testSubscription';
+            streaming.subscriptions.push(subscription);
+
+            let resolveResetStreamingPromise;
+            const resetStreamingPromise = new Promise((resolve) => {
+                resolveResetStreamingPromise = resolve;
+            });
+
+            // mock fallback implementation
+            streaming.on(streaming.EVENT_STREAMING_FAILED, () => {
+                streaming.resetStreaming('newStreamingUrl', {
+                    transportTypes: [streamingTransports.PLAIN_WEBSOCKETS],
+                });
+
+                resolveResetStreamingPromise();
+            });
+
+            resolveSignalrCoreStartPromise();
+
+            signalrCoreStartPromise
+                .then(() => {
+                    // push invalid message which should trigger disconnection and fallback
+                    mockSignalMessageReceivedHandler({
+                        Payload: '{ testKey: testValue',
+                        PayloadFormat: 1,
+                    });
+
+                    // resolve connection close
+                    mockStreamCancel.resolve();
+                    return mockStreamCancel.promise;
+                })
+                .then(() => {
+                    mockCloseConnection.resolve();
+                    return mockStreamCancel.promise;
+                })
+                .then(() => {
+                    // trigger streaming failed event
+                    tick(10);
+                });
+
+            resetStreamingPromise
+                .then(() => {
+                    fetchMock.resolve(200);
+
+                    return plainWebsocketStartPromise;
+                })
+                .then(() => {
+                    expect(subscription.reset).toHaveBeenCalled();
+
+                    done();
+                });
+        });
+
+        it('should clear reconnection timer while resetting streaming', () => {
+            streaming = new Streaming(transport, 'testUrl', authProvider, {
+                transportTypes: [streamingTransports.SIGNALR_CORE],
+            });
 
             const subscription = mockSubscription();
             subscription.referenceId = 'testSubscription';

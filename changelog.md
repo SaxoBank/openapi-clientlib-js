@@ -1,3 +1,6 @@
+### v8.2.1
+- Fix cloud streaming fallback
+
 ### v8.2.0
 - Handle disconnect and reconnect correctly
 - Send close message frame when switching between on-premise and cloud streaming services

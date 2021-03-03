@@ -329,7 +329,9 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
     }
 
     // Do not trigger disconnect in case of transport fallback to avoid reconnection
-    const shouldTriggerDisconnect = !this.hasTransportError;
+    // the transport explicitely sets this error flag when there is some issue while parsing message
+    // or if unknown status is received during token renewal
+    const shouldFallbackToOtherTransport = this.hasTransportError;
 
     this.connection = null;
     this.messageStream = null;
@@ -338,9 +340,12 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
     this.hasStreamingStarted = false;
     this.hasTransportError = false;
 
-    if (shouldTriggerDisconnect) {
-        this.setState(constants.CONNECTION_STATE_DISCONNECTED);
+    if (shouldFallbackToOtherTransport) {
+        this.transportFailCallback();
+        return;
     }
+
+    this.setState(constants.CONNECTION_STATE_DISCONNECTED);
 };
 
 SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
@@ -376,7 +381,6 @@ SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
         );
 
         this.stop(true);
-        this.transportFailCallback();
     }
 };
 
@@ -473,7 +477,6 @@ SignalrCoreTransport.prototype.renewSession = function() {
                     );
 
                     this.stop(true);
-                    this.transportFailCallback();
             }
         })
         .catch((error) => {

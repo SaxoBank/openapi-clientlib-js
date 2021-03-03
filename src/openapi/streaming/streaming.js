@@ -67,6 +67,9 @@ function init() {
 }
 
 function onStreamingFailed() {
+    // Allow consumer to reset streaming and reconnect with different streaming service
+    this.connectionState = this.CONNECTION_STATE_DISCONNECTED;
+
     // Let consumer setup event handlers in case of steaming failure during initial setup
     setTimeout(() => {
         this.trigger(this.EVENT_STREAMING_FAILED);
