@@ -223,7 +223,7 @@ function onConnectionStateChanged(nextState) {
 
     this.trigger(this.EVENT_CONNECTION_STATE_CHANGED, this.connectionState);
 
-    if (this.disposed) {
+    if (this.disposed || this.isPaused) {
         return;
     }
 
@@ -935,6 +935,36 @@ Streaming.prototype.disposeSubscriptionByTag = function (
  */
 Streaming.prototype.disconnect = function () {
     this.connection.stop();
+};
+
+Streaming.prototype.pause = function() {
+    this.isPaused = true;
+
+    if (this.reconnecting) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnecting = false;
+        this.retryCount = 0;
+    }
+
+    this.orphanFinder.stop();
+
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        const subscription = this.subscriptions[i];
+        // Mark the subscription as not having a connection and reset it so its state becomes unsubscribed
+        subscription.onConnectionUnavailable();
+        subscription.reset();
+    }
+
+    this.disconnect();
+};
+
+Streaming.prototype.resume = function() {
+    if (!this.isPaused) {
+        return;
+    }
+
+    this.isPaused = false;
+    connect.call(this);
 };
 
 /**

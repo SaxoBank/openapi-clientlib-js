@@ -290,7 +290,7 @@ SignalrCoreTransport.prototype.stop = function (hasTransportError) {
 
     const sendCloseMessage = () =>
         this.connection.invoke('CloseConnection').catch((err) => {
-            log.warn(
+            log.info(
                 LOG_AREA,
                 'Error occurred while invoking CloseConnection',
                 err,
