@@ -110,6 +110,15 @@ function expandNumber(number, precision, options) {
     );
 }
 
+function roundNumber(number, decimals) {
+    // Shift with exponential notation to avoid floating-point issues.
+    let pair = `${number}e`.split('e');
+    const value = Math.round(`${pair[0]}e${Number(pair[1]) + decimals}`);
+    const factor = Math.pow(10, decimals);
+
+    return value / factor;
+}
+
 // -- Exported methods section --
 
 function formatNumber(inputNumber, decimals, options) {
@@ -120,18 +129,13 @@ function formatNumber(inputNumber, decimals, options) {
     // Does AwayFromZero rounding as per C# - see MidpointRound.AwayFromZero
     // When a number is halfway between two others, it is rounded toward the nearest number that is away from zero.
     // We do this by rounding the absolute number, so it always goes away from zero.
-    const factor = Math.pow(10, decimals);
-    let absoluteNumber = Math.abs(inputNumber);
-    absoluteNumber = Math.round(absoluteNumber * factor) / factor;
+    const absoluteNumber = Math.abs(inputNumber);
+    const roundedNumber = roundNumber(absoluteNumber, decimals);
 
-    let formattedNumber = expandNumber(
-        Math.abs(absoluteNumber),
-        decimals,
-        options,
-    );
+    let formattedNumber = expandNumber(Math.abs(roundedNumber), decimals, options);
 
     // if the original is negative and it hasn't been rounded to 0
-    if (inputNumber < 0 && absoluteNumber !== 0) {
+    if (inputNumber < 0 && roundedNumber !== 0) {
         formattedNumber = formatNegativeNumber(formattedNumber, options);
     }
 

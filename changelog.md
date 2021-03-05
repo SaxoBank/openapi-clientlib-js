@@ -1,3 +1,6 @@
+### v8.2.2
+- Fix rounding numbers
+
 ### v8.2.1
 - Fix cloud streaming fallback
 
