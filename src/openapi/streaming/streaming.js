@@ -223,7 +223,7 @@ function onConnectionStateChanged(nextState) {
 
     this.trigger(this.EVENT_CONNECTION_STATE_CHANGED, this.connectionState);
 
-    if (this.disposed || this.isPaused) {
+    if (this.disposed || this.paused) {
         return;
     }
 
@@ -727,7 +727,7 @@ function Streaming(transport, baseUrl, authProvider, options) {
     this.transport = transport;
     this.subscriptions = [];
     this.isReset = false;
-    this.isPaused = false;
+    this.paused = false;
 
     this.setOptions({ ...DEFAULT_STREAMING_OPTIONS, ...options });
 
@@ -939,7 +939,7 @@ Streaming.prototype.disconnect = function () {
 };
 
 Streaming.prototype.pause = function() {
-    this.isPaused = true;
+    this.paused = true;
 
     if (this.reconnecting) {
         clearTimeout(this.reconnectTimer);
@@ -960,11 +960,11 @@ Streaming.prototype.pause = function() {
 };
 
 Streaming.prototype.resume = function() {
-    if (!this.isPaused) {
+    if (!this.paused) {
         return;
     }
 
-    this.isPaused = false;
+    this.paused = false;
     connect.call(this);
 };
 
@@ -1080,7 +1080,7 @@ Streaming.prototype.getActiveTransportName = function () {
 };
 
 Streaming.prototype.isPaused = function() {
-    return this.isPaused;
+    return this.paused;
 };
 
 // -- Export section --

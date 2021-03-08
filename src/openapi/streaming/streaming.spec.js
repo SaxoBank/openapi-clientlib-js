@@ -1604,6 +1604,7 @@ describe('openapi Streaming', () => {
         it('should pause and resume streaming', () => {
             streaming.pause();
 
+            expect(streaming.isPaused()).toBe(true);
             expect(subscription.onConnectionUnavailable).toHaveBeenCalled();
             expect(subscription.reset).toHaveBeenCalled();
             // shouldn't retry
