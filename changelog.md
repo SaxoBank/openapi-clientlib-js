@@ -1,3 +1,6 @@
+### v8.4.0
+- Add pause, resume support to freeze subscriptions
+
 ### v8.3.0
 - Remove negotiate call from signalrCore websocket
 - Add signalrCore longpoliing as a fallback

@@ -951,9 +951,10 @@ Streaming.prototype.pause = function() {
 
     for (let i = 0; i < this.subscriptions.length; i++) {
         const subscription = this.subscriptions[i];
-        // Mark the subscription as not having a connection and reset it so its state becomes unsubscribed
-        subscription.onConnectionUnavailable();
+        // Reset the subscription and mark it as not having a connection so its state becomes unsubscribed
+        // next action if there is any i.e. subscribe will go in the queue until the connection is available again
         subscription.reset();
+        subscription.onConnectionUnavailable();
     }
 
     this.disconnect();
