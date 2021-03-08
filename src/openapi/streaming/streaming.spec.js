@@ -1570,4 +1570,47 @@ describe('openapi Streaming', () => {
             expect(streaming.retryCount).toEqual(0);
         });
     });
+
+    describe('pause/resume streaming', () => {
+        let streaming;
+        let subscription;
+
+        beforeEach(() => {
+            streaming = streaming = new Streaming(
+                transport,
+                'testUrl',
+                authProvider,
+            );
+
+            mockConnection.start.mockImplementation((options, callback) => {
+                startCallback = callback;
+                streaming.connection.transport.stateChangedCallback(
+                    connectionConstants.CONNECTION_STATE_CONNECTED,
+                );
+            });
+
+            mockConnection.stop.mockImplementation((options, callback) => {
+                startCallback = callback;
+                streaming.connection.transport.stateChangedCallback(
+                    connectionConstants.CONNECTION_STATE_DISCONNECTED,
+                );
+            });
+
+            subscription = mockSubscription();
+            subscription.referenceId = 'testSubscription';
+            streaming.subscriptions.push(subscription);
+        });
+
+        it('should pause and resume streaming', () => {
+            streaming.pause();
+
+            expect(subscription.onConnectionUnavailable).toHaveBeenCalled();
+            expect(subscription.reset).toHaveBeenCalled();
+            // shouldn't retry
+            expect(streaming.retryCount).toEqual(0);
+
+            streaming.resume();
+            expect(subscription.onConnectionAvailable).toHaveBeenCalled();
+        });
+    });
 });

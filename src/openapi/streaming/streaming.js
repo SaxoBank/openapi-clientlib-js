@@ -727,6 +727,7 @@ function Streaming(transport, baseUrl, authProvider, options) {
     this.transport = transport;
     this.subscriptions = [];
     this.isReset = false;
+    this.isPaused = false;
 
     this.setOptions({ ...DEFAULT_STREAMING_OPTIONS, ...options });
 
@@ -1076,6 +1077,10 @@ Streaming.prototype.getActiveTransportName = function () {
     const activeTransport = this.connection.getTransport();
 
     return activeTransport && activeTransport.name;
+};
+
+Streaming.prototype.isPaused = function() {
+    return this.isPaused;
 };
 
 // -- Export section --
