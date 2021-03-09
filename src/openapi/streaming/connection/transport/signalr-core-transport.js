@@ -57,12 +57,22 @@ function buildConnection({
     accessTokenFactory,
     protocol,
     retryPolicy,
+    skipNegotiation,
+    transportType,
 }) {
     const url = `${baseUrl}/streaming?contextId=${contextId}`;
+    let transport;
+    if (transportType === transportTypes.SIGNALR_CORE_WEBSOCKETS) {
+        transport = window.signalrCore.HttpTransportType.WebSockets;
+    } else if (transportType === transportTypes.SIGNALR_CORE_LONG_POLLING) {
+        transport = window.signalrCore.HttpTransportType.LongPolling;
+    }
 
     return new window.signalrCore.HubConnectionBuilder()
         .withUrl(url, {
             accessTokenFactory,
+            transport,
+            skipNegotiation,
         })
         .withHubProtocol(protocol)
         .withAutomaticReconnect(retryPolicy)
@@ -198,6 +208,8 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
             },
             protocol,
             retryPolicy: getRetryPolicy(this),
+            skipNegotiation: options.skipNegotiation,
+            transportType: options.transportType,
         });
     } catch (error) {
         log.error(LOG_AREA, "Couldn't intialize the connection", {

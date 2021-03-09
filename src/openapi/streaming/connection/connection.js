@@ -5,15 +5,40 @@ import SignalrTransport from './transport/signalr-transport';
 import SignalrCoreTransport from './transport/signalr-core-transport';
 
 const LOG_AREA = 'Connection';
-const DEFAULT_TRANSPORTS = [WebsocketTransport, SignalrTransport];
+const DEFAULT_TRANSPORTS = [
+    transportTypes.PLAIN_WEBSOCKETS,
+    transportTypes.LEGACY_SIGNALR_WEBSOCKETS,
+];
 
 const TRANSPORT_NAME_MAP = {
-    [transportTypes.SIGNALR_CORE]: SignalrCoreTransport,
-    [transportTypes.PLAIN_WEBSOCKETS]: WebsocketTransport,
+    [transportTypes.SIGNALR_CORE_WEBSOCKETS]: {
+        options: {
+            transportType: transportTypes.SIGNALR_CORE_WEBSOCKETS,
+            skipNegotiation: true,
+        },
+        instance: SignalrCoreTransport,
+    },
+    [transportTypes.SIGNALR_CORE_LONG_POLLING]: {
+        options: {
+            transportType: transportTypes.SIGNALR_CORE_LONG_POLLING,
+            skipNegotiation: false,
+        },
+        instance: SignalrCoreTransport,
+    },
+    [transportTypes.PLAIN_WEBSOCKETS]: {
+        options: {},
+        instance: WebsocketTransport,
+    },
 
     // Backward compatible mapping to legacy signalR.
-    [transportTypes.LEGACY_SIGNALR_WEBSOCKETS]: SignalrTransport,
-    [transportTypes.LEGACY_SIGNALR_LONG_POLLING]: SignalrTransport,
+    [transportTypes.LEGACY_SIGNALR_WEBSOCKETS]: {
+        options: {},
+        instance: SignalrTransport,
+    },
+    [transportTypes.LEGACY_SIGNALR_LONG_POLLING]: {
+        options: {},
+        instance: SignalrTransport,
+    },
 };
 
 const NOOP = () => {};
@@ -79,7 +104,11 @@ function onTransportFail(error) {
             this.contextId,
             this.authExpiry,
         );
-        this.transport.start(this.options, this.startCallback);
+        const transportOptions = {
+            ...this.transports[this.tranportIndex].options,
+            ...this.options,
+        };
+        this.transport.start(transportOptions, this.startCallback);
     }
 }
 
@@ -96,7 +125,7 @@ function createTransport(baseUrl) {
     }
 
     // Create transport from supported transports lists.
-    const SelectedTransport = this.transports[this.tranportIndex];
+    const SelectedTransport = this.transports[this.tranportIndex].instance;
 
     if (!SelectedTransport.isSupported()) {
         // SelectedTransport transport is not supported by browser. Try to create next possible transport.
@@ -106,9 +135,10 @@ function createTransport(baseUrl) {
     return new SelectedTransport(baseUrl, onTransportFail.bind(this));
 }
 
-function getSupportedTransports(transportNames) {
+function getSupportedTransports(requestedTrasnports) {
+    let transportNames = requestedTrasnports;
     if (!transportNames) {
-        return DEFAULT_TRANSPORTS;
+        transportNames = DEFAULT_TRANSPORTS;
     }
 
     const supported = [];
@@ -218,7 +248,12 @@ Connection.prototype.start = function(callback) {
     if (this.transport) {
         this.state = STATE_STARTED;
         this.startCallback = callback;
-        this.transport.start(this.options, this.startCallback);
+
+        const transportOptions = {
+            ...this.transports[this.tranportIndex].options,
+            ...this.options,
+        };
+        this.transport.start(transportOptions, this.startCallback);
     }
 };
 
