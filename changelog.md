@@ -1,3 +1,6 @@
+### v8.2.3
+- Fix transport fallback
+
 ### v8.2.2
 - Fix rounding numbers
 

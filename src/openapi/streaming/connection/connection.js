@@ -32,22 +32,11 @@ function getLogDetails() {
     };
 }
 
-function ensureValidState(callback, expectedTransport, callbackType, ...args) {
+function ensureValidState(callback, callbackType, ...args) {
     if (this.state === STATE_DISPOSED) {
         log.warn(LOG_AREA, 'callback called after transport was disposed', {
             callback: callbackType,
             transport: this.transport.name,
-            contextId: this.contextId,
-        });
-        return;
-    }
-
-    if (expectedTransport !== this.transport.name) {
-        log.warn(LOG_AREA, 'callback called after transport was changed', {
-            callback: callbackType,
-            transport: expectedTransport,
-            currentTransport: this.transport.name,
-            connectionState: this.state,
             contextId: this.contextId,
         });
         return;
@@ -186,7 +175,6 @@ Connection.prototype.setUnauthorizedCallback = function(callback) {
         this.unauthorizedCallback = ensureValidState.bind(
             this,
             callback,
-            this.transport.name,
             'unauthorizedCallback',
         );
         this.transport.setUnauthorizedCallback(this.unauthorizedCallback);
@@ -198,7 +186,6 @@ Connection.prototype.setStateChangedCallback = function(callback) {
         this.stateChangedCallback = ensureValidState.bind(
             this,
             callback,
-            this.transport.name,
             'stateChangedCallback',
         );
         this.transport.setStateChangedCallback(this.stateChangedCallback);
@@ -210,7 +197,6 @@ Connection.prototype.setReceivedCallback = function(callback) {
         this.receiveCallback = ensureValidState.bind(
             this,
             callback,
-            this.transport.name,
             'receivedCallback',
         );
         this.transport.setReceivedCallback(this.receiveCallback);
@@ -222,7 +208,6 @@ Connection.prototype.setConnectionSlowCallback = function(callback) {
         this.connectionSlowCallback = ensureValidState.bind(
             this,
             callback,
-            this.transport.name,
             'connectionSlowCallback',
         );
         this.transport.setConnectionSlowCallback(this.connectionSlowCallback);
