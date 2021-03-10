@@ -289,23 +289,27 @@ SignalrCoreTransport.prototype.stop = function (hasTransportError) {
     }
 
     const sendCloseMessage = () =>
-        this.connection.invoke('CloseConnection').catch((err) => {
-            log.info(
-                LOG_AREA,
-                'Error occurred while invoking CloseConnection',
-                err,
-            );
-        });
+        this.connection
+            ? this.connection.invoke('CloseConnection').catch((err) => {
+                  log.info(
+                      LOG_AREA,
+                      'Error occurred while invoking CloseConnection',
+                      err,
+                  );
+              })
+            : Promise.resolve();
 
     // close message stream before closing connection
     if (this.messageStream) {
         return this.messageStream
             .cancelCallback()
             .then(sendCloseMessage)
-            .then(() => this.connection.stop());
+            .then(() => this.connection && this.connection.stop());
     }
 
-    return sendCloseMessage().then(() => this.connection.stop());
+    return sendCloseMessage().then(
+        () => this.connection && this.connection.stop(),
+    );
 };
 
 SignalrCoreTransport.prototype.createMessageStream = function (protocol) {
