@@ -1,3 +1,7 @@
+### v8.3.0
+- Remove negotiate call from signalrCore websocket
+- Add signalrCore longpoliing as a fallback
+
 ### v8.2.3
 - Fix transport fallback
 

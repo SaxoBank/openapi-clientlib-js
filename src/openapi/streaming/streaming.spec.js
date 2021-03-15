@@ -1379,6 +1379,10 @@ describe('openapi Streaming', () => {
             global.signalrCore = {
                 HubConnectionBuilder: MockConnectionBuilder,
                 JsonHubProtocol,
+                HttpTransportType: {
+                    WebSockets: 1,
+                    LongPolling: 4,
+                },
             };
 
             const mockSubject = {
@@ -1444,30 +1448,24 @@ describe('openapi Streaming', () => {
 
             fetchMock.resolve(200);
 
-            plainWebsocketStartPromise
-                .then(() => {
-                    expect(subscription.onUnsubscribe).not.toHaveBeenCalled();
+            plainWebsocketStartPromise.then(() => {
+                expect(subscription.onUnsubscribe).not.toHaveBeenCalled();
 
-                    streaming.resetStreaming('newStreamingUrl', {
-                        transportTypes: [streamingTransports.SIGNALR_CORE],
-                    });
-
-                    expect(spySocketClose).toHaveBeenCalledTimes(1);
-                    expect(streaming.retryCount).toBe(0);
-                    expect(
-                        subscription.onConnectionUnavailable,
-                    ).toHaveBeenCalledTimes(1);
-                    expect(mockHubConnection.start).toHaveBeenCalledTimes(1);
-
-                    resolveSignalrCoreStartPromise();
-
-                    return signalrCoreStartPromise;
-                })
-                .then(() => {
-                    expect(subscription.reset).toHaveBeenCalled();
-
-                    done();
+                streaming.resetStreaming('newStreamingUrl', {
+                    transportTypes: [
+                        streamingTransports.SIGNALR_CORE_WEBSOCKETS,
+                    ],
                 });
+
+                expect(spySocketClose).toHaveBeenCalledTimes(1);
+                expect(streaming.retryCount).toBe(0);
+                expect(
+                    subscription.onConnectionUnavailable,
+                ).toHaveBeenCalledTimes(1);
+                expect(mockHubConnection.start).toHaveBeenCalledTimes(1);
+
+                done();
+            });
         });
 
         it('should reset streaming when there is no active transport', (done) => {
@@ -1494,7 +1492,7 @@ describe('openapi Streaming', () => {
 
         it('should fallback to on-premise streaming service if cloud streaming fails', (done) => {
             streaming = new Streaming(transport, 'testUrl', authProvider, {
-                transportTypes: [streamingTransports.SIGNALR_CORE],
+                transportTypes: [streamingTransports.SIGNALR_CORE_WEBSOCKETS],
             });
 
             const subscription = mockSubscription();
@@ -1553,7 +1551,7 @@ describe('openapi Streaming', () => {
 
         it('should clear reconnection timer while resetting streaming', () => {
             streaming = new Streaming(transport, 'testUrl', authProvider, {
-                transportTypes: [streamingTransports.SIGNALR_CORE],
+                transportTypes: [streamingTransports.SIGNALR_CORE_WEBSOCKETS],
             });
 
             const subscription = mockSubscription();

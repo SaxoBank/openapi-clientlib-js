@@ -112,7 +112,7 @@ function expandNumber(number, precision, options) {
 
 function roundNumber(number, decimals) {
     // Shift with exponential notation to avoid floating-point issues.
-    let pair = `${number}e`.split('e');
+    const pair = `${number}e`.split('e');
     const value = Math.round(`${pair[0]}e${Number(pair[1]) + decimals}`);
     const factor = Math.pow(10, decimals);
 
@@ -132,7 +132,11 @@ function formatNumber(inputNumber, decimals, options) {
     const absoluteNumber = Math.abs(inputNumber);
     const roundedNumber = roundNumber(absoluteNumber, decimals);
 
-    let formattedNumber = expandNumber(Math.abs(roundedNumber), decimals, options);
+    let formattedNumber = expandNumber(
+        Math.abs(roundedNumber),
+        decimals,
+        options,
+    );
 
     // if the original is negative and it hasn't been rounded to 0
     if (inputNumber < 0 && roundedNumber !== 0) {
