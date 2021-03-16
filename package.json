@@ -51,7 +51,7 @@
     "license": "Apache-2.0",
     "devDependencies": {
         "@babel/core": "7.9.0",
-        "@babel/preset-env": "7.9.0",
+        "@babel/preset-env": "7.13.10",
         "babel-jest": "25.1.0",
         "eslint": "6.8.0",
         "eslint-import-resolver-node": "0.3.3",
