@@ -214,7 +214,9 @@ describe('openapi WebSocket Transport', () => {
                     const dataBuffer = new window.TextEncoder().encode(
                         JSON.stringify(jsonPayload),
                     );
-                    const payload = new Uint8Array(dataBuffer.length + 17);
+                    const payload = new Uint8Array(
+                        new ArrayBuffer(dataBuffer.length + 17),
+                    );
                     payload.set(
                         [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 134, 12, 0, 0],
                         0,
@@ -267,7 +269,9 @@ describe('openapi WebSocket Transport', () => {
                 const dataBuffer = new window.TextEncoder().encode(
                     JSON.stringify(jsonPayload),
                 );
-                const payload = new Uint8Array(dataBuffer.length + 17);
+                const payload = new Uint8Array(
+                    new ArrayBuffer(dataBuffer.length + 17),
+                );
                 payload.set(
                     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 134, 12, 0, 0],
                     0,
@@ -306,7 +310,9 @@ describe('openapi WebSocket Transport', () => {
                 const dataBuffer = Uint8Array.from(illFormattedJson, (c) =>
                     c.charCodeAt(0),
                 );
-                const payload = new Uint8Array(dataBuffer.length + 17);
+                const payload = new Uint8Array(
+                    new ArrayBuffer(dataBuffer.length + 17),
+                );
                 payload.set(
                     [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 13, 0, 0, 0],
                     0,
