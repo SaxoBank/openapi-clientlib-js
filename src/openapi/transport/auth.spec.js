@@ -20,7 +20,7 @@ describe('openapi TransportAuth', () => {
         fetch = mockFetch();
         authProvider = mockAuthProvider();
     });
-    afterEach(function() {
+    afterEach(function () {
         uninstallClock();
         if (transportAuth) {
             transportAuth.dispose();
@@ -80,8 +80,8 @@ describe('openapi TransportAuth', () => {
         });
     });
 
-    describe('transport', function() {
-        it('adds on a auth header when methods are called', function() {
+    describe('transport', function () {
+        it('adds on a auth header when methods are called', function () {
             transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(fetch).not.toBeCalled();
@@ -111,7 +111,7 @@ describe('openapi TransportAuth', () => {
             );
         });
 
-        it('supports all the http verbs', function() {
+        it('supports all the http verbs', function () {
             transportAuth = new TransportAuth('localhost', authProvider);
 
             transportAuth.get('service_path', 'url');
@@ -168,7 +168,7 @@ describe('openapi TransportAuth', () => {
             ]);
         });
 
-        it('overrides an auth header if one exists', function() {
+        it('overrides an auth header if one exists', function () {
             transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(fetch).not.toBeCalled();
@@ -190,7 +190,7 @@ describe('openapi TransportAuth', () => {
             ]);
         });
 
-        it('counts transport authorization errors', function(done) {
+        it('counts transport authorization errors', function (done) {
             transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
@@ -216,7 +216,7 @@ describe('openapi TransportAuth', () => {
             });
         });
 
-        it('blocks re-requesting authorization token if auth errors happen on different tokens', function(done) {
+        it('blocks re-requesting authorization token if auth errors happen on different tokens', function (done) {
             transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
@@ -293,7 +293,7 @@ describe('openapi TransportAuth', () => {
             ]);
         });
 
-        it('doesnt block re-requesting if limit not reached for separate endpoints', function(done) {
+        it('doesnt block re-requesting if limit not reached for separate endpoints', function (done) {
             transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
@@ -358,7 +358,7 @@ describe('openapi TransportAuth', () => {
             ]);
         });
 
-        it('resets error counters after dispose', function(done) {
+        it('resets error counters after dispose', function (done) {
             transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(
@@ -412,7 +412,7 @@ describe('openapi TransportAuth', () => {
             ]);
         });
 
-        it('resets error counters after debounce timeout is reached', function(done) {
+        it('resets error counters after debounce timeout is reached', function (done) {
             transportAuth = new TransportAuth('localhost', authProvider);
 
             expect(

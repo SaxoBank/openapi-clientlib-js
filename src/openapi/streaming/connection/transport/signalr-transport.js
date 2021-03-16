@@ -78,47 +78,47 @@ function SignalrTransport(baseUrl, failCallback) {
     this.connection.error(handleError.bind(this));
 }
 
-SignalrTransport.isSupported = function() {
+SignalrTransport.isSupported = function () {
     return true;
 };
 
 SignalrTransport.prototype.isSupported = SignalrTransport.isSupported;
 
-SignalrTransport.prototype.setUnauthorizedCallback = function(callback) {
+SignalrTransport.prototype.setUnauthorizedCallback = function (callback) {
     this.unauthorizedCallback = callback;
 };
 
-SignalrTransport.prototype.setStateChangedCallback = function(callback) {
+SignalrTransport.prototype.setStateChangedCallback = function (callback) {
     this.stateChangedCallback = callback;
 };
 
-SignalrTransport.prototype.setReceivedCallback = function(callback) {
+SignalrTransport.prototype.setReceivedCallback = function (callback) {
     this.connection.received(callback);
 };
 
-SignalrTransport.prototype.setConnectionSlowCallback = function(callback) {
+SignalrTransport.prototype.setConnectionSlowCallback = function (callback) {
     this.connection.connectionSlow(callback);
 };
 
-SignalrTransport.prototype.start = function(options, callback) {
+SignalrTransport.prototype.start = function (options, callback) {
     this.connection.start(options, callback);
 };
 
-SignalrTransport.prototype.stop = function() {
+SignalrTransport.prototype.stop = function () {
     this.connection.stop();
 };
 
-SignalrTransport.prototype.updateQuery = function(authToken, contextId) {
+SignalrTransport.prototype.updateQuery = function (authToken, contextId) {
     this.connection.qs = `authorization=${encodeURIComponent(
         authToken,
     )}&context=${encodeURIComponent(contextId)}`;
 };
 
-SignalrTransport.prototype.getQuery = function() {
+SignalrTransport.prototype.getQuery = function () {
     return this.connection.qs;
 };
 
-SignalrTransport.prototype.getTransport = function() {
+SignalrTransport.prototype.getTransport = function () {
     return this.connection.transport;
 };
 

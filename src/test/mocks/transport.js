@@ -11,7 +11,7 @@
     };
 
     function methodFunction(method) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
             transport[method + 'Resolve'] = resolve;
             transport[method + 'Reject'] = reject;
         });

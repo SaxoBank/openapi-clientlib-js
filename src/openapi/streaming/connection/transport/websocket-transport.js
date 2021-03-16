@@ -354,7 +354,7 @@ function WebsocketTransport(baseUrl, failCallback = NOOP) {
     }
 }
 
-WebsocketTransport.isSupported = function() {
+WebsocketTransport.isSupported = function () {
     return (
         Boolean(window.WebSocket) &&
         Boolean(window.Int8Array) &&
@@ -365,23 +365,23 @@ WebsocketTransport.isSupported = function() {
 
 WebsocketTransport.prototype.isSupported = WebsocketTransport.isSupported;
 
-WebsocketTransport.prototype.setUnauthorizedCallback = function(callback) {
+WebsocketTransport.prototype.setUnauthorizedCallback = function (callback) {
     this.unauthorizedCallback = callback;
 };
 
-WebsocketTransport.prototype.setStateChangedCallback = function(callback) {
+WebsocketTransport.prototype.setStateChangedCallback = function (callback) {
     this.stateChangedCallback = callback;
 };
 
-WebsocketTransport.prototype.setReceivedCallback = function(callback) {
+WebsocketTransport.prototype.setReceivedCallback = function (callback) {
     this.receivedCallback = callback;
 };
 
-WebsocketTransport.prototype.setConnectionSlowCallback = function(callback) {
+WebsocketTransport.prototype.setConnectionSlowCallback = function (callback) {
     this.connectionSlowCallback = callback;
 };
 
-WebsocketTransport.prototype.getAuthorizePromise = function(
+WebsocketTransport.prototype.getAuthorizePromise = function (
     contextId,
     authToken,
     forceAuthenticate,
@@ -434,7 +434,7 @@ WebsocketTransport.prototype.getAuthorizePromise = function(
     return this.authorizePromise;
 };
 
-WebsocketTransport.prototype.start = function(options, callback) {
+WebsocketTransport.prototype.start = function (options, callback) {
     this.startedCallback = callback || NOOP;
 
     if (!this.isSupported()) {
@@ -468,7 +468,7 @@ WebsocketTransport.prototype.start = function(options, callback) {
     );
 };
 
-WebsocketTransport.prototype.stop = function() {
+WebsocketTransport.prototype.stop = function () {
     destroySocket.call(this);
 
     clearTimeout(this.reconnectTimeout);
@@ -485,17 +485,17 @@ WebsocketTransport.prototype.stop = function() {
     this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
 };
 
-WebsocketTransport.prototype.onOrphanFound = function() {
+WebsocketTransport.prototype.onOrphanFound = function () {
     this.lastOrphanFound = Date.now();
     detectNetworkError.call(this);
 };
 
-WebsocketTransport.prototype.onSubscribeNetworkError = function() {
+WebsocketTransport.prototype.onSubscribeNetworkError = function () {
     this.lastSubscribeNetworkError = Date.now();
     detectNetworkError.call(this);
 };
 
-WebsocketTransport.prototype.updateQuery = function(
+WebsocketTransport.prototype.updateQuery = function (
     authToken,
     contextId,
     authExpiry,
@@ -537,7 +537,7 @@ WebsocketTransport.prototype.updateQuery = function(
     }
 };
 
-WebsocketTransport.prototype.getQuery = function() {
+WebsocketTransport.prototype.getQuery = function () {
     return this.query;
 };
 

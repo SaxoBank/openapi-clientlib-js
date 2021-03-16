@@ -47,13 +47,13 @@ function StreamingOrphanFinder(subscriptions, onOrphanFound, startDelay) {
  * Starts the orphan-finder.
  * It will delay reporting orphans for a set amount of time
  */
-StreamingOrphanFinder.prototype.start = function() {
+StreamingOrphanFinder.prototype.start = function () {
     this.enabled = true;
     this.minCheckTime = Date.now() + this.startDelay;
     this.update();
 };
 
-StreamingOrphanFinder.prototype.stop = function() {
+StreamingOrphanFinder.prototype.stop = function () {
     if (this.nextUpdateTimeoutId) {
         clearTimeout(this.nextUpdateTimeoutId);
         this.nextUpdateTimeoutId = null;
@@ -62,7 +62,7 @@ StreamingOrphanFinder.prototype.stop = function() {
     this.enabled = false;
 };
 
-StreamingOrphanFinder.prototype.update = function() {
+StreamingOrphanFinder.prototype.update = function () {
     if (!this.enabled) {
         return;
     }

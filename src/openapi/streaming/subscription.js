@@ -701,7 +701,7 @@ Subscription.prototype.OPENAPI_DELETE_PROPERTY = '__meta_deleted';
 /**
  * Add a callback to be invoked when the subscription state changes.
  */
-Subscription.prototype.addStateChangedCallback = function(callback) {
+Subscription.prototype.addStateChangedCallback = function (callback) {
     const index = this.onStateChangedCallbacks.indexOf(callback);
 
     if (index === -1) {
@@ -712,7 +712,7 @@ Subscription.prototype.addStateChangedCallback = function(callback) {
 /**
  * Remove a callback which was invoked when the subscription state changes.
  */
-Subscription.prototype.removeStateChangedCallback = function(callback) {
+Subscription.prototype.removeStateChangedCallback = function (callback) {
     const index = this.onStateChangedCallbacks.indexOf(callback);
 
     if (index > -1) {
@@ -720,7 +720,7 @@ Subscription.prototype.removeStateChangedCallback = function(callback) {
     }
 };
 
-Subscription.prototype.processUpdate = function(message, type) {
+Subscription.prototype.processUpdate = function (message, type) {
     let nextMessage;
     try {
         nextMessage = extend({}, message, {
@@ -741,7 +741,7 @@ Subscription.prototype.processUpdate = function(message, type) {
     this.onUpdate(nextMessage, type);
 };
 
-Subscription.prototype.processSnapshot = function(response) {
+Subscription.prototype.processSnapshot = function (response) {
     if (response.Schema && response.SchemaName) {
         this.SchemaName = response.SchemaName;
         this.parser.addSchema(response.Schema, response.SchemaName);
@@ -779,7 +779,7 @@ Subscription.prototype.processSnapshot = function(response) {
  * because the subscribe manages to get to the server before the unsubscribe.
  * @private
  */
-Subscription.prototype.reset = function() {
+Subscription.prototype.reset = function () {
     switch (this.currentState) {
         case this.STATE_UNSUBSCRIBED:
         case this.STATE_UNSUBSCRIBE_REQUESTED:
@@ -827,7 +827,7 @@ Subscription.prototype.reset = function() {
  *                           If true, any unsubscribe before subscribe will be kept. Otherwise they are dropped.
  * @private
  */
-Subscription.prototype.onSubscribe = function() {
+Subscription.prototype.onSubscribe = function () {
     if (this.isDisposed) {
         throw new Error(
             'Subscribing a disposed subscription - you will not get data',
@@ -842,7 +842,7 @@ Subscription.prototype.onSubscribe = function() {
  * @param {Object} newArgs - Updated arguments of modified subscription.
  * @private
  */
-Subscription.prototype.onModify = function(newArgs, options) {
+Subscription.prototype.onModify = function (newArgs, options) {
     if (this.isDisposed) {
         throw new Error(
             'Modifying a disposed subscription - you will not get data',
@@ -870,7 +870,7 @@ Subscription.prototype.onModify = function(newArgs, options) {
  * Try to unsubscribe.
  * @private
  */
-Subscription.prototype.onUnsubscribe = function(forceUnsubscribe) {
+Subscription.prototype.onUnsubscribe = function (forceUnsubscribe) {
     if (this.isDisposed) {
         log.warn(
             LOG_AREA,
@@ -887,7 +887,7 @@ Subscription.prototype.onUnsubscribe = function(forceUnsubscribe) {
  * Tells us we are now disposed
  * @private
  */
-Subscription.prototype.dispose = function() {
+Subscription.prototype.dispose = function () {
     this.isDisposed = true;
 };
 
@@ -895,7 +895,7 @@ Subscription.prototype.dispose = function() {
  * Tell the subscription that the connection is unavailable.
  * @private
  */
-Subscription.prototype.onConnectionUnavailable = function() {
+Subscription.prototype.onConnectionUnavailable = function () {
     this.connectionAvailable = false;
     if (this.networkErrorSubscribingTimer) {
         // we recently received a network error, so now we can just wait until we are online again
@@ -909,7 +909,7 @@ Subscription.prototype.onConnectionUnavailable = function() {
  * Tell the subscription that the connection is available and it can perform any queued action.
  * @private
  */
-Subscription.prototype.onConnectionAvailable = function() {
+Subscription.prototype.onConnectionAvailable = function () {
     this.connectionAvailable = true;
 
     // if we waited to do something and we are not transitioning, then try something
@@ -923,7 +923,7 @@ Subscription.prototype.onConnectionAvailable = function() {
  * @private
  * @returns {boolean} false if the update is not for this subscription
  */
-Subscription.prototype.onStreamingData = function(message) {
+Subscription.prototype.onStreamingData = function (message) {
     onActivity.call(this);
 
     switch (this.currentState) {
@@ -976,7 +976,7 @@ Subscription.prototype.onStreamingData = function(message) {
  * Handles a heartbeat from the server.
  * @private
  */
-Subscription.prototype.onHeartbeat = function() {
+Subscription.prototype.onHeartbeat = function () {
     if (this.currentState === this.STATE_SUBSCRIBE_REQUESTED) {
         log.debug(
             LOG_AREA,
@@ -990,14 +990,14 @@ Subscription.prototype.onHeartbeat = function() {
 /**
  * Handle a subscription pending unsubscribe by tag.
  */
-Subscription.prototype.onUnsubscribeByTagPending = function() {
+Subscription.prototype.onUnsubscribeByTagPending = function () {
     tryPerformAction.call(this, ACTION_UNSUBSCRIBE_BY_TAG_PENDING);
 };
 
 /**
  * Handled a subscription having been unsubscribed by tag.
  */
-Subscription.prototype.onUnsubscribeByTagComplete = function() {
+Subscription.prototype.onUnsubscribeByTagComplete = function () {
     setState.call(this, this.STATE_UNSUBSCRIBED);
     onReadyToPerformNextAction.call(this);
 };
@@ -1005,7 +1005,7 @@ Subscription.prototype.onUnsubscribeByTagComplete = function() {
 /**
  * Returns whether this subscription is ready to be unsubscribed by tag after it has been requested.
  */
-Subscription.prototype.isReadyForUnsubscribeByTag = function() {
+Subscription.prototype.isReadyForUnsubscribeByTag = function () {
     return this.currentState === this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG;
 };
 
@@ -1014,7 +1014,7 @@ Subscription.prototype.isReadyForUnsubscribeByTag = function() {
  * @param now - The current time as a reference (e.g. Date.now()).
  * @private
  */
-Subscription.prototype.timeTillOrphaned = function(now) {
+Subscription.prototype.timeTillOrphaned = function (now) {
     // this works because there are no suspended and resume states.
     // once subscribed, orphan finder will be notified.
     if (

@@ -12,18 +12,18 @@ describe('openapi TransportPutPatchDiagnositicsQueue', () => {
         transportCore = mockTransport();
         installClock();
     });
-    afterEach(function() {
+    afterEach(function () {
         uninstallClock();
     });
 
     it('requires both arguments to the constructor', () => {
-        expect(function() {
+        expect(function () {
             transportPutPatch = new TransportPutPatchDiagnositicsQueue();
         }).toThrow();
-        expect(function() {
+        expect(function () {
             transportPutPatch = new TransportPutPatchDiagnositicsQueue({});
         }).toThrow();
-        expect(function() {
+        expect(function () {
             transportPutPatch = new TransportPutPatchDiagnositicsQueue(
                 null,
                 {},

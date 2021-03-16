@@ -60,7 +60,7 @@ export function convertFetchSuccess(url, body, timerId, result) {
 
     const contentType = result.headers.get('content-type');
     if (contentType && contentType.indexOf('application/json') > -1) {
-        convertedPromise = result.text().then(function(text) {
+        convertedPromise = result.text().then(function (text) {
             try {
                 return {
                     response: JSON.parse(text),
@@ -94,7 +94,7 @@ export function convertFetchSuccess(url, body, timerId, result) {
             }
         });
     } else if (contentType && contentType.indexOf('multipart/mixed') > -1) {
-        convertedPromise = result.text().then(function(text) {
+        convertedPromise = result.text().then(function (text) {
             return {
                 response: text,
                 status: result.status,
@@ -108,7 +108,7 @@ export function convertFetchSuccess(url, body, timerId, result) {
         contentType &&
         (contentType.indexOf('image/') > -1 || binaryContentTypes[contentType])
     ) {
-        convertedPromise = result.blob().then(function(blob) {
+        convertedPromise = result.blob().then(function (blob) {
             return {
                 response: blob,
                 status: result.status,
@@ -121,7 +121,7 @@ export function convertFetchSuccess(url, body, timerId, result) {
     } else {
         convertedPromise = result
             .text()
-            .then(function(text) {
+            .then(function (text) {
                 return {
                     response: text,
                     status: result.status,

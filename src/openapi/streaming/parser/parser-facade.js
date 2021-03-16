@@ -44,7 +44,7 @@ const ParserFacade = {};
  * @param {Object} map - The engine map, where key is format name and value is engine object/constructor.
  *     Example: { 'applications/x-protobuf': protobuf }
  */
-ParserFacade.addEngines = function(map) {
+ParserFacade.addEngines = function (map) {
     extend(enginesMap, map);
 };
 
@@ -52,11 +52,11 @@ ParserFacade.addEngines = function(map) {
  * Add parsing methods.
  * @param {Object} map - The parser map, where key is format name and value is factory for parser.
  */
-ParserFacade.addParsers = function(map) {
+ParserFacade.addParsers = function (map) {
     extend(parserCreators, map);
 };
 
-ParserFacade.getDefaultFormat = function() {
+ParserFacade.getDefaultFormat = function () {
     return defaultParser.FORMAT_NAME;
 };
 
@@ -65,7 +65,7 @@ ParserFacade.getDefaultFormat = function() {
  * @param {String} format - Data format ie. application/json
  * @return {Boolean} - Returns true if format is supported. Returns false if format is not supported by available parsing methods.
  */
-ParserFacade.isFormatSupported = function(format) {
+ParserFacade.isFormatSupported = function (format) {
     return Boolean(parserCreators[format]);
 };
 
@@ -80,7 +80,7 @@ ParserFacade.isFormatSupported = function(format) {
  * @param {String} url - The url for given endpoint
  * @return {Object} Parser
  */
-ParserFacade.getParser = function(format, servicePath, url) {
+ParserFacade.getParser = function (format, servicePath, url) {
     const id = getId.call(this, format, servicePath, url);
 
     if (parsersMap[id]) {

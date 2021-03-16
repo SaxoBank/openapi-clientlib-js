@@ -54,7 +54,7 @@ function NumberFormatting(options) {
  * @param {string} value - The number to parse.
  * @returns {number} parsed value
  */
-NumberFormatting.prototype.parse = function(value) {
+NumberFormatting.prototype.parse = function (value) {
     return parseNumber(value, this);
 };
 
@@ -65,7 +65,7 @@ NumberFormatting.prototype.parse = function(value) {
  *                              If undefined then the number is formatted with however many decimal places it needs to display the number (upto 8).
  * @returns {string}
  */
-NumberFormatting.prototype.format = function(num, decimals) {
+NumberFormatting.prototype.format = function (num, decimals) {
     if (decimals === undefined || decimals === null) {
         decimals = this.getActualDecimals(num);
     }
@@ -80,7 +80,7 @@ NumberFormatting.prototype.format = function(num, decimals) {
  * @param {number} [maxDecimals] - The maximum number of decimals to display after the decimal point.
  * @returns {string}
  */
-NumberFormatting.prototype.formatNoRounding = function(
+NumberFormatting.prototype.formatNoRounding = function (
     num,
     minDecimals,
     maxDecimals,
@@ -107,7 +107,7 @@ NumberFormatting.prototype.formatNoRounding = function(
  * @param {number} number
  * @returns {string}
  */
-NumberFormatting.prototype.shortFormat = function(number) {
+NumberFormatting.prototype.shortFormat = function (number) {
     return shortFormat(number, this);
 };
 
@@ -116,7 +116,7 @@ NumberFormatting.prototype.shortFormat = function(number) {
  * @param number
  * @returns {number}
  */
-NumberFormatting.prototype.getActualDecimals = function(number) {
+NumberFormatting.prototype.getActualDecimals = function (number) {
     number = Math.abs(number);
     return (number - Math.floor(number))
         .toFixed(8)

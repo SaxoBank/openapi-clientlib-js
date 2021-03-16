@@ -200,7 +200,7 @@ function Connection(options, baseUrl, failCallback = NOOP) {
     }
 }
 
-Connection.prototype.setUnauthorizedCallback = function(callback) {
+Connection.prototype.setUnauthorizedCallback = function (callback) {
     if (this.transport) {
         this.unauthorizedCallback = ensureValidState.bind(
             this,
@@ -211,7 +211,7 @@ Connection.prototype.setUnauthorizedCallback = function(callback) {
     }
 };
 
-Connection.prototype.setStateChangedCallback = function(callback) {
+Connection.prototype.setStateChangedCallback = function (callback) {
     if (this.transport) {
         this.stateChangedCallback = ensureValidState.bind(
             this,
@@ -222,7 +222,7 @@ Connection.prototype.setStateChangedCallback = function(callback) {
     }
 };
 
-Connection.prototype.setReceivedCallback = function(callback) {
+Connection.prototype.setReceivedCallback = function (callback) {
     if (this.transport) {
         this.receiveCallback = ensureValidState.bind(
             this,
@@ -233,7 +233,7 @@ Connection.prototype.setReceivedCallback = function(callback) {
     }
 };
 
-Connection.prototype.setConnectionSlowCallback = function(callback) {
+Connection.prototype.setConnectionSlowCallback = function (callback) {
     if (this.transport) {
         this.connectionSlowCallback = ensureValidState.bind(
             this,
@@ -244,7 +244,7 @@ Connection.prototype.setConnectionSlowCallback = function(callback) {
     }
 };
 
-Connection.prototype.start = function(callback) {
+Connection.prototype.start = function (callback) {
     if (this.transport) {
         this.state = STATE_STARTED;
         this.startCallback = callback;
@@ -257,18 +257,18 @@ Connection.prototype.start = function(callback) {
     }
 };
 
-Connection.prototype.stop = function() {
+Connection.prototype.stop = function () {
     if (this.transport) {
         this.state = STATE_STOPPED;
         this.transport.stop();
     }
 };
 
-Connection.prototype.dispose = function() {
+Connection.prototype.dispose = function () {
     this.state = STATE_DISPOSED;
 };
 
-Connection.prototype.updateQuery = function(
+Connection.prototype.updateQuery = function (
     authToken,
     contextId,
     authExpiry,
@@ -293,19 +293,19 @@ Connection.prototype.updateQuery = function(
     }
 };
 
-Connection.prototype.getQuery = function() {
+Connection.prototype.getQuery = function () {
     if (this.transport) {
         return this.transport.getQuery();
     }
 };
 
-Connection.prototype.onOrphanFound = function() {
+Connection.prototype.onOrphanFound = function () {
     if (this.transport && this.transport.onOrphanFound) {
         this.transport.onOrphanFound();
     }
 };
 
-Connection.prototype.onSubscribeNetworkError = function() {
+Connection.prototype.onSubscribeNetworkError = function () {
     if (this.transport && this.transport.onSubscribeNetworkError) {
         this.transport.onSubscribeNetworkError();
     }
@@ -315,7 +315,7 @@ Connection.prototype.onSubscribeNetworkError = function() {
  * Get underlying transport
  * @returns {*}
  */
-Connection.prototype.getTransport = function() {
+Connection.prototype.getTransport = function () {
     if (!this.transport) {
         return null;
     }

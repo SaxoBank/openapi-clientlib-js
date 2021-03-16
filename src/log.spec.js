@@ -2,7 +2,7 @@ import log from './log';
 
 describe('log', () => {
     it('works when it has no subscribers', () => {
-        expect(function() {
+        expect(function () {
             log.info('area', 'testing info', {});
             log.debug('area', 'testing debug', {});
             log.warn('area', 'testing warn', {});

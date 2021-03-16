@@ -47,13 +47,13 @@ describe('openapi StreamingOrphanFinder', () => {
     afterEach(() => uninstallClock());
 
     it('requires subscriptions and callback', () => {
-        expect(function() {
-            new StreamingOrphanFinder([], function() {});
+        expect(function () {
+            new StreamingOrphanFinder([], function () {});
         }).not.toThrow();
-        expect(function() {
-            new StreamingOrphanFinder(null, function() {});
+        expect(function () {
+            new StreamingOrphanFinder(null, function () {});
         }).toThrow();
-        expect(function() {
+        expect(function () {
             new StreamingOrphanFinder([]);
         }).toThrow();
     });

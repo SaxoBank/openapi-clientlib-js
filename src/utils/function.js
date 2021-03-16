@@ -29,7 +29,7 @@ let nextTick; // eslint-disable-line import/no-mutable-exports
 // of the event loop.
 if (typeof setImmediate === 'function') {
     // https://github.com/NobleJS/setImmediate
-    nextTick = function(func) {
+    nextTick = function (func) {
         // IE11 throws "invalid calling object" if re-assigned, so we have to wrap
         setImmediate(func);
     };
@@ -40,13 +40,13 @@ if (typeof setImmediate === 'function') {
     // linked list of tasks (single, with head node)
     let head = {};
     let tail = head;
-    channel.port1.onmessage = function() {
+    channel.port1.onmessage = function () {
         head = head.next;
         const task = head.task;
         delete head.task;
         task();
     };
-    nextTick = function(task) {
+    nextTick = function (task) {
         tail = tail.next = { task };
         channel.port2.postMessage(0);
     };

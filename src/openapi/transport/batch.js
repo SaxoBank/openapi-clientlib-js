@@ -225,7 +225,7 @@ TransportBatch.prototype = Object.create(TransportQueue.prototype, {
  * @private
  * @param item
  */
-TransportBatch.prototype.addToQueue = function(item) {
+TransportBatch.prototype.addToQueue = function (item) {
     TransportQueue.prototype.addToQueue.call(this, item);
     if (!this.nextTickTimer || this.timeoutMs > 0) {
         if (this.timeoutMs === 0) {
@@ -247,7 +247,7 @@ TransportBatch.prototype.addToQueue = function(item) {
  * @private
  * @param item
  */
-TransportBatch.prototype.shouldQueue = function(item) {
+TransportBatch.prototype.shouldQueue = function (item) {
     return !shouldUseCloud(this.services[item.servicePath]);
 };
 
@@ -255,7 +255,7 @@ TransportBatch.prototype.shouldQueue = function(item) {
  * @private
  * @param item
  */
-TransportBatch.prototype.runBatches = function() {
+TransportBatch.prototype.runBatches = function () {
     this.nextTickTimer = false;
     const serviceGroupMap = emptyQueueIntoServiceGroups.call(this);
     const serviceGroups = Object.keys(serviceGroupMap);

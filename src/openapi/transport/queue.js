@@ -8,7 +8,7 @@
 // -- Local methods section --
 
 function transportMethod(method) {
-    return function() {
+    return function () {
         if (!this.isQueueing) {
             // checking expiry every time so that if device goes to sleep and is woken then
             // we intercept a call about to be made and then do not have to cope with the 401 responses
@@ -159,7 +159,7 @@ TransportQueue.prototype.options = transportMethod('options');
  * Waits for a promise to finish before allowing the queue to continue.
  * @param promise
  */
-TransportQueue.prototype.waitFor = function(promise) {
+TransportQueue.prototype.waitFor = function (promise) {
     this.waitForPromises.push(promise);
     this.isQueueing = true;
     promise.then(onWaitForPromiseResolved.bind(this, promise));
@@ -168,7 +168,7 @@ TransportQueue.prototype.waitFor = function(promise) {
 /**
  * @protected
  */
-TransportQueue.prototype.emptyQueue = function() {
+TransportQueue.prototype.emptyQueue = function () {
     for (let i = 0; i < this.queue.length; i++) {
         this.runQueueItem(this.queue[i]);
     }
@@ -179,7 +179,7 @@ TransportQueue.prototype.emptyQueue = function() {
  * @protected
  * @param item
  */
-TransportQueue.prototype.runQueueItem = function(item) {
+TransportQueue.prototype.runQueueItem = function (item) {
     this.transport[item.method].apply(this.transport, item.args).then(
         (...args) => {
             item.resolve(...args);
@@ -205,7 +205,7 @@ TransportQueue.prototype.runQueueItem = function(item) {
  * @protected
  * @param item
  */
-TransportQueue.prototype.addToQueue = function(item) {
+TransportQueue.prototype.addToQueue = function (item) {
     this.queue.push(item);
 };
 
@@ -213,14 +213,14 @@ TransportQueue.prototype.addToQueue = function(item) {
  * @protected
  * @param item
  */
-TransportQueue.prototype.shouldQueue = function(item) {
+TransportQueue.prototype.shouldQueue = function (item) {
     return true;
 };
 
 /**
  * Disposes the transport queue and removes any pending items.
  */
-TransportQueue.prototype.dispose = function() {
+TransportQueue.prototype.dispose = function () {
     this.queue.length = 0;
     if (this.authProvider) {
         this.authProvider.off(

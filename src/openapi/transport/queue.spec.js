@@ -18,12 +18,12 @@ describe('openapi TransportQueue', () => {
         authProvider = mockAuthProvider();
         installClock();
     });
-    afterEach(function() {
+    afterEach(function () {
         uninstallClock();
     });
 
     it('does not require options', () => {
-        expect(function() {
+        expect(function () {
             transportQueue = new TransportQueue(transport);
         }).not.toThrow();
     });
@@ -46,23 +46,23 @@ describe('openapi TransportQueue', () => {
 
         let waitingForPromiseResolve;
         transportQueue.waitFor(
-            new Promise(function(resolve, reject) {
+            new Promise(function (resolve, reject) {
                 waitingForPromiseResolve = resolve;
             }),
         );
 
         const getPromise = transportQueue.get();
-        setTimeout(function() {
+        setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(0);
             waitingForPromiseResolve();
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(transport.get.mock.calls.length).toEqual(1);
                 transport.getResolve({ status: 204, response: 'test' });
 
                 const getSpy = jest.fn().mockName('getSpy');
                 getPromise.then(getSpy);
 
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(getSpy.mock.calls.length).toEqual(1);
                     expect(getSpy.mock.calls[0]).toEqual([
                         { status: 204, response: 'test' },
@@ -80,23 +80,23 @@ describe('openapi TransportQueue', () => {
 
         let waitingForPromiseResolve;
         transportQueue.waitFor(
-            new Promise(function(resolve, reject) {
+            new Promise(function (resolve, reject) {
                 waitingForPromiseResolve = resolve;
             }),
         );
 
         const getPromise = transportQueue.get();
-        setTimeout(function() {
+        setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(0);
             waitingForPromiseResolve();
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(transport.get.mock.calls.length).toEqual(1);
                 transport.getReject();
 
                 const getSpy = jest.fn().mockName('getSpy');
                 getPromise.catch(getSpy);
 
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(getSpy.mock.calls.length).toEqual(1);
                     expect(getSpy.mock.calls[0]).toEqual([undefined]);
                     done();
@@ -111,13 +111,13 @@ describe('openapi TransportQueue', () => {
         expect(transportQueue.isQueueing).toEqual(true);
 
         transportQueue.get();
-        setTimeout(function() {
+        setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(0);
 
             authProvider.setExpiry(Date.now() + 10000);
             authProvider.triggerTokenReceived();
 
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(transport.get.mock.calls.length).toEqual(1);
                 done();
             });
@@ -130,7 +130,7 @@ describe('openapi TransportQueue', () => {
         expect(transportQueue.isQueueing).toEqual(false);
 
         transportQueue.get();
-        setTimeout(function() {
+        setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(1);
             done();
         });
@@ -144,7 +144,7 @@ describe('openapi TransportQueue', () => {
         authProvider.setExpiry(Date.now() - 1);
         transportQueue.get();
         expect(authProvider.refreshOpenApiToken).toHaveBeenCalledTimes(1);
-        setTimeout(function() {
+        setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(0);
             done();
         });
@@ -157,7 +157,7 @@ describe('openapi TransportQueue', () => {
 
         let waitingForPromiseResolve;
         transportQueue.waitFor(
-            new Promise(function(resolve, reject) {
+            new Promise(function (resolve, reject) {
                 waitingForPromiseResolve = resolve;
             }),
         );
@@ -169,7 +169,7 @@ describe('openapi TransportQueue', () => {
         authProvider.setExpiry(Date.now() - 1);
         waitingForPromiseResolve();
 
-        setTimeout(function() {
+        setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(0);
             done();
         });
@@ -197,7 +197,7 @@ describe('openapi TransportQueue', () => {
 
         authProvider.isFetchingNewToken.mockReturnValue(true);
 
-        setTimeout(function() {
+        setTimeout(function () {
             expect(getSpy1.mock.calls.length).toEqual(0);
             expect(getSpy2.mock.calls.length).toEqual(0);
             expect(transportQueue.isQueueing).toEqual(true);
@@ -231,7 +231,7 @@ describe('openapi TransportQueue', () => {
         getReject1({ status: 401 });
         getReject2({ status: 401 });
 
-        setTimeout(function() {
+        setTimeout(function () {
             expect(getSpy1.mock.calls.length).toEqual(0);
             expect(getSpy2.mock.calls.length).toEqual(0);
             expect(transportQueue.isQueueing).toEqual(false);

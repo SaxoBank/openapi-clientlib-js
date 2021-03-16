@@ -10,7 +10,7 @@ describe('openapi AuthProvider', () => {
         installClock();
         fetch = mockFetch();
     });
-    afterEach(function() {
+    afterEach(function () {
         uninstallClock();
         if (authProvider) {
             authProvider.dispose();
@@ -69,8 +69,8 @@ describe('openapi AuthProvider', () => {
         });
     });
 
-    describe('auth events', function() {
-        it('fires an event when about to refresh', function() {
+    describe('auth events', function () {
+        it('fires an event when about to refresh', function () {
             const options = {
                 token: 'TOKEN',
                 expiry: relativeDate(60),
@@ -89,7 +89,7 @@ describe('openapi AuthProvider', () => {
             expect(tokenRefreshSpy).toBeCalledTimes(1);
         });
 
-        it('fires an event when receiving a new token', function(done) {
+        it('fires an event when receiving a new token', function (done) {
             const options = {
                 token: 'TOKEN',
                 expiry: relativeDate(60),
@@ -114,7 +114,7 @@ describe('openapi AuthProvider', () => {
             tick(60000);
 
             fetch.resolve('200', { token: 'TOK3', expiry: 60 });
-            setTimeout(function() {
+            setTimeout(function () {
                 authProvider.off(
                     authProvider.EVENT_TOKEN_REFRESH_FAILED,
                     tokenRefreshFailSpy,
@@ -127,7 +127,7 @@ describe('openapi AuthProvider', () => {
 
                 authProvider.set('TOK4', relativeDate(0));
                 fetch.resolve('200', { token: 'TOK5', expiry: 60 });
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(tokenReceivedSpy).toBeCalledTimes(1);
                     expect(tokenRefreshFailSpy).not.toBeCalled();
                     done();
@@ -135,8 +135,8 @@ describe('openapi AuthProvider', () => {
             });
         });
 
-        describe('when token refreshing fails', function() {
-            it('fires an event if unauthorized - 401', function(done) {
+        describe('when token refreshing fails', function () {
+            it('fires an event if unauthorized - 401', function (done) {
                 const options = {
                     token: 'TOKEN',
                     expiry: relativeDate(60),
@@ -161,13 +161,13 @@ describe('openapi AuthProvider', () => {
 
                 tick(60000);
                 fetch.resolve(401, { error: 'not authorised' });
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(tokenRefreshFailSpy.mock.calls.length).toEqual(1);
                     done();
                 });
             });
 
-            it('fires an event if unauthorized - 403', function(done) {
+            it('fires an event if unauthorized - 403', function (done) {
                 const options = {
                     token: 'TOKEN',
                     expiry: relativeDate(60),
@@ -192,13 +192,13 @@ describe('openapi AuthProvider', () => {
 
                 tick(60000);
                 fetch.resolve(403, { error: 'not authorised' });
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(tokenRefreshFailSpy.mock.calls.length).toEqual(1);
                     done();
                 });
             });
 
-            it('fires an event if forbidden', function(done) {
+            it('fires an event if forbidden', function (done) {
                 const options = {
                     token: 'TOKEN',
                     expiry: relativeDate(60),
@@ -222,7 +222,7 @@ describe('openapi AuthProvider', () => {
                 );
                 tick(60000);
                 fetch.resolve(403, { error: 'forbidden' });
-                setTimeout(function() {
+                setTimeout(function () {
                     authProvider.off(
                         authProvider.EVENT_TOKEN_REFRESH_FAILED,
                         tokenRefreshFailSpy,
@@ -236,7 +236,7 @@ describe('openapi AuthProvider', () => {
                 });
             });
 
-            it('fires an event after retrying', function(done) {
+            it('fires an event after retrying', function (done) {
                 const options = {
                     token: 'TOKEN',
                     expiry: relativeDate(60),
@@ -263,12 +263,12 @@ describe('openapi AuthProvider', () => {
                 tick(60000);
                 expect(fetch).toHaveBeenCalledTimes(1);
                 fetch.reject(new Error('Network error'));
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(tokenRefreshFailSpy.mock.calls.length).toEqual(0);
                     tick(1000);
                     expect(fetch).toHaveBeenCalledTimes(2);
                     fetch.reject(new Error('Network error'));
-                    setTimeout(function() {
+                    setTimeout(function () {
                         expect(tokenRefreshFailSpy.mock.calls.length).toEqual(
                             1,
                         );
@@ -278,7 +278,7 @@ describe('openapi AuthProvider', () => {
                 });
             });
 
-            it('retries and recovers after a fail', function(done) {
+            it('retries and recovers after a fail', function (done) {
                 const options = {
                     token: 'TOKEN',
                     expiry: relativeDate(60),
@@ -303,11 +303,11 @@ describe('openapi AuthProvider', () => {
                 );
                 tick(60000);
                 fetch.reject(new Error('Network error'));
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(tokenRefreshFailSpy.mock.calls.length).toEqual(0);
                     tick(1000);
                     fetch.resolve(200, { token: 'TOK5', expiry: 60 });
-                    setTimeout(function() {
+                    setTimeout(function () {
                         expect(tokenRefreshFailSpy.mock.calls.length).toEqual(
                             0,
                         );
@@ -320,7 +320,7 @@ describe('openapi AuthProvider', () => {
     });
 
     describe('refreshing', () => {
-        it('allows no arguments and defaults to expired', function() {
+        it('allows no arguments and defaults to expired', function () {
             const options = { tokenRefreshUrl: 'http://refresh' };
             authProvider = new AuthProvider(options);
 
@@ -351,7 +351,7 @@ describe('openapi AuthProvider', () => {
             expect(fetch.mock.calls[0][1].method).toEqual('POST');
 
             fetch.resolve('200', { token: 'TOK2', expiry: 60 });
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(authProvider.getToken()).toEqual('Bearer TOK2');
                 done();
             });
@@ -413,7 +413,7 @@ describe('openapi AuthProvider', () => {
             expect(authProvider.getExpiry()).toEqual(initialOptions.expiry);
 
             fetch.resolve('200', { token: 'TOK2', expiry: 60 });
-            setTimeout(function() {
+            setTimeout(function () {
                 expect(authProvider.getToken()).toEqual('Bearer TOK2');
 
                 tick(60000);
@@ -422,7 +422,7 @@ describe('openapi AuthProvider', () => {
                 expect(authProvider.getToken()).toEqual('Bearer TOK2');
 
                 fetch.resolve('200', { token: 'TOK3', expiry: 60 });
-                setTimeout(function() {
+                setTimeout(function () {
                     expect(authProvider.getToken()).toEqual('Bearer TOK3');
                     done();
                 });

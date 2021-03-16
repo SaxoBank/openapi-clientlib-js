@@ -98,17 +98,17 @@ function mixinEmitter(target) {
         eventSubscribers.push({ onFunction, that, isOne });
     }
 
-    target.one = function(eventType, onFunction, that) {
+    target.one = function (eventType, onFunction, that) {
         addSubscriber(eventType, onFunction, that, true);
         return this;
     };
 
-    target.on = function(eventType, onFunction, that) {
+    target.on = function (eventType, onFunction, that) {
         addSubscriber(eventType, onFunction, that, false);
         return this;
     };
 
-    target.off = function(eventType, onFunction, that) {
+    target.off = function (eventType, onFunction, that) {
         if (eventType) {
             const eventSubscribers = subscribers[eventType];
             if (eventSubscribers) {
@@ -135,7 +135,7 @@ function mixinEmitter(target) {
         return this;
     };
 
-    target.trigger = function(eventType) {
+    target.trigger = function (eventType) {
         const eventSubscribers = subscribers[eventType];
         if (eventSubscribers) {
             const args = Array.prototype.slice.call(arguments, 1);

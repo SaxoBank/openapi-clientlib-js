@@ -42,7 +42,7 @@ function PriceFormatting(numberOptions) {
  * @param {number} [numeratorDecimals=0] - The number of decimal places of the numerator in the case of fractions and modern fractions.
  * @returns {string} The formatting string.
  */
-PriceFormatting.prototype.format = function(
+PriceFormatting.prototype.format = function (
     value,
     decimals,
     formatFlags,
@@ -76,7 +76,7 @@ PriceFormatting.prototype.format = function(
  * @param {number} [numeratorDecimals=0] - The number of decimal places of the numerator in the case of fractions and modern fractions.
  * @returns {saxo.PriceParts} formatted price parts.
  */
-PriceFormatting.prototype.formatPriceParts = function(
+PriceFormatting.prototype.formatPriceParts = function (
     value,
     decimals,
     formatFlags,
@@ -100,7 +100,7 @@ PriceFormatting.prototype.formatPriceParts = function(
  * @param {string} [templateStr="{Pre}{First}{Pips}<small>{DeciPips}</small>{Post}"] - The template string to use.
  * @returns {string} A formatted string.
  */
-PriceFormatting.prototype.formatTemplated = function(
+PriceFormatting.prototype.formatTemplated = function (
     value,
     decimals,
     formatFlags,
@@ -127,7 +127,7 @@ PriceFormatting.prototype.formatTemplated = function(
  * @param {string|Object.<string, boolean>} formatFlags - The format flags to use when parsing - see {@link saxo.priceFormatOptions}.
  * @returns {number}
  */
-PriceFormatting.prototype.parse = function(str, decimals, formatFlags) {
+PriceFormatting.prototype.parse = function (str, decimals, formatFlags) {
     return parsePrice(this.numberFormatting, str, decimals, formatFlags);
 };
 
@@ -136,7 +136,9 @@ PriceFormatting.prototype.parse = function(str, decimals, formatFlags) {
  * @param {{integer: boolean, negative: boolean, price: boolean, numbers: boolean}} includeScenarios - The scenarios to get prices for.
  * @returns {string}
  */
-PriceFormatting.prototype.getValidPriceCharacters = function(includeScenarios) {
+PriceFormatting.prototype.getValidPriceCharacters = function (
+    includeScenarios,
+) {
     return getValidPriceCharacters(this.numberFormatting, includeScenarios);
 };
 
@@ -145,7 +147,7 @@ PriceFormatting.prototype.getValidPriceCharacters = function(includeScenarios) {
  * @param {{integer: boolean, negative: boolean, price: boolean, numbers: boolean}} includeScenarios - The scenarios to get prices for.
  * @returns {RegExp}
  */
-PriceFormatting.prototype.getValidPriceRegex = function(includeScenarios) {
+PriceFormatting.prototype.getValidPriceRegex = function (includeScenarios) {
     return getValidPriceRegex(this.numberFormatting, includeScenarios);
 };
 
@@ -153,7 +155,7 @@ PriceFormatting.prototype.getValidPriceRegex = function(includeScenarios) {
  * Returns the character that should be used as the modern fractions seperator
  * @returns {String}
  */
-PriceFormatting.prototype.getModernFractionsSeparator = function() {
+PriceFormatting.prototype.getModernFractionsSeparator = function () {
     return getModernFractionsSeparator(this.numberFormatting);
 };
 

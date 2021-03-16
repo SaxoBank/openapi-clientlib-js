@@ -66,7 +66,7 @@
         "mockdate": "3.0.3",
         "nodemon": "2.0.2",
         "npm-run-all": "4.1.5",
-        "prettier": "1.19.1",
+        "prettier": "2.2.1",
         "protobufjs": "6.8.9",
         "regenerator-runtime": "0.13.7",
         "rimraf": "3.0.2",
@@ -77,6 +77,18 @@
         "trailingComma": "all",
         "tabWidth": 4,
         "singleQuote": true,
-        "arrowParens": "always"
+        "arrowParens": "always",
+        "endOfLine": "auto",
+        "overrides": [
+            {
+                "files": [
+                    "package.json",
+                    "package-lock.json"
+                ],
+                "options": {
+                    "endOfLine": "lf"
+                }
+            }
+        ]
     }
 }

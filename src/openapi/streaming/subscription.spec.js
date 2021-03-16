@@ -43,11 +43,11 @@ describe('openapi StreamingSubscription', () => {
         errorSpy = jest.fn().mockName('error');
         networkErrorSpy = jest.fn().mockName('networkEror');
         authManager = { getAuth: jest.fn() };
-        authManager.getAuth.mockImplementation(function() {
+        authManager.getAuth.mockImplementation(function () {
             return { token: 'TOKEN' };
         });
     });
-    afterEach(function() {
+    afterEach(function () {
         uninstallClock();
     });
 

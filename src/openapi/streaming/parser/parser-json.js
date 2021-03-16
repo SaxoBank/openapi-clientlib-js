@@ -18,15 +18,15 @@ ParserJson.prototype = Object.create(ParserBase.prototype, {
     },
 });
 
-ParserJson.prototype.parse = function(data, schemaName) {
+ParserJson.prototype.parse = function (data, schemaName) {
     return data;
 };
 
-ParserJson.prototype.stringify = function(data, schemaName) {
+ParserJson.prototype.stringify = function (data, schemaName) {
     return JSON.stringify(data);
 };
 
-ParserJson.prototype.getFormatName = function() {
+ParserJson.prototype.getFormatName = function () {
     return ParserJson.FORMAT_NAME;
 };
 

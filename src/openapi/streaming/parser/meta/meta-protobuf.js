@@ -84,7 +84,7 @@ function MetaProtobuf() {}
  * @param {Object} data - JSON object. Object get's mutated.
  * @return {Object} The result of meta processing.
  */
-MetaProtobuf.prototype.process = function(message, data) {
+MetaProtobuf.prototype.process = function (message, data) {
     if (!message || !data) {
         return data;
     }

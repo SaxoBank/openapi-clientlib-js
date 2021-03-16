@@ -26,7 +26,7 @@ function format(sTemplate, args) {
     if (typeof args !== 'object') {
         args = Array.prototype.slice.call(arguments, 1);
     }
-    return sTemplate.replace(formatRx, function(capture, p1) {
+    return sTemplate.replace(formatRx, function (capture, p1) {
         return args[p1] === undefined ? '{' + p1 + '}' : args[p1];
     });
 }

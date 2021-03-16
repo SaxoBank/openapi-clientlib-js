@@ -16,12 +16,12 @@ describe('openapi TransportRetry', () => {
         installClock();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         uninstallClock();
     });
 
     it('does not require options', () => {
-        expect(function() {
+        expect(function () {
             transportRetry = new TransportRetry(transport);
         }).not.toThrow();
     });
@@ -88,7 +88,7 @@ describe('openapi TransportRetry', () => {
         const deletePromise = transportRetry.delete();
         expect(transport.delete.mock.calls.length).toEqual(1);
         transport.deleteResolve({ status: 200, response: 'test' });
-        setTimeout(function() {
+        setTimeout(function () {
             let isResolved = false;
             deletePromise.then(() => {
                 isResolved = true;
@@ -107,7 +107,7 @@ describe('openapi TransportRetry', () => {
         });
 
         const postPromise = transportRetry.post();
-        setTimeout(function() {
+        setTimeout(function () {
             expect(transport.post.mock.calls.length).toEqual(1);
             transport.postReject({ status: 404, response: 'test' });
             let isRejected = false;

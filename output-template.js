@@ -1,14 +1,14 @@
 ﻿/*
  *  'OUTPUT_NAME' 'OUTPUT_VERSION'
  */
-(function(global) {
+(function (global) {
     'use strict';
 
     /*SPLIT PLACEHOLDER FOR ROLLUP*/
 
     // umd definition. First check if requirejs is running
     if (typeof define === 'function' && define.amd) {
-        define([], function() {
+        define([], function () {
             return 'EXPORT_PLACEHOLDER';
         });
     } else {

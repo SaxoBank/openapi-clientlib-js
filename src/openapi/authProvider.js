@@ -208,13 +208,13 @@ function AuthProvider(options) {
         expiry = toAbsoluteTokenExpiry(expiry);
     }
 
-    this.getToken = function() {
+    this.getToken = function () {
         return token;
     };
-    this.getExpiry = function() {
+    this.getExpiry = function () {
         return expiry;
     };
-    this.set = function(newToken, newExpiry) {
+    this.set = function (newToken, newExpiry) {
         token = addBearer(newToken);
         expiry = newExpiry;
     };
@@ -251,14 +251,14 @@ function AuthProvider(options) {
 }
 /* eslint-enable complexity */
 
-AuthProvider.prototype.isFetchingNewToken = function() {
+AuthProvider.prototype.isFetchingNewToken = function () {
     return !(this.state & STATE_WAITING && this.retries === 0);
 };
 
 /**
  * Refresh the open api token if we are not already doing so
  */
-AuthProvider.prototype.refreshOpenApiToken = function() {
+AuthProvider.prototype.refreshOpenApiToken = function () {
     const isFetching = this.isFetchingNewToken();
 
     if (isFetching) {
@@ -272,7 +272,7 @@ AuthProvider.prototype.refreshOpenApiToken = function() {
  * Call this method when a 401 unauthenticated is received
  * See also {@link TransportAuth.onTokenInvalid}.
  */
-AuthProvider.prototype.tokenRejected = function(expiryOfRejectedToken) {
+AuthProvider.prototype.tokenRejected = function (expiryOfRejectedToken) {
     const isFetching = this.isFetchingNewToken();
 
     const currentAuthExpiry = this.getExpiry();
@@ -379,7 +379,7 @@ AuthProvider.prototype.EVENT_TOKEN_REFRESH_FAILED = 'tokenRefreshFailed';
 /**
  * Stops the AuthProvider from refreshing the token.
  */
-AuthProvider.prototype.dispose = function() {
+AuthProvider.prototype.dispose = function () {
     if (this.tokenRefreshTimer) {
         clearTimeout(this.tokenRefreshTimer);
     }
