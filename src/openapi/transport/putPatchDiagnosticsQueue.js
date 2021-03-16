@@ -13,7 +13,7 @@ const LOG_AREA = 'TransportPutPatchDiagnositicsQueue';
 // -- Local methods section --
 
 function putPatchTransportMethod(method) {
-    return function() {
+    return function () {
         const transport = this.isQueueing
             ? this.transportQueue
             : this.transport;
@@ -22,7 +22,7 @@ function putPatchTransportMethod(method) {
 }
 
 function otherMethodTransport(method) {
-    return function() {
+    return function () {
         return this.transport[method].apply(this.transport, arguments);
     };
 }

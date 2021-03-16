@@ -37,7 +37,7 @@ function SubscriptionQueue() {
  * @param {Object} queuedItem - action with arguments to add to the queue.
  */
 /* eslint-disable-next-line complexity */
-SubscriptionQueue.prototype.enqueue = function(queuedItem) {
+SubscriptionQueue.prototype.enqueue = function (queuedItem) {
     if (!queuedItem.action) {
         throw new Error('Subscription queued action is invalid');
     }
@@ -101,7 +101,7 @@ SubscriptionQueue.prototype.enqueue = function(queuedItem) {
  * We know at that point we do not need any follow up patches
  * or subscribes.
  */
-SubscriptionQueue.prototype.clearPatches = function() {
+SubscriptionQueue.prototype.clearPatches = function () {
     const newItems = [];
     let reachedNonPatchSubscribe = false;
     for (let i = 0; i < this.items.length; i++) {
@@ -124,7 +124,7 @@ SubscriptionQueue.prototype.clearPatches = function() {
  * Returns the action from the beginning of a queue without removing it.
  * @return {Number} Next action.
  */
-SubscriptionQueue.prototype.peekAction = function() {
+SubscriptionQueue.prototype.peekAction = function () {
     if (this.isEmpty()) {
         return undefined;
     }
@@ -135,7 +135,7 @@ SubscriptionQueue.prototype.peekAction = function() {
  * Removes and returns the action from the beginning of a queue.
  * @return {Number|undefined} First action, if queue is not empty. Otherwise undefined.
  */
-SubscriptionQueue.prototype.dequeue = function() {
+SubscriptionQueue.prototype.dequeue = function () {
     if (this.isEmpty()) {
         return undefined;
     }
@@ -165,7 +165,7 @@ SubscriptionQueue.prototype.dequeue = function() {
 /**
  * Resets queue.
  */
-SubscriptionQueue.prototype.reset = function() {
+SubscriptionQueue.prototype.reset = function () {
     this.items = [];
 };
 
@@ -173,7 +173,7 @@ SubscriptionQueue.prototype.reset = function() {
  * Returns true if queue is empty.
  * @return {boolean} True if empty.
  */
-SubscriptionQueue.prototype.isEmpty = function() {
+SubscriptionQueue.prototype.isEmpty = function () {
     return this.items.length === 0;
 };
 

@@ -821,7 +821,7 @@ Streaming.prototype.READABLE_CONNECTION_STATE_MAP =
  * @param {function} [options.onQueueEmpty] - A callback function that is invoked after the last action is dequeued.
  * @returns {saxo.openapi.StreamingSubscription} A subscription object.
  */
-Streaming.prototype.createSubscription = function(
+Streaming.prototype.createSubscription = function (
     servicePath,
     url,
     subscriptionArgs,
@@ -867,7 +867,7 @@ Streaming.prototype.createSubscription = function(
  *
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to start.
  */
-Streaming.prototype.subscribe = function(subscription) {
+Streaming.prototype.subscribe = function (subscription) {
     subscription.onSubscribe();
 };
 
@@ -879,7 +879,7 @@ Streaming.prototype.subscribe = function(subscription) {
  * @param {Object} args - The target arguments of modified subscription.
  * @param {Object} options - Options for subscription modification.
  */
-Streaming.prototype.modify = function(subscription, args, options) {
+Streaming.prototype.modify = function (subscription, args, options) {
     subscription.onModify(args, options);
 };
 
@@ -888,7 +888,7 @@ Streaming.prototype.modify = function(subscription, args, options) {
  *
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to stop.
  */
-Streaming.prototype.unsubscribe = function(subscription) {
+Streaming.prototype.unsubscribe = function (subscription) {
     subscription.onUnsubscribe();
 };
 
@@ -897,7 +897,7 @@ Streaming.prototype.unsubscribe = function(subscription) {
  *
  * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to stop and remove.
  */
-Streaming.prototype.disposeSubscription = function(subscription) {
+Streaming.prototype.disposeSubscription = function (subscription) {
     this.unsubscribe(subscription);
     removeSubscription.call(this, subscription);
 };
@@ -910,7 +910,7 @@ Streaming.prototype.disposeSubscription = function(subscription) {
  * @param {string} url - the url of the subscriptions to unsubscribe
  * @param {string} tag - the tag of the subscriptions to unsubscribe
  */
-Streaming.prototype.unsubscribeByTag = function(servicePath, url, tag) {
+Streaming.prototype.unsubscribeByTag = function (servicePath, url, tag) {
     unsubscribeSubscriptionByTag.call(this, servicePath, url, tag, false);
 };
 
@@ -921,7 +921,11 @@ Streaming.prototype.unsubscribeByTag = function(servicePath, url, tag) {
  * @param {string} url - the url of the subscriptions to unsubscribe
  * @param {string} tag - the tag of the subscriptions to unsubscribe
  */
-Streaming.prototype.disposeSubscriptionByTag = function(servicePath, url, tag) {
+Streaming.prototype.disposeSubscriptionByTag = function (
+    servicePath,
+    url,
+    tag,
+) {
     unsubscribeSubscriptionByTag.call(this, servicePath, url, tag, true);
 };
 
@@ -929,14 +933,14 @@ Streaming.prototype.disposeSubscriptionByTag = function(servicePath, url, tag) {
  * This disconnects the current socket. We will follow normal reconnection logic to try and restore the connection.
  * It *will not* stop the subscription (see dispose for that). It is useful for testing reconnect logic works or for resetting all subscriptions.
  */
-Streaming.prototype.disconnect = function() {
+Streaming.prototype.disconnect = function () {
     this.connection.stop();
 };
 
 /**
  * Shuts down streaming.
  */
-Streaming.prototype.dispose = function() {
+Streaming.prototype.dispose = function () {
     this.disposed = true;
 
     this.orphanFinder.stop();
@@ -958,13 +962,13 @@ Streaming.prototype.dispose = function() {
     this.disconnect();
 };
 
-Streaming.prototype.getQuery = function() {
+Streaming.prototype.getQuery = function () {
     if (this.connection) {
         return this.connection.getQuery();
     }
 };
 
-Streaming.prototype.setOptions = function(options) {
+Streaming.prototype.setOptions = function (options) {
     options = options || {};
 
     const {
@@ -1007,7 +1011,7 @@ Streaming.prototype.setOptions = function(options) {
     }
 };
 
-Streaming.prototype.resetStreaming = function(baseUrl, options = {}) {
+Streaming.prototype.resetStreaming = function (baseUrl, options = {}) {
     this.baseUrl = baseUrl;
     this.setOptions({ ...this.options, ...options });
 
@@ -1038,7 +1042,7 @@ Streaming.prototype.resetStreaming = function(baseUrl, options = {}) {
     this.disconnect();
 };
 
-Streaming.prototype.getActiveTransportName = function() {
+Streaming.prototype.getActiveTransportName = function () {
     const activeTransport = this.connection.getTransport();
 
     return activeTransport && activeTransport.name;

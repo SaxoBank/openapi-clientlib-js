@@ -10,21 +10,21 @@ function ParserBase(name, engine = null) {
     this.engine = engine;
 }
 
-ParserBase.prototype.getSchemaNames = function() {};
+ParserBase.prototype.getSchemaNames = function () {};
 
-ParserBase.prototype.getSchemaType = function(schemaName, schemaType) {};
+ParserBase.prototype.getSchemaType = function (schemaName, schemaType) {};
 
-ParserBase.prototype.getSchemaName = function(name) {};
+ParserBase.prototype.getSchemaName = function (name) {};
 
-ParserBase.prototype.getSchema = function(name) {};
+ParserBase.prototype.getSchema = function (name) {};
 
-ParserBase.prototype.addSchema = function(schema, name) {};
+ParserBase.prototype.addSchema = function (schema, name) {};
 
-ParserBase.prototype.parse = function(data, schemaName) {};
+ParserBase.prototype.parse = function (data, schemaName) {};
 
-ParserBase.prototype.stringify = function(data, schemaName) {};
+ParserBase.prototype.stringify = function (data, schemaName) {};
 
-ParserBase.prototype.getFormatName = function() {
+ParserBase.prototype.getFormatName = function () {
     return this.prototype.FORMAT_NAME;
 };
 

@@ -11,7 +11,7 @@ describe('openapi TransportCore', () => {
         installClock();
     });
 
-    afterEach(function() {
+    afterEach(function () {
         uninstallClock();
     });
 

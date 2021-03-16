@@ -77,6 +77,18 @@
         "trailingComma": "all",
         "tabWidth": 4,
         "singleQuote": true,
-        "arrowParens": "always"
+        "arrowParens": "always",
+        "endOfLine": "auto",
+        "overrides": [
+            {
+                "files": [
+                    "package.json",
+                    "package-lock.json"
+                ],
+                "options": {
+                    "endOfLine": "lf"
+                }
+            }
+        ]
     }
 }

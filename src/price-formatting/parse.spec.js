@@ -45,7 +45,7 @@ function testConversionChanged(
 }
 
 describe('price-formatting parse', () => {
-    it('does the basics', function() {
+    it('does the basics', function () {
         testConversion(0, 1);
         testConversion(0, 4);
         testConversion(0, 8);
@@ -75,7 +75,7 @@ describe('price-formatting parse', () => {
         ]);
     });
 
-    it('handles Special Futures Format - 32', function() {
+    it('handles Special Futures Format - 32', function () {
         testConversion(2567.90625, 5, priceFormatOptions.ModernFractions);
 
         testConversion(2567.21875, 5, priceFormatOptions.ModernFractions);
@@ -116,7 +116,7 @@ describe('price-formatting parse', () => {
         testConversion(-2567.9921875, 5, priceFormatOptions.ModernFractions, 2);
     });
 
-    it('handles Special Futures Format - 64', function() {
+    it('handles Special Futures Format - 64', function () {
         testConversion(2567.21875, 6, priceFormatOptions.ModernFractions);
 
         testConversion(2567.21875, 6, priceFormatOptions.ModernFractions, 1);
@@ -137,7 +137,7 @@ describe('price-formatting parse', () => {
         testConversion(0, 6, priceFormatOptions.ModernFractions, 2);
     });
 
-    it('handles invalid Special Futures Format values', function() {
+    it('handles invalid Special Futures Format values', function () {
         const prices = new PriceFormatting();
 
         expect(
@@ -172,7 +172,7 @@ describe('price-formatting parse', () => {
         ).toEqual(NaN);
     });
 
-    it('handles misc scenarios', function() {
+    it('handles misc scenarios', function () {
         // Percentage
         testConversion(0.1233, 2, priceFormatOptions.Percentage);
 
@@ -188,7 +188,7 @@ describe('price-formatting parse', () => {
         );
     });
 
-    it('handles daDK', function() {
+    it('handles daDK', function () {
         testConversion(1.23451, 5, null, 0, da_dk);
 
         testConversion(1234567.2345, 4, null, 0, da_dk);
@@ -198,7 +198,7 @@ describe('price-formatting parse', () => {
         testConversion(42.0625, 5, priceFormatOptions.Fractions, 0, da_dk);
     });
 
-    it('handles frFR', function() {
+    it('handles frFR', function () {
         testConversion(1.23451, 5, null, 0, fr_fr);
 
         testConversion(1234567.2345, 4, null, 0, fr_fr);
@@ -208,17 +208,17 @@ describe('price-formatting parse', () => {
         testConversion(42.0625, 5, priceFormatOptions.Fractions, 0, fr_fr);
     });
 
-    it('handles arEG', function() {
+    it('handles arEG', function () {
         testConversion(1.2345, 4, priceFormatOptions.Normal, 0, ar_eg);
     });
 
-    it('handles hiIN', function() {
+    it('handles hiIN', function () {
         testConversion(1.2345, 4, null, 0, hi_in);
 
         testConversion(1234567.2345, 4, null, 0, hi_in);
     });
 
-    it('supports format with deci-pips', function() {
+    it('supports format with deci-pips', function () {
         testConversion(1789.2, 1, priceFormatOptions.AllowDecimalPips);
 
         testConversion(1789.25, 1, priceFormatOptions.AllowDecimalPips);

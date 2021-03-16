@@ -171,7 +171,7 @@ function SignalrCoreTransport(baseUrl, transportFailCallback = NOOP) {
     }
 }
 
-SignalrCoreTransport.isSupported = function() {
+SignalrCoreTransport.isSupported = function () {
     return (
         window.signalrCore &&
         typeof window.signalrCore.HubConnectionBuilder === 'function' &&
@@ -184,7 +184,7 @@ SignalrCoreTransport.isSupported = function() {
     );
 };
 
-SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
+SignalrCoreTransport.prototype.start = function (options, onStartCallback) {
     if (this.connection) {
         log.warn(
             LOG_AREA,
@@ -277,7 +277,7 @@ SignalrCoreTransport.prototype.start = function(options, onStartCallback) {
         });
 };
 
-SignalrCoreTransport.prototype.stop = function(hasTransportError) {
+SignalrCoreTransport.prototype.stop = function (hasTransportError) {
     if (!this.connection) {
         log.warn(LOG_AREA, "connection doesn't exist");
         return;
@@ -308,7 +308,7 @@ SignalrCoreTransport.prototype.stop = function(hasTransportError) {
     return sendCloseMessage().then(() => this.connection.stop());
 };
 
-SignalrCoreTransport.prototype.createMessageStream = function(protocol) {
+SignalrCoreTransport.prototype.createMessageStream = function (protocol) {
     if (!this.connection) {
         log.warn(
             LOG_AREA,
@@ -335,7 +335,7 @@ SignalrCoreTransport.prototype.createMessageStream = function(protocol) {
     this.messageStream = messageStream;
 };
 
-SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
+SignalrCoreTransport.prototype.handleConnectionClosure = function (error) {
     if (error) {
         log.error(LOG_AREA, 'connection closed abruptly', { error });
     }
@@ -360,7 +360,10 @@ SignalrCoreTransport.prototype.handleConnectionClosure = function(error) {
     this.setState(constants.CONNECTION_STATE_DISCONNECTED);
 };
 
-SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
+SignalrCoreTransport.prototype.handleNextMessage = function (
+    message,
+    protocol,
+) {
     if (!this.connection) {
         log.warn(
             LOG_AREA,
@@ -396,7 +399,7 @@ SignalrCoreTransport.prototype.handleNextMessage = function(message, protocol) {
     }
 };
 
-SignalrCoreTransport.prototype.handleMessageStreamError = function(error) {
+SignalrCoreTransport.prototype.handleMessageStreamError = function (error) {
     // It will be called if signalr failed to send message to start streaming
     // or if connection is closed with some error
     // only handle the 1st case since connection closing with error is already handled in onclose handler
@@ -411,7 +414,7 @@ SignalrCoreTransport.prototype.handleMessageStreamError = function(error) {
     }
 };
 
-SignalrCoreTransport.prototype.updateQuery = function(
+SignalrCoreTransport.prototype.updateQuery = function (
     authToken,
     contextId,
     authExpiry,
@@ -431,7 +434,7 @@ SignalrCoreTransport.prototype.updateQuery = function(
     }
 };
 
-SignalrCoreTransport.prototype.renewSession = function() {
+SignalrCoreTransport.prototype.renewSession = function () {
     if (
         !this.connection ||
         this.state !== constants.CONNECTION_STATE_CONNECTED
@@ -517,24 +520,24 @@ SignalrCoreTransport.prototype.renewSession = function() {
         });
 };
 
-SignalrCoreTransport.prototype.setState = function(state) {
+SignalrCoreTransport.prototype.setState = function (state) {
     this.state = state;
     this.stateChangedCallback(state);
 };
 
-SignalrCoreTransport.prototype.setStateChangedCallback = function(callback) {
+SignalrCoreTransport.prototype.setStateChangedCallback = function (callback) {
     this.stateChangedCallback = callback;
 };
 
-SignalrCoreTransport.prototype.setReceivedCallback = function(callback) {
+SignalrCoreTransport.prototype.setReceivedCallback = function (callback) {
     this.receivedCallback = callback;
 };
 
-SignalrCoreTransport.prototype.setErrorCallback = function(callback) {
+SignalrCoreTransport.prototype.setErrorCallback = function (callback) {
     this.errorCallback = callback;
 };
 
-SignalrCoreTransport.prototype.setUnauthorizedCallback = function(callback) {
+SignalrCoreTransport.prototype.setUnauthorizedCallback = function (callback) {
     this.unauthorizedCallback = callback;
 };
 

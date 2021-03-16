@@ -19,7 +19,7 @@ const DEFAULT_CACHE = true;
  * @param method
  */
 function generateTransportCall(method) {
-    return function(servicePath, urlTemplate, templateArgs, options) {
+    return function (servicePath, urlTemplate, templateArgs, options) {
         let body;
         let headers = {};
         let cache = this.defaultCache;
@@ -481,7 +481,7 @@ Transport.prototype.options = generateTransportCall('OPTIONS');
  * a X-HTTP-Method-Override header
  * @param {boolean} useXHttpMethodOverride
  */
-Transport.prototype.setUseXHttpMethodOverride = function(
+Transport.prototype.setUseXHttpMethodOverride = function (
     useXHttpMethodOverride,
 ) {
     this.useXHttpMethodOverride = useXHttpMethodOverride;
@@ -496,7 +496,7 @@ Transport.prototype.fetch = fetch;
 /**
  * dispose anything.
  */
-Transport.prototype.dispose = function() {
+Transport.prototype.dispose = function () {
     // here for consistency of api
 };
 

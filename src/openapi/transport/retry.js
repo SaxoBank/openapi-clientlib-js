@@ -8,7 +8,7 @@
 // -- Local methods section --
 
 function transportMethod(method) {
-    return function() {
+    return function () {
         // checking if http method call should be handled by RetryTransport
         if (
             this.methods[method] &&
@@ -125,7 +125,7 @@ TransportRetry.prototype.options = transportMethod('options');
  * @protected
  * @param transportCall
  */
-TransportRetry.prototype.sendTransportCall = function(transportCall) {
+TransportRetry.prototype.sendTransportCall = function (transportCall) {
     this.transport[transportCall.method]
         .apply(this.transport, transportCall.args)
         .then(transportCall.resolve, (response) => {
@@ -163,7 +163,7 @@ TransportRetry.prototype.sendTransportCall = function(transportCall) {
  * @protected
  * @param transportCall
  */
-TransportRetry.prototype.addFailedCall = function(transportCall) {
+TransportRetry.prototype.addFailedCall = function (transportCall) {
     const callOptions = this.methods[transportCall.method];
     if (
         callOptions.retryTimeouts &&
@@ -189,7 +189,7 @@ TransportRetry.prototype.addFailedCall = function(transportCall) {
 /**
  * @protected
  */
-TransportRetry.prototype.retryFailedCalls = function() {
+TransportRetry.prototype.retryFailedCalls = function () {
     this.retryTimer = null;
     while (this.failedCalls.length > 0) {
         this.sendTransportCall(this.failedCalls.shift());
@@ -200,7 +200,7 @@ TransportRetry.prototype.retryFailedCalls = function() {
  * @protected
  * @param transportCall
  */
-TransportRetry.prototype.retryIndividualFailedCall = function(transportCall) {
+TransportRetry.prototype.retryIndividualFailedCall = function (transportCall) {
     transportCall.retryTimer = null;
     const individualFailedCallsIndex = this.individualFailedCalls.indexOf(
         transportCall,
@@ -214,7 +214,7 @@ TransportRetry.prototype.retryIndividualFailedCall = function(transportCall) {
 /**
  * Disposes the underlying transport, the failed calls queue and clears retry timers.
  */
-TransportRetry.prototype.dispose = function() {
+TransportRetry.prototype.dispose = function () {
     this.isDisposed = true;
     this.individualFailedCalls.forEach((failedCall) => {
         if (failedCall.retryTimer != null) {

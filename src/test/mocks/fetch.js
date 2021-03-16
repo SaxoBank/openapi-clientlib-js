@@ -17,8 +17,8 @@
         },
     };
 
-    this.text = function() {
-        return new Promise(function(resolve) {
+    this.text = function () {
+        return new Promise(function (resolve) {
             if (typeof response === 'object') {
                 resolve(JSON.stringify(response));
             } else {
@@ -27,8 +27,8 @@
         });
     };
 
-    this.blob = function() {
-        return new Promise(function(resolve) {
+    this.blob = function () {
+        return new Promise(function (resolve) {
             resolve(response);
         });
     };
@@ -37,13 +37,13 @@
 function mockFetch() {
     const fetch = jest.fn();
     global.fetch = fetch;
-    fetch.mockImplementation(function() {
-        return new Promise(function(resolve, reject) {
+    fetch.mockImplementation(function () {
+        return new Promise(function (resolve, reject) {
             // assign in here so that a particular resolve/reject can be captured
-            fetch.resolve = function(status, data, contentType) {
+            fetch.resolve = function (status, data, contentType) {
                 resolve(new FetchResponse(status, data, contentType));
             };
-            fetch.reject = function(status, data, contentType) {
+            fetch.reject = function (status, data, contentType) {
                 if (status instanceof Error) {
                     reject(status);
                     return;

@@ -17,7 +17,7 @@ const DEFAULT_AUTH_ERRORS_DEBOUNCE_PERIOD = 30000; // ms
 // -- Local methods section --
 
 function makeTransportMethod(method) {
-    return function(servicePath, urlTemplate, templateArgs, options) {
+    return function (servicePath, urlTemplate, templateArgs, options) {
         const newOptions = {
             ...options,
             headers: {
@@ -158,7 +158,7 @@ TransportAuth.prototype.options = makeTransportMethod('options');
 /**
  * Cleanup of error counter map
  */
-TransportAuth.prototype.cleanupAuthErrors = function() {
+TransportAuth.prototype.cleanupAuthErrors = function () {
     const cleanThoseBefore = Date.now() - this.authErrorsDebouncePeriod;
 
     for (const url in this.authorizationErrors) {
@@ -184,7 +184,7 @@ TransportAuth.prototype.cleanupAuthErrors = function() {
  * @param {number} authExpiry - The expiry of the token that was rejected
  * @param {number} timeRequested - The time the request was made
  */
-TransportAuth.prototype.addAuthError = function(
+TransportAuth.prototype.addAuthError = function (
     url,
     authExpiry,
     timeRequested,
@@ -205,7 +205,7 @@ TransportAuth.prototype.addAuthError = function(
  * @param {number} authExpiry - The auth expiry of the request to check
  * @returns {boolean} Whether it is problematic
  */
-TransportAuth.prototype.areUrlAuthErrorsProblematic = function(
+TransportAuth.prototype.areUrlAuthErrorsProblematic = function (
     url,
     authExpiry,
 ) {
@@ -223,7 +223,7 @@ TransportAuth.prototype.areUrlAuthErrorsProblematic = function(
 /**
  * Stops the transport from refreshing the token.
  */
-TransportAuth.prototype.dispose = function() {
+TransportAuth.prototype.dispose = function () {
     clearTimeout(this.errorCleanupTimoutId);
     this.errorCleanupTimoutId = null;
     this.authorizationErrors = {};
