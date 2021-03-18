@@ -1328,10 +1328,8 @@ describe('openapi Streaming', () => {
     describe('resetStreaming', () => {
         let spySocketClose;
         let mockHubConnection;
-        let resolveSignalrCoreStartPromise;
-        let signalrCoreStartPromise;
-        let resolvePlainWebsocketStartPromise;
-        let plainWebsocketStartPromise;
+        let mockSignalrCoreStart;
+        let mockPlainWebsocketStart;
         let mockSignalMessageReceivedHandler;
         let mockStreamCancel;
         let mockCloseConnection;
@@ -1360,20 +1358,18 @@ describe('openapi Streaming', () => {
         beforeEach(() => {
             spySocketClose = jest.fn().mockName('spySocketClose');
 
-            plainWebsocketStartPromise = new Promise((resolve) => {
-                resolvePlainWebsocketStartPromise = resolve;
-            });
-
+            mockPlainWebsocketStart = getResolvablePromise();
             global.WebSocket = jest.fn().mockImplementation(() => {
-                streaming.connection.transport.stateChangedCallback(
-                    connectionConstants.CONNECTION_STATE_CONNECTED,
-                );
-
-                resolvePlainWebsocketStartPromise();
-
-                return {
+                const socket = {
                     close: spySocketClose,
                 };
+
+                setTimeout(() => {
+                    socket.onopen();
+                    mockPlainWebsocketStart.resolve();
+                });
+
+                return socket;
             });
 
             global.signalrCore = {
@@ -1401,16 +1397,9 @@ describe('openapi Streaming', () => {
                     .fn()
                     .mockName('signalrConnectionStart')
                     .mockImplementation(() => {
-                        signalrCoreStartPromise = new Promise(
-                            (resolve) =>
-                                (resolveSignalrCoreStartPromise = () => {
-                                    streaming.connection.transport.stateChangedCallback(
-                                        connectionConstants.CONNECTION_STATE_CONNECTED,
-                                    );
-                                    resolve();
-                                }),
-                        );
-                        return signalrCoreStartPromise;
+                        mockSignalrCoreStart = getResolvablePromise();
+
+                        return mockSignalrCoreStart.promise;
                     }),
                 stream: jest
                     .fn()
@@ -1448,7 +1437,7 @@ describe('openapi Streaming', () => {
 
             fetchMock.resolve(200);
 
-            plainWebsocketStartPromise.then(() => {
+            mockPlainWebsocketStart.promise.then(() => {
                 expect(subscription.onUnsubscribe).not.toHaveBeenCalled();
 
                 streaming.resetStreaming('newStreamingUrl', {
@@ -1483,7 +1472,7 @@ describe('openapi Streaming', () => {
 
             fetchMock.resolve(200);
 
-            plainWebsocketStartPromise.then(() => {
+            mockPlainWebsocketStart.promise.then(() => {
                 expect(subscription.reset).toHaveBeenCalled();
 
                 done();
@@ -1513,9 +1502,9 @@ describe('openapi Streaming', () => {
                 resolveResetStreamingPromise();
             });
 
-            resolveSignalrCoreStartPromise();
+            mockSignalrCoreStart.resolve();
 
-            signalrCoreStartPromise
+            mockSignalrCoreStart.promise
                 .then(() => {
                     // push invalid message which should trigger disconnection and fallback
                     mockSignalMessageReceivedHandler({
@@ -1540,7 +1529,7 @@ describe('openapi Streaming', () => {
                 .then(() => {
                     fetchMock.resolve(200);
 
-                    return plainWebsocketStartPromise;
+                    return mockPlainWebsocketStart.promise;
                 })
                 .then(() => {
                     expect(subscription.reset).toHaveBeenCalled();
@@ -1568,6 +1557,129 @@ describe('openapi Streaming', () => {
             });
 
             expect(streaming.retryCount).toEqual(0);
+        });
+    });
+
+    describe('pause/resume streaming', () => {
+        let streaming;
+        let subscription;
+        let mockConnectionStart;
+        let prevReferenceId;
+
+        beforeEach(() => {
+            mockConnection.start.mockImplementation((options, callback) => {
+                mockConnectionStart = getResolvablePromise();
+                setTimeout(() => {
+                    streaming.connection.transport.stateChangedCallback(
+                        connectionConstants.CONNECTION_STATE_CONNECTED,
+                    );
+                    mockConnectionStart.resolve();
+                });
+            });
+
+            mockConnection.stop.mockImplementation(() => {
+                streaming.connection.transport.stateChangedCallback(
+                    connectionConstants.CONNECTION_STATE_DISCONNECTED,
+                );
+            });
+
+            streaming = new Streaming(transport, 'testUrl', authProvider);
+
+            mockConnectionStart.promise.then(() => {
+                subscription = streaming.createSubscription('test', 'v1/url');
+                prevReferenceId = subscription.referenceId;
+            });
+        });
+
+        it('should pause and resume streaming', (done) => {
+            mockConnectionStart.promise
+                .then(() => {
+                    expect(transport.post).toHaveBeenCalledWith(
+                        'test',
+                        'v1/url',
+                        null,
+                        expect.objectContaining({
+                            body: expect.objectContaining({
+                                ContextId: '0000000000',
+                                ReferenceId: prevReferenceId,
+                            }),
+                        }),
+                    );
+
+                    // set subscription status to connected
+                    transport.postResolve({
+                        status: '200',
+                        response: { Snapshot: { Data: [1, 'fish', 3] } },
+                    });
+
+                    return Promise.resolve();
+                })
+                .then(() => {
+                    expect(subscription.currentState).toBe(
+                        subscription.STATE_SUBSCRIBED,
+                    );
+
+                    transport.post.mockClear();
+
+                    streaming.pause();
+
+                    // should delete subscription immediately
+                    expect(transport.delete).toHaveBeenCalledWith(
+                        'test',
+                        'v1/url/{contextId}/{referenceId}',
+                        {
+                            contextId: '0000000000',
+                            referenceId: prevReferenceId,
+                        },
+                    );
+
+                    transport.deleteResolve();
+
+                    return Promise.resolve();
+                })
+                .then(() => {
+                    expect(subscription.currentState).toBe(
+                        subscription.STATE_UNSUBSCRIBED,
+                    );
+
+                    // should not subscribe until connection is available again
+                    expect(transport.post).not.toHaveBeenCalledWith(
+                        'test',
+                        'v1/url',
+                        null,
+                        expect.objectContaining({
+                            body: expect.objectContaining({
+                                ContextId: '0000000000',
+                            }),
+                        }),
+                    );
+
+                    streaming.resume();
+
+                    // wait for new start promise
+                    return mockConnectionStart.promise;
+                })
+                .then(() => {
+                    expect(prevReferenceId).not.toEqual(
+                        subscription.referenceId,
+                    );
+                    expect(transport.post).toHaveBeenCalledWith(
+                        'test',
+                        'v1/url',
+                        null,
+                        expect.objectContaining({
+                            body: expect.objectContaining({
+                                ContextId: '0000000000',
+                                ReferenceId: subscription.referenceId,
+                            }),
+                        }),
+                    );
+
+                    expect(subscription.currentState).toBe(
+                        subscription.STATE_SUBSCRIBE_REQUESTED,
+                    );
+                    done();
+                });
         });
     });
 });

@@ -223,7 +223,7 @@ function onConnectionStateChanged(nextState) {
 
     this.trigger(this.EVENT_CONNECTION_STATE_CHANGED, this.connectionState);
 
-    if (this.disposed) {
+    if (this.disposed || this.paused) {
         return;
     }
 
@@ -727,6 +727,7 @@ function Streaming(transport, baseUrl, authProvider, options) {
     this.transport = transport;
     this.subscriptions = [];
     this.isReset = false;
+    this.paused = false;
 
     this.setOptions({ ...DEFAULT_STREAMING_OPTIONS, ...options });
 
@@ -937,6 +938,37 @@ Streaming.prototype.disconnect = function () {
     this.connection.stop();
 };
 
+Streaming.prototype.pause = function () {
+    this.paused = true;
+
+    if (this.reconnecting) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnecting = false;
+        this.retryCount = 0;
+    }
+
+    this.orphanFinder.stop();
+
+    for (let i = 0; i < this.subscriptions.length; i++) {
+        const subscription = this.subscriptions[i];
+        // Reset the subscription and mark it as not having a connection so its state becomes unsubscribed
+        // next action if there is any i.e. subscribe will go in the queue until the connection is available again
+        subscription.reset();
+        subscription.onConnectionUnavailable();
+    }
+
+    this.disconnect();
+};
+
+Streaming.prototype.resume = function () {
+    if (!this.paused) {
+        return;
+    }
+
+    this.paused = false;
+    connect.call(this);
+};
+
 /**
  * Shuts down streaming.
  */
@@ -1046,6 +1078,10 @@ Streaming.prototype.getActiveTransportName = function () {
     const activeTransport = this.connection.getTransport();
 
     return activeTransport && activeTransport.name;
+};
+
+Streaming.prototype.isPaused = function () {
+    return this.paused;
 };
 
 // -- Export section --
