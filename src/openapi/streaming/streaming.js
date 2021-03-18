@@ -938,7 +938,7 @@ Streaming.prototype.disconnect = function () {
     this.connection.stop();
 };
 
-Streaming.prototype.pause = function() {
+Streaming.prototype.pause = function () {
     this.paused = true;
 
     if (this.reconnecting) {
@@ -960,7 +960,7 @@ Streaming.prototype.pause = function() {
     this.disconnect();
 };
 
-Streaming.prototype.resume = function() {
+Streaming.prototype.resume = function () {
     if (!this.paused) {
         return;
     }
@@ -1080,7 +1080,7 @@ Streaming.prototype.getActiveTransportName = function () {
     return activeTransport && activeTransport.name;
 };
 
-Streaming.prototype.isPaused = function() {
+Streaming.prototype.isPaused = function () {
     return this.paused;
 };
 
