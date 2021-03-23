@@ -1,8 +1,12 @@
 {
-	"presets": [
-	    ["@babel/preset-env", {
-			"loose": true,
-			"spec": false
-		}]
-	]
+    "presets": [
+        [
+            "@babel/preset-env",
+            {
+                "loose": true,
+                "spec": false
+            }
+        ],
+        "@babel/preset-typescript"
+    ]
 }

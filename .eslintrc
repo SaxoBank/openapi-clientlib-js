@@ -1,7 +1,7 @@
 {
     "root": true,
     "parserOptions": {
-        "ecmaVersion": 2019,
+        "ecmaVersion": 2020,
         "sourceType": "module"
     },
     "plugins": ["import", "destructuring", "switch-case", "promise"],
@@ -443,7 +443,7 @@
     },
     "overrides": [
         {
-            "files": ["*.spec.js", "src/test/**/*"],
+            "files": ["*.spec.js", "src/test/**/*.js"],
             "env": {
                 "jest": true
             },
@@ -472,6 +472,18 @@
                 "import/no-commonjs": "off",
                 "import/no-nodejs-modules": "off"
             }
+        },
+        {
+            "files": [
+                "** /*.ts"
+            ],
+            "parser": "@typescript-eslint/parser",
+            "plugins": [
+                "@typescript-eslint"
+            ],
+            "extends": [
+                "plugin:@typescript-eslint/recommended"
+            ]
         }
     ]
 }
