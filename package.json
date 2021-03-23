@@ -9,7 +9,7 @@
         "ts": "tsc",
         "ts:watch": "tsc --watch",
         "build:doc": "rimraf doc && jsdoc src --destination doc",
-        "clean": "rimraf dist",
+        "clean": "rimraf esnext",
         "check": "npm-run-all -p lint prettier:check test",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
@@ -27,7 +27,7 @@
         "verbose": true,
         "testPathIgnorePatterns": [
             "/node_modules/",
-            "/dist/"
+            "/esnext/"
         ],
         "transform": {
             "^.+\\.[jt]sx?$": "babel-jest"
@@ -38,12 +38,12 @@
         ],
         "testEnvironment": "jsdom",
         "restoreMocks": true,
-        "coverageDirectory": "dist/coverage/"
+        "coverageDirectory": "coverage/"
     },
-    "main": "dist/esnext/openapi-client.js",
-    "types": "dist/esnext/",
+    "main": "esnext/index.js",
+    "types": "esnext",
     "files": [
-        "dist"
+        "esnext"
     ],
     "repository": {
         "type": "git",

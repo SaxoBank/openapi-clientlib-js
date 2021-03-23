@@ -13,7 +13,7 @@ It also has hooks for custom conversion of data and mocked data as well as a bun
 2. Install Node Modules  
 `npm install`
 4. Run tasks
-`npm run dist` build distribution  
+`npm run build` build distribution  
 `npm run check` check lint errors and run unit tests
 
 ## Publishing
