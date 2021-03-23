@@ -9,6 +9,7 @@ import mockAuthProvider from '../../../../test/mocks/authProvider';
 import * as constants from '../constants';
 import jsonPayload from './payload.json';
 import SignalrCoreTransport from './signalr-core-transport';
+import 'fast-text-encoding';
 
 const CONTEXT_ID = '0000000000';
 const BASE_URL = 'testUrl';

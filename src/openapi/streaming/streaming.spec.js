@@ -13,6 +13,7 @@ import mockFetch from '../../test/mocks/fetch';
 import Streaming, { findRetryDelay } from './streaming';
 import * as connectionConstants from './connection/constants';
 import * as streamingTransports from './connection/transportTypes';
+import 'fast-text-encoding';
 
 describe('openapi Streaming', () => {
     let stateChangedCallback;

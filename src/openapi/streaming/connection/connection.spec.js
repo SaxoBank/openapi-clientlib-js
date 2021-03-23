@@ -1,5 +1,6 @@
 import Connection from './connection';
 import * as transportTypes from './transportTypes';
+import 'fast-text-encoding';
 
 describe('openapi Streaming connection', () => {
     const baseUrl = 'test-url';

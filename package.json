@@ -25,9 +25,6 @@
     },
     "jest": {
         "verbose": true,
-        "setupFiles": [
-            "./test/jestSetup.js"
-        ],
         "transform": {
             "^.+\\.jsx?$": "babel-jest"
         },
