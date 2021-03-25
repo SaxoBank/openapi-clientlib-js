@@ -1,6 +1,6 @@
 import { setTimeout, tick, installClock, uninstallClock } from '../test/utils';
 import mockFetch from '../test/mocks/fetch';
-import AuthProvider from './authProvider';
+import AuthProvider from './authProvider.ts';
 
 describe('openapi AuthProvider', () => {
     let authProvider;
