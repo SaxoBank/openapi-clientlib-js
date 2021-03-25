@@ -10,6 +10,7 @@ import * as RequestUtils from '../../../../utils/request';
 import WebSocketTransport from './websocket-transport';
 import * as constants from './../constants';
 import jsonPayload from './payload.json';
+import 'fast-text-encoding';
 
 const CONTEXT_ID = '0000000000';
 const AUTH_TOKEN = 'TOKEN';

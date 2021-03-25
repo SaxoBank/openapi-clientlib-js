@@ -6,7 +6,11 @@
 // -- Local variables section --
 
 // -- Local methods section --
-
+/**
+ *
+ * @param {string} method
+ * @returns {any}
+ */
 function transportMethod(method) {
     return function () {
         if (!this.isQueueing) {

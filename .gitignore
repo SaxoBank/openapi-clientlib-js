@@ -1,5 +1,7 @@
 node_modules
 dist
+esnext
+coverage
 .idea
 .eslintcache
 doc
