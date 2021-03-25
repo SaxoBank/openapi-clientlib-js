@@ -111,7 +111,6 @@ function mixinEmitter(target) {
     target.off = function (eventType, onFunction, that) {
         if (eventType) {
             const eventSubscribers = subscribers[eventType];
-
             if (eventSubscribers) {
                 for (let i = eventSubscribers.length - 1; i >= 0; i--) {
                     const subscriber = eventSubscribers[i];
