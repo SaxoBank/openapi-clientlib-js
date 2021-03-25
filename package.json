@@ -6,7 +6,8 @@
     },
     "scripts": {
         "build": "npm-run-all -s clean ts",
-        "ts": "tsc --noEmit",
+        "ts": "tsc",
+        "ts:check": "tsc --noEmit",
         "ts:watch": "tsc --watch --noEmit",
         "build:doc": "rimraf doc && jsdoc src --destination doc",
         "clean": "rimraf esnext",

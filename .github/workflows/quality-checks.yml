@@ -28,7 +28,7 @@ jobs:
               if: ${{ always() }}
 
             - name: Run TS
-              run: yarn ts
+              run: yarn ts:check
               if: ${{ always() }}
 
             - name: Run unit tests
