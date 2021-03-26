@@ -91,7 +91,7 @@ type Options = {
  */
 
 class AuthProvider {
-    #expiry: number = 0;
+    #expiry = 0;
     token: string | null = null;
     tokenRefreshUrl?: string
     tokenRefreshHeaders?: Record<string, string> = {}
@@ -284,16 +284,16 @@ class AuthProvider {
 
     getToken() {
         return this.token;
-    };
+    }
 
     getExpiry() {
         return this.#expiry;
-    };
+    }
 
     set(newToken: string, newExpiry: number) {
         this.token = addBearer(newToken);
         this.#expiry = newExpiry;
-    };
+    }
 
     isFetchingNewToken() {
         return !(this.state & STATE_WAITING && this.retries === 0);
@@ -405,7 +405,7 @@ class AuthProvider {
         if (shouldRequest) {
             this.refreshOpenApiToken();
         }
-    };
+    }
 
     /**
      * Stops the AuthProvider from refreshing the token.
@@ -414,7 +414,7 @@ class AuthProvider {
         if (this.tokenRefreshTimer) {
             clearTimeout(this.tokenRefreshTimer);
         }
-    };
+    }
 }
 
 export default AuthProvider;

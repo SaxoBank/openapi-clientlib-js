@@ -7,7 +7,7 @@ import {
 } from '../../test/utils';
 import mockFetch from '../../test/mocks/fetch';
 import mockAuthProvider from '../../test/mocks/authProvider';
-import TransportAuth from './auth.ts';
+import TransportAuth from './auth';
 
 describe('openapi TransportAuth', () => {
     const noop = () => {};

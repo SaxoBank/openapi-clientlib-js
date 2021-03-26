@@ -6,7 +6,7 @@
 // -- Local variables section --
 
 import log from '../../log';
-import AuthProvider from '../authProvider';
+import type AuthProvider from '../authProvider';
 import TransportCore from './core';
 
 const LOG_AREA = 'TransportAuth';
@@ -24,8 +24,9 @@ type Options = {
     authErrorsDebouncePeriod?: number
 }
 
-let makeTransportMethod = function (this: TransportAuth, method: Methods) {
-    const that = this
+function makeTransportMethod(this: TransportAuth, method: Methods) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const that = this;
     return function (servicePath: string, urlTemplate: string, templateArgs: string[], options: any) {
         const newOptions = {
             ...options,
@@ -50,7 +51,7 @@ let makeTransportMethod = function (this: TransportAuth, method: Methods) {
     };
 }
 
-let onTransportError = function (this: TransportAuth, oldTokenExpiry: number, timeRequested: number, result: any) {
+function onTransportError(this: TransportAuth, oldTokenExpiry: number, timeRequested: number, result: any) {
     if (result && result.status === 401) {
         this.addAuthError(result.url, oldTokenExpiry, timeRequested);
         this.cleanupAuthErrors();
@@ -154,7 +155,7 @@ class TransportAuth {
                 }
             }
         }
-    };
+    }
 
 
     /**
@@ -176,7 +177,7 @@ class TransportAuth {
         } else {
             this.authorizationErrors[url] = [{ authExpiry, added: timeRequested }];
         }
-    };
+    }
 
     /**
      * Returns if the auth errors for a url are problematic
@@ -197,7 +198,7 @@ class TransportAuth {
         }
 
         return false;
-    };
+    }
 
     //  Stops the transport from refreshing the token.
     dispose() {
@@ -206,7 +207,7 @@ class TransportAuth {
         this.authorizationErrors = {};
 
         this.transport.dispose();
-    };
+    }
 
 }
 
