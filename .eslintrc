@@ -6,7 +6,12 @@
     },
     "plugins": ["import", "destructuring", "switch-case", "promise"],
     "settings": {
-        "import/ignore": ["libs", "node_modules"]
+        "import/parsers": {
+            "@typescript-eslint/parser": [".ts"]
+        },
+        "import/resolver": {
+            "typescript": {}
+        }
     },
     "globals": {
         // define our own globals since the built-in list contains many false negatives like "find" that are non-standard
@@ -474,16 +479,48 @@
             }
         },
         {
-            "files": [
-                "** /*.ts"
-            ],
+            "files": ["**/*.ts"],
             "parser": "@typescript-eslint/parser",
-            "plugins": [
-                "@typescript-eslint"
-            ],
-            "extends": [
-                "plugin:@typescript-eslint/recommended"
-            ]
+            "plugins": ["@typescript-eslint"],
+            "extends": ["plugin:@typescript-eslint/recommended"],
+            "rules": {
+                "import/order": "off",
+                "no-loop-func": "off",
+                "@typescript-eslint/no-loop-func": "error",
+                "no-redeclare": "off",
+                "@typescript-eslint/no-redeclare": "error",
+                "no-shadow": "off",
+                "@typescript-eslint/no-shadow": "error",
+                "no-unused-expressions": "off",
+                "@typescript-eslint/no-unused-expressions": "error",
+                "no-unused-vars": "off",
+                "@typescript-eslint/no-unused-vars": [
+                    "error",
+                    {
+                        "vars": "all",
+                        "args": "after-used",
+                        "ignoreRestSiblings": true
+                    }
+                ],
+                "no-use-before-define": "off",
+                "@typescript-eslint/no-use-before-define": ["error", "nofunc"],
+                "no-useless-constructor": "off",
+                "@typescript-eslint/no-useless-constructor": "error",
+                "@typescript-eslint/ban-ts-comment": "off",
+                "@typescript-eslint/explicit-module-boundary-types": "off",
+                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-empty-function": "off",
+                "@typescript-eslint/consistent-indexed-object-style": [
+                    "error",
+                    "record"
+                ],
+                "@typescript-eslint/consistent-type-assertions": [
+                    "error",
+                    { "assertionStyle": "as" }
+                ],
+                "@typescript-eslint/consistent-type-imports": "error",
+                "@typescript-eslint/no-non-null-assertion": "error"
+            }
         }
     ]
 }
