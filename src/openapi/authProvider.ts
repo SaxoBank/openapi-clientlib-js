@@ -35,9 +35,10 @@ const STATE_FAILED = 0x4;
  * Returns the absolute timestamp of the expiry based on the current date and time.
  * @param {number|string} relativeExpiry - The time in seconds until the token expires.
  */
-function toAbsoluteTokenExpiry(relativeExpiry: string) {
-    let relativeExpiryInt = parseInt(relativeExpiry, 10);
-    return new Date().getTime() + relativeExpiryInt * 1000;
+function toAbsoluteTokenExpiry(relativeExpiry: number) {
+    // let relativeExpiryInt = parseInt(relativeExpiry, 10);
+    // return new Date().getTime() + relativeExpiryInt * 1000;
+    return new Date().getTime() + relativeExpiry * 1000;
 }
 
 function addBearer(newToken: string | null) {
@@ -49,7 +50,7 @@ function addBearer(newToken: string | null) {
 
 type Options = {
     token?: string | null;
-    expiry?: string | number;
+    expiry?: number;
     tokenRefreshUrl?: string;
     tokenRefreshHeaders?: Record<string, string>;
     tokenRefreshCredentials?: string;
@@ -90,7 +91,7 @@ type Options = {
  */
 
 class AuthProvider {
-    expiry: number | string = 0;
+    #expiry: number = 0;
     token: string | null = null;
     tokenRefreshUrl?: string
     tokenRefreshHeaders?: Record<string, string> = {}
@@ -109,6 +110,7 @@ class AuthProvider {
     EVENT_TOKEN_REFRESH = 'tokenRefresh';
     EVENT_TOKEN_RECEIVED = 'tokenReceived';
     EVENT_TOKEN_REFRESH_FAILED = 'tokenRefreshFailed';
+    // need to remove once we have microEmitter implement as class
     trigger: any
 
     constructor(options?: Options) {
@@ -117,17 +119,15 @@ class AuthProvider {
         if (!options?.token && !options?.tokenRefreshUrl) {
             throw new Error('No token supplied and no way to get it');
         }
-        let expiry = options?.expiry || 0;
+        this.#expiry = options?.expiry || 0;
 
-        if (options.token) {
-            this.token = addBearer(options.token);
-        }
+        this.token = addBearer(options.token || null);
 
         // convert to absolute if the value is too small to be absolute
-        if (expiry < Date.UTC(2000, 0)) {
-            expiry = toAbsoluteTokenExpiry(expiry as string);
+        if (this.#expiry < Date.UTC(2000, 0)) {
+            this.#expiry = toAbsoluteTokenExpiry(this.#expiry);
         }
-        this.expiry = expiry
+
         this.tokenRefreshUrl = options.tokenRefreshUrl;
         this.tokenRefreshHeaders = options.tokenRefreshHeaders;
 
@@ -253,7 +253,7 @@ class AuthProvider {
     /**
      * Called when the token has changed.
      */
-    private createTimerForNextToken() {
+    createTimerForNextToken() {
         const expiry = this.getExpiry() as number;
 
         let elapse = expiry - new Date().getTime();
@@ -285,13 +285,14 @@ class AuthProvider {
     getToken() {
         return this.token;
     };
+
     getExpiry() {
-        return this.expiry;
+        return this.#expiry;
     };
 
     set(newToken: string, newExpiry: number) {
         this.token = addBearer(newToken);
-        this.expiry = newExpiry;
+        this.#expiry = newExpiry;
     };
 
     isFetchingNewToken() {
