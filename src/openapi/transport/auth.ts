@@ -17,17 +17,21 @@ const DEFAULT_AUTH_ERRORS_DEBOUNCE_PERIOD = 30000; // ms
 
 // -- Local methods section --
 
-
 type Methods = 'get' | 'put' | 'post' | 'delete' | 'patch' | 'options' | 'head';
 
 type Options = {
-    authErrorsDebouncePeriod?: number
-}
+    authErrorsDebouncePeriod?: number;
+};
 
 function makeTransportMethod(this: TransportAuth, method: Methods) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
-    return function (servicePath: string, urlTemplate: string, templateArgs: string[], options: any) {
+    return function (
+        servicePath: string,
+        urlTemplate: string,
+        templateArgs: string[],
+        options: any,
+    ) {
         const newOptions = {
             ...options,
             headers: {
@@ -51,7 +55,12 @@ function makeTransportMethod(this: TransportAuth, method: Methods) {
     };
 }
 
-function onTransportError(this: TransportAuth, oldTokenExpiry: number, timeRequested: number, result: any) {
+function onTransportError(
+    this: TransportAuth,
+    oldTokenExpiry: number,
+    timeRequested: number,
+    result: any,
+) {
     if (result && result.status === 401) {
         this.addAuthError(result.url, oldTokenExpiry, timeRequested);
         this.cleanupAuthErrors();
@@ -100,33 +109,36 @@ function onTransportError(this: TransportAuth, oldTokenExpiry: number, timeReque
  *                                                      to be ignored.
  */
 class TransportAuth {
-
     authErrorsDebouncePeriod = DEFAULT_AUTH_ERRORS_DEBOUNCE_PERIOD;
-    authorizationErrors: Record<string, Array<{ authExpiry: number, added: number }>> = {}
+    authorizationErrors: Record<
+        string,
+        Array<{ authExpiry: number; added: number }>
+    > = {};
 
     // its a timeout id
-    errorCleanupTimeOutId: any
+    errorCleanupTimeOutId: any;
     // needs to map with transport core interface
     transport: any;
-    authProvider: AuthProvider
-    constructor(baseUrl: string, authProvider: AuthProvider, options?: Options) {
+    authProvider: AuthProvider;
+    constructor(
+        baseUrl: string,
+        authProvider: AuthProvider,
+        options?: Options,
+    ) {
         if (!authProvider) {
             throw new Error('transport auth created without a auth provider');
         }
 
         if (options?.authErrorsDebouncePeriod) {
-            this.authErrorsDebouncePeriod =
-                options.authErrorsDebouncePeriod
+            this.authErrorsDebouncePeriod = options.authErrorsDebouncePeriod;
         }
 
-        // @ts-ignore fix-me 
+        // @ts-ignore fix-me
         this.transport = new TransportCore(baseUrl, options);
 
         // Map of authorization error counts per endpoint/url.
         this.authProvider = authProvider;
     }
-
-
 
     get = makeTransportMethod.call(this, 'get'); // Performs a authenticated get request.
     put = makeTransportMethod.call(this, 'put'); // Performs a authenticated put request.
@@ -144,7 +156,10 @@ class TransportAuth {
             if (this.authorizationErrors.hasOwnProperty(url)) {
                 const newEntries = [];
                 for (let i = 0; i < this.authorizationErrors[url].length; i++) {
-                    if (this.authorizationErrors[url][i].added > cleanThoseBefore) {
+                    if (
+                        this.authorizationErrors[url][i].added >
+                        cleanThoseBefore
+                    ) {
                         newEntries.push(this.authorizationErrors[url][i]);
                     }
                 }
@@ -157,25 +172,22 @@ class TransportAuth {
         }
     }
 
-
     /**
      * Add a authentication error to the error map
      * @param {string} url - The url/endpoint at which a auth error occurred
      * @param {number} authExpiry - The expiry of the token that was rejected
      * @param {number} timeRequested - The time the request was made
      */
-    addAuthError(
-        url: string,
-        authExpiry: number,
-        timeRequested: number,
-    ) {
+    addAuthError(url: string, authExpiry: number, timeRequested: number) {
         if (this.authorizationErrors.hasOwnProperty(url)) {
             this.authorizationErrors[url].push({
                 authExpiry,
                 added: timeRequested,
             });
         } else {
-            this.authorizationErrors[url] = [{ authExpiry, added: timeRequested }];
+            this.authorizationErrors[url] = [
+                { authExpiry, added: timeRequested },
+            ];
         }
     }
 
@@ -185,13 +197,12 @@ class TransportAuth {
      * @param {number} authExpiry - The auth expiry of the request to check
      * @returns {boolean} Whether it is problematic
      */
-    areUrlAuthErrorsProblematic(
-        url: string,
-        authExpiry: number,
-    ) {
+    areUrlAuthErrorsProblematic(url: string, authExpiry: number) {
         if (this.authorizationErrors.hasOwnProperty(url)) {
             for (let i = 0; i < this.authorizationErrors[url].length; i++) {
-                if (this.authorizationErrors[url][i].authExpiry !== authExpiry) {
+                if (
+                    this.authorizationErrors[url][i].authExpiry !== authExpiry
+                ) {
                     return true;
                 }
             }
@@ -208,8 +219,6 @@ class TransportAuth {
 
         this.transport.dispose();
     }
-
 }
-
 
 export default TransportAuth;

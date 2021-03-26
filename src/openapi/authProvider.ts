@@ -60,8 +60,7 @@ type Options = {
     tokenRefreshMarginMs?: number;
     retryDelayMs?: number;
     maxRetryCount?: number;
-}
-
+};
 
 /**
  * This class builds on top of {@link saxo.openapi.TransportCore} and adds authentication management. You need only
@@ -93,25 +92,25 @@ type Options = {
 class AuthProvider {
     #expiry = 0;
     token: string | null = null;
-    tokenRefreshUrl?: string
-    tokenRefreshHeaders?: Record<string, string> = {}
-    tokenRefreshCredentials = DEFAULT_TOKEN_REFRESH_CREDENTIALS
-    tokenRefreshMethod = DEFAULT_TOKEN_REFRESH_METHOD
-    tokenRefreshPropertyNameToken = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_TOKEN
-    tokenRefreshPropertyNameExpires = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES
-    tokenRefreshMarginMs = DEFAULT_TOKEN_REFRESH_MARGIN_MS
-    retryDelayMs = DEFAULT_RETRY_DELAY_MS
-    maxRetryCount = DEFAULT_MAX_RETRY_COUNT
-    state = 1
-    retries = 0
-    tokenRefreshTimerFireTime = 0
-    tokenRefreshTimer: any = 0
-    lastTokenFetchTime = 0
+    tokenRefreshUrl?: string;
+    tokenRefreshHeaders?: Record<string, string> = {};
+    tokenRefreshCredentials = DEFAULT_TOKEN_REFRESH_CREDENTIALS;
+    tokenRefreshMethod = DEFAULT_TOKEN_REFRESH_METHOD;
+    tokenRefreshPropertyNameToken = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_TOKEN;
+    tokenRefreshPropertyNameExpires = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES;
+    tokenRefreshMarginMs = DEFAULT_TOKEN_REFRESH_MARGIN_MS;
+    retryDelayMs = DEFAULT_RETRY_DELAY_MS;
+    maxRetryCount = DEFAULT_MAX_RETRY_COUNT;
+    state = 1;
+    retries = 0;
+    tokenRefreshTimerFireTime = 0;
+    tokenRefreshTimer: any = 0;
+    lastTokenFetchTime = 0;
     EVENT_TOKEN_REFRESH = 'tokenRefresh';
     EVENT_TOKEN_RECEIVED = 'tokenReceived';
     EVENT_TOKEN_REFRESH_FAILED = 'tokenRefreshFailed';
     // need to remove once we have microEmitter implement as class
-    trigger: any
+    trigger: any;
 
     constructor(options?: Options) {
         emitter.mixinTo(this);
@@ -132,26 +131,28 @@ class AuthProvider {
         this.tokenRefreshHeaders = options.tokenRefreshHeaders;
 
         if (options.tokenRefreshCredentials) {
-            this.tokenRefreshCredentials = options.tokenRefreshCredentials
+            this.tokenRefreshCredentials = options.tokenRefreshCredentials;
         }
         if (options.tokenRefreshMethod) {
-            this.tokenRefreshMethod = options.tokenRefreshMethod
+            this.tokenRefreshMethod = options.tokenRefreshMethod;
         }
         if (options.tokenRefreshPropertyNameToken) {
-            this.tokenRefreshPropertyNameToken = options.tokenRefreshPropertyNameToken
+            this.tokenRefreshPropertyNameToken =
+                options.tokenRefreshPropertyNameToken;
         }
         if (options.tokenRefreshPropertyNameExpires) {
-            this.tokenRefreshPropertyNameExpires = options.tokenRefreshPropertyNameExpires
+            this.tokenRefreshPropertyNameExpires =
+                options.tokenRefreshPropertyNameExpires;
         }
 
         if (options.tokenRefreshMarginMs) {
-            this.tokenRefreshMarginMs = options.tokenRefreshMarginMs
+            this.tokenRefreshMarginMs = options.tokenRefreshMarginMs;
         }
         if (options.retryDelayMs) {
-            this.retryDelayMs = options.retryDelayMs
+            this.retryDelayMs = options.retryDelayMs;
         }
         if (options.maxRetryCount) {
-            this.maxRetryCount = options.maxRetryCount
+            this.maxRetryCount = options.maxRetryCount;
         }
 
         this.state = STATE_WAITING;
@@ -163,7 +164,7 @@ class AuthProvider {
     /**
      * This internal method refreshes the token no matter what and should only
      * be called if we know we are in the correct state to do it.
-    */
+     */
     private refreshToken = () => {
         if (this.tokenRefreshTimer) {
             clearTimeout(this.tokenRefreshTimer);
@@ -172,7 +173,7 @@ class AuthProvider {
         if (this.tokenRefreshUrl) {
             this.fetchToken(this.tokenRefreshUrl);
         }
-    }
+    };
 
     private fetchToken(url: string) {
         this.state = STATE_REFRESHING;
@@ -208,7 +209,7 @@ class AuthProvider {
         this.set(token, expiry);
         this.createTimerForNextToken();
         this.trigger(this.EVENT_TOKEN_RECEIVED, token, expiry);
-    }
+    };
 
     private onApiTokenReceiveFail = (result: any) => {
         const currentExpiry = this.getExpiry();
@@ -248,7 +249,7 @@ class AuthProvider {
             this.state = STATE_FAILED;
             this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
         }
-    }
+    };
 
     /**
      * Called when the token has changed.
@@ -363,15 +364,20 @@ class AuthProvider {
             const isCurrentTokenExpired = currentAuthExpiry < now;
 
             shouldRequest =
-                (isCurrentTokenNotExpiredButRejected || isCurrentTokenExpired) &&
+                (isCurrentTokenNotExpiredButRejected ||
+                    isCurrentTokenExpired) &&
                 !isFetching;
 
             if (isCurrentTokenNotExpiredButRejected) {
                 if (isFetching) {
-                    log.debug(LOG_AREA, 'Another call failed with invalid token', {
-                        currentAuthExpiry,
-                        now,
-                    });
+                    log.debug(
+                        LOG_AREA,
+                        'Another call failed with invalid token',
+                        {
+                            currentAuthExpiry,
+                            now,
+                        },
+                    );
                 } else {
                     log.error(
                         LOG_AREA,
