@@ -106,9 +106,13 @@ class AuthProvider {
     tokenRefreshTimerFireTime = 0;
     tokenRefreshTimer: any = 0;
     lastTokenFetchTime = 0;
+    // Type of event that occurs when the token is refreshing.
     EVENT_TOKEN_REFRESH = 'tokenRefresh';
+    // Type of event that occurs when the token is received.
     EVENT_TOKEN_RECEIVED = 'tokenReceived';
+    // Type of event that occurs when the token refresh fails.
     EVENT_TOKEN_REFRESH_FAILED = 'tokenRefreshFailed';
+
     // need to remove once we have microEmitter implement as class
     trigger: any;
 
@@ -255,7 +259,7 @@ class AuthProvider {
      * Called when the token has changed.
      */
     createTimerForNextToken() {
-        const expiry = this.getExpiry() as number;
+        const expiry = this.getExpiry();
 
         let elapse = expiry - new Date().getTime();
 

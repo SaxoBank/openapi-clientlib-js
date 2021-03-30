@@ -23,72 +23,9 @@ type Options = {
     authErrorsDebouncePeriod?: number;
 };
 
-function makeTransportMethod(this: TransportAuth, method: Methods) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const that = this;
-    return function (
-        servicePath: string,
-        urlTemplate: string,
-        templateArgs: string[],
-        options: any,
-    ) {
-        const newOptions = {
-            ...options,
-            headers: {
-                ...(options && options.headers),
-                Authorization: that.authProvider.getToken(),
-            },
-        };
 
-        return that.transport[method](
-            servicePath,
-            urlTemplate,
-            templateArgs,
-            newOptions,
-        ).catch(
-            onTransportError.bind(
-                that,
-                that.authProvider.getExpiry(),
-                Date.now(),
-            ),
-        );
-    };
-}
 
-function onTransportError(
-    this: TransportAuth,
-    oldTokenExpiry: number,
-    timeRequested: number,
-    result: any,
-) {
-    if (result && result.status === 401) {
-        this.addAuthError(result.url, oldTokenExpiry, timeRequested);
-        this.cleanupAuthErrors();
-        const areUrlAuthErrorsProblematic = this.areUrlAuthErrorsProblematic(
-            result.url,
-            oldTokenExpiry,
-        );
 
-        if (areUrlAuthErrorsProblematic) {
-            // Blocking infinite loop of authorization re-requests which might be caused by invalid
-            // behavior of given endpoint which constantly returns 401 error.
-            log.error(
-                LOG_AREA,
-                'Too many authorization errors occurred for different tokens within a specified time-frame for a specific endpoint',
-                result.url,
-            );
-            throw {
-                message: 'Auth overload',
-                isNetworkError: false,
-            };
-        }
-
-        log.debug(LOG_AREA, 'Authentication failure', result);
-
-        this.authProvider.tokenRejected(oldTokenExpiry);
-    }
-    throw result;
-}
 
 // -- Exported methods section --
 
@@ -140,13 +77,80 @@ class TransportAuth {
         this.authProvider = authProvider;
     }
 
-    get = makeTransportMethod.call(this, 'get'); // Performs a authenticated get request.
-    put = makeTransportMethod.call(this, 'put'); // Performs a authenticated put request.
-    post = makeTransportMethod.call(this, 'post'); // Performs a authenticated post request.
-    delete = makeTransportMethod.call(this, 'delete'); // Performs a authenticated delete request.
-    patch = makeTransportMethod.call(this, 'patch'); // Performs a authenticated patch request.
-    head = makeTransportMethod.call(this, 'head');
-    options = makeTransportMethod.call(this, 'options');
+    private onTransportError(
+        oldTokenExpiry: number,
+        timeRequested: number,
+        result: any,
+    ) {
+        if (result && result.status === 401) {
+            this.addAuthError(result.url, oldTokenExpiry, timeRequested);
+            this.cleanupAuthErrors();
+            const areUrlAuthErrorsProblematic = this.areUrlAuthErrorsProblematic(
+                result.url,
+                oldTokenExpiry,
+            );
+
+            if (areUrlAuthErrorsProblematic) {
+                // Blocking infinite loop of authorization re-requests which might be caused by invalid
+                // behavior of given endpoint which constantly returns 401 error.
+                log.error(
+                    LOG_AREA,
+                    'Too many authorization errors occurred for different tokens within a specified time-frame for a specific endpoint',
+                    result.url,
+                );
+                throw {
+                    message: 'Auth overload',
+                    isNetworkError: false,
+                };
+            }
+
+            log.debug(LOG_AREA, 'Authentication failure', result);
+
+            this.authProvider.tokenRejected(oldTokenExpiry);
+        }
+        throw result;
+    }
+
+    private makeTransportMethod = (method: Methods) => {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        return (
+            servicePath: string,
+            urlTemplate: string,
+            templateArgs: string[],
+            options: any,
+        ) => {
+            const newOptions = {
+                ...options,
+                headers: {
+                    ...(options && options.headers),
+                    Authorization: this.authProvider.getToken(),
+                },
+            };
+
+            return this.transport[method](
+                servicePath,
+                urlTemplate,
+                templateArgs,
+                newOptions,
+            ).catch(
+                // binding of this is required to access the old context for getting old expiry token
+                // see ath.spec.js refreshes the token when a transport call returns a 401 
+                this.onTransportError.bind(
+                    this,
+                    this.authProvider.getExpiry(),
+                    Date.now(),
+                ),
+            );
+        };
+    }
+
+    get = this.makeTransportMethod('get');
+    put = this.makeTransportMethod('put');
+    post = this.makeTransportMethod('post');
+    delete = this.makeTransportMethod('delete');
+    patch = this.makeTransportMethod('patch');
+    head = this.makeTransportMethod('head');
+    options = this.makeTransportMethod('options');
 
     // Cleanup of error counter map
     cleanupAuthErrors() {
