@@ -23,10 +23,6 @@ type Options = {
     authErrorsDebouncePeriod?: number;
 };
 
-
-
-
-
 // -- Exported methods section --
 
 /**
@@ -133,7 +129,7 @@ class TransportAuth {
                 newOptions,
             ).catch(
                 // binding of this is required to access the old context for getting old expiry token
-                // see ath.spec.js refreshes the token when a transport call returns a 401 
+                // see ath.spec.js refreshes the token when a transport call returns a 401
                 this.onTransportError.bind(
                     this,
                     this.authProvider.getExpiry(),
@@ -141,7 +137,7 @@ class TransportAuth {
                 ),
             );
         };
-    }
+    };
 
     get = this.makeTransportMethod('get');
     put = this.makeTransportMethod('put');
