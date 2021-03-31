@@ -116,13 +116,16 @@ class AuthProvider {
     // fix-me need to remove once we have microEmitter implement as class
     trigger: any;
 
-    constructor(options?: Options) {
+    constructor(options: Options) {
         emitter.mixinTo(this);
 
         if (!options?.token && !options?.tokenRefreshUrl) {
             throw new Error('No token supplied and no way to get it');
         }
-        this.expiry = options?.expiry || 0;
+
+        if (options?.expiry) {
+            this.expiry = options.expiry
+        }
 
         this.token = addBearer(options.token || null);
 
