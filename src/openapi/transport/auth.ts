@@ -53,7 +53,7 @@ class TransportAuth {
     > = {};
 
     // its a timeout id
-    errorCleanupTimeOutId: any;
+    errorCleanupTimeOutId: ReturnType<typeof setTimeout> | null = null;
     // needs to map with transport core interface
     transport: any;
     authProvider: AuthProvider;
@@ -82,7 +82,7 @@ class TransportAuth {
         timeRequested: number,
         result: any,
     ) {
-        if (result && result.status === 401) {
+        if (result?.status === 401) {
             this.addAuthError(result.url, oldTokenExpiry, timeRequested);
             this.cleanupAuthErrors();
             const areUrlAuthErrorsProblematic = this.areUrlAuthErrorsProblematic(
@@ -112,7 +112,6 @@ class TransportAuth {
     }
 
     private makeTransportMethod = (method: Methods) => {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
         return (
             servicePath: string,
             urlTemplate: string,
@@ -217,10 +216,11 @@ class TransportAuth {
 
     //  Stops the transport from refreshing the token.
     dispose() {
-        clearTimeout(this.errorCleanupTimeOutId);
-        this.errorCleanupTimeOutId = null;
+        if (this.errorCleanupTimeOutId != null) {
+            clearTimeout(this.errorCleanupTimeOutId);
+            this.errorCleanupTimeOutId = null;
+        }
         this.authorizationErrors = {};
-
         this.transport.dispose();
     }
 }
