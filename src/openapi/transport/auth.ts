@@ -48,8 +48,6 @@ class TransportAuth {
         Array<{ authExpiry: number; added: number }>
     > = {};
 
-    // its a timeout id
-    errorCleanupTimeOutId: ReturnType<typeof setTimeout> | null = null;
     // needs to map with transport core interface
     transport: any;
     authProvider: AuthProvider;
@@ -76,6 +74,7 @@ class TransportAuth {
     private onTransportError(
         oldTokenExpiry: number,
         timeRequested: number,
+        // fix-me remove any
         result: any,
     ) {
         if (result?.status === 401) {
@@ -212,10 +211,6 @@ class TransportAuth {
 
     //  Stops the transport from refreshing the token.
     dispose() {
-        if (this.errorCleanupTimeOutId != null) {
-            clearTimeout(this.errorCleanupTimeOutId);
-            this.errorCleanupTimeOutId = null;
-        }
         this.authorizationErrors = {};
         this.transport.dispose();
     }
