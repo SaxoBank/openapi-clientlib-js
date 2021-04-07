@@ -124,7 +124,7 @@ class AuthProvider {
         }
 
         if (options?.expiry) {
-            this.expiry = options.expiry
+            this.expiry = options.expiry;
         }
 
         this.token = addBearer(options.token || null);
