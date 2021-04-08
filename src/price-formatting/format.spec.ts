@@ -1,8 +1,8 @@
 import { de_ch, da_dk, fr_fr, ar_eg, hi_in } from '../test/locales';
-import PriceFormatting from './price-formatting';
+import PriceFormatting from '.';
 import priceFormatOptions from './format-options';
 
-function _multiply(s, count) {
+function _multiply(s: string, count: number) {
     let res = '';
     for (let i = 0; i < count; i++) {
         res += s;
@@ -66,8 +66,11 @@ describe('price-formatting format', () => {
     });
 
     it('requires decimals to be set and positive', () => {
+        // @ts-expect-error
         expect(() => priceFormatting.format(1, null)).toThrow();
+        // @ts-expect-error
         expect(() => priceFormatting.format(1, undefined)).toThrow();
+        // @ts-expect-error
         expect(() => priceFormatting.format(1, '0')).toThrow();
         expect(() => priceFormatting.format(1, -1)).toThrow();
     });
@@ -1990,26 +1993,33 @@ describe('price-formatting format', () => {
     });
 
     it('handles non numbers', () => {
+        // @ts-expect-error - undefined not allowed by TS but check that it's handled gracefully
         expect(priceFormatting.format(undefined, 3)).toEqual('');
         expect(priceFormatting.format(NaN, 3)).toEqual('');
+        // @ts-expect-error - null not allowed by TS but check that it's handled gracefully
         expect(priceFormatting.format(null, 3)).toEqual('');
+        // @ts-expect-error - empty string not allowed by TS but check that it's handled gracefully
         expect(priceFormatting.format('', 3)).toEqual('');
 
         expect(
+            // @ts-expect-error - undefined not allowed by TS but check that it's handled gracefully
             priceFormatting.format(undefined, 3, priceFormatOptions.Fractions),
         ).toEqual('');
         expect(
             priceFormatting.format(NaN, 3, priceFormatOptions.Fractions),
         ).toEqual('');
         expect(
+            // @ts-expect-error - null not allowed by TS but check that it's handled gracefully
             priceFormatting.format(null, 3, priceFormatOptions.Fractions),
         ).toEqual('');
         expect(
+            // @ts-expect-error - empty string not allowed by TS but check that it's handled gracefully
             priceFormatting.format('', 3, priceFormatOptions.Fractions),
         ).toEqual('');
 
         expect(
             priceFormatting.format(
+                // @ts-expect-error - undefined not allowed by TS but check that it's handled gracefully
                 undefined,
                 3,
                 priceFormatOptions.ModernFractions,
@@ -2019,9 +2029,11 @@ describe('price-formatting format', () => {
             priceFormatting.format(NaN, 3, priceFormatOptions.ModernFractions),
         ).toEqual('');
         expect(
+            // @ts-expect-error - null not allowed by TS but check that it's handled gracefully
             priceFormatting.format(null, 3, priceFormatOptions.ModernFractions),
         ).toEqual('');
         expect(
+            // @ts-expect-error - empty string not allowed by TS but check that it's handled gracefully
             priceFormatting.format('', 3, priceFormatOptions.ModernFractions),
         ).toEqual('');
     });

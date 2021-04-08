@@ -9,6 +9,7 @@ import emitter from '../micro-emitter';
 import log from '../log';
 import { startsWith } from '../utils/string';
 import fetch from '../utils/fetch';
+import type { HttpMethod } from '../utils/fetch';
 
 const LOG_AREA = 'AuthProvider';
 
@@ -53,8 +54,8 @@ type Options = {
     expiry?: number;
     tokenRefreshUrl?: string;
     tokenRefreshHeaders?: Record<string, string>;
-    tokenRefreshCredentials?: string;
-    tokenRefreshMethod?: string;
+    tokenRefreshCredentials?: RequestCredentials;
+    tokenRefreshMethod?: HttpMethod;
     tokenRefreshPropertyNameToken?: string;
     tokenRefreshPropertyNameExpires?: string;
     tokenRefreshMarginMs?: number;
@@ -94,8 +95,8 @@ class AuthProvider {
     private token: string | null = null;
     tokenRefreshUrl?: string;
     tokenRefreshHeaders?: Record<string, string> = {};
-    tokenRefreshCredentials = DEFAULT_TOKEN_REFRESH_CREDENTIALS;
-    tokenRefreshMethod = DEFAULT_TOKEN_REFRESH_METHOD;
+    tokenRefreshCredentials: RequestCredentials = DEFAULT_TOKEN_REFRESH_CREDENTIALS;
+    tokenRefreshMethod: HttpMethod = DEFAULT_TOKEN_REFRESH_METHOD;
     tokenRefreshPropertyNameToken = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_TOKEN;
     tokenRefreshPropertyNameExpires = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES;
     tokenRefreshMarginMs = DEFAULT_TOKEN_REFRESH_MARGIN_MS;

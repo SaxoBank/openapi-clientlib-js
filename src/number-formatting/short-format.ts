@@ -1,25 +1,15 @@
-/**
- * @module saxo/number-formatting/short-format
- * @ignore
- */
-
 import { extend } from '../utils/object';
 import formatNumber from './format';
-
-// -- Local variables section --
-
-// -- Local methods section --
-
-// -- Exported methods section --
+import type { NumberFormattingOptions } from '.';
 
 /**
  * Converts from a number to a string like "1k" or "100m".
- * @param num
+ * @param number
  * @param precision
  * @param options
  * @returns {string} Returns 0 when dates are equal. -1 when date1 less than date2. 1 when date1 greater than date2.
  */
-function shortFormat(num, options) {
+function shortFormat(number: number, options: NumberFormattingOptions) {
     let prefix = '';
     let suffix = '';
 
@@ -45,20 +35,20 @@ function shortFormat(num, options) {
         },
     ];
 
-    if (num < 0) {
+    if (number < 0) {
         // -10000 => -10k
-        num = Math.abs(num);
+        number = Math.abs(number);
         prefix = options.negativePre;
         suffix = options.negativePost;
     }
 
     const shortFormatOptions = extend({}, options, { isHideZeroTail: true });
-    const [digits] = String(num).split('.');
+    const [digits] = String(number).split('.');
 
     let numberPrecision = 0;
     let shortHandNotation = '';
 
-    const digitSize = roundOffNumber(num, digits.length);
+    const digitSize = roundOffNumber(number, digits.length);
 
     for (let i = 0; i < notations.length; i++) {
         const notation = notations[i];
@@ -66,20 +56,20 @@ function shortFormat(num, options) {
             const { precisionDigits, numDigits, shortNotation } = notation;
 
             numberPrecision = 2 - (digitSize - precisionDigits);
-            num /= Math.pow(10, numDigits);
+            number /= Math.pow(10, numDigits);
             shortHandNotation = shortNotation;
             break;
         }
     }
 
     return `${prefix}${formatNumber(
-        num,
+        number,
         numberPrecision,
         shortFormatOptions,
     )}${suffix}${shortHandNotation}`;
 }
 
-function roundOffNumber(num, digitSize) {
+function roundOffNumber(num: number, digitSize: number) {
     // If number is greater than 10,000 round off to closest number and increase digitSize accordingly.
     // Eg   99,950 is closer to 100,000 than 99.9k, so new digitSize will be increased to 6
     if (digitSize >= 5) {
@@ -93,7 +83,5 @@ function roundOffNumber(num, digitSize) {
 
     return digitSize;
 }
-
-// -- Export section --
 
 export default shortFormat;

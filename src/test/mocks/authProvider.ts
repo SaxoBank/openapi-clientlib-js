@@ -3,13 +3,14 @@ import microEmitter from '../../micro-emitter';
 function mockAuthProvider() {
     const EVENT_TOKEN_RECEIVED = 'testTokenReceived';
 
-    const emitter = {};
+    // FIXME - update implementation and typing once emitter is typed and refactored
+    const emitter: Record<string, any> = {};
     microEmitter.mixinTo(emitter);
 
     const authProvider = {
         getToken: jest.fn().mockImplementation(() => 'Bearer TOKEN'),
         getExpiry: jest.fn().mockImplementation(() => Date.now() + 1000),
-        setExpiry(value) {
+        setExpiry(value: number) {
             this.getExpiry.mockImplementation(() => value);
         },
         on: jest.fn().mockImplementation((eventName, cb, context) => {

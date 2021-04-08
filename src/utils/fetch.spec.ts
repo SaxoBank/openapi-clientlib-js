@@ -5,11 +5,11 @@ import { convertFetchSuccess, convertFetchReject } from './fetch';
 describe('utils fetch', () => {
     it('images are downloaded as a binary blob', (done) => {
         const contentType = 'image/jpeg';
-        const result = new FetchResponse(
+        const result = (new FetchResponse(
             200,
             'this is a binary image',
             contentType,
-        );
+        ) as unknown) as Response;
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
         promise.then((response) => {
@@ -25,11 +25,11 @@ describe('utils fetch', () => {
 
     it('octet-stream are downloaded as a binary blob', (done) => {
         const contentType = 'application/octet-stream';
-        const result = new FetchResponse(
+        const result = (new FetchResponse(
             200,
             'this is generic binary data',
             contentType,
-        );
+        ) as unknown) as Response;
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
         promise.then((response) => {
@@ -45,7 +45,11 @@ describe('utils fetch', () => {
 
     it('json is downloaded and converted to an object', (done) => {
         const contentType = 'application/json';
-        const result = new FetchResponse(200, '{"test":1}', contentType);
+        const result = (new FetchResponse(
+            200,
+            '{"test":1}',
+            contentType,
+        ) as unknown) as Response;
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
         promise.then((response) => {
@@ -62,11 +66,11 @@ describe('utils fetch', () => {
     it('xslx is downloaded as a binary blob', (done) => {
         const contentType =
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-        const result = new FetchResponse(
+        const result = (new FetchResponse(
             200,
             'this is a binary string',
             contentType,
-        );
+        ) as unknown) as Response;
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
         promise.then((response) => {
@@ -82,7 +86,11 @@ describe('utils fetch', () => {
 
     it('unknown file types are downloaded as text', (done) => {
         const contentType = 'unknown/file';
-        const result = new FetchResponse(200, 'this is a string', contentType);
+        const result = (new FetchResponse(
+            200,
+            'this is a string',
+            contentType,
+        ) as unknown) as Response;
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
         promise.then((response) => {
@@ -108,11 +116,11 @@ describe('utils fetch', () => {
         it('convertFetchSuccess clears timers', () => {
             const timerSpy = jest.fn().mockName('timerSpy');
             const timerId = setTimeout(timerSpy);
-            const result = new FetchResponse(
+            const result = (new FetchResponse(
                 200,
                 'this is a string',
                 'application/text',
-            );
+            ) as unknown) as Response;
             convertFetchSuccess('url', 'body', timerId, result);
             tick(1);
 

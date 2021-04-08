@@ -1,16 +1,7 @@
-/**
- * @module saxo/price-formatting/valid-character
- * @ignore
- */
-
 import { extend } from '../utils/object';
 import { getModernFractionsSeparator } from './modern-fractions-character';
-
-// -- Local variables section --
-
-// -- Local methods section --
-
-// -- Exported methods section --
+import type NumberFormatting from '../number-formatting';
+import type { Scenarios } from './types';
 
 /**
  * Returns characters valid for entering prices.
@@ -18,7 +9,10 @@ import { getModernFractionsSeparator } from './modern-fractions-character';
  * @param {{integer: boolean, negative: boolean, price: boolean, numbers: boolean}} includeScenarios - The scenarios to get prices for.
  * @returns {string}
  */
-function getValidPriceCharacters(numberFormatting, includeScenarios) {
+function getValidPriceCharacters(
+    numberFormatting: NumberFormatting,
+    includeScenarios: Partial<Scenarios>,
+) {
     let characters;
 
     if (!includeScenarios) {
@@ -60,7 +54,10 @@ function getValidPriceCharacters(numberFormatting, includeScenarios) {
  * @param {{integer: boolean, negative: boolean, price: boolean, numbers: boolean}} includeScenarios - The scenarios to get prices for.
  * @returns {RegExp}
  */
-function getValidPriceRegex(numberFormatting, includeScenarios) {
+function getValidPriceRegex(
+    numberFormatting: NumberFormatting,
+    includeScenarios: Partial<Scenarios>,
+) {
     const valid = getValidPriceCharacters(
         numberFormatting,
         extend({}, includeScenarios || {}, { numbers: false }),
@@ -73,7 +70,5 @@ function getValidPriceRegex(numberFormatting, includeScenarios) {
 
     return new RegExp('^[\\d' + regex + ']+$');
 }
-
-// -- Export section --
 
 export { getValidPriceCharacters, getValidPriceRegex };

@@ -1,5 +1,5 @@
 ﻿function mockTransport() {
-    const transport = {
+    const transport: Record<string, any> = {
         post: jest.fn(),
         put: jest.fn(),
         get: jest.fn(),
@@ -10,7 +10,7 @@
         setUseXHttpMethodOverride: jest.fn(),
     };
 
-    function methodFunction(method) {
+    function methodFunction(method: string) {
         return new Promise(function (resolve, reject) {
             transport[method + 'Resolve'] = resolve;
             transport[method + 'Reject'] = reject;

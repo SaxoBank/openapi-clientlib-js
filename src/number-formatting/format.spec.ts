@@ -1,17 +1,29 @@
 import { en_us, ar_eg } from '../test/locales';
-import NumberFormatting from './number-formatting';
+import NumberFormatting from '.';
+import type { NumberFormattingOptions } from '.';
 
-function formatNumberNoRounding(number, minDecimals, maxDecimals) {
+function formatNumberNoRounding(
+    number: number,
+    minDecimals: number,
+    maxDecimals?: number,
+) {
     const numbers = new NumberFormatting();
     return numbers.formatNoRounding(number, minDecimals, maxDecimals);
 }
 
-function shortFormat(number, options) {
+function shortFormat(
+    number: number,
+    options?: Partial<NumberFormattingOptions>,
+) {
     const numbers = new NumberFormatting(options);
     return numbers.shortFormat(number);
 }
 
-function formatNumber(number, decimals, options) {
+function formatNumber(
+    number: number,
+    decimals?: number,
+    options?: Partial<NumberFormattingOptions>,
+) {
     const numbers = new NumberFormatting(options);
     return numbers.format(number, decimals);
 }
@@ -131,9 +143,13 @@ describe('NumberFormatting format', () => {
             expect(formatNumber(545750.43893783)).toEqual('545,750.43893783');
         });
         it('handles non numbers', () => {
+            // FIXME - discuss whether we want to make non-numeric types be allowed by TS
+            // @ts-expect-error - we expect number but test that undefined is handled gracefully
             expect(formatNumber(undefined, 2, en_us)).toEqual('');
             expect(formatNumber(NaN, 2, en_us)).toEqual('');
+            // @ts-expect-error - we expect number but test that null is handled gracefully
             expect(formatNumber(null, 2, en_us)).toEqual('');
+            // @ts-expect-error - we expect number but test that empty string is handled gracefully
             expect(formatNumber('', 2, en_us)).toEqual('');
         });
         it('uses away from zero rounding', () => {

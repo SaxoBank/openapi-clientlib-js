@@ -1,24 +1,6 @@
 ﻿/**
- * @module saxo/utils/function
- * @ignore
- */
-
-// -- Local variables section --
-
-// -- Local methods section --
-
-// -- Exported methods section --
-
-/**
- * @namespace saxo.utils.function
- */
-
-/**
  * Schedules a micro-task to run after breaking the current call stack
  * - See {@link https://github.com/kriskowal/asap} and {@link https://github.com/YuzuJS/setImmediate}.
- * @function
- * @alias saxo.utils.function.nextTick
- * @static
  * @param {function} func - The function to run after code has been broken out of.
  */
 let nextTick; // eslint-disable-line import/no-mutable-exports
@@ -29,7 +11,7 @@ let nextTick; // eslint-disable-line import/no-mutable-exports
 // of the event loop.
 if (typeof setImmediate === 'function') {
     // https://github.com/NobleJS/setImmediate
-    nextTick = function (func) {
+    nextTick = function (func: () => void) {
         // IE11 throws "invalid calling object" if re-assigned, so we have to wrap
         setImmediate(func);
     };
@@ -38,7 +20,7 @@ if (typeof setImmediate === 'function') {
     // http://www.nonblocking.io/2011/06/windownexttick.html
     const channel = new MessageChannel();
     // linked list of tasks (single, with head node)
-    let head = {};
+    let head: Record<string, any> = {};
     let tail = head;
     channel.port1.onmessage = function () {
         head = head.next;
@@ -46,7 +28,7 @@ if (typeof setImmediate === 'function') {
         delete head.task;
         task();
     };
-    nextTick = function (task) {
+    nextTick = function (task: () => void) {
         tail = tail.next = { task };
         channel.port2.postMessage(0);
     };

@@ -5,9 +5,6 @@ on:
         branches:
             - master
     pull_request:
-        branches:
-            - master
-            - develop
 
 jobs:
     quality-checks:
@@ -16,23 +13,27 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v2
 
+            - uses: actions/setup-node@v2
+              with:
+                node-version: '14'
+
             - name: Install Dependencies
-              run: yarn
+              run: npm i --ignore-scripts
 
             - name: Check Prettier adherence
-              run: yarn prettier:check
+              run: npm run prettier:check
               if: ${{ always() }}
 
             - name: Run linter
-              run: yarn lint
+              run: npm run lint
               if: ${{ always() }}
 
             - name: Run TS
-              run: yarn ts:check
+              run: npm run ts:check
               if: ${{ always() }}
 
             - name: Run unit tests
-              run: yarn test
+              run: npm run test
               if: ${{ always() }}
 
             - name: Cache node modules

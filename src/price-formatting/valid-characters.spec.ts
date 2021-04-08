@@ -1,13 +1,17 @@
 ﻿import { de_ch, da_dk, fr_fr } from '../test/locales';
-import PriceFormatting from './price-formatting';
+import PriceFormatting from '.';
 import priceFormatOptions from './format-options';
+import type { PriceFormatOption } from './format-options';
+import type { FormatFlags } from './format';
+import type { NumberOptions } from '../number-formatting';
+import type { Scenarios } from './types';
 
 function testHasCharacters(
-    price,
-    decimals,
-    formatFlags,
-    options,
-    includeScenarios,
+    price: number,
+    decimals: number,
+    formatFlags: PriceFormatOption | PriceFormatOption[] | FormatFlags | null,
+    options: Partial<NumberOptions>,
+    includeScenarios: Partial<Scenarios>,
 ) {
     const prices = new PriceFormatting(options);
     const formattedPrice = prices.format(price, decimals, formatFlags);
@@ -21,7 +25,13 @@ function testHasCharacters(
     return true;
 }
 
-function testRegex(price, decimals, formatFlags, options, includeScenarios) {
+function testRegex(
+    price: number,
+    decimals: number,
+    formatFlags: PriceFormatOption | PriceFormatOption[] | FormatFlags | null,
+    options: Partial<NumberOptions>,
+    includeScenarios: Partial<Scenarios>,
+) {
     const prices = new PriceFormatting(options);
     const formattedPrice = prices.format(price, decimals, formatFlags);
     const validRegex = prices.getValidPriceRegex(includeScenarios);

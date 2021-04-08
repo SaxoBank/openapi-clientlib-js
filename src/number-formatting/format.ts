@@ -1,13 +1,10 @@
-/**
- * @module saxo/number-formatting/format
- * @ignore
- */
+import type { NumberFormattingOptions } from '.';
 
-// -- Local variables section --
+interface Options extends NumberFormattingOptions {
+    isHideZeroTail?: boolean;
+}
 
-// -- Local methods section --
-
-function formatNegativeNumber(str, options) {
+function formatNegativeNumber(str: string, options: Options) {
     return options.negativePattern.replace('{0}', str);
 }
 
@@ -15,12 +12,12 @@ function formatNegativeNumber(str, options) {
  * converts a number to a decimal string if it is on scientific notation
  * @param number
  */
-function convertNumbertToString(number, precision) {
+function convertNumberToString(number: number, precision: number) {
     let numberString = String(number);
 
     // if the number is in scientific notation, convert to decimal
     if (/\d+\.?\d*e[+-]*\d+/i.test(numberString)) {
-        numberString = number.toFixed(precision).trim('0');
+        numberString = number.toFixed(precision).trim();
     }
 
     return numberString;
@@ -32,7 +29,7 @@ function convertNumbertToString(number, precision) {
  * @param precision
  * @param { groupSizes, groupSeparator, decimalSeparator, isHideZeroTail } options
  */
-function expandNumber(number, precision, options) {
+function expandNumber(number: number, precision: number, options: Options) {
     const {
         groupSizes,
         groupSeparator,
@@ -41,7 +38,7 @@ function expandNumber(number, precision, options) {
     } = options;
     let curSize = groupSizes[0];
     let curGroupIndex = 1;
-    let numberString = convertNumbertToString(number, precision);
+    let numberString = convertNumberToString(number, precision);
     const decimalIndex = numberString.indexOf('.');
     let right = '';
     let i;
@@ -110,21 +107,33 @@ function expandNumber(number, precision, options) {
     );
 }
 
-function roundNumber(number, decimals) {
+function roundNumber(number: number, decimals: number) {
     // Shift with exponential notation to avoid floating-point issues.
     const pair = `${number}e`.split('e');
-    const value = Math.round(`${pair[0]}e${Number(pair[1]) + decimals}`);
+    const value = Math.round(
+        Number(`${pair[0]}e${Number(pair[1]) + decimals}`),
+    );
     const factor = Math.pow(10, decimals);
 
     return value / factor;
 }
 
-// -- Exported methods section --
+function isNumeric(
+    number: number | string | null | undefined,
+): number is number | string {
+    return !isNaN(number as any) && number !== null && number !== '';
+}
 
-function formatNumber(inputNumber, decimals, options) {
-    if (isNaN(inputNumber) || inputNumber === null || inputNumber === '') {
+function formatNumber(
+    inputNumber: number | string | null | undefined,
+    decimals: number,
+    options: Options,
+) {
+    if (!isNumeric(inputNumber)) {
         return '';
     }
+
+    inputNumber = Number(inputNumber);
 
     // Does AwayFromZero rounding as per C# - see MidpointRound.AwayFromZero
     // When a number is halfway between two others, it is rounded toward the nearest number that is away from zero.
@@ -145,7 +154,5 @@ function formatNumber(inputNumber, decimals, options) {
 
     return formattedNumber;
 }
-
-// -- Export section --
 
 export default formatNumber;
