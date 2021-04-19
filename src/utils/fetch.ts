@@ -1,15 +1,5 @@
 ﻿import log from '../log';
-
-export type HttpMethod =
-    | 'GET'
-    | 'HEAD'
-    | 'POST'
-    | 'PUT'
-    | 'DELETE'
-    | 'CONNECT'
-    | 'OPTIONS'
-    | 'TRACE'
-    | 'PATCH';
+import type { HTTPMethods } from '../openapi/transport/types';
 
 interface Options {
     body?: BodyInit | Record<string, unknown>;
@@ -200,12 +190,12 @@ export function convertFetchSuccess(
 }
 
 function getBody(
-    method: HttpMethod,
+    method: HTTPMethods,
     options?: Options,
 ): BodyInit | Record<string, unknown> | undefined {
     // If PATCH without body occurs, create empty payload.
     // Reason: Some proxies and default configs for CDNs like Akamai have issues with accepting PATCH with content-length: 0.
-    if (method === 'PATCH' && !options?.body) {
+    if (method === 'patch' && !options?.body) {
         return {};
     }
 
@@ -219,7 +209,7 @@ function getBody(
  * @param {string} method - The http method.
  * @param {string} url - The url to fetch.
  * @param {Object} [options]
- * @param {string} [options.body] - The body of the request. If this is an object, that is not already handled by the body mixin,
+ * @param {string|Object} [options.body] - The body of the request. If this is an object, that is not already handled by the body mixin,
                                     it is converted to JSON and the appropriate content-type header added.
  * @param {Object} [options.headers] - Object of header key to header value.
  * @param {boolean} [options.cache] - Whether or not to cache.
@@ -231,7 +221,7 @@ function getBody(
  *                             "same-origin" will include the cookies if on the same domain (this is the XmlHttpRequest default)
  *                             "include" will always include the cookies.
  */
-function localFetch(method: HttpMethod, url: string, options?: Options) {
+function localFetch(method: HTTPMethods, url: string, options?: Options) {
     let body = getBody(method, options);
     const headers = options?.headers || {};
     const cache = options?.cache;
@@ -246,14 +236,14 @@ function localFetch(method: HttpMethod, url: string, options?: Options) {
 
     if (
         useXHttpMethodOverride &&
-        (method === 'PUT' || method === 'DELETE' || method === 'PATCH')
+        (method === 'put' || method === 'delete' || method === 'patch')
     ) {
         headers['X-HTTP-Method-Override'] = method;
-        method = 'POST';
+        method = 'post';
     }
 
     if (cache === false) {
-        if (method === 'GET') {
+        if (method === 'get') {
             const cacheBreak = String(cacheBreakNum++);
             url += (url.indexOf('?') > 0 ? '&_=' : '?_=') + cacheBreak;
         }
@@ -269,6 +259,7 @@ function localFetch(method: HttpMethod, url: string, options?: Options) {
         });
     }, 30000);
 
+    // @ts-ignore fix-me revisit to map all headers type to Record<string, string>
     return fetch(url, { headers, method, body, credentials })
         .catch(convertFetchReject.bind(null, url, body, timerId))
         .then(convertFetchSuccess.bind(null, url, body, timerId));

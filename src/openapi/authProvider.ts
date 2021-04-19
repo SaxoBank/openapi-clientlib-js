@@ -9,13 +9,13 @@ import emitter from '../micro-emitter';
 import log from '../log';
 import { startsWith } from '../utils/string';
 import fetch from '../utils/fetch';
-import type { HttpMethod } from '../utils/fetch';
+import type { HTTPMethods } from './transport/types';
 
 const LOG_AREA = 'AuthProvider';
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
 const DEFAULT_MAX_RETRY_COUNT = 5;
-const DEFAULT_TOKEN_REFRESH_METHOD = 'POST';
+const DEFAULT_TOKEN_REFRESH_METHOD = 'post';
 const DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_TOKEN = 'token';
 const DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES = 'expiry';
 const DEFAULT_TOKEN_REFRESH_MARGIN_MS = 0;
@@ -55,7 +55,7 @@ type Options = {
     tokenRefreshUrl?: string;
     tokenRefreshHeaders?: Record<string, string>;
     tokenRefreshCredentials?: RequestCredentials;
-    tokenRefreshMethod?: HttpMethod;
+    tokenRefreshMethod?: HTTPMethods;
     tokenRefreshPropertyNameToken?: string;
     tokenRefreshPropertyNameExpires?: string;
     tokenRefreshMarginMs?: number;
@@ -96,7 +96,7 @@ class AuthProvider {
     tokenRefreshUrl?: string;
     tokenRefreshHeaders?: Record<string, string> = {};
     tokenRefreshCredentials: RequestCredentials = DEFAULT_TOKEN_REFRESH_CREDENTIALS;
-    tokenRefreshMethod: HttpMethod = DEFAULT_TOKEN_REFRESH_METHOD;
+    tokenRefreshMethod: HTTPMethods = DEFAULT_TOKEN_REFRESH_METHOD;
     tokenRefreshPropertyNameToken = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_TOKEN;
     tokenRefreshPropertyNameExpires = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES;
     tokenRefreshMarginMs = DEFAULT_TOKEN_REFRESH_MARGIN_MS;

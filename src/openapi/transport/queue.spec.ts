@@ -9,9 +9,10 @@ import mockAuthProvider from '../../test/mocks/authProvider';
 import TransportQueue from './queue';
 
 describe('openapi TransportQueue', () => {
-    let transport;
-    let transportQueue;
-    let authProvider;
+    let transport: any;
+    let transportQueue: TransportQueue;
+    // this authProvider is a mockImplementation and have few methods different then
+    let authProvider: any;
 
     beforeEach(() => {
         transport = mockTransport();
@@ -44,9 +45,9 @@ describe('openapi TransportQueue', () => {
         transportQueue = new TransportQueue(transport);
         expect(transportQueue.isQueueing).toEqual(false);
 
-        let waitingForPromiseResolve;
+        let waitingForPromiseResolve: (value?: any) => void;
         transportQueue.waitFor(
-            new Promise(function (resolve, reject) {
+            new Promise(function (resolve) {
                 waitingForPromiseResolve = resolve;
             }),
         );
@@ -62,6 +63,7 @@ describe('openapi TransportQueue', () => {
                 const getSpy = jest.fn().mockName('getSpy');
                 getPromise.then(getSpy);
 
+                // eslint-disable-next-line max-nested-callbacks
                 setTimeout(function () {
                     expect(getSpy.mock.calls.length).toEqual(1);
                     expect(getSpy.mock.calls[0]).toEqual([
@@ -78,9 +80,9 @@ describe('openapi TransportQueue', () => {
         transportQueue = new TransportQueue(transport);
         expect(transportQueue.isQueueing).toEqual(false);
 
-        let waitingForPromiseResolve;
+        let waitingForPromiseResolve: (value?: any) => void;
         transportQueue.waitFor(
-            new Promise(function (resolve, reject) {
+            new Promise(function (resolve) {
                 waitingForPromiseResolve = resolve;
             }),
         );
@@ -155,9 +157,9 @@ describe('openapi TransportQueue', () => {
         transportQueue = new TransportQueue(transport, authProvider);
         expect(transportQueue.isQueueing).toEqual(false);
 
-        let waitingForPromiseResolve;
+        let waitingForPromiseResolve: (value?: any) => void;
         transportQueue.waitFor(
-            new Promise(function (resolve, reject) {
+            new Promise(function (resolve) {
                 waitingForPromiseResolve = resolve;
             }),
         );
@@ -167,6 +169,7 @@ describe('openapi TransportQueue', () => {
         transportQueue.get();
 
         authProvider.setExpiry(Date.now() - 1);
+        // @ts-ignore
         waitingForPromiseResolve();
 
         setTimeout(function () {

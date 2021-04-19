@@ -92,7 +92,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             );
@@ -105,7 +105,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             );
@@ -125,7 +125,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -134,7 +134,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -143,7 +143,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -152,7 +152,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                         'Content-Type': expect.any(String),
                     },
                 }),
@@ -162,7 +162,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -184,7 +184,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);

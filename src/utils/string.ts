@@ -90,7 +90,7 @@ function padLeft(value: string, length: number, padChar: string) {
  */
 function formatUrl(
     urlTemplate: string,
-    templateArgs?: Record<string, string | number | boolean>,
+    templateArgs?: Record<string, string | number | boolean> | null,
     queryParams?: Record<string, string | number | boolean>,
 ) {
     let url;

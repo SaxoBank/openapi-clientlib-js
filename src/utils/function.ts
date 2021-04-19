@@ -3,7 +3,7 @@
  * - See {@link https://github.com/kriskowal/asap} and {@link https://github.com/YuzuJS/setImmediate}.
  * @param {function} func - The function to run after code has been broken out of.
  */
-let nextTick; // eslint-disable-line import/no-mutable-exports
+let nextTick: (func: () => void) => void; // eslint-disable-line import/no-mutable-exports
 
 // Borrowed from Q JS lib
 // https://github.com/kriskowal/q/blob/v1/q.js#L169

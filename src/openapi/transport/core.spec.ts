@@ -1,10 +1,11 @@
+/* eslint-disable max-nested-callbacks */
 import mockFetch from '../../test/mocks/fetch';
 import { setTimeout, installClock, uninstallClock } from '../../test/utils';
 import TransportCore from './core';
 
 describe('openapi TransportCore', () => {
-    let transport;
-    let fetch;
+    let transport: TransportCore;
+    let fetch: any;
 
     beforeEach(() => {
         fetch = mockFetch();
@@ -287,8 +288,8 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/service_path/account/info/te/st',
                 {
                     body: undefined,
-                    method: 'GET',
-                    headers: { 'X-Request-Id': expect.any(Number) },
+                    method: 'get',
+                    headers: { 'X-Request-Id': expect.any(String) },
                     // credentials: 'include' adds cookies.
                     // Cookies used by some open api operations. if we don't default here make sure it is sent through with subscription requests.
                     credentials: 'include',
@@ -310,10 +311,10 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/service_path/account/info/te/st',
                 {
                     body: '{"Test":true}',
-                    method: 'POST',
+                    method: 'post',
                     headers: {
                         'Content-Type': 'application/json; charset=UTF-8',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                     // credentials: 'include' adds cookies.
                     // Cookies used by some open api operations. if we don't default here make sure it is sent through with subscription requests.
@@ -336,8 +337,8 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/service_path/account/info/te/st',
                 {
                     body: '{"Test":true}',
-                    method: 'POST',
-                    headers: { 'X-Request-Id': expect.any(Number) },
+                    method: 'post',
+                    headers: { 'X-Request-Id': expect.any(String) },
                     credentials: 'include',
                 },
             ]);
@@ -364,8 +365,8 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/platform/v1/media/fleeb',
                 {
                     body: expect.any(window.FormData),
-                    method: 'POST',
-                    headers: { 'X-Request-Id': expect.any(Number) },
+                    method: 'post',
+                    headers: { 'X-Request-Id': expect.any(String) },
                     credentials: 'include',
                 },
             ]);
@@ -390,8 +391,8 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/platform/v1/media/fleeb',
                 {
                     body: expect.any(window.Blob),
-                    method: 'POST',
-                    headers: { 'X-Request-Id': expect.any(Number) },
+                    method: 'post',
+                    headers: { 'X-Request-Id': expect.any(String) },
                     credentials: 'include',
                 },
             ]);
@@ -415,8 +416,8 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/platform/v1/media/fleeb',
                 {
                     body: expect.any(window.URLSearchParams),
-                    method: 'POST',
-                    headers: { 'X-Request-Id': expect.any(Number) },
+                    method: 'post',
+                    headers: { 'X-Request-Id': expect.any(String) },
                     credentials: 'include',
                 },
             ]);
@@ -680,7 +681,7 @@ describe('openapi TransportCore', () => {
 
         afterEach(() => transport.dispose());
 
-        function expectTheLanguageToBeSetTo(assertedLanguage) {
+        function expectTheLanguageToBeSetTo(assertedLanguage: string) {
             expect(fetch.mock.calls.length).toEqual(1);
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
@@ -697,11 +698,11 @@ describe('openapi TransportCore', () => {
             expectTheLanguageToBeSetTo('dk, *;q=0.5');
             fetch.mockClear();
 
-            transport.put('service_path', 'url', null, null);
+            transport.put('service_path', 'url', null);
             expectTheLanguageToBeSetTo('dk, *;q=0.5');
             fetch.mockClear();
 
-            transport.post('service_path', 'url', null, { headers: null });
+            transport.post('service_path', 'url', null, { headers: {} });
             expectTheLanguageToBeSetTo('dk, *;q=0.5');
             fetch.mockClear();
 
@@ -776,33 +777,33 @@ describe('openapi TransportCore', () => {
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'GET',
-                    headers: { 'X-Request-Id': expect.any(Number) },
+                    method: 'get',
+                    headers: { 'X-Request-Id': expect.any(String) },
                 }),
             ]);
             fetch.mockClear();
 
-            transport.put('service_path', 'url', null, null);
+            transport.put('service_path', 'url', null);
             expect(fetch.mock.calls.length).toEqual(1);
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'POST',
+                    method: 'post',
                     headers: {
-                        'X-HTTP-Method-Override': 'PUT',
-                        'X-Request-Id': expect.any(Number),
+                        'X-HTTP-Method-Override': 'put',
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
             fetch.mockClear();
 
-            transport.post('service_path', 'url', null, { headers: null });
+            transport.post('service_path', 'url', null, { headers: {} });
             expect(fetch.mock.calls.length).toEqual(1);
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'POST',
-                    headers: { 'X-Request-Id': expect.any(Number) },
+                    method: 'post',
+                    headers: { 'X-Request-Id': expect.any(String) },
                 }),
             ]);
             fetch.mockClear();
@@ -812,10 +813,10 @@ describe('openapi TransportCore', () => {
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'POST',
+                    method: 'post',
                     headers: {
-                        'X-HTTP-Method-Override': 'DELETE',
-                        'X-Request-Id': expect.any(Number),
+                        'X-HTTP-Method-Override': 'delete',
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -826,12 +827,11 @@ describe('openapi TransportCore', () => {
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'POST',
                     body: '{}',
                     headers: {
                         'Content-Type': 'application/json; charset=UTF-8',
-                        'X-HTTP-Method-Override': 'PATCH',
-                        'X-Request-Id': expect.any(Number),
+                        'X-HTTP-Method-Override': 'patch',
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -854,11 +854,11 @@ describe('openapi TransportCore', () => {
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'PATCH',
+                    method: 'patch',
                     body: '{"exampleField":"test"}',
                     headers: {
                         'Content-Type': 'application/json; charset=UTF-8',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);

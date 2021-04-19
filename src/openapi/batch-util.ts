@@ -29,20 +29,23 @@ const LOG_AREA = 'batch';
  * @param {Number} parentRequestId - The parent request id. Used as a base for calculating batch items request ids.
  * @returns {Array.<{status:string, response: Object}>} An array of responses, in the position of the response id's.
  */
-function parse(responseText, parentRequestId = 0) {
+function parse(responseText: string, parentRequestId = 0) {
     if (!responseText) {
         throw new Error('Required Parameter: responseText in batch parse');
     }
 
     const lines = responseText.split('\r\n');
     const responseBoundary = lines[0];
-    let currentData = null;
+    let currentData: {
+        status?: number;
+        response?: Record<string, any>;
+    } | null = null;
     let requestId = null;
     const responseData = [];
     for (let i = 0, l = lines.length; i < l; i++) {
         const line = lines[i];
         if (line.length) {
-            if (!responseData[requestId]) {
+            if (requestId === null || !responseData[requestId]) {
                 requestId = line.match(requestRx);
                 if (requestId) {
                     requestId = parseInt(requestId[1], 10);
@@ -102,7 +105,15 @@ function parse(responseText, parentRequestId = 0) {
  * @param {string} host - The host of the sender.
  * @returns { body: string, boundary: string }
  */
-function build(subRequests, host) {
+
+type Request = {
+    method: string;
+    headers?: Record<string, string>;
+    url: string;
+    data?: string;
+};
+
+function build(subRequests: Request[], host: string) {
     if (!subRequests || !host) {
         throw new Error(
             'Missing required parameters: batch build requires sub requests and host',

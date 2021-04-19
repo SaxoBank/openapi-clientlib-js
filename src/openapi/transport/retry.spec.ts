@@ -1,4 +1,5 @@
-﻿import {
+﻿/* eslint-disable max-nested-callbacks */
+import {
     setTimeout,
     installClock,
     uninstallClock,
@@ -8,8 +9,8 @@ import mockTransport from '../../test/mocks/transport';
 import TransportRetry from './retry';
 
 describe('openapi TransportRetry', () => {
-    let transport;
-    let transportRetry;
+    let transport: any;
+    let transportRetry: TransportRetry;
 
     beforeEach(() => {
         transport = mockTransport();
@@ -56,8 +57,8 @@ describe('openapi TransportRetry', () => {
         });
         expect(transportRetry.retryTimeout).toEqual(2000);
         const deletePromise = transportRetry.delete();
-        let apiResponse;
-        deletePromise.catch((response) => {
+        let apiResponse: any;
+        deletePromise.catch((response: any) => {
             apiResponse = response;
         });
         setTimeout(() => {

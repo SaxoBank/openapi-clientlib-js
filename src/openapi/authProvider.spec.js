@@ -329,7 +329,7 @@ describe('openapi AuthProvider', () => {
             expect(fetch).toBeCalledTimes(1);
             expect(fetch.mock.calls[0]).toEqual([
                 'http://refresh',
-                expect.objectContaining({ method: 'POST' }),
+                expect.objectContaining({ method: 'post' }),
             ]);
         });
 
@@ -348,7 +348,7 @@ describe('openapi AuthProvider', () => {
             expect(authProvider.getExpiry()).toEqual(initialOptions.expiry);
 
             expect(fetch.mock.calls[0][0]).toEqual('http://refresh');
-            expect(fetch.mock.calls[0][1].method).toEqual('POST');
+            expect(fetch.mock.calls[0][1].method).toEqual('post');
 
             fetch.resolve('200', { token: 'TOK2', expiry: 60 });
             setTimeout(function () {

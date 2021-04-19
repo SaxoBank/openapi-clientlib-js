@@ -8,22 +8,14 @@
 import log from '../../log';
 import type AuthProvider from '../authProvider';
 import TransportCore from './core';
+import TransportBase from './trasportBase';
+import type { Options, HTTPMethods, TransportCoreOptions } from './types';
 
 const LOG_AREA = 'TransportAuth';
 
 // The default period within which errors on different tokens
 // cause an endpoint auth errors to be ignored.
 const DEFAULT_AUTH_ERRORS_DEBOUNCE_PERIOD = 30000; // ms
-
-// -- Local methods section --
-
-type Methods = 'get' | 'put' | 'post' | 'delete' | 'patch' | 'options' | 'head';
-
-type Options = {
-    authErrorsDebouncePeriod?: number;
-};
-
-// -- Exported methods section --
 
 /**
  * This class builds on top of {@link saxo.openapi.TransportCore} and adds authentication management. You need only
@@ -41,7 +33,7 @@ type Options = {
  * @param {number} [options.authErrorsDebouncePeriod] - The period within which errors on different tokens cause an endpoint auth errors
  *                                                      to be ignored.
  */
-class TransportAuth {
+class TransportAuth extends TransportBase {
     authErrorsDebouncePeriod = DEFAULT_AUTH_ERRORS_DEBOUNCE_PERIOD;
     authorizationErrors: Record<
         string,
@@ -49,13 +41,15 @@ class TransportAuth {
     > = {};
 
     // needs to map with transport core interface
-    transport: any;
+    transport: TransportCore;
     authProvider: AuthProvider;
+
     constructor(
         baseUrl: string,
         authProvider: AuthProvider,
         options?: Options,
     ) {
+        super();
         if (!authProvider) {
             throw new Error('transport auth created without a auth provider');
         }
@@ -64,7 +58,6 @@ class TransportAuth {
             this.authErrorsDebouncePeriod = options.authErrorsDebouncePeriod;
         }
 
-        // @ts-ignore fix-me
         this.transport = new TransportCore(baseUrl, options);
 
         // Map of authorization error counts per endpoint/url.
@@ -106,18 +99,18 @@ class TransportAuth {
         throw result;
     }
 
-    private makeTransportMethod = (method: Methods) => {
+    prepareTransportMethod(method: HTTPMethods) {
         return (
-            servicePath: string,
-            urlTemplate: string,
-            templateArgs: string[],
-            options: any,
+            servicePath?: string,
+            urlTemplate?: string,
+            templateArgs?: Record<string, string | number> | null,
+            options?: TransportCoreOptions,
         ) => {
             const newOptions = {
                 ...options,
                 headers: {
                     ...(options && options.headers),
-                    Authorization: this.authProvider.getToken(),
+                    Authorization: this.authProvider.getToken() as string,
                 },
             };
 
@@ -136,15 +129,7 @@ class TransportAuth {
                 ),
             );
         };
-    };
-
-    get = this.makeTransportMethod('get');
-    put = this.makeTransportMethod('put');
-    post = this.makeTransportMethod('post');
-    delete = this.makeTransportMethod('delete');
-    patch = this.makeTransportMethod('patch');
-    head = this.makeTransportMethod('head');
-    options = this.makeTransportMethod('options');
+    }
 
     // Cleanup of error counter map
     cleanupAuthErrors() {
