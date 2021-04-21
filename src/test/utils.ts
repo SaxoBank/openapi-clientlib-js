@@ -41,8 +41,8 @@ const waterfallTimeout = (arr: Array<() => void>, startIndex?: number) => {
 };
 
 const getResolvablePromise = () => {
-    let resolver;
-    let rejecter;
+    let resolver: (value?: unknown) => void;
+    let rejecter: (value?: unknown) => void;
 
     const promise = new Promise((resolve, reject) => {
         resolver = resolve;
@@ -51,7 +51,9 @@ const getResolvablePromise = () => {
 
     return {
         promise,
+        // @ts-expect-error TS complains that variable is used before initialized
         resolve: resolver,
+        // @ts-expect-error TS complains that variable is used before initialized
         reject: rejecter,
     };
 };

@@ -6,9 +6,9 @@ describe('openapi Streaming connection', () => {
     const baseUrl = 'test-url';
     const token = 'token';
     const contextId = '00000000';
-    let mockWithUrlConfig;
-    let mockHubConnection;
-    let connection;
+    let mockWithUrlConfig: jest.Mock;
+    let mockHubConnection: Record<string, jest.Mock>;
+    let connection: Connection;
 
     beforeEach(() => {
         mockWithUrlConfig = jest.fn();
@@ -23,7 +23,7 @@ describe('openapi Streaming connection', () => {
         };
 
         class MockConnectionBuilder {
-            withUrl(...args) {
+            withUrl(...args: unknown[]) {
                 mockWithUrlConfig(...args);
                 return this;
             }
@@ -66,7 +66,7 @@ describe('openapi Streaming connection', () => {
         it('should fallback to signalr longpolling if websocket fails', (done) => {
             mockHubConnection.start.mockImplementation(() => Promise.reject());
 
-            connection.start();
+            connection.start(() => {});
             expect(mockWithUrlConfig).toHaveBeenCalledWith(
                 `${baseUrl}/streaming?contextId=${contextId}`,
                 expect.objectContaining({

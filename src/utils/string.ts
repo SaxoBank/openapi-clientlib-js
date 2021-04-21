@@ -1,3 +1,8 @@
+export type StringTemplateArgs = Record<
+    string,
+    string | number | boolean
+> | null;
+
 const formatRx = /\{([^{]+?)\}/g;
 
 /**

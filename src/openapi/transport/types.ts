@@ -1,3 +1,5 @@
+import type { StringTemplateArgs } from '../../utils/string';
+
 export type HTTPMethods = 'get' | 'put' | 'post' | 'delete' | 'patch' | 'options' | 'head';
 
 export type APIStatusCode = 401 | 404 | 200 | 201 | 500;
@@ -30,10 +32,10 @@ export interface APIResponse {
 export interface TransportCoreOptions {
     headers?: Record<string, string>;
     queryParams?: Record<string, string | number>;
-    body?: string | Record<string, string | number | boolean> | URLSearchParams | File | FormData;
+    body?: string | Record<string, unknown> | URLSearchParams | File | FormData;
     cache?: boolean;
     requestId?: string;
 }
 
 // eslint-disable-next-line max-len
-export type MethodInputArgs = [string | undefined, string | undefined, Record<string, string | number> | null | undefined, TransportCoreOptions | undefined];
+export type MethodInputArgs = [string | undefined, string | undefined, StringTemplateArgs | undefined, TransportCoreOptions | undefined];

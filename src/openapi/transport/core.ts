@@ -14,6 +14,7 @@ import type {
     HTTPMethods,
 } from './types';
 import TransportBase from './trasportBase';
+import type { StringTemplateArgs } from '../../utils/string';
 
 /**
  * Options pertaining to a specific service path.
@@ -59,7 +60,7 @@ class TransportCore extends TransportBase {
         return (
             servicePath?: string,
             urlTemplate?: string,
-            templateArgs?: Record<string, string | number> | null,
+            templateArgs?: StringTemplateArgs,
             options?: TransportCoreOptions,
         ) => {
             let body;

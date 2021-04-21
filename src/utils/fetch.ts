@@ -64,7 +64,7 @@ export function convertFetchSuccess(
     clearTimeout(timerId);
 
     let convertedPromise: Promise<{
-        response?: string | Blob | undefined;
+        response?: string | Blob | Record<string, unknown>;
         status: number;
         headers: Headers;
         size: number;

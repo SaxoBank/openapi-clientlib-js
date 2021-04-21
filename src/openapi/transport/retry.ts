@@ -6,6 +6,7 @@
 import type { APIResponse, MethodInputArgs, HTTPMethods } from './types';
 import type TransportCore from './core';
 import TransportBase from './trasportBase';
+import type { HTTPMethodResult } from './trasportBase';
 
 interface TransportCall {
     method: HTTPMethods;
@@ -82,7 +83,7 @@ class TransportRetry extends TransportBase {
                 (this.methods[method].retryLimit > 0 ||
                     this.methods[method].retryTimeouts)
             ) {
-                return new Promise((resolve, reject) => {
+                return new Promise<HTTPMethodResult>((resolve, reject) => {
                     const transportCall = {
                         method,
                         args,

@@ -180,7 +180,7 @@ describe('Parser Protobuf', () => {
             );
 
             expect(schemas).not.toBeFalsy();
-            expect(schemaObject.name).toBe('InstrumentPriceDetails');
+            expect(schemaObject?.name).toBe('InstrumentPriceDetails');
             expect(rootMessage).toBe('InstrumentPriceDetails');
         });
 
@@ -191,7 +191,7 @@ describe('Parser Protobuf', () => {
 
             expect(schemaObject).not.toBeFalsy();
 
-            expect(JSON.parse(JSON.stringify(schemaObject.fields))).toEqual(
+            expect(JSON.parse(JSON.stringify(schemaObject?.fields))).toEqual(
                 expect.objectContaining(mockProtoPrice.fields),
             );
         });

@@ -1,4 +1,4 @@
-import protobuf from 'protobufjs/dist/protobuf';
+import protobuf from 'protobufjs';
 import {
     setTimeout,
     installClock,
@@ -21,14 +21,14 @@ ParserFacade.addParsers({
 });
 
 describe('openapi StreamingSubscription', () => {
-    let transport;
-    let updateSpy;
-    let createdSpy;
-    let errorSpy;
-    let authManager;
-    let networkErrorSpy;
+    let transport: any;
+    let updateSpy: jest.Mock;
+    let createdSpy: jest.Mock;
+    let errorSpy: jest.Mock;
+    let authManager: { getAuth: jest.Mock };
+    let networkErrorSpy: jest.Mock;
 
-    function sendInitialResponse(response) {
+    function sendInitialResponse(response?: Record<string, any>) {
         if (!response) {
             response = { Snapshot: { Data: [1, 'fish', 3] } };
         }
@@ -52,7 +52,7 @@ describe('openapi StreamingSubscription', () => {
     });
 
     describe('unsubscribe by tag behaviour', () => {
-        let subscription;
+        let subscription: Subscription;
 
         beforeEach(() => {
             subscription = new Subscription(
@@ -159,7 +159,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                null,
+                undefined,
                 { headers: { Header: 'header' } },
             );
             subscription.onSubscribe();
@@ -193,14 +193,14 @@ describe('openapi StreamingSubscription', () => {
         });
 
         it('does not carry over headers mutation', (done) => {
-            const headers = { Header: 'header' };
+            const headers: Record<string, string> = { Header: 'header' };
             const subscription = new Subscription(
                 '123',
                 transport,
                 'servicePath',
                 'src/test/resource',
                 {},
-                null,
+                undefined,
                 { headers },
             );
 
@@ -391,7 +391,7 @@ describe('openapi StreamingSubscription', () => {
     });
 
     describe('streamed update', () => {
-        let subscription;
+        let subscription: Subscription;
         beforeEach((done) => {
             subscription = new Subscription(
                 '123',
@@ -1333,7 +1333,6 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                updateSpy,
             );
 
             subscription.reset(); // reset before subscribed
@@ -1382,7 +1381,6 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                updateSpy,
             );
 
             subscription.reset(); // reset before subscribed
@@ -1430,7 +1428,6 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                updateSpy,
             );
 
             expect(transport.post.mock.calls.length).toEqual(0);
@@ -1747,7 +1744,7 @@ describe('openapi StreamingSubscription', () => {
 
                 const parser = subscription.parser;
 
-                const schemaObject = parser.getSchemaType(
+                const schemaObject: any = parser.getSchemaType(
                     'Price',
                     'PriceResponse',
                 );
@@ -2075,7 +2072,6 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                updateSpy,
             );
             subscription.onSubscribe();
 
@@ -2127,7 +2123,6 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                updateSpy,
             );
             subscription.onSubscribe();
 

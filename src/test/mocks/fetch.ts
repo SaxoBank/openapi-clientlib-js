@@ -39,7 +39,7 @@
 }
 
 function mockFetch() {
-    const fetch = jest.fn();
+    const fetch: jest.Mock = jest.fn();
     // @ts-expect-error
     global.fetch = fetch;
     fetch.mockImplementation(function () {
@@ -75,7 +75,10 @@ function mockFetch() {
     fetch.reject = () => {
         throw new Error('fetch not called');
     };
-    return fetch;
+    return fetch as jest.Mock & {
+        resolve: (_?: any) => never;
+        reject: (_?: any) => never;
+    };
 }
 
 export default mockFetch;

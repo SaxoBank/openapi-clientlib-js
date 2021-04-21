@@ -73,8 +73,8 @@ const ParserFacade = {
      * @param {String} format - Data format ie. application/json
      * @return {Boolean} - Returns true if format is supported. Returns false if format is not supported by available parsing methods.
      */
-    isFormatSupported(format: string) {
-        return Boolean(parserCreators[format]);
+    isFormatSupported(format?: string) {
+        return Boolean(parserCreators[String(format)]);
     },
 
     /**
@@ -88,14 +88,14 @@ const ParserFacade = {
      * @param {String} url - The url for given endpoint
      * @return {Object} Parser
      */
-    getParser(format: string, servicePath: string, url: string) {
+    getParser(format: string | undefined, servicePath: string, url: string) {
         const id = getId(format, servicePath, url);
 
         if (parsersMap[id]) {
             return parsersMap[id];
         }
-        const Parser = parserCreators[format] || defaultParser;
-        const engine = enginesMap[format];
+        const Parser = (format && parserCreators[format]) || defaultParser;
+        const engine = format && enginesMap[format];
 
         parsersMap[id] = new Parser(id, engine);
 

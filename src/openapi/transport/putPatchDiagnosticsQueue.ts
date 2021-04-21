@@ -4,11 +4,10 @@
  */
 
 import log from '../../log';
-import type TransportAuth from './auth';
-import type TransportBatch from './batch';
 import TransportQueue from './queue';
 import type TransportCore from './core';
 import type { HTTPMethods } from './types';
+import type { ITransport } from './trasportBase';
 
 // -- Local variables section --
 
@@ -29,17 +28,10 @@ const LOG_AREA = 'TransportPutPatchDiagnositicsQueue';
 
 class TransportPutPatchDiagnositicsQueue {
     isQueueing = true;
-    transport: TransportAuth | TransportQueue | TransportBatch | TransportCore;
+    transport: ITransport;
     transportQueue: TransportQueue;
 
-    constructor(
-        transport:
-            | TransportAuth
-            | TransportQueue
-            | TransportBatch
-            | TransportCore,
-        transportCore: TransportCore,
-    ) {
+    constructor(transport: ITransport, transportCore: TransportCore) {
         if (!transport) {
             throw new Error(
                 'Missing required parameter: transport in TransportPutPatchDiagnositicsQueue',

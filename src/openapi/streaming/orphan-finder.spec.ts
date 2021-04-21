@@ -1,20 +1,21 @@
 ﻿import { installClock, uninstallClock, tick } from '../../test/utils';
 import StreamingOrphanFinder from './orphan-finder';
+import type Subscription from './subscription';
 
 describe('openapi StreamingOrphanFinder', () => {
-    let streamingOrphanFinder;
-    let orphanFoundCallback;
-    let orphanedSubscription;
-    let notOrphanedSubscription;
-    let orphanIn20Subscription;
-    let orphanIn30Subscription;
+    let streamingOrphanFinder: StreamingOrphanFinder;
+    let orphanFoundCallback: jest.Mock;
+    let orphanedSubscription: any;
+    let notOrphanedSubscription: any;
+    let orphanIn20Subscription: any;
+    let orphanIn30Subscription: any;
     let orphanedSubscriptionTime;
     let notOrphanedSubscriptionTime;
     let transitioningSubscriptionTime;
-    let orphanIn20SubscriptionTime;
-    let orphanIn30SubscriptionTime;
+    let orphanIn20SubscriptionTime: { time: number };
+    let orphanIn30SubscriptionTime: { time: number };
 
-    function mockSubscription(timeTillOrphanedObj) {
+    function mockSubscription(timeTillOrphanedObj: { time: number }) {
         const subscription = {
             timeTillOrphaned: jest.fn(),
         };
@@ -51,9 +52,11 @@ describe('openapi StreamingOrphanFinder', () => {
             new StreamingOrphanFinder([], function () {});
         }).not.toThrow();
         expect(function () {
+            // @ts-expect-error checking invalid case
             new StreamingOrphanFinder(null, function () {});
         }).toThrow();
         expect(function () {
+            // @ts-expect-error checking invalid case
             new StreamingOrphanFinder([]);
         }).toThrow();
     });
@@ -71,7 +74,7 @@ describe('openapi StreamingOrphanFinder', () => {
     });
 
     it('resets orphaned subscriptions', () => {
-        const subscriptions = [];
+        const subscriptions: Subscription[] = [];
         streamingOrphanFinder = new StreamingOrphanFinder(
             subscriptions,
             orphanFoundCallback,
@@ -254,7 +257,7 @@ describe('openapi StreamingOrphanFinder', () => {
         expect(streamingOrphanFinder.nextUpdateTime).toEqual(
             Date.now() + 20000,
         );
-
+        // @ts-ignore
         expect(global.setTimeout.mock.calls.length).toEqual(1); // start scheduled one update
 
         // restore fake setTimeout
@@ -265,13 +268,18 @@ describe('openapi StreamingOrphanFinder', () => {
         orphanIn20SubscriptionTime.time = -100000; // make our subscription orphaned
         expect(orphanFoundCallback.mock.calls.length).toEqual(0);
 
+        // @ts-ignore
         let updateCall = global.setTimeout.mock.calls[0][0];
         updateCall(); // we schedule the timer, happening late, it should detect it and not report orphaned, in case a phone went to sleep and was just awoken
 
         expect(orphanFoundCallback.mock.calls.length).toEqual(0); // so it has not reported it
+        // @ts-ignore
         expect(global.setTimeout.mock.calls.length).toEqual(2); // but it has scheduled a new update
 
+        // @ts-ignore
         updateCall = global.setTimeout.mock.calls[1][0];
+
+        // @ts-ignore
         const delayBeforeNextUpdate = global.setTimeout.mock.calls[1][1];
 
         // restore fake setTimeout

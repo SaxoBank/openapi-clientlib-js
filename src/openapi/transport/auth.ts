@@ -10,6 +10,8 @@ import type AuthProvider from '../authProvider';
 import TransportCore from './core';
 import TransportBase from './trasportBase';
 import type { Options, HTTPMethods, TransportCoreOptions } from './types';
+import type { HTTPMethodResult } from './trasportBase';
+import type { StringTemplateArgs } from '../../utils/string';
 
 const LOG_AREA = 'TransportAuth';
 
@@ -69,7 +71,7 @@ class TransportAuth extends TransportBase {
         timeRequested: number,
         // fix-me remove any
         result: any,
-    ) {
+    ): never {
         if (result?.status === 401) {
             this.addAuthError(result.url, oldTokenExpiry, timeRequested);
             this.cleanupAuthErrors();
@@ -103,9 +105,9 @@ class TransportAuth extends TransportBase {
         return (
             servicePath?: string,
             urlTemplate?: string,
-            templateArgs?: Record<string, string | number> | null,
+            templateArgs?: StringTemplateArgs,
             options?: TransportCoreOptions,
-        ) => {
+        ): Promise<HTTPMethodResult> => {
             const newOptions = {
                 ...options,
                 headers: {

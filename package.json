@@ -55,6 +55,7 @@
         "@babel/core": "7.13.10",
         "@babel/preset-env": "7.13.10",
         "@babel/preset-typescript": "^7.13.0",
+        "@microsoft/signalr": "5.0.4",
         "@types/jest": "^26.0.21",
         "@typescript-eslint/eslint-plugin": "^4.19.0",
         "@typescript-eslint/parser": "^4.19.0",

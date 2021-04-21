@@ -62,7 +62,10 @@ class ParserProtobuf extends ParserBase {
 
     getSchemaType(schemaName: string, typeName: string) {
         const schemas = this.schemasMap[schemaName];
-        return schemas?.root.lookup(typeName) as ProtoBuf.Type;
+        return schemas?.root.lookup(typeName) as
+            | ProtoBuf.Type
+            | null
+            | undefined;
     }
     getSchemaName() {
         return this.lastSchemaName;

@@ -10,8 +10,9 @@ import type {
     TransportCoreOptions,
     APIStatusCode,
 } from './types';
-import type { ITransport } from './trasportBase';
+import type { ITransport, HTTPMethodResult } from './trasportBase';
 import TransportBase from './trasportBase';
+import type { StringTemplateArgs } from '../../utils/string';
 
 // -- Exported methods section --
 
@@ -35,7 +36,7 @@ export type QueueItem = {
     args: MethodInputArgs;
     servicePath: string;
     urlTemplate: string;
-    urlArgs?: Record<string, string | number> | null;
+    urlArgs?: StringTemplateArgs;
     options?: TransportCoreOptions;
     resolve: (...value: any[]) => void;
     reject: (reason?: any, ...rest: any[]) => void;
@@ -99,7 +100,7 @@ class TransportQueue extends TransportBase {
 
             const transportCallArguments = args;
 
-            return new Promise((resolve, reject) => {
+            return new Promise<HTTPMethodResult>((resolve, reject) => {
                 const queueItem: QueueItem = {
                     method,
                     args: transportCallArguments,

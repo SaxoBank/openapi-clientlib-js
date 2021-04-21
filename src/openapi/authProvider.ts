@@ -117,6 +117,15 @@ class AuthProvider {
     // fix-me need to remove once we have microEmitter implement as class
     trigger: any;
 
+    // fix-me need to remove once we have microEmitter implement as class
+    on: any;
+
+    // fix-me need to remove once we have microEmitter implement as class
+    one: any;
+
+    // fix-me need to remove once we have microEmitter implement as class
+    off: any;
+
     constructor(options: Options) {
         emitter.mixinTo(this);
 
@@ -327,7 +336,7 @@ class AuthProvider {
      * Call this method when a 401 unauthenticated is received
      * See also {@link TransportAuth.onTokenInvalid}.
      */
-    tokenRejected(expiryOfRejectedToken: number) {
+    tokenRejected(expiryOfRejectedToken?: number) {
         const isFetching = this.isFetchingNewToken();
 
         const currentAuthExpiry = this.getExpiry();

@@ -2,7 +2,7 @@ import SubscriptionQueue from './subscription-queue';
 import * as SubscriptionActions from './subscription-actions';
 
 describe('openapi SubscriptionQueue', () => {
-    let queue;
+    let queue: SubscriptionQueue;
 
     describe('enqueue', () => {
         beforeEach(() => {
@@ -11,6 +11,7 @@ describe('openapi SubscriptionQueue', () => {
 
         it('throws if no action', () => {
             expect(() => {
+                // @ts-expect-error checking invalid usage
                 queue.enqueue({});
             }).toThrow();
         });
@@ -63,7 +64,7 @@ describe('openapi SubscriptionQueue', () => {
             };
         }
 
-        const tests = [
+        it.each([
             // Basic tests
             [
                 'should dequeue first and only action and leave queue empty',
@@ -277,26 +278,18 @@ describe('openapi SubscriptionQueue', () => {
                 ],
                 [unsubscribeByTagPending()],
             ],
-        ];
-
-        tests.forEach(([title, actionsToQueue, expectedActions]) => {
-            it(title, () => {
-                for (const action of actionsToQueue) {
-                    if (action === 'clearPatches') {
-                        queue.clearPatches();
-                    } else {
-                        queue.enqueue(action);
-                    }
+        ])('%s', (_, actionsToQueue, expectedActions) => {
+            for (const action of actionsToQueue) {
+                queue.enqueue(action);
+            }
+            for (const action of expectedActions) {
+                if (action === 'clearPatches') {
+                    queue.clearPatches();
+                } else {
+                    expect(queue.dequeue()).toStrictEqual(action);
                 }
-                for (const action of expectedActions) {
-                    if (action === 'clearPatches') {
-                        queue.clearPatches();
-                    } else {
-                        expect(queue.dequeue()).toStrictEqual(action);
-                    }
-                }
-                expect(queue.isEmpty()).toBe(true);
-            });
+            }
+            expect(queue.isEmpty()).toBe(true);
         });
     });
 
@@ -345,14 +338,14 @@ describe('openapi SubscriptionQueue', () => {
             expect(queue.peekAction()).toBe(
                 SubscriptionActions.ACTION_UNSUBSCRIBE,
             );
-            expect(queue.dequeue().action).toBe(
+            expect(queue.dequeue()?.action).toBe(
                 SubscriptionActions.ACTION_UNSUBSCRIBE,
             );
 
             expect(queue.peekAction()).toBe(
                 SubscriptionActions.ACTION_SUBSCRIBE,
             );
-            expect(queue.dequeue().action).toBe(
+            expect(queue.dequeue()?.action).toBe(
                 SubscriptionActions.ACTION_SUBSCRIBE,
             );
 
@@ -383,7 +376,10 @@ describe('openapi SubscriptionQueue', () => {
                 action: SubscriptionActions.ACTION_UNSUBSCRIBE,
                 args: { force: false },
             });
-            queue.enqueue({ action: SubscriptionActions.ACTION_SUBSCRIBE });
+            queue.enqueue({
+                action: SubscriptionActions.ACTION_SUBSCRIBE,
+                args: undefined,
+            });
 
             expect(queue.isEmpty()).toBe(false);
         });
