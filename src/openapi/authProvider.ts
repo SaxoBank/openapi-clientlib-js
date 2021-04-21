@@ -1,11 +1,4 @@
-/**
- * @module saxo/openapi/authProvider
- * @ignore
- */
-
-// -- Local variables section --
-
-import emitter from '../micro-emitter';
+import MicroEmitter from '../micro-emitter';
 import log from '../log';
 import { startsWith } from '../utils/string';
 import fetch from '../utils/fetch';
@@ -29,8 +22,6 @@ const TOKEN_BEARER = 'Bearer ';
 const STATE_WAITING = 0x1;
 const STATE_REFRESHING = 0x2;
 const STATE_FAILED = 0x4;
-
-// -- Local methods section --
 
 /**
  * Returns the absolute timestamp of the expiry based on the current date and time.
@@ -90,7 +81,7 @@ type Options = {
  * @param {number} [options.maxRetryCount] - The maximum number of times to retry the auth url
  */
 
-class AuthProvider {
+class AuthProvider extends MicroEmitter {
     private expiry = 0;
     private token: string | null = null;
     tokenRefreshUrl?: string;
@@ -114,21 +105,8 @@ class AuthProvider {
     // Type of event that occurs when the token refresh fails.
     EVENT_TOKEN_REFRESH_FAILED = 'tokenRefreshFailed';
 
-    // fix-me need to remove once we have microEmitter implement as class
-    trigger: any;
-
-    // fix-me need to remove once we have microEmitter implement as class
-    on: any;
-
-    // fix-me need to remove once we have microEmitter implement as class
-    one: any;
-
-    // fix-me need to remove once we have microEmitter implement as class
-    off: any;
-
     constructor(options: Options) {
-        emitter.mixinTo(this);
-
+        super();
         if (!options?.token && !options?.tokenRefreshUrl) {
             throw new Error('No token supplied and no way to get it');
         }

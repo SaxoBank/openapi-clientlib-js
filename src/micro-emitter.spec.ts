@@ -1,14 +1,14 @@
-import microEmitter from './micro-emitter';
+import EventEmitter from './micro-emitter';
+import type { IEventEmitter } from './micro-emitter';
 
 describe('microEmitter', () => {
-    let eventEmitter;
-    let spyTest;
-    let spyTest1;
-    let spyOrange;
+    let eventEmitter: IEventEmitter;
+    let spyTest: jest.Mock;
+    let spyTest1: jest.Mock;
+    let spyOrange: jest.Mock;
 
     beforeEach(() => {
-        eventEmitter = {};
-        microEmitter.mixinTo(eventEmitter);
+        eventEmitter = new EventEmitter();
         spyTest = jest.fn().mockName('test');
         spyTest1 = jest.fn().mockName('test1');
         spyOrange = jest.fn().mockName('orange');

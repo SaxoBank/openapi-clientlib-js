@@ -1,4 +1,4 @@
-import emitter from '../../micro-emitter';
+import MicroEmitter from '../../micro-emitter';
 import log from '../../log';
 import { padLeft } from '../../utils/string';
 import Subscription from './subscription';
@@ -95,7 +95,7 @@ export function findRetryDelay(
  * @param {Array.<string>} [options.transportTypes=['plainWebSockets', 'webSockets', 'longPolling']] - The transports to be used in order by signal-r.
  * @param {Object} [options.messageProtocol={}] - Message serialization protocol used by signalr core
  */
-class Streaming {
+class Streaming extends MicroEmitter {
     /**
      * Event that occurs when the connection state changes.
      */
@@ -175,18 +175,6 @@ class Streaming {
     reconnectTimer?: number;
     disposed = false;
 
-    // fix-me need to remove once we have microEmitter implement as class
-    trigger: any;
-
-    // fix-me need to remove once we have microEmitter implement as class
-    on: any;
-
-    // fix-me need to remove once we have microEmitter implement as class
-    one: any;
-
-    // fix-me need to remove once we have microEmitter implement as class
-    off: any;
-
     constructor(
         // FIXME any
         transport: any,
@@ -194,8 +182,7 @@ class Streaming {
         authProvider: AuthProvider,
         options?: Partial<StreamingConfigurableOptions>,
     ) {
-        emitter.mixinTo(this);
-
+        super();
         this.baseUrl = baseUrl;
         this.authProvider = authProvider;
         this.transport = transport;

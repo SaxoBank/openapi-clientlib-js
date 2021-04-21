@@ -1,3 +1,8 @@
+### v9.0.0
+
+#### Breaking
+- micro-emitter becomes a class and needs to be instantiated instead of mixed into an existing object.
+
 ### v8.4.0
 - Add pause, resume support to freeze subscriptions
 

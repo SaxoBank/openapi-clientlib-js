@@ -1,11 +1,9 @@
-import microEmitter from '../../micro-emitter';
+import MicroEmitter from '../../micro-emitter';
 
 function mockAuthProvider() {
     const EVENT_TOKEN_RECEIVED = 'testTokenReceived';
 
-    // FIXME - update implementation and typing once emitter is typed and refactored
-    const emitter: Record<string, any> = {};
-    microEmitter.mixinTo(emitter);
+    const emitter = new MicroEmitter();
 
     const authProvider = {
         getToken: jest.fn().mockImplementation(() => 'Bearer TOKEN'),
@@ -34,6 +32,7 @@ function mockAuthProvider() {
         triggerTokenReceived() {
             emitter.trigger(EVENT_TOKEN_RECEIVED);
         },
+
         tokenRejected: jest.fn(),
         isFetchingNewToken: jest.fn().mockReturnValue(false),
         refreshOpenApiToken: jest.fn(),

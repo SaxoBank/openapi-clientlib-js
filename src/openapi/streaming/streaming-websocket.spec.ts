@@ -35,8 +35,7 @@ describe('openapi Streaming', () => {
     let receivedCallback: (arg: any) => void;
     let authProvider: any;
     let mockConnection;
-    // FIXME try to fix once Transport is migrated
-    let transport: any;
+    let transport: ReturnType<typeof mockTransport>;
 
     beforeEach(() => {
         (WebSocketTransport.isSupported as jest.Mock).mockReturnValue(true);

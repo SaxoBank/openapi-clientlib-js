@@ -25,7 +25,7 @@
         "postversion": "git push"
     },
     "jest": {
-        "verbose": true,
+        "verbose": false,
         "testPathIgnorePatterns": [
             "/node_modules/",
             "/esnext/"

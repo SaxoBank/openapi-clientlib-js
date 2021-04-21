@@ -973,7 +973,7 @@ describe('openapi StreamingSubscription', () => {
                 { onUpdate: updateSpy },
             );
 
-            jest.spyOn(log, 'error');
+            const logError = jest.spyOn(log, 'error');
 
             subscription.onUnsubscribe();
             subscription.onUnsubscribe();
@@ -1030,7 +1030,7 @@ describe('openapi StreamingSubscription', () => {
                     expect(transport.post.mock.calls.length).toEqual(0);
                     expect(transport.delete.mock.calls.length).toEqual(0);
 
-                    expect(log.error.mock.calls.length).toEqual(0);
+                    expect(logError.mock.calls.length).toEqual(0);
 
                     done();
                 });
@@ -1051,7 +1051,7 @@ describe('openapi StreamingSubscription', () => {
                 { onUpdate: updateSpy },
             );
 
-            jest.spyOn(log, 'error');
+            const logError = jest.spyOn(log, 'error');
 
             subscription.onSubscribe();
             transport.post.mockClear();
@@ -1065,7 +1065,7 @@ describe('openapi StreamingSubscription', () => {
                 expect(transport.post.mock.calls.length).toEqual(0);
                 expect(transport.delete.mock.calls.length).toEqual(0);
 
-                expect(log.error.mock.calls.length).toEqual(0);
+                expect(logError.mock.calls.length).toEqual(0);
 
                 done();
             });

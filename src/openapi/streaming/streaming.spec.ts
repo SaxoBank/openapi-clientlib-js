@@ -790,16 +790,16 @@ describe('openapi Streaming', () => {
             expect(connectionSlowSpy.mock.calls.length).toEqual(1);
         });
         it('handles connection error events', () => {
-            jest.spyOn(log, 'warn');
+            const warnLogSpy = jest.spyOn(log, 'warn');
             errorCallback('error details');
 
-            expect(log.warn.mock.calls.length).toEqual(1);
+            expect(warnLogSpy.mock.calls.length).toEqual(1);
         });
         it('handles signal-r log calls', () => {
-            jest.spyOn(log, 'debug');
+            const logDebugSpy = jest.spyOn(log, 'debug');
             // @ts-expect-error TS can't see that log property is added to the connection
             mockConnection.log('my message');
-            expect(log.debug.mock.calls.length).toEqual(1);
+            expect(logDebugSpy.mock.calls.length).toEqual(1);
         });
     });
 
