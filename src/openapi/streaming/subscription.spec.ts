@@ -239,7 +239,7 @@ describe('openapi StreamingSubscription', () => {
         });
 
         describe('accepts shouldSubscribeBeforeStreamingSetup boolean flag', () => {
-            it.only('should subscribe when the connection is unavailable and flag is true', () => {
+            it('should subscribe when the connection is unavailable and flag is true', () => {
                 const subscription = new Subscription(
                     '123',
                     transport,
