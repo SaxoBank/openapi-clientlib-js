@@ -237,6 +237,36 @@ describe('openapi StreamingSubscription', () => {
                 });
             });
         });
+
+        describe('accepts shouldSubscribeBeforeStreamingSetup boolean flag', () => {
+            it.only('should subscribe when the connection is unavailable and flag is true', () => {
+                const subscription = new Subscription(
+                    '123',
+                    transport,
+                    'servicePath',
+                    'src/test/resource',
+                    {},
+                    null,
+                    { shouldSubscribeBeforeStreamingSetup: true },
+                );
+                subscription.onConnectionUnavailable();
+                subscription.onSubscribe();
+
+                expect(transport.post.mock.calls.length).toEqual(1);
+                expect(transport.post.mock.calls[0]).toEqual([
+                    'servicePath',
+                    'src/test/resource',
+                    null,
+                    {
+                        body: {
+                            RefreshRate: 1000,
+                            ContextId: '123',
+                            ReferenceId: '1',
+                        },
+                    },
+                ]);
+            });
+        });
     });
 
     describe('initial snapshot', () => {

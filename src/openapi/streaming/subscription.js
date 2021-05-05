@@ -149,6 +149,15 @@ function tryPerformAction(action, args) {
     }
 
     if (
+        this.shouldSubscribeBeforeStreamingSetup &&
+        action === ACTION_SUBSCRIBE &&
+        !this.connectionAvailable
+    ) {
+        performAction.call(this, { action, args });
+        return;
+    }
+
+    if (
         !this.connectionAvailable ||
         this.TRANSITIONING_STATES & this.currentState
     ) {
@@ -660,6 +669,8 @@ function Subscription(
     this.onQueueEmpty = options.onQueueEmpty;
     this.headers = options.headers && extend({}, options.headers);
     this.onNetworkError = options.onNetworkError;
+    this.shouldSubscribeBeforeStreamingSetup =
+        options.shouldSubscribeBeforeStreamingSetup;
 
     if (!this.subscriptionData.RefreshRate) {
         this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
@@ -684,6 +695,7 @@ Subscription.prototype.STATE_SUBSCRIBED = 0x2;
 Subscription.prototype.STATE_UNSUBSCRIBE_REQUESTED = 0x4;
 Subscription.prototype.STATE_UNSUBSCRIBED = 0x8;
 Subscription.prototype.STATE_PATCH_REQUESTED = 0x10;
+Subscription.prototype.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG = 0x20;
 
 Subscription.prototype.TRANSITIONING_STATES =
     Subscription.prototype.STATE_SUBSCRIBE_REQUESTED |
