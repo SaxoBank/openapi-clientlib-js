@@ -856,18 +856,18 @@ class Subscription {
         this.onReadyToPerformNextAction();
     }
 
-    /**
-     * Resets the subscription activity
-     */
-    private onActivity() {
-        this.latestActivity = new Date().getTime();
-    }
-
     private setState(state: SubscriptionState) {
         this.currentState = state;
         for (let i = 0; i < this.onStateChangedCallbacks.length; i++) {
             this.onStateChangedCallbacks[i](state);
         }
+    }
+
+    /**
+     * Resets the subscription activity
+     */
+    onActivity() {
+        this.latestActivity = new Date().getTime();
     }
 
     /**
