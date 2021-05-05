@@ -259,9 +259,9 @@ describe('openapi StreamingSubscription', () => {
                     null,
                     {
                         body: {
-                            RefreshRate: 1000,
                             ContextId: '123',
-                            ReferenceId: '1',
+                            ReferenceId: '10',
+                            RefreshRate: 1000,
                         },
                     },
                 ]);
