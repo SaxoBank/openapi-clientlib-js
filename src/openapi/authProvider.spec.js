@@ -321,14 +321,14 @@ describe('openapi AuthProvider', () => {
 
     describe('refreshing', () => {
         it('allows no arguments and defaults to expired', function () {
-            const options = { tokenRefreshUrl: 'http://refresh' };
+            const options = { tokenRefreshUrl: 'http://refresh?investor=1' };
             authProvider = new AuthProvider(options);
 
             expect(authProvider.getExpiry()).toEqual(relativeDate(0));
             expect(authProvider.getToken()).toEqual(null);
             expect(fetch).toBeCalledTimes(1);
             expect(fetch.mock.calls[0]).toEqual([
-                'http://refresh',
+                expect.stringMatching(/http:\/\/refresh\?investor=1&timestamp=(.\d+)$/),
                 expect.objectContaining({ method: 'POST' }),
             ]);
         });
@@ -347,7 +347,7 @@ describe('openapi AuthProvider', () => {
             );
             expect(authProvider.getExpiry()).toEqual(initialOptions.expiry);
 
-            expect(fetch.mock.calls[0][0]).toEqual('http://refresh');
+            expect(fetch.mock.calls[0][0]).toMatch(/http:\/\/refresh\?timestamp=(.\d+)$/),
             expect(fetch.mock.calls[0][1].method).toEqual('POST');
 
             fetch.resolve('200', { token: 'TOK2', expiry: 60 });

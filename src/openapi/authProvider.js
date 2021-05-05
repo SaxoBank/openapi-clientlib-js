@@ -155,11 +155,16 @@ function getToken(url) {
     const headers = this.tokenRefreshHeaders || {};
     headers['Content-Type'] = headers['Content-Type'] || 'JSON';
 
-    fetch(this.tokenRefreshMethod, url, {
+    fetch(this.tokenRefreshMethod, addTimestamp(url), {
         headers,
         cache: false,
         credentials: this.tokenRefreshCredentials,
     }).then(onApiTokenReceived.bind(this), onApiTokenReceiveFail.bind(this));
+}
+
+function addTimestamp(url) {
+    const hasQueryString = url.indexOf('?') !== -1;
+    return `${url}${hasQueryString ? '&' : '?'}timestamp=${new Date().getTime()}`;
 }
 
 function addBearer(newToken) {
