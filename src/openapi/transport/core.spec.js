@@ -865,4 +865,32 @@ describe('openapi TransportCore', () => {
             fetch.mockClear();
         });
     });
+
+    describe('abort signal', () => {
+        beforeEach(() => {
+            transport = new TransportCore('localhost');
+        });
+
+        afterEach(() => transport.dispose());
+
+        function expectFetchToBeCalledWith(signal) {
+            expect(fetch.mock.calls.length).toEqual(1);
+            expect(fetch.mock.calls[0]).toEqual([
+                expect.anything(),
+                expect.objectContaining({ signal }),
+            ]);
+        }
+
+        it('passes the abort signal down to fetch', () => {
+            const signal = jest.fn().mockName('AbortSignal')
+
+            transport.get('service_path', 'url', null, { signal });
+            expectFetchToBeCalledWith(signal);
+            fetch.mockClear();
+
+            transport.get('service_path', 'url');
+            expectFetchToBeCalledWith(undefined);
+            fetch.mockClear();
+        });
+    });
 });

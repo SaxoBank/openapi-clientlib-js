@@ -24,6 +24,7 @@ function generateTransportCall(method) {
         let headers = {};
         let cache = this.defaultCache;
         let queryParams;
+        let signal;
 
         if (!servicePath || !urlTemplate) {
             throw new Error('Transport calls require a service path and a URL');
@@ -39,6 +40,7 @@ function generateTransportCall(method) {
             }
 
             queryParams = options.queryParams;
+            signal = options.signal;
         }
 
         const url = formatUrl(urlTemplate, templateArgs, queryParams);
@@ -66,6 +68,7 @@ function generateTransportCall(method) {
                 headers,
                 cache,
                 useXHttpMethodOverride: this.useXHttpMethodOverride,
+                signal,
             },
         );
     };
