@@ -1,5 +1,29 @@
 ﻿import log from '../log';
-import type { HTTPMethods } from '../openapi/transport/types';
+
+export type HTTPMethodType =
+    | 'get'
+    | 'put'
+    | 'post'
+    | 'delete'
+    | 'patch'
+    | 'options'
+    | 'head';
+
+export interface OAPICallResult {
+    response?: any;
+    status: number;
+    headers: Headers;
+    size: number;
+    url: string;
+    responseType?: string;
+    isNetworkError?: never;
+}
+
+export interface NetworkError {
+    message?: string | Error;
+    isNetworkError: true;
+    status?: never;
+}
 
 interface Options {
     body?: BodyInit | Record<string, unknown>;
@@ -43,7 +67,7 @@ export function convertFetchReject(
         error,
     });
 
-    const networkError = {
+    const networkError: NetworkError = {
         message: error?.message ? error.message : error,
         isNetworkError: true,
     };
@@ -63,14 +87,7 @@ export function convertFetchSuccess(
 ) {
     clearTimeout(timerId);
 
-    let convertedPromise: Promise<{
-        response?: string | Blob | Record<string, unknown>;
-        status: number;
-        headers: Headers;
-        size: number;
-        url: string;
-        responseType?: string;
-    }>;
+    let convertedPromise: Promise<OAPICallResult>;
 
     const contentType = result.headers.get('content-type');
 
@@ -190,7 +207,7 @@ export function convertFetchSuccess(
 }
 
 function getBody(
-    method: HTTPMethods,
+    method: HTTPMethodType,
     options?: Options,
 ): BodyInit | Record<string, unknown> | undefined {
     // If PATCH without body occurs, create empty payload.
@@ -206,7 +223,7 @@ function getBody(
  * Performs a fetch and processes the response.
  * All non 200 responses are converted to rejections. The body can be an object and will be JSON.stringified and the right header added.
  * All responses that contain JSON are converted to objects.
- * @param {string} method - The http method.
+ * @param {string} httMethod - The http method.
  * @param {string} url - The url to fetch.
  * @param {Object} [options]
  * @param {string|Object} [options.body] - The body of the request. If this is an object, that is not already handled by the body mixin,
@@ -221,7 +238,12 @@ function getBody(
  *                             "same-origin" will include the cookies if on the same domain (this is the XmlHttpRequest default)
  *                             "include" will always include the cookies.
  */
-function localFetch(method: HTTPMethods, url: string, options?: Options) {
+function localFetch(
+    httMethod: HTTPMethodType | Uppercase<HTTPMethodType>,
+    url: string,
+    options?: Options,
+): Promise<any> {
+    let method = httMethod.toLowerCase() as HTTPMethodType;
     let body = getBody(method, options);
     const headers = options?.headers || {};
     const cache = options?.cache;
@@ -259,7 +281,6 @@ function localFetch(method: HTTPMethods, url: string, options?: Options) {
         });
     }, 30000);
 
-    // @ts-ignore fix-me revisit to map all headers type to Record<string, string>
     return fetch(url, { headers, method, body, credentials })
         .catch(convertFetchReject.bind(null, url, body, timerId))
         .then(convertFetchSuccess.bind(null, url, body, timerId));

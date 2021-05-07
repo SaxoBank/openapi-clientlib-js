@@ -1,39 +1,17 @@
-/**
- * @module saxo/openapi/transport/queue
- * @ignore
- */
-
 import type AuthProvider from '../authProvider';
 import type {
-    HTTPMethods,
-    MethodInputArgs,
+    HTTPMethodInputArgs,
     TransportCoreOptions,
-    APIStatusCode,
+    HTTPStatusCode,
 } from './types';
-import type { ITransport, HTTPMethodResult } from './trasportBase';
-import TransportBase from './trasportBase';
+import type { OAPICallResult, HTTPMethodType } from '../../utils/fetch';
+import type { ITransport } from './transport-base';
+import TransportBase from './transport-base';
 import type { StringTemplateArgs } from '../../utils/string';
 
-// -- Exported methods section --
-
-/**
- * TransportQueue wraps a transport class to allow the queueing of transport calls, so that all calls can be paused until after a particular event.
- * 1. This coordinates with authentication so that calls are queued whilst not authenticated
- * 2. The ability to wait for a promise to complete see {@link saxo.openapi.TransportQueue#waitFor}.
- *    The old library had an option initLoadBalancerCookies which did
- *    two calls to isalive before allowing any other calls through. This can be implemented with this class.
- * 3. It serves as a base class for auto batching, which by its nature queues calls.
- * @class
- * @alias saxo.openapi.TransportQueue
- * @param {saxo.openapi.TransportAuth|saxo.openapi.TransportBatch|saxo.openapi.TransportCore|saxo.openapi.TransportQueue} transport -
- *      The transport to wrap.
- * @param {saxo.openapi.authProvider} [authProvider] - If provided then calls will be queued whilst the token is expired.
- *      If not given then calls will continue even when the authentication is not expired and no 401 calls will be handled.
- */
-
 export type QueueItem = {
-    method: HTTPMethods;
-    args: MethodInputArgs;
+    method: HTTPMethodType;
+    args: HTTPMethodInputArgs;
     servicePath: string;
     urlTemplate: string;
     urlArgs?: StringTemplateArgs;
@@ -42,6 +20,18 @@ export type QueueItem = {
     reject: (reason?: any, ...rest: any[]) => void;
 };
 
+/**
+ * TransportQueue wraps a transport class to allow the queueing of transport calls, so that all calls can be paused until after a particular event.
+ * 1. This coordinates with authentication so that calls are queued whilst not authenticated
+ * 2. The ability to wait for a promise to complete see {@link saxo.openapi.TransportQueue#waitFor}.
+ *    The old library had an option initLoadBalancerCookies which did
+ *    two calls to isalive before allowing any other calls through. This can be implemented with this class.
+ * 3. It serves as a base class for auto batching, which by its nature queues calls.
+ * @param {saxo.openapi.TransportAuth|saxo.openapi.TransportBatch|saxo.openapi.TransportCore|saxo.openapi.TransportQueue} transport -
+ *      The transport to wrap.
+ * @param {saxo.openapi.authProvider} [authProvider] - If provided then calls will be queued whilst the token is expired.
+ *      If not given then calls will continue even when the authentication is not expired and no 401 calls will be handled.
+ */
 class TransportQueue extends TransportBase {
     isQueueing = false;
     authProvider: AuthProvider | null = null;
@@ -83,8 +73,8 @@ class TransportQueue extends TransportBase {
         }
     }
 
-    prepareTransportMethod(method: HTTPMethods) {
-        return (...args: MethodInputArgs) => {
+    prepareTransportMethod(method: HTTPMethodType) {
+        return (...args: HTTPMethodInputArgs) => {
             if (!this.isQueueing) {
                 // checking expiry every time so that if device goes to sleep and is woken then
                 // we intercept a call about to be made and then do not have to cope with the 401 responses
@@ -99,8 +89,8 @@ class TransportQueue extends TransportBase {
 
             const transportCallArguments = args;
 
-            return new Promise<HTTPMethodResult>((resolve, reject) => {
-                const queueItem: QueueItem = {
+            return new Promise<OAPICallResult>((resolve, reject) => {
+                const queueItem = {
                     method,
                     args: transportCallArguments,
                     servicePath: transportCallArguments[0] || '',
@@ -149,7 +139,7 @@ class TransportQueue extends TransportBase {
                 item.resolve(...args);
             },
             // @ts-expect-error as it should return promise but returning direct void
-            (result: { status: APIStatusCode }, ...args: [any]) => {
+            (result: { status: HTTPStatusCode }, ...args: [any]) => {
                 if (this.authProvider && result && result.status === 401) {
                     this.addToQueue(item);
                     // if we are fetching a new token, wait

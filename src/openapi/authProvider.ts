@@ -2,7 +2,11 @@ import MicroEmitter from '../micro-emitter';
 import log from '../log';
 import { startsWith } from '../utils/string';
 import fetch from '../utils/fetch';
-import type { HTTPMethods } from './transport/types';
+import type {
+    OAPICallResult,
+    HTTPMethodType,
+    NetworkError,
+} from '../utils/fetch';
 
 const LOG_AREA = 'AuthProvider';
 
@@ -13,6 +17,7 @@ const DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_TOKEN = 'token';
 const DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES = 'expiry';
 const DEFAULT_TOKEN_REFRESH_MARGIN_MS = 0;
 const DEFAULT_TOKEN_REFRESH_CREDENTIALS = 'include';
+
 // This should be higher than a possible network delay, high enough that we don't request alot of new tokens, but alot less than a possible
 // token expiry and not so high that if a new token is somehow invalid it takes too long to resolve (unlikely).
 const TRASH_NEW_TOKEN_DELAY_MS = 10000;
@@ -27,10 +32,12 @@ const STATE_FAILED = 0x4;
  * Returns the absolute timestamp of the expiry based on the current date and time.
  * @param {number|string} relativeExpiry - The time in seconds until the token expires.
  */
-function toAbsoluteTokenExpiry(relativeExpiry: number) {
-    // let relativeExpiryInt = parseInt(relativeExpiry, 10);
-    // return new Date().getTime() + relativeExpiryInt * 1000;
-    return new Date().getTime() + relativeExpiry * 1000;
+function toAbsoluteTokenExpiry(relativeExpiry: number | string) {
+    const relativeExpiryInt =
+        typeof relativeExpiry === 'string'
+            ? parseInt(relativeExpiry, 10)
+            : relativeExpiry;
+    return new Date().getTime() + relativeExpiryInt * 1000;
 }
 
 function addBearer(newToken: string | null) {
@@ -46,7 +53,7 @@ type Options = {
     tokenRefreshUrl?: string;
     tokenRefreshHeaders?: Record<string, string>;
     tokenRefreshCredentials?: RequestCredentials;
-    tokenRefreshMethod?: HTTPMethods;
+    tokenRefreshMethod?: HTTPMethodType;
     tokenRefreshPropertyNameToken?: string;
     tokenRefreshPropertyNameExpires?: string;
     tokenRefreshMarginMs?: number;
@@ -87,7 +94,7 @@ class AuthProvider extends MicroEmitter {
     tokenRefreshUrl?: string;
     tokenRefreshHeaders?: Record<string, string> = {};
     tokenRefreshCredentials: RequestCredentials = DEFAULT_TOKEN_REFRESH_CREDENTIALS;
-    tokenRefreshMethod: HTTPMethods = DEFAULT_TOKEN_REFRESH_METHOD;
+    tokenRefreshMethod: HTTPMethodType = DEFAULT_TOKEN_REFRESH_METHOD;
     tokenRefreshPropertyNameToken = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_TOKEN;
     tokenRefreshPropertyNameExpires = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES;
     tokenRefreshMarginMs = DEFAULT_TOKEN_REFRESH_MARGIN_MS;
@@ -183,14 +190,26 @@ class AuthProvider extends MicroEmitter {
         }).then(this.onApiTokenReceived, this.onApiTokenReceiveFail);
     }
 
-    // Fix me remove any
-    private onApiTokenReceived = (result: any) => {
+    private isValidTokenResponse(
+        response?: string | Blob | Record<string, unknown>,
+    ): response is Record<string, string | number> {
+        if (
+            response &&
+            typeof response !== 'string' &&
+            !(response instanceof window.Blob) &&
+            response[this.tokenRefreshPropertyNameToken]
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private onApiTokenReceived = (result: OAPICallResult) => {
         this.state = STATE_WAITING;
         this.retries = 0;
-        if (
-            !result.response ||
-            !result.response[this.tokenRefreshPropertyNameToken]
-        ) {
+
+        if (!this.isValidTokenResponse(result.response)) {
             log.error(
                 LOG_AREA,
                 'Token refresh succeeded but no new token was present in response',
@@ -198,7 +217,9 @@ class AuthProvider extends MicroEmitter {
             );
             return;
         }
-        const token = result.response[this.tokenRefreshPropertyNameToken];
+        const token = result.response[
+            this.tokenRefreshPropertyNameToken
+        ] as string;
         const expiry = toAbsoluteTokenExpiry(
             result.response[this.tokenRefreshPropertyNameExpires],
         );
@@ -207,8 +228,7 @@ class AuthProvider extends MicroEmitter {
         this.trigger(this.EVENT_TOKEN_RECEIVED, token, expiry);
     };
 
-    // Fix me remove any
-    private onApiTokenReceiveFail = (result: any) => {
+    private onApiTokenReceiveFail = (result: OAPICallResult | NetworkError) => {
         const currentExpiry = this.getExpiry();
         const isAuthenticationError =
             result && (result.status === 401 || result.status === 403);

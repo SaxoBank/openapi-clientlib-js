@@ -5,7 +5,7 @@ import shortFormat from './short-format';
 
 const numberOfZerosRx = /0+$/;
 
-export interface NumberOptions {
+export type NumberOptions = Readonly<{
     groupSizes: number[];
     groupSeparator: string;
     decimalSeparator: string;
@@ -13,7 +13,7 @@ export interface NumberOptions {
     unitSuffixThousand: string;
     unitSuffixMillion: string;
     unitSuffixBillion: string;
-}
+}>;
 
 interface InternalOptions {
     negativePre: string;

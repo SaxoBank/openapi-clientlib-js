@@ -5,7 +5,7 @@ import TransportCore from './core';
 
 describe('openapi TransportCore', () => {
     let transport: TransportCore;
-    let fetch: any;
+    let fetch: ReturnType<typeof mockFetch>;
 
     beforeEach(() => {
         fetch = mockFetch();

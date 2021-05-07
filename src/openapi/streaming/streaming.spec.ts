@@ -49,7 +49,7 @@ describe('openapi Streaming', () => {
         stop: jest.Mock;
     };
 
-    let transport: ReturnType<typeof mockTransport>;
+    let transport: any;
     let fetchMock: ReturnType<typeof mockFetch>;
 
     const legacySignalrConnectionState = {
@@ -1609,7 +1609,7 @@ describe('openapi Streaming', () => {
             mockConnection.start.mockImplementation(() => {
                 mockConnectionStart = getResolvablePromise();
                 setTimeout(() => {
-                    streaming.connection.transport.stateChangedCallback(
+                    streaming.connection.transport?.stateChangedCallback(
                         connectionConstants.CONNECTION_STATE_CONNECTED,
                     );
                     mockConnectionStart.resolve();
@@ -1617,7 +1617,7 @@ describe('openapi Streaming', () => {
             });
 
             mockConnection.stop.mockImplementation(() => {
-                streaming.connection.transport.stateChangedCallback(
+                streaming.connection.transport?.stateChangedCallback(
                     connectionConstants.CONNECTION_STATE_DISCONNECTED,
                 );
             });

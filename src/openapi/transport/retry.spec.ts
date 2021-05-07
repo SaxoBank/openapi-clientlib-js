@@ -230,6 +230,7 @@ describe('openapi TransportRetry', () => {
                 delete: { retryTimeouts: [1000, 2000, 5000], statuses: [500] },
             },
         });
+        // @ts-ignore - retry timeout is defined
         expect(transportRetry.methods['delete'].retryTimeouts.length).toEqual(
             3,
         );

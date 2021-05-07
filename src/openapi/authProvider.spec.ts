@@ -3,8 +3,8 @@ import mockFetch from '../test/mocks/fetch';
 import AuthProvider from './authProvider';
 
 describe('openapi AuthProvider', () => {
-    let authProvider;
-    let fetch;
+    let authProvider: AuthProvider;
+    let fetch: ReturnType<typeof mockFetch>;
 
     beforeEach(() => {
         installClock();
@@ -14,16 +14,18 @@ describe('openapi AuthProvider', () => {
         uninstallClock();
         if (authProvider) {
             authProvider.dispose();
+            // @ts-ignore
             authProvider = null;
         }
     });
 
-    function relativeDate(relativeTime) {
+    function relativeDate(relativeTime: number) {
         return new Date().getTime() + relativeTime * 1000;
     }
 
     it('throws an exception if created without options', () => {
         expect(() => {
+            // @ts-expect-error testing invalid input
             new AuthProvider();
         }).toThrow();
         expect(() => {
@@ -113,7 +115,7 @@ describe('openapi AuthProvider', () => {
             );
             tick(60000);
 
-            fetch.resolve('200', { token: 'TOK3', expiry: 60 });
+            fetch.resolve(200, { token: 'TOK3', expiry: 60 });
             setTimeout(function () {
                 authProvider.off(
                     authProvider.EVENT_TOKEN_REFRESH_FAILED,
@@ -126,7 +128,7 @@ describe('openapi AuthProvider', () => {
                 expect(tokenReceivedSpy).toBeCalledTimes(1);
 
                 authProvider.set('TOK4', relativeDate(0));
-                fetch.resolve('200', { token: 'TOK5', expiry: 60 });
+                fetch.resolve(200, { token: 'TOK5', expiry: 60 });
                 setTimeout(function () {
                     expect(tokenReceivedSpy).toBeCalledTimes(1);
                     expect(tokenRefreshFailSpy).not.toBeCalled();
@@ -348,9 +350,9 @@ describe('openapi AuthProvider', () => {
             expect(authProvider.getExpiry()).toEqual(initialOptions.expiry);
 
             expect(fetch.mock.calls[0][0]).toEqual('http://refresh');
-            expect(fetch.mock.calls[0][1].method).toEqual('post');
+            expect(fetch.mock.calls[0][1]?.method).toEqual('post');
 
-            fetch.resolve('200', { token: 'TOK2', expiry: 60 });
+            fetch.resolve(200, { token: 'TOK2', expiry: 60 });
             setTimeout(function () {
                 expect(authProvider.getToken()).toEqual('Bearer TOK2');
                 done();
@@ -370,9 +372,8 @@ describe('openapi AuthProvider', () => {
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).toBeCalledTimes(1);
-            expect(fetch.mock.calls[0]).toEqual(
-                expect.anything(),
-                expect.objectContaining({ headers: expectedHeaders }),
+            expect(fetch.mock.calls[0][1]?.headers).toMatchObject(
+                expectedHeaders,
             );
         });
 
@@ -389,9 +390,8 @@ describe('openapi AuthProvider', () => {
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).toBeCalledTimes(1);
-            expect(fetch.mock.calls[0]).toEqual(
-                expect.anything(),
-                expect.objectContaining({ headers: expectedHeaders }),
+            expect(fetch.mock.calls[0][1]?.headers).toMatchObject(
+                expectedHeaders,
             );
         });
 
@@ -412,7 +412,7 @@ describe('openapi AuthProvider', () => {
             );
             expect(authProvider.getExpiry()).toEqual(initialOptions.expiry);
 
-            fetch.resolve('200', { token: 'TOK2', expiry: 60 });
+            fetch.resolve(200, { token: 'TOK2', expiry: 60 });
             setTimeout(function () {
                 expect(authProvider.getToken()).toEqual('Bearer TOK2');
 
@@ -421,7 +421,7 @@ describe('openapi AuthProvider', () => {
                 expect(fetch).toBeCalledTimes(2);
                 expect(authProvider.getToken()).toEqual('Bearer TOK2');
 
-                fetch.resolve('200', { token: 'TOK3', expiry: 60 });
+                fetch.resolve(200, { token: 'TOK3', expiry: 60 });
                 setTimeout(function () {
                     expect(authProvider.getToken()).toEqual('Bearer TOK3');
                     done();
@@ -506,7 +506,7 @@ describe('openapi AuthProvider', () => {
             // ignored because fetch is in progress
             authProvider.tokenRejected();
             expect(fetch).toBeCalledTimes(1);
-            fetch.resolve('200', { token: 'TOK2', expiry: 60 });
+            fetch.resolve(200, { token: 'TOK2', expiry: 60 });
             setTimeout(() => {
                 // ignored because lt 10,000 ms has passed since new token
                 authProvider.tokenRejected();
@@ -559,7 +559,7 @@ describe('openapi AuthProvider', () => {
             // ignored because fetch is in progress
             authProvider.tokenRejected(relativeDate(60));
             expect(fetch).toBeCalledTimes(1);
-            fetch.resolve('200', { token: 'TOK2', expiry: 60 });
+            fetch.resolve(200, { token: 'TOK2', expiry: 60 });
             setTimeout(() => {
                 expect(fetch).toBeCalledTimes(1);
                 authProvider.tokenRejected(relativeDate(60));
@@ -593,6 +593,7 @@ describe('openapi AuthProvider', () => {
             };
             authProvider = new AuthProvider(initialOptions);
 
+            // @ts-expect-error - don't care that timer id may be null
             clearTimeout(authProvider.tokenRefreshTimer);
             tick(15000);
 
@@ -609,6 +610,7 @@ describe('openapi AuthProvider', () => {
             };
             authProvider = new AuthProvider(initialOptions);
 
+            // @ts-expect-error - don't care that timer id may be null
             clearTimeout(authProvider.tokenRefreshTimer);
             tick(15000);
 

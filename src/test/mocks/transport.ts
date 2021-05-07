@@ -1,5 +1,5 @@
 ﻿function mockTransport() {
-    const transport: Record<string, any> = {
+    const transport: any = {
         post: jest.fn(),
         put: jest.fn(),
         get: jest.fn(),

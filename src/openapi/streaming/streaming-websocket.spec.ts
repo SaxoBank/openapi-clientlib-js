@@ -18,11 +18,10 @@ import type { StreamingConfigurableOptions } from './streaming';
 import * as constants from './connection/constants';
 import mockAuthProvider from '../../test/mocks/authProvider';
 import Subscription from './subscription';
+import type { ConnectionState } from './connection/types';
 
 const mockedConnection = original as jest.Mocked<typeof original>;
 const Connection = mockedConnection.default;
-
-type ConnectionState = keyof typeof constants.READABLE_CONNECTION_STATE_MAP;
 
 const defaultOptions: Partial<StreamingConfigurableOptions> = {
     transportTypes: ['plainWebSockets', 'webSockets'],
@@ -71,7 +70,7 @@ describe('openapi Streaming', () => {
         );
 
         Connection.prototype.setStateChangedCallback.mockImplementation(
-            (callback: () => void) => {
+            (callback: (nextState: ConnectionState) => void) => {
                 stateChangedCallback = callback;
             },
         );

@@ -12,7 +12,7 @@ import TransportAuth from './auth';
 describe('openapi TransportAuth', () => {
     const noop = () => {};
     let transportAuth: TransportAuth;
-    let fetch: any;
+    let fetch: ReturnType<typeof mockFetch>;
     let authProvider: any;
 
     beforeEach(() => {
@@ -268,9 +268,7 @@ describe('openapi TransportAuth', () => {
                         Array [
                           Array [
                             Object {
-                              "headers": Object {
-                                "get": [Function],
-                              },
+                              "headers": Headers {},
                               "response": Object {
                                 "error": 401,
                                 "message": "Authorization exception",

@@ -1,28 +1,25 @@
 ﻿export class FetchResponse {
     status: number;
-    response: unknown;
-    headers: {
-        get(name: string): string;
-    };
+    response?: string | Blob | Record<string, unknown>;
+    headers: Headers = new Headers();
+    size = 0;
+    url = '';
 
-    constructor(status: number, response: unknown, contentType: string) {
+    constructor(
+        status: number,
+        response?: string | Blob | Record<string, unknown>,
+        contentType?: string,
+    ) {
         this.status = status;
         this.response = response;
 
-        const headersMap: Record<string, string> = {
-            'content-type':
-                contentType ||
-                (typeof response === 'object'
-                    ? 'application/json; utf-8'
-                    : 'application/text'),
-        };
+        const headerValue =
+            contentType ||
+            (typeof response === 'object'
+                ? 'application/json; utf-8'
+                : 'application/text');
 
-        this.headers = {
-            get(headerName: string) {
-                headerName = headerName.toLowerCase();
-                return headersMap[headerName];
-            },
-        };
+        this.headers.set('content-type', headerValue);
     }
 
     text() {
@@ -39,7 +36,20 @@
 }
 
 function mockFetch() {
-    const fetch: jest.Mock = jest.fn();
+    const fetch = (jest.fn() as unknown) as jest.MockedFunction<
+        typeof window.fetch & {
+            resolve: (
+                status: number,
+                data?: string | Blob | Record<string, unknown>,
+                contentType?: string,
+            ) => Promise<any>;
+            reject: (
+                status: number | Error,
+                data?: string | Blob | Record<string, unknown>,
+                contentType?: string,
+            ) => Promise<any>;
+        }
+    >;
     // @ts-expect-error
     global.fetch = fetch;
     fetch.mockImplementation(function () {
@@ -48,16 +58,17 @@ function mockFetch() {
             // @ts-expect-error
             fetch.resolve = function (
                 status: number,
-                data: unknown,
+                data: string | Blob | Record<string, unknown>,
                 contentType: string,
             ) {
+                // @ts-ignore
                 resolve(new FetchResponse(status, data, contentType));
             };
             // @ts-expect-error
             fetch.reject = function (
                 status: number | Error,
-                data: unknown,
-                contentType: string,
+                data?: string | Blob | Record<string, unknown>,
+                contentType?: string,
             ) {
                 if (status instanceof Error) {
                     reject(status);
@@ -67,18 +78,15 @@ function mockFetch() {
             };
         });
     });
-    // @ts-expect-error
+
     fetch.resolve = () => {
         throw new Error('fetch not called');
     };
-    // @ts-expect-error
+
     fetch.reject = () => {
         throw new Error('fetch not called');
     };
-    return fetch as jest.Mock & {
-        resolve: (_?: any) => never;
-        reject: (_?: any) => never;
-    };
+    return fetch;
 }
 
 export default mockFetch;

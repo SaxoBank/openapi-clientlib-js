@@ -8,12 +8,16 @@ import StreamingOrphanFinder from './orphan-finder';
 import Connection from './connection/connection';
 import * as connectionConstants from './connection/constants';
 import * as streamingTransports from './connection/transportTypes';
-import type { TransportTypes, ConnectionOptions } from './connection/types';
+import type {
+    TransportTypes,
+    ConnectionOptions,
+    ConnectionState,
+} from './connection/types';
 import type AuthProvider from '../authProvider';
 import type ParserBase from './parser/parser-base';
 import type { IHubProtocol } from '@microsoft/signalr';
+import type { ITransport } from '../transport/transport-base';
 
-type ConnectionState = keyof typeof connectionConstants.READABLE_CONNECTION_STATE_MAP;
 export interface RetryDelayLevel {
     level: number;
     delay: number;
@@ -153,14 +157,12 @@ class Streaming extends MicroEmitter {
     connectionState: ConnectionState = this.CONNECTION_STATE_INITIALIZING;
     baseUrl: string;
     authProvider: AuthProvider;
-    // FIXME any
-    transport: any;
+    transport: ITransport;
     subscriptions: Subscription[] = [];
     isReset = false;
     paused = false;
     orphanFinder: StreamingOrphanFinder;
-    // FIXME any
-    connection: any;
+    connection!: Connection;
     connectionOptions: ConnectionOptions = {
         waitForPageLoad: false,
         transport: [
@@ -169,15 +171,14 @@ class Streaming extends MicroEmitter {
         ],
     };
     reconnecting = false;
-    contextId?: string;
+    contextId!: string;
     retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
     retryDelayLevels?: RetryDelayLevel[];
     reconnectTimer?: number;
     disposed = false;
 
     constructor(
-        // FIXME any
-        transport: any,
+        transport: ITransport,
         baseUrl: string,
         authProvider: AuthProvider,
         options?: Partial<StreamingConfigurableOptions>,
@@ -490,7 +491,7 @@ class Streaming extends MicroEmitter {
         this.trigger(this.EVENT_CONNECTION_STATE_CHANGED, this.connectionState);
     }
 
-    // @ts-expect-error FIXME once transports are migrated to TS
+    // @ts-expect-error FIXME once streaming/connection/transports are migrated to TS
     private processUpdate(update) {
         try {
             if (update.ReferenceId[0] === OPENAPI_CONTROL_MESSAGE_PREFIX) {
@@ -514,7 +515,7 @@ class Streaming extends MicroEmitter {
      * handles the connection received event from SignalR
      * @param updates
      */
-    // @ts-expect-error FIXME once transports are migrated to TS
+    // @ts-expect-error FIXME once treaming/connection/transports are migrated to TS
     private onReceived(updates) {
         if (!updates) {
             log.warn(LOG_AREA, 'onReceived called with no data', updates);
@@ -550,7 +551,7 @@ class Streaming extends MicroEmitter {
      * Sends an update to a subscription by finding it and calling its callback
      * @param update
      */
-    // @ts-expect-error FIXME once transports are migrated to TS
+    // @ts-expect-error FIXME once treaming/connection/transports are migrated to TS
     private sendDataUpdateToSubscribers(update) {
         const subscription = this.findSubscriptionByReferenceId(
             update.ReferenceId,
@@ -565,7 +566,7 @@ class Streaming extends MicroEmitter {
         }
     }
 
-    // @ts-expect-error FIXME once transports are migrated to TS
+    // @ts-expect-error FIXME once treaming/connection/transports are migrated to TS
     private getHeartbeats(message) {
         if (message.Heartbeats) {
             return message.Heartbeats;
@@ -578,7 +579,7 @@ class Streaming extends MicroEmitter {
         return null;
     }
 
-    // @ts-expect-error FIXME once transports are migrated to TS
+    // @ts-expect-error FIXME once treaming/connection/transports are migrated to TS
     private getTargetReferenceIds(message) {
         if (message.TargetReferenceIds) {
             return message.TargetReferenceIds;
@@ -595,7 +596,7 @@ class Streaming extends MicroEmitter {
      * Handles a control message on the streaming connection
      * @param {Object} message From open-api
      */
-    // @ts-expect-error FIXME once transports are migrated to TS
+    // @ts-expect-error FIXME once streaming/connection/transports are migrated to TS
     private handleControlMessage(message) {
         switch (message.ReferenceId) {
             case OPENAPI_CONTROL_MESSAGE_HEARTBEAT:
@@ -761,7 +762,7 @@ class Streaming extends MicroEmitter {
      */
     private updateConnectionQuery(forceAuth = false) {
         this.connection.updateQuery(
-            this.authProvider.getToken(),
+            this.authProvider.getToken() as string, // assuming token is received at this point
             this.contextId,
             this.authProvider.getExpiry(),
             forceAuth,
@@ -961,7 +962,7 @@ class Streaming extends MicroEmitter {
         };
 
         const subscription = new Subscription(
-            this.contextId as string, // assuming contextId exists at this stage
+            this.contextId, // assuming contextId exists at this stage
             this.transport,
             servicePath,
             url,

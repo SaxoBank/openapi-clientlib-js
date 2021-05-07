@@ -48,6 +48,7 @@ describe('openapi TransportBatch', () => {
             });
         }).toThrow();
         expect(function () {
+            // @ts-expect-error testing invalid argument
             transportBatch = new TransportBatch(null, validBaseUrl, {});
         }).toThrow();
         expect(function () {

@@ -1,32 +1,37 @@
-﻿/**
- * @module saxo/openapi/transport/retry
- * @ignore
- */
-
-import type { APIResponse, MethodInputArgs, HTTPMethods } from './types';
+﻿import type { HTTPMethodInputArgs } from './types';
+import type {
+    OAPICallResult,
+    HTTPMethodType,
+    NetworkError,
+} from '../../utils/fetch';
 import type TransportCore from './core';
-import TransportBase from './trasportBase';
-import type { HTTPMethodResult } from './trasportBase';
+import TransportBase from './transport-base';
 
 interface TransportCall {
-    method: HTTPMethods;
-    args: MethodInputArgs;
+    method: HTTPMethodType;
+    args: HTTPMethodInputArgs;
     resolve: (value?: any) => void;
     reject: (value?: any) => void;
     retryCount: number;
     retryTimer: ReturnType<typeof setTimeout> | null;
 }
 
-// -- Local variables section --
+interface RetryOptions {
+    retryTimeouts?: number[];
+    statuses?: number[];
+    retryNetworkError?: boolean;
+    retryLimit?: number;
+}
 
-// -- Local methods section --
+type HTTPRequestRetryOptions = Partial<Record<HTTPMethodType, RetryOptions>>;
 
-// -- Exported methods section --
+interface Options {
+    retryTimeout: number;
+    methods?: HTTPRequestRetryOptions;
+}
 
 /**
  * TransportRetry wraps a transport class to allow the retrying of failed transport calls, so the calls are resent after a timeout.
- * @class
- * @alias saxo.openapi.TransportRetry
  * @param {Transport} transport - The transport to wrap.
  * @param {object} [options] - Settings options. Define retry timeout, http methods to retry and max retry limit
  *      per http method type. If not given then calls will run with underlying transport without retry logic.
@@ -44,23 +49,16 @@ interface TransportCall {
  *      }
  * });
  */
-
 class TransportRetry extends TransportBase {
     retryTimeout = 0;
-    methods: Record<string, any>;
+    methods: HTTPRequestRetryOptions;
     transport: TransportCore;
     failedCalls: TransportCall[] = [];
     individualFailedCalls: TransportCall[] = [];
     retryTimer: ReturnType<typeof setTimeout> | null = null;
     isDisposed = false;
 
-    constructor(
-        transport: TransportCore,
-        options?: {
-            retryTimeout: number;
-            methods?: Record<string, any>;
-        },
-    ) {
+    constructor(transport: TransportCore, options?: Options) {
         super();
         if (!transport) {
             throw new Error(
@@ -75,15 +73,18 @@ class TransportRetry extends TransportBase {
         this.transport = transport;
     }
 
-    prepareTransportMethod(method: HTTPMethods) {
-        return (...args: MethodInputArgs) => {
+    prepareTransportMethod(method: HTTPMethodType) {
+        return (...args: HTTPMethodInputArgs) => {
+            const methodRetryOptions = this.methods[method];
+
             // checking if http method call should be handled by RetryTransport
             if (
-                this.methods[method] &&
-                (this.methods[method].retryLimit > 0 ||
-                    this.methods[method].retryTimeouts)
+                methodRetryOptions &&
+                ((methodRetryOptions.retryLimit &&
+                    methodRetryOptions.retryLimit > 0) ||
+                    methodRetryOptions.retryTimeouts)
             ) {
-                return new Promise<HTTPMethodResult>((resolve, reject) => {
+                return new Promise<OAPICallResult>((resolve, reject) => {
                     const transportCall = {
                         method,
                         args,
@@ -104,20 +105,23 @@ class TransportRetry extends TransportBase {
     protected sendTransportCall = (transportCall: TransportCall) => {
         this.transport[transportCall.method](...transportCall.args).then(
             transportCall.resolve,
-            (response: APIResponse) => {
-                const callOptions = this.methods[transportCall.method];
+            (response: OAPICallResult | NetworkError) => {
+                const callOptions = this.methods[
+                    transportCall.method
+                ] as RetryOptions;
                 const isRetryForStatus =
-                    response &&
-                    response.status &&
-                    callOptions.statuses &&
-                    callOptions.statuses.indexOf(response.status) >= 0;
-                const isRetryRequest =
-                    response && response.isNetworkError
-                        ? callOptions.retryNetworkError
-                        : isRetryForStatus;
+                    response?.status &&
+                    callOptions?.statuses?.includes(response.status);
+
+                const isRetryRequest = response?.isNetworkError
+                    ? callOptions.retryNetworkError
+                    : isRetryForStatus;
+
                 const isWithinRetryLimitOption =
+                    callOptions.retryLimit &&
                     callOptions.retryLimit > 0 &&
                     transportCall.retryCount < callOptions.retryLimit;
+
                 const isWithinRetryTimeoutsOption =
                     callOptions.retryTimeouts &&
                     transportCall.retryCount < callOptions.retryTimeouts.length;
@@ -136,7 +140,7 @@ class TransportRetry extends TransportBase {
     };
 
     protected addFailedCall(transportCall: TransportCall) {
-        const callOptions = this.methods[transportCall.method];
+        const callOptions = this.methods[transportCall.method] as RetryOptions;
         if (
             callOptions.retryTimeouts &&
             callOptions.retryTimeouts.length > transportCall.retryCount
@@ -199,5 +203,4 @@ class TransportRetry extends TransportBase {
     }
 }
 
-// -- Export section --
 export default TransportRetry;

@@ -1,20 +1,11 @@
-/**
- * @module saxo/openapi/transport/putPatchDiagnosticsQueue
- * @ignore
- */
-
 import log from '../../log';
 import TransportQueue from './queue';
 import type TransportCore from './core';
-import type { HTTPMethods } from './types';
-import type { ITransport } from './trasportBase';
-
-// -- Local variables section --
+import type { HTTPMethodType } from '../../utils/fetch';
+import type { ITransport } from './transport-base';
 
 // fix-me typo
 const LOG_AREA = 'TransportPutPatchDiagnositicsQueue';
-
-// -- Exported methods section --
 
 /**
  * TransportPutPatchDiagnositicsQueue Waits on sending put and patch calls until a put/patch diagnostics call is successful.
@@ -25,7 +16,6 @@ const LOG_AREA = 'TransportPutPatchDiagnositicsQueue';
  *      The transport to wrap.
  * @param {saxo.openapi.TransportCore} [transportCore] - The core transport at the bottom of the chain.
  */
-
 class TransportPutPatchDiagnositicsQueue {
     isQueueing = true;
     transport: ITransport;
@@ -72,7 +62,7 @@ class TransportPutPatchDiagnositicsQueue {
         );
     }
 
-    private putPatchTransportMethod(method: HTTPMethods) {
+    private putPatchTransportMethod(method: 'put' | 'patch') {
         return (...args: any) => {
             const transport = this.isQueueing
                 ? this.transportQueue
@@ -81,17 +71,16 @@ class TransportPutPatchDiagnositicsQueue {
         };
     }
 
-    private otherMethodTransport(method: HTTPMethods) {
+    private otherMethodTransport(method: HTTPMethodType) {
         return (...args: any) => this.transport[method](...args);
     }
 
-    get = this.otherMethodTransport('get');
-    post = this.otherMethodTransport('post');
     put = this.putPatchTransportMethod('put');
-    delete = this.otherMethodTransport('delete');
-
     patch = this.putPatchTransportMethod('patch');
 
+    get = this.otherMethodTransport('get');
+    post = this.otherMethodTransport('post');
+    delete = this.otherMethodTransport('delete');
     head = this.otherMethodTransport('head');
     options = this.otherMethodTransport('options');
 }
