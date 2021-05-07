@@ -209,6 +209,8 @@ function getBody(method, options) {
  *                                    none will be included.
  *                             "same-origin" will include the cookies if on the same domain (this is the XmlHttpRequest default)
  *                             "include" will always include the cookies.
+ * @param {AbortSignal} [options.signal] - represents a signal object that allows to communicate with Fetch and abort it if required
+ *
  * @return {Promise<{ status: number, response: Object|String, headers: Object },{ status: number, response: Object|String, headers: Object }|Error>}
  */
 function localFetch(method, url, options) {
@@ -217,6 +219,7 @@ function localFetch(method, url, options) {
     const cache = options && options.cache;
     let credentials = options && options.credentials;
     const useXHttpMethodOverride = options && options.useXHttpMethodOverride;
+    const signal = options && options.signal;
 
     if (!credentials) {
         credentials = 'include';
@@ -253,7 +256,7 @@ function localFetch(method, url, options) {
         });
     }, 30000);
 
-    return fetch(url, { headers, method, body, credentials })
+    return fetch(url, { headers, method, body, credentials, signal })
         .catch(convertFetchReject.bind(null, url, body, timerId))
         .then(convertFetchSuccess.bind(null, url, body, timerId));
 }
