@@ -882,7 +882,7 @@ describe('openapi TransportCore', () => {
         }
 
         it('passes the abort signal down to fetch', () => {
-            const signal = jest.fn().mockName('AbortSignal')
+            const signal = jest.fn().mockName('AbortSignal');
 
             transport.get('service_path', 'url', null, { signal });
             expectFetchToBeCalledWith(signal);
