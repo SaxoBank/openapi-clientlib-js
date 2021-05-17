@@ -25,7 +25,7 @@ const parsersMap: ParsersMap = {};
 const defaultParser = ParserJson;
 
 const getId = (
-    format: string | undefined,
+    format: string | undefined | null,
     servicePath: string,
     url: string,
 ) => {
@@ -73,7 +73,7 @@ const ParserFacade = {
      * @param format - Data format ie. application/json
      * @returns Returns true if format is supported. Returns false if format is not supported by available parsing methods.
      */
-    isFormatSupported(format?: string) {
+    isFormatSupported(format?: string | null) {
         return Boolean(parserCreators[String(format)]);
     },
 
@@ -88,7 +88,11 @@ const ParserFacade = {
      * @param url - The url for given endpoint
      * @returns  Parser
      */
-    getParser(format: string | undefined, servicePath: string, url: string) {
+    getParser(
+        format: string | undefined | null,
+        servicePath: string,
+        url: string,
+    ) {
         const id = getId(format, servicePath, url);
 
         if (parsersMap[id]) {

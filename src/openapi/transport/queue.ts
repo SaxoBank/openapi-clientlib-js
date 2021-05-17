@@ -1,13 +1,13 @@
 import type AuthProvider from '../authProvider';
+import type { HTTPMethodInputArgs, HTTPStatusCode } from './types';
 import type {
-    HTTPMethodInputArgs,
-    TransportCoreOptions,
-    HTTPStatusCode,
-} from './types';
-import type { OAPICallResult, HTTPMethodType } from '../../utils/fetch';
+    OAPIRequestResult,
+    HTTPMethodType,
+    StringTemplateArgs,
+    RequestOptions,
+} from '../../types';
 import type { ITransport } from './transport-base';
 import TransportBase from './transport-base';
-import type { StringTemplateArgs } from '../../utils/string';
 
 export type QueueItem = {
     method: HTTPMethodType;
@@ -15,7 +15,7 @@ export type QueueItem = {
     servicePath: string;
     urlTemplate: string;
     urlArgs?: StringTemplateArgs;
-    options?: TransportCoreOptions;
+    options?: RequestOptions;
     resolve: (...value: any[]) => void;
     reject: (reason?: any, ...rest: any[]) => void;
 };
@@ -89,7 +89,7 @@ class TransportQueue extends TransportBase {
 
             const transportCallArguments = args;
 
-            return new Promise<OAPICallResult>((resolve, reject) => {
+            return new Promise<OAPIRequestResult>((resolve, reject) => {
                 const queueItem = {
                     method,
                     args: transportCallArguments,

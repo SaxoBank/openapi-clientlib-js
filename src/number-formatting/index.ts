@@ -11,13 +11,13 @@ export type NumberOptions = Readonly<{
      * @example
      * [3] would be thousands separator and produce 123.456.789,00 where as [2,3] would be "12.34.56.789,00".
      */
-    groupSizes: number[];
+    groupSizes: Readonly<number[]>;
     /**
      * The character used for group separation E.g. '.' in Danish.
      */
     groupSeparator: string;
     /**
-     * The character used for decimal searation E.g.',' in Danish.
+     * The character used for decimal separation E.g.',' in Danish.
      */
     decimalSeparator: string;
     /**
@@ -72,7 +72,7 @@ class NumberFormatting implements NumberFormattingOptions {
      * @param value - The number to parse.
      * @returns  parsed value
      */
-    parse(value: string) {
+    parse(value: string | null | undefined) {
         return parseNumber(value, this);
     }
 
@@ -84,9 +84,12 @@ class NumberFormatting implements NumberFormattingOptions {
      *                              decimal places it needs to display the number (upto 8).
      *
      */
-    format(num: number, decimals?: number) {
+    format(num: number | null | undefined | string, decimals?: number | null) {
         if (decimals === undefined || decimals === null) {
-            decimals = this.getActualDecimals(num);
+            decimals =
+                num === undefined || num === null
+                    ? 0
+                    : this.getActualDecimals(Number(num));
         }
 
         return formatNumber(num, decimals, this);
@@ -97,9 +100,17 @@ class NumberFormatting implements NumberFormattingOptions {
      * @param num - The number to format
      * @param minDecimals - (optional) The minimum number of decimals to display after the decimal point.
      * @param maxDecimals - (optional) The maximum number of decimals to display after the decimal point.
-     *
+     * @returns formatted number string or an empty string when an invalid number was provided
      */
-    formatNoRounding(num: number, minDecimals?: number, maxDecimals?: number) {
+    formatNoRounding(
+        num: number | null | undefined | string,
+        minDecimals?: number | null,
+        maxDecimals?: number | null,
+    ) {
+        if (num === null || num === undefined) {
+            return '';
+        }
+
         if (!minDecimals) {
             minDecimals = 0;
         }
@@ -111,7 +122,7 @@ class NumberFormatting implements NumberFormattingOptions {
             num,
             Math.min(
                 maxDecimals,
-                Math.max(minDecimals, this.getActualDecimals(num)),
+                Math.max(minDecimals, this.getActualDecimals(Number(num))),
             ),
             this,
         );
@@ -119,17 +130,19 @@ class NumberFormatting implements NumberFormattingOptions {
 
     /**
      * Formats a number into a short format, e.g. 10.000 becomes 10k.
-     * @param number - number
+     * @param number - number to format
      *
      */
-    shortFormat(number: number) {
+    shortFormat(number: number | string | null | undefined) {
+        if (number === undefined || number === null) {
+            return '';
+        }
         return shortFormat(number, this);
     }
 
     /**
      * Returns the actual number of decimals that a number has.
-     * @param number - number
-     *
+     * @param number - number or numeric string
      */
     getActualDecimals(number: number) {
         number = Math.abs(number);

@@ -2,11 +2,7 @@ import MicroEmitter from '../micro-emitter';
 import log from '../log';
 import { startsWith } from '../utils/string';
 import fetch from '../utils/fetch';
-import type {
-    OAPICallResult,
-    HTTPMethodType,
-    NetworkError,
-} from '../utils/fetch';
+import type { OAPIRequestResult, HTTPMethodType, NetworkError } from '../types';
 
 const LOG_AREA = 'AuthProvider';
 
@@ -220,7 +216,7 @@ class AuthProvider extends MicroEmitter {
         return false;
     }
 
-    private onApiTokenReceived = (result: OAPICallResult) => {
+    private onApiTokenReceived = (result: OAPIRequestResult) => {
         this.state = STATE_WAITING;
         this.retries = 0;
 
@@ -243,7 +239,9 @@ class AuthProvider extends MicroEmitter {
         this.trigger(this.EVENT_TOKEN_RECEIVED, token, expiry);
     };
 
-    private onApiTokenReceiveFail = (result: OAPICallResult | NetworkError) => {
+    private onApiTokenReceiveFail = (
+        result: OAPIRequestResult | NetworkError,
+    ) => {
         const currentExpiry = this.getExpiry();
         const isAuthenticationError =
             result && (result.status === 401 || result.status === 403);

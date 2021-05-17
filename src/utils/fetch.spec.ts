@@ -130,14 +130,17 @@ describe('utils fetch', () => {
         it('convertFetchReject clears timers', () => {
             const timerSpy = jest.fn().mockName('timerSpy');
             const timerId = setTimeout(timerSpy);
-            try {
-                convertFetchReject('url', 'body', timerId, new Error());
-            } catch (e) {
-                // eslint-disable no-empty
-            }
+            const promise = convertFetchReject(
+                'url',
+                'body',
+                timerId,
+                new Error(),
+            ).catch(() => {});
             tick(1);
 
             expect(timerSpy).not.toBeCalled();
+
+            return promise;
         });
     });
 });

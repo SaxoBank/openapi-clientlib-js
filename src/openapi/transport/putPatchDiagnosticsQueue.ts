@@ -1,21 +1,26 @@
 import log from '../../log';
 import TransportQueue from './queue';
 import type TransportCore from './core';
-import type { HTTPMethodType } from '../../utils/fetch';
+import type {
+    HTTPMethodType,
+    HTTPMethod,
+    StringTemplateArgs,
+    RequestOptions,
+} from '../../types';
 import type { ITransport } from './transport-base';
 
 // fix-me typo
-const LOG_AREA = 'TransportPutPatchDiagnositicsQueue';
+const LOG_AREA = 'TransportPutPatchDiagnosticsQueue';
 
 /**
- * TransportPutPatchDiagnositicsQueue Waits on sending put and patch calls until a put/patch diagnostics call is successful.
+ * TransportPutPatchDiagnosticsQueue Waits on sending put and patch calls until a put/patch diagnostics call is successful.
  * If Either are not successful, it calls setUseXHttpMethodOverride with true on the passed transportCore.
  *
  * @param transport -
  *      The transport to wrap.
  * @param transportCore - (optional) The core transport at the bottom of the chain.
  */
-class TransportPutPatchDiagnositicsQueue {
+class TransportPutPatchDiagnosticsQueue {
     isQueueing = true;
     transport: ITransport;
     transportQueue: TransportQueue;
@@ -23,12 +28,12 @@ class TransportPutPatchDiagnositicsQueue {
     constructor(transport: ITransport, transportCore: TransportCore) {
         if (!transport) {
             throw new Error(
-                'Missing required parameter: transport in TransportPutPatchDiagnositicsQueue',
+                'Missing required parameter: transport in TransportPutPatchDiagnosticsQueue',
             );
         }
         if (!transportCore) {
             throw new Error(
-                'Missing required parameter: transportCore in TransportPutPatchDiagnositicsQueue',
+                'Missing required parameter: transportCore in TransportPutPatchDiagnosticsQueue',
             );
         }
 
@@ -61,17 +66,38 @@ class TransportPutPatchDiagnositicsQueue {
         );
     }
 
-    private putPatchTransportMethod(method: 'put' | 'patch') {
-        return (...args: any) => {
+    private putPatchTransportMethod(method: 'put' | 'patch'): HTTPMethod {
+        return (
+            servicePath: string,
+            urlTemplate: string,
+            templateArgs?: StringTemplateArgs,
+            options?: RequestOptions,
+        ) => {
             const transport = this.isQueueing
                 ? this.transportQueue
                 : this.transport;
-            return transport[method](...args);
+            return transport[method](
+                servicePath,
+                urlTemplate,
+                templateArgs,
+                options,
+            );
         };
     }
 
     private otherMethodTransport(method: HTTPMethodType) {
-        return (...args: any) => this.transport[method](...args);
+        return (
+            servicePath: string,
+            urlTemplate: string,
+            templateArgs?: StringTemplateArgs,
+            options?: RequestOptions,
+        ) =>
+            this.transport[method](
+                servicePath,
+                urlTemplate,
+                templateArgs,
+                options,
+            );
     }
 
     put = this.putPatchTransportMethod('put');
@@ -84,4 +110,4 @@ class TransportPutPatchDiagnositicsQueue {
     options = this.otherMethodTransport('options');
 }
 
-export default TransportPutPatchDiagnositicsQueue;
+export default TransportPutPatchDiagnosticsQueue;

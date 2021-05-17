@@ -19,6 +19,7 @@ describe('openapi TransportCore', () => {
     describe('parameters', () => {
         it('requires a service path and url', () => {
             transport = new TransportCore('localhost');
+            // @ts-expect-error testing invalid usage
             expect(() => transport.get()).toThrow();
             expect(() => transport.get('', '')).toThrow();
             expect(() => transport.get('service_path', '')).toThrow();

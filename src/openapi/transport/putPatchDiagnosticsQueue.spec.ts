@@ -1,8 +1,8 @@
 import { setTimeout, installClock, uninstallClock } from '../../test/utils';
 import mockTransport from '../../test/mocks/transport';
-import TransportPutPatchDiagnositicsQueue from './putPatchDiagnosticsQueue';
+import TransportPutPatchDiagnosticsQueue from './putPatchDiagnosticsQueue';
 
-describe('openapi TransportPutPatchDiagnositicsQueue', () => {
+describe('openapi TransportPutPatchDiagnosticsQueue', () => {
     let transport: any;
     let transportCore: any;
     let transportPutPatch: any;
@@ -19,14 +19,14 @@ describe('openapi TransportPutPatchDiagnositicsQueue', () => {
     it('requires both arguments to the constructor', () => {
         expect(function () {
             // @ts-expect-error
-            transportPutPatch = new TransportPutPatchDiagnositicsQueue();
+            transportPutPatch = new TransportPutPatchDiagnosticsQueue();
         }).toThrow();
         expect(function () {
             // @ts-expect-error
-            transportPutPatch = new TransportPutPatchDiagnositicsQueue({});
+            transportPutPatch = new TransportPutPatchDiagnosticsQueue({});
         }).toThrow();
         expect(function () {
-            transportPutPatch = new TransportPutPatchDiagnositicsQueue(
+            transportPutPatch = new TransportPutPatchDiagnosticsQueue(
                 // @ts-expect-error
                 null,
                 {},
@@ -43,7 +43,7 @@ describe('openapi TransportPutPatchDiagnositicsQueue', () => {
     `(
         'Calls through straight away for non put/patch - $method',
         ({ method }) => {
-            transportPutPatch = new TransportPutPatchDiagnositicsQueue(
+            transportPutPatch = new TransportPutPatchDiagnosticsQueue(
                 transport,
                 transportCore,
             );
@@ -70,7 +70,7 @@ describe('openapi TransportPutPatchDiagnositicsQueue', () => {
         'Handles a $method failure',
         // @ts-ignore its breaking next test if we remove done but somehow its picking wrong type definition from JEST
         ({ method }, done) => {
-            transportPutPatch = new TransportPutPatchDiagnositicsQueue(
+            transportPutPatch = new TransportPutPatchDiagnosticsQueue(
                 transport,
                 transportCore,
             );
@@ -121,7 +121,7 @@ describe('openapi TransportPutPatchDiagnositicsQueue', () => {
     );
 
     it('handles successful put/patch', (done) => {
-        transportPutPatch = new TransportPutPatchDiagnositicsQueue(
+        transportPutPatch = new TransportPutPatchDiagnosticsQueue(
             transport,
             transportCore,
         );

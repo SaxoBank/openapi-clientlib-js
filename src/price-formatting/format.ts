@@ -338,7 +338,7 @@ function isNumeric(
  */
 function formatPriceParts(
     numberFormatting: NumberFormatting,
-    value: number,
+    value: number | undefined | null | string,
     decimals: number,
     formatFlags: FormatFlags,
     numeratorDecimals?: number,
@@ -356,7 +356,7 @@ function formatPriceParts(
     }
 
     const isNegative = value < 0;
-    value = Math.abs(value);
+    value = Math.abs(Number(value));
 
     if (formatFlags.ModernFractions || formatFlags.Fractions) {
         formatPricePartsFraction(
@@ -404,7 +404,7 @@ function formatPriceParts(
  */
 function formatPrice(
     numberFormatting: NumberFormatting,
-    value: number,
+    value: number | undefined | null | string,
     decimals: number,
     formatOptions?:
         | PriceFormatOption

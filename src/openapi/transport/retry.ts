@@ -1,9 +1,9 @@
 ﻿import type { HTTPMethodInputArgs } from './types';
 import type {
-    OAPICallResult,
+    OAPIRequestResult,
     HTTPMethodType,
     NetworkError,
-} from '../../utils/fetch';
+} from '../../types';
 import type TransportCore from './core';
 import TransportBase from './transport-base';
 
@@ -93,7 +93,7 @@ class TransportRetry extends TransportBase {
                     methodRetryOptions.retryLimit > 0) ||
                     methodRetryOptions.retryTimeouts)
             ) {
-                return new Promise<OAPICallResult>((resolve, reject) => {
+                return new Promise<OAPIRequestResult>((resolve, reject) => {
                     const transportCall = {
                         method,
                         args,
@@ -114,7 +114,7 @@ class TransportRetry extends TransportBase {
     protected sendTransportCall = (transportCall: TransportCall) => {
         this.transport[transportCall.method](...transportCall.args).then(
             transportCall.resolve,
-            (response: OAPICallResult | NetworkError) => {
+            (response: OAPIRequestResult | NetworkError) => {
                 const callOptions = this.methods[
                     transportCall.method
                 ] as RetryOptions;

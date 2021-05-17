@@ -9,7 +9,7 @@ import * as constants from '../constants';
 import log from '../../../../log';
 import * as uint64utils from '../../../../utils/uint64';
 import fetch from '../../../../utils/fetch';
-import type { OAPICallResult } from '../../../../utils/fetch';
+import type { OAPIRequestResult } from '../../../../types';
 import { getRequestId } from '../../../../utils/request';
 import * as transportTypes from '../transportTypes';
 import type { StreamingTransportInterface } from '../types';
@@ -70,7 +70,7 @@ class WebsocketTransport implements StreamingTransportInterface {
     lastMessageTime = 0;
     query: string | null = null;
     contextId: string | null = null;
-    authorizePromise: Promise<OAPICallResult | null> | null = null;
+    authorizePromise: Promise<OAPIRequestResult | null> | null = null;
     authToken: string | null = null;
     // Callbacks
     failCallback: Callback;
@@ -393,7 +393,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         contextId: string | null,
         authToken: string | null,
         forceAuthenticate?: boolean,
-    ): Promise<OAPICallResult | null> {
+    ): Promise<OAPIRequestResult | null> {
         if (!forceAuthenticate && this.authorizePromise) {
             log.debug(LOG_AREA, 'Connection already authorized');
             return this.authorizePromise;

@@ -135,11 +135,11 @@ function parseDecimalPrice(
 function parseModernFractionalPrice(
     numberFormatting: NumberFormatting,
     s: string,
-    decimals: number,
+    decimals: number | null | undefined,
 ) {
     let result;
     const separator = getModernFractionsSeparator(numberFormatting);
-    const denominator = 1 << decimals;
+    const denominator = 1 << (decimals || 0);
 
     const signInfo = parseNumberNegativePattern(s, numberFormatting);
     const isNegative = signInfo[0] === '-';
@@ -236,7 +236,7 @@ function parseFractionalPrice(
     numberFormatting: NumberFormatting,
     s: string,
     formatFlags: FormatFlags,
-    decimals: number,
+    decimals: number | null | undefined,
 ) {
     if (formatFlags.ModernFractions) {
         // special futures
@@ -257,7 +257,7 @@ function parseFractionalPrice(
 function parsePrice(
     numberFormatting: NumberFormatting,
     str: string,
-    decimals: number,
+    decimals: number | null | undefined,
     formatOptions?:
         | PriceFormatOption
         | PriceFormatOption[]
@@ -273,7 +273,7 @@ function parsePrice(
         formatFlags = enumUtils.toObject(formatOptions);
     }
 
-    if (decimals < 0) {
+    if (decimals && decimals < 0) {
         throw new Error(
             'This library supports the openapi format specification, so fractions are done with ' +
                 'positive decimals and the Fractions or ModernFractions flag',

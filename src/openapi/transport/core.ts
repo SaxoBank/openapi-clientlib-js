@@ -2,10 +2,13 @@ import { formatUrl } from '../../utils/string';
 import fetch from '../../utils/fetch';
 import { getRequestId } from '../../utils/request';
 import { shouldUseCloud } from './options';
-import type { TransportOptions, TransportCoreOptions, Services } from './types';
-import type { HTTPMethodType } from '../../utils/fetch';
+import type { TransportOptions, Services } from './types';
+import type {
+    HTTPMethodType,
+    StringTemplateArgs,
+    RequestOptions,
+} from '../../types';
 import TransportBase from './transport-base';
-import type { StringTemplateArgs } from '../../utils/string';
 
 /**
  * Handles core transport to the openapi rest service. This is little more than a thin layer on top of fetch, adding
@@ -41,10 +44,10 @@ class TransportCore extends TransportBase {
 
     prepareTransportMethod(method: HTTPMethodType) {
         return (
-            servicePath?: string,
-            urlTemplate?: string,
+            servicePath: string,
+            urlTemplate: string,
             templateArgs?: StringTemplateArgs,
-            options?: TransportCoreOptions,
+            options?: RequestOptions,
         ) => {
             let body;
             let headers: Record<string, string> = {};

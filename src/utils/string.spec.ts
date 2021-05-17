@@ -66,5 +66,18 @@ describe('String utils', () => {
                 { param1: 'fo o' },
             ),
         ).toBe('http://example.com/b%20ar?baz=23&param1=fo%20o');
+
+        expect(
+            formatUrl(
+                'http://example.com/{foo}',
+                { foo: 'blach' },
+                {
+                    param1: [true, 'blach', 23],
+                    param2: 'baz',
+                    param3: null,
+                    param4: undefined,
+                },
+            ),
+        ).toBe('http://example.com/blach?param1=true%2Cblach%2C23&param2=baz');
     });
 });

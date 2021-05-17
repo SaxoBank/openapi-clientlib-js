@@ -1,13 +1,4 @@
-import type { TransportCoreOptions } from './types';
-import type { OAPICallResult, HTTPMethodType } from '../../utils/fetch';
-import type { StringTemplateArgs } from '../../utils/string';
-
-type HTTPMethod = (
-    servicePath?: string,
-    urlTemplate?: string,
-    templateArgs?: StringTemplateArgs,
-    options?: TransportCoreOptions,
-) => Promise<OAPICallResult>;
+import type { HTTPMethodType, HTTPMethod } from '../../types';
 
 export interface ITransport {
     dispose: () => void;
@@ -23,14 +14,9 @@ export interface ITransport {
 abstract class TransportBase implements ITransport {
     abstract dispose(): void;
 
-    abstract prepareTransportMethod(
+    protected abstract prepareTransportMethod(
         method: HTTPMethodType,
-    ): (
-        servicePath?: string,
-        urlTemplate?: string,
-        templateArgs?: StringTemplateArgs,
-        options?: TransportCoreOptions,
-    ) => Promise<OAPICallResult>;
+    ): HTTPMethod;
 
     /**
      * Does a get request against open api.

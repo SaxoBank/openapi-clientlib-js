@@ -1192,8 +1192,8 @@ describe('openapi TransportBatch', () => {
 
     it('disposes okay', () => {
         transportBatch = new TransportBatch(transport, validBaseUrl);
-        transportBatch.get();
-        transportBatch.get();
+        transportBatch.get('foo', 'bar');
+        transportBatch.get('foo', 'bar');
         transportBatch.dispose();
         expect(transportBatch.queue).toEqual([]);
         expect(transport.dispose.mock.calls.length).toEqual(1);

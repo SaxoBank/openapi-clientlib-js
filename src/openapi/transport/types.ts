@@ -1,4 +1,4 @@
-import type { StringTemplateArgs } from '../../utils/string';
+import type { RequestOptions, StringTemplateArgs } from '../../types';
 
 export type HTTPStatusCode = 401 | 404 | 200 | 201 | 500;
 
@@ -14,30 +14,27 @@ export interface TransportOptions {
     /**
      * The period within which errors on different tokens cause an endpoint auth errors to be ignored.
      */
-    authErrorsDebouncePeriod?: number;
+    readonly authErrorsDebouncePeriod?: number;
     /**
      * The language sent as a header if not overridden.
      */
-    language?: string;
+    readonly language?: string;
     /**
      * Per-service options, keyed by service path.
      */
-    services?: Services;
-    host?: 'string';
-    timeoutMs?: number;
+    readonly services?: Services;
+    readonly host?: 'string';
+    readonly timeoutMs?: number;
     /**
      * Sets the default caching behaviour if not overridden on a call.
      */
-    defaultCache?: boolean;
-}
-
-export interface TransportCoreOptions {
-    headers?: Record<string, string>;
-    queryParams?: Record<string, string | number>;
-    body?: string | Record<string, unknown> | URLSearchParams | File | FormData;
-    cache?: boolean;
-    requestId?: string;
+    readonly defaultCache?: boolean;
 }
 
 // eslint-disable-next-line max-len
-export type HTTPMethodInputArgs = [string | undefined, string | undefined, StringTemplateArgs | undefined, TransportCoreOptions | undefined];
+export type HTTPMethodInputArgs = [
+    string,
+    string,
+    StringTemplateArgs | undefined,
+    RequestOptions | undefined,
+];

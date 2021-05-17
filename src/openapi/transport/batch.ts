@@ -7,14 +7,14 @@ import { shouldUseCloud } from './options';
 import type { QueueItem } from './queue';
 import TransportQueue from './queue';
 import type { Services, TransportOptions } from './types';
-import type { OAPICallResult, NetworkError } from '../../utils/fetch';
+import type { OAPIRequestResult, NetworkError } from '../../types';
 import type { ITransport } from './transport-base';
 
 const URLRegex = /((https?:)?\/\/)?[^/]+(.*)/i;
 
 const LOG_AREA = 'TransportBatch';
 
-function getParentRequestId(batchResult: OAPICallResult) {
+function getParentRequestId(batchResult: OAPIRequestResult) {
     let parentRequestId = 0;
 
     if (batchResult.headers) {
@@ -86,7 +86,7 @@ class TransportBatch extends TransportQueue {
 
     private batchCallFailure = (
         callList: QueueItem[],
-        batchResponse: OAPICallResult | NetworkError,
+        batchResponse: OAPIRequestResult | NetworkError,
     ) => {
         const isAuthFailure = batchResponse?.status === 401;
         const isNetworkError =
@@ -113,7 +113,7 @@ class TransportBatch extends TransportQueue {
 
     private batchCallSuccess = (
         callList: QueueItem[],
-        batchResult: OAPICallResult,
+        batchResult: OAPIRequestResult,
     ) => {
         // Previously occurred due to a bug in the auth transport
         if (!(batchResult && batchResult.response)) {
@@ -241,10 +241,10 @@ class TransportBatch extends TransportQueue {
                 cache: false,
                 requestId: parentRequestId,
             })
-            .then((batchResult: OAPICallResult) =>
+            .then((batchResult: OAPIRequestResult) =>
                 this.batchCallSuccess(callList, batchResult),
             )
-            .catch((errorResponse: OAPICallResult | NetworkError) =>
+            .catch((errorResponse: OAPIRequestResult | NetworkError) =>
                 this.batchCallFailure(callList, errorResponse),
             );
     };

@@ -24,12 +24,20 @@ export interface StreamingTransportOptions extends ConnectionOptions {
 export interface StreamingTransportInterface {
     stateChangedCallback: (state: ConnectionState) => void;
 
-    start(transportOptions: StreamingTransportOptions, startCallback?: Callback): void;
+    start(
+        transportOptions: StreamingTransportOptions,
+        startCallback?: Callback,
+    ): void;
     stop(hasTransportError?: boolean): void;
     name: string;
 
     getQuery?(): string | null | undefined | void;
-    updateQuery(authToken: string, contextId: string, authExpiry?: number | null, forceAuth?: boolean): void;
+    updateQuery(
+        authToken: string,
+        contextId: string,
+        authExpiry?: number | null,
+        forceAuth?: boolean,
+    ): void;
 
     onOrphanFound?(): unknown;
     getTransport?(): StreamingTransportInterface;

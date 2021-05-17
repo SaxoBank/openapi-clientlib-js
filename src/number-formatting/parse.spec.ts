@@ -1,6 +1,6 @@
 ﻿import NumberFormatting from '.';
 
-function parse(number: string) {
+function parse(number: string | null | undefined) {
     const numbers = new NumberFormatting();
     return numbers.parse(number);
 }
@@ -12,9 +12,7 @@ describe('NumberFormatting parse', () => {
     });
 
     it('handles bad input', () => {
-        // @ts-expect-error
         expect(parse(null)).toEqual(NaN);
-        // @ts-expect-error
         expect(parse(undefined)).toEqual(NaN);
     });
 });

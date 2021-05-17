@@ -1,7 +1,4 @@
-export type StringTemplateArgs = Record<
-    string,
-    string | number | boolean
-> | null;
+import type { QueryParams, StringTemplateArgs } from '../types';
 
 const formatRx = /\{([^{]+?)\}/g;
 
@@ -94,7 +91,7 @@ function padLeft(value: string, length: number, padChar: string) {
 function formatUrl(
     urlTemplate: string,
     templateArgs?: StringTemplateArgs,
-    queryParams?: Record<string, string | number | boolean>,
+    queryParams?: QueryParams | null,
 ) {
     let url;
 
@@ -123,7 +120,7 @@ function formatUrl(
                     (firstQueryParam ? '?' : '&') +
                     queryParamKey +
                     '=' +
-                    encodeURIComponent(queryParams[queryParamKey]);
+                    encodeURIComponent(String(queryParams[queryParamKey]));
                 firstQueryParam = false;
             }
         }

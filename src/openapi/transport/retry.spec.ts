@@ -32,7 +32,7 @@ describe('openapi TransportRetry', () => {
         expect(transport.get.mock.calls.length).toEqual(0);
         expect(transportRetry.retryTimeout).toEqual(0);
         expect(transportRetry.methods).toEqual({});
-        const getPromise = transportRetry.get();
+        const getPromise = transportRetry.get('foo', 'bar');
         setTimeout(() => {
             expect(transport.get.mock.calls.length).toEqual(1);
 
@@ -56,7 +56,7 @@ describe('openapi TransportRetry', () => {
             methods: { delete: { retryLimit: 1, statuses: [503] } },
         });
         expect(transportRetry.retryTimeout).toEqual(2000);
-        const deletePromise = transportRetry.delete();
+        const deletePromise = transportRetry.delete('foo', 'bar');
         let apiResponse: any;
         deletePromise.catch((response: any) => {
             apiResponse = response;
@@ -86,7 +86,7 @@ describe('openapi TransportRetry', () => {
             retryTimeout: 10000,
             methods: { delete: { retryLimit: 3 } },
         });
-        const deletePromise = transportRetry.delete();
+        const deletePromise = transportRetry.delete('foo', 'bar');
         expect(transport.delete.mock.calls.length).toEqual(1);
         transport.deleteResolve({ status: 200, response: 'test' });
         setTimeout(function () {
@@ -107,7 +107,7 @@ describe('openapi TransportRetry', () => {
             methods: { delete: { retryLimit: 3 } },
         });
 
-        const postPromise = transportRetry.post();
+        const postPromise = transportRetry.post('foo', 'bar');
         setTimeout(function () {
             expect(transport.post.mock.calls.length).toEqual(1);
             transport.postReject({ status: 404, response: 'test' });
@@ -127,7 +127,7 @@ describe('openapi TransportRetry', () => {
             retryTimeout: 2000,
             methods: { delete: { retryLimit: 3, statuses: [500] } },
         });
-        const deletePromise = transportRetry.delete();
+        const deletePromise = transportRetry.delete('foo', 'bar');
         setTimeout(() => {
             expect(transport.delete.mock.calls.length).toEqual(1);
             transport.deleteReject({ status: 500, response: 'test' });
@@ -161,7 +161,7 @@ describe('openapi TransportRetry', () => {
             methods: { delete: { retryLimit: 3, statuses: [500] } },
         });
         expect(transportRetry.retryTimeout).toEqual(2000);
-        const deletePromise = transportRetry.delete();
+        const deletePromise = transportRetry.delete('foo', 'bar');
         let isRejected = false;
         deletePromise.catch(() => {
             isRejected = true;
@@ -234,7 +234,7 @@ describe('openapi TransportRetry', () => {
         expect(transportRetry.methods['delete'].retryTimeouts.length).toEqual(
             3,
         );
-        const deletePromise = transportRetry.delete();
+        const deletePromise = transportRetry.delete('foo', 'bar');
         let isRejected = false;
         deletePromise.catch(() => {
             isRejected = true;
@@ -325,8 +325,8 @@ describe('openapi TransportRetry', () => {
                 post: { retryTimeouts: [1000, 2000], statuses: [500] },
             },
         });
-        const deletePromise = transportRetry.delete();
-        const postPromise = transportRetry.post();
+        const deletePromise = transportRetry.delete('foo', 'bar');
+        const postPromise = transportRetry.post('foo', 'bar');
         let isDeleteRejected = false;
         deletePromise.catch(() => {
             isDeleteRejected = true;
@@ -398,7 +398,7 @@ describe('openapi TransportRetry', () => {
             retryTimeout: 2000,
             methods: { delete: { retryLimit: 3, statuses: [503] } },
         });
-        const deletePromise = transportRetry.delete();
+        const deletePromise = transportRetry.delete('foo', 'bar');
         setTimeout(() => {
             expect(transport.delete.mock.calls.length).toEqual(1);
             transport.deleteReject({ status: 404, response: 'test' });
@@ -421,7 +421,7 @@ describe('openapi TransportRetry', () => {
             retryTimeout: 2000,
             methods: { delete: { retryLimit: 3, statuses: [504] } },
         });
-        const deletePromise = transportRetry.delete();
+        const deletePromise = transportRetry.delete('foo', 'bar');
         let isRejected = false;
         deletePromise.catch(() => {
             isRejected = true;
@@ -445,7 +445,7 @@ describe('openapi TransportRetry', () => {
             retryTimeout: 2000,
             methods: { delete: { retryLimit: 3, statuses: [504] } },
         });
-        const deletePromise = transportRetry.delete();
+        const deletePromise = transportRetry.delete('foo', 'bar');
         let isRejected = false;
         deletePromise.catch(() => {
             isRejected = true;
@@ -472,8 +472,8 @@ describe('openapi TransportRetry', () => {
                 post: { retryTimeouts: [1000, 2000], statuses: [503] },
             },
         });
-        const deletePromise = transportRetry.delete();
-        const postPromise = transportRetry.post();
+        const deletePromise = transportRetry.delete('foo', 'bar');
+        const postPromise = transportRetry.post('foo', 'bar');
         let isDeleteRejected = false;
         deletePromise.catch(() => {
             isDeleteRejected = true;

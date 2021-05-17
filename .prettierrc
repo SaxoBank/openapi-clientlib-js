@@ -6,7 +6,7 @@
   "endOfLine": "crlf",
   "overrides": [
     {
-      "files": "**/*/types.ts",
+      "files": "**/*/utils/types.ts",
       "options": {
         "printWidth": 200
       }

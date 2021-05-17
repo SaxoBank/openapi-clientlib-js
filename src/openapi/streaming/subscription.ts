@@ -11,9 +11,8 @@ import SubscriptionQueue from './subscription-queue';
 import type { QueuedItem } from './subscription-queue';
 import ParserFacade from './parser/parser-facade';
 import type { ITransport } from '../transport/transport-base';
-import type { TransportCoreOptions } from '../transport/types';
+import type { RequestOptions } from '../../types';
 
-// TODO improve naming
 const updateTypes = {
     UPDATE_TYPE_SNAPSHOT: 1,
     UPDATE_TYPE_DELTA: 2,
@@ -21,7 +20,6 @@ const updateTypes = {
 
 type SubscriptionUpdateTypes = typeof updateTypes[keyof typeof updateTypes];
 
-// TODO improve naming
 const stateFlags = {
     SUBSCRIBE_REQUESTED: 1,
     SUBSCRIBED: 2,
@@ -63,7 +61,7 @@ export interface SubscriptionArgs {
     /**
      * The format for the subscription (passed to OpenAPI).
      */
-    Format?: string;
+    Format?: string | null;
     /**
      * The subscription arguments (passed to OpenAPI).
      */
@@ -180,7 +178,7 @@ class Subscription {
     onUpdate;
     onError;
     onQueueEmpty;
-    headers: Record<string, any> | undefined;
+    headers: Record<string, string> | undefined;
     onNetworkError;
     connectionAvailable;
     currentState: SubscriptionState = this.STATE_UNSUBSCRIBED;
@@ -285,10 +283,10 @@ class Subscription {
             ReferenceId: referenceId,
             KnownSchemas: this.parser.getSchemaNames(),
         };
-        const options: TransportCoreOptions = { body: data };
+        let options: RequestOptions = { body: data };
 
         if (this.headers) {
-            options.headers = { ...this.headers };
+            options = { ...options, headers: { ...this.headers } };
         }
 
         this.normalizeSubscribeData(data);
@@ -302,10 +300,6 @@ class Subscription {
         this.currentStreamingContextId = this.streamingContextId;
         this.transport
             .post(this.servicePath, subscribeUrl, null, options)
-            // @ts-expect-error FIXME - our custom fetch wrapper may
-            // return result without a response or the response of a different type.
-            // Add proper type checks inside onSubscribeSuccess to let TS know
-            // that a correct response is used
             .then(this.onSubscribeSuccess.bind(this, referenceId))
             .catch(this.onSubscribeError.bind(this, referenceId));
     }

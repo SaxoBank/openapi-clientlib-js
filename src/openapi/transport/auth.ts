@@ -2,13 +2,14 @@ import log from '../../log';
 import type AuthProvider from '../authProvider';
 import TransportCore from './core';
 import TransportBase from './transport-base';
-import type { TransportOptions, TransportCoreOptions } from './types';
-import type { StringTemplateArgs } from '../../utils/string';
+import type { TransportOptions } from './types';
 import type {
-    OAPICallResult,
+    OAPIRequestResult,
     HTTPMethodType,
     NetworkError,
-} from '../../utils/fetch';
+    StringTemplateArgs,
+    RequestOptions,
+} from '../../types';
 
 const LOG_AREA = 'TransportAuth';
 
@@ -61,7 +62,7 @@ class TransportAuth extends TransportBase {
     private onTransportError(
         oldTokenExpiry: number,
         timeRequested: number,
-        result: OAPICallResult | NetworkError,
+        result: OAPIRequestResult | NetworkError,
     ): never {
         if (result?.status === 401) {
             this.addAuthError(result.url, oldTokenExpiry, timeRequested);
@@ -94,11 +95,11 @@ class TransportAuth extends TransportBase {
 
     prepareTransportMethod(method: HTTPMethodType) {
         return (
-            servicePath?: string,
-            urlTemplate?: string,
+            servicePath: string,
+            urlTemplate: string,
             templateArgs?: StringTemplateArgs,
-            options?: TransportCoreOptions,
-        ): Promise<OAPICallResult> => {
+            options?: RequestOptions,
+        ): Promise<OAPIRequestResult> => {
             const newOptions = {
                 ...options,
                 headers: {

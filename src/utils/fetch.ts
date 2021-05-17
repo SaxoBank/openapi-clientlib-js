@@ -1,36 +1,11 @@
 ﻿import log from '../log';
-
-export type HTTPMethodType =
-    | 'get'
-    | 'put'
-    | 'post'
-    | 'delete'
-    | 'patch'
-    | 'options'
-    | 'head';
-
-export interface OAPICallResult {
-    response?: any;
-    status: number;
-    headers: Headers;
-    size: number;
-    url: string;
-    responseType?: string;
-    isNetworkError?: never;
-}
-
-export interface NetworkError {
-    message?: string | Error;
-    isNetworkError: true;
-    status?: never;
-}
+import type { HTTPMethodType, NetworkError, OAPIRequestResult } from '../types';
 
 interface Options {
     /**
-     *  The body of the request. If this is an object, that is not already handled by the body mixin
-     *  it is converted to JSON and the appropriate content-type header added.
+     *  The body of the request.
      */
-    body?: BodyInit | Record<string, unknown>;
+    body?: any;
     /**
      * Object of header key to header value.
      */
@@ -105,7 +80,7 @@ export function convertFetchSuccess(
 ) {
     clearTimeout(timerId);
 
-    let convertedPromise: Promise<OAPICallResult>;
+    let convertedPromise: Promise<OAPIRequestResult>;
 
     const contentType = result.headers.get('content-type');
 
@@ -185,6 +160,7 @@ export function convertFetchSuccess(
                 // since we guess that it can be interpreted as text, do not fail the promise
                 // if we fail to get text
                 return {
+                    response: undefined,
                     status: result.status,
                     headers: result.headers,
                     size: 0,
@@ -224,10 +200,7 @@ export function convertFetchSuccess(
     return convertedPromise;
 }
 
-function getBody(
-    method: HTTPMethodType,
-    options?: Options,
-): BodyInit | Record<string, unknown> | undefined {
+function getBody(method: HTTPMethodType, options?: Options): any {
     // If PATCH without body occurs, create empty payload.
     // Reason: Some proxies and default configs for CDNs like Akamai have issues with accepting PATCH with content-length: 0.
     if (method === 'patch' && !options?.body) {
@@ -246,11 +219,11 @@ function getBody(
  * @param url - The url to fetch.
  * @param options - (optional)
  */
-function localFetch(
+function localFetch<Response = any>(
     httMethod: HTTPMethodType | Uppercase<HTTPMethodType>,
     url: string,
     options?: Options,
-): Promise<any> {
+): Promise<OAPIRequestResult<Response>> {
     let method = httMethod.toLowerCase() as HTTPMethodType;
     let body = getBody(method, options);
     const headers = options?.headers || {};
@@ -294,9 +267,7 @@ function localFetch(
         .then(convertFetchSuccess.bind(null, url, body, timerId));
 }
 
-function shouldBeStringified(
-    body?: BodyInit | Record<string, unknown>,
-): body is Record<string, unknown> {
+function shouldBeStringified(body?: any): body is Record<string, any> {
     return Boolean(
         body && typeof body === 'object' && !isAlreadySupported(body),
     );

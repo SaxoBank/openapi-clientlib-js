@@ -34,7 +34,7 @@ describe('openapi TransportQueue', () => {
         expect(transportQueue.isQueueing).toEqual(false);
         expect(transport.get.mock.calls.length).toEqual(0);
 
-        transportQueue.get();
+        transportQueue.get('foo', 'bar');
         setTimeout(() => {
             expect(transport.get.mock.calls.length).toEqual(1);
             done();
@@ -52,7 +52,7 @@ describe('openapi TransportQueue', () => {
             }),
         );
 
-        const getPromise = transportQueue.get();
+        const getPromise = transportQueue.get('foo', 'bar');
         setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(0);
             waitingForPromiseResolve();
@@ -87,7 +87,7 @@ describe('openapi TransportQueue', () => {
             }),
         );
 
-        const getPromise = transportQueue.get();
+        const getPromise = transportQueue.get('foo', 'bar');
         setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(0);
             waitingForPromiseResolve();
@@ -112,7 +112,7 @@ describe('openapi TransportQueue', () => {
         transportQueue = new TransportQueue(transport, authProvider);
         expect(transportQueue.isQueueing).toEqual(true);
 
-        transportQueue.get();
+        transportQueue.get('foo', 'bar');
         setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(0);
 
@@ -131,7 +131,7 @@ describe('openapi TransportQueue', () => {
         transportQueue = new TransportQueue(transport, authProvider);
         expect(transportQueue.isQueueing).toEqual(false);
 
-        transportQueue.get();
+        transportQueue.get('foo', 'bar');
         setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(1);
             done();
@@ -144,7 +144,7 @@ describe('openapi TransportQueue', () => {
         expect(transportQueue.isQueueing).toEqual(false);
 
         authProvider.setExpiry(Date.now() - 1);
-        transportQueue.get();
+        transportQueue.get('foo', 'bar');
         expect(authProvider.refreshOpenApiToken).toHaveBeenCalledTimes(1);
         setTimeout(function () {
             expect(transport.get.mock.calls.length).toEqual(0);
@@ -166,7 +166,7 @@ describe('openapi TransportQueue', () => {
 
         expect(transportQueue.isQueueing).toEqual(true);
 
-        transportQueue.get();
+        transportQueue.get('foo', 'bar');
 
         authProvider.setExpiry(Date.now() - 1);
         // @ts-ignore
@@ -183,9 +183,9 @@ describe('openapi TransportQueue', () => {
         transportQueue = new TransportQueue(transport, authProvider);
         expect(transportQueue.isQueueing).toEqual(false);
 
-        const getPromise1 = transportQueue.get();
+        const getPromise1 = transportQueue.get('foo', 'bar');
         const getReject1 = transport.getReject;
-        const getPromise2 = transportQueue.get();
+        const getPromise2 = transportQueue.get('foo', 'bar');
         const getReject2 = transport.getReject;
 
         const getSpy1 = jest.fn().mockName('get1');
@@ -219,9 +219,9 @@ describe('openapi TransportQueue', () => {
         transportQueue = new TransportQueue(transport, authProvider);
         expect(transportQueue.isQueueing).toEqual(false);
 
-        const getPromise1 = transportQueue.get();
+        const getPromise1 = transportQueue.get('foo', 'bar');
         const getReject1 = transport.getReject;
-        const getPromise2 = transportQueue.get();
+        const getPromise2 = transportQueue.get('foo', 'bar');
         const getReject2 = transport.getReject;
 
         const getSpy1 = jest.fn().mockName('get1');
@@ -246,16 +246,16 @@ describe('openapi TransportQueue', () => {
 
     it('disposes okay', () => {
         transportQueue = new TransportQueue(transport);
-        transportQueue.get();
-        transportQueue.get();
+        transportQueue.get('foo', 'bar');
+        transportQueue.get('foo', 'bar');
         transportQueue.dispose();
         expect(transportQueue.queue).toEqual([]);
         expect(transport.dispose.mock.calls.length).toEqual(1);
         transport.dispose.mockClear();
 
         transportQueue = new TransportQueue(transport, authProvider);
-        transportQueue.get();
-        transportQueue.get();
+        transportQueue.get('foo', 'bar');
+        transportQueue.get('foo', 'bar');
         transportQueue.dispose();
         expect(transport.dispose.mock.calls.length).toEqual(1);
     });
