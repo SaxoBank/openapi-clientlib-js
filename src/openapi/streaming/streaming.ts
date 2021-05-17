@@ -22,14 +22,36 @@ export interface RetryDelayLevel {
     level: number;
     delay: number;
 }
+
 export interface StreamingConfigurableOptions {
+    /**
+     * Whether the signal-r streaming connection waits for page load before starting
+     */
     waitForPageLoad?: boolean;
+    /**
+     * The transports to be used in order by signal-r.
+     */
     transportTypes?: Array<TransportTypes>;
+    /**
+     * The delay in milliseconds to wait before attempting a new connect after signal-r has disconnected
+     */
     connectRetryDelay?: number;
+    /**
+     * The levels of delays in milliseconds for specific retry counts. Structure: `[{ level:Number, delay:Number }].`
+     */
     connectRetryDelayLevels?: RetryDelayLevel[];
+    /**
+     * The map of subscription parsers where key is format name and value is parser constructor.
+     */
     parsers?: Record<string, new (...args: any) => ParserBase>;
+    /**
+     * The map of subscription parser engines where key is format name and value is an engine implementation.
+     */
     parserEngines?: Record<string, unknown>;
     transport?: Array<TransportTypes>;
+    /**
+     *  Message serialization protocol used by signalr core
+     */
     messageProtocol?: Record<string, any>;
     messageSerializationProtocol?: IHubProtocol;
 }
@@ -55,10 +77,10 @@ const DEFAULT_STREAMING_OPTIONS = {
 /**
  * Find matching delay based on current retry count/index.
  * @param retryLevels - The retry levels that contain different delays for various retry count levels.
- *                      Structure: [ { level: Number, delay: Number } ].
+ *                      Structure: `[ { level: Number, delay: Number } ].`
  * @param retryIndex - The current retry index/try/count.
- * @param defaultDelay {number} - The default delay.
- * @returns {number} Matching delay to retry index/try/count.
+ * @param defaultDelay - The default delay.
+ * @returns  Matching delay to retry index/try/count.
  */
 export function findRetryDelay(
     retryLevels: RetryDelayLevel[],
@@ -80,24 +102,6 @@ export function findRetryDelay(
 /**
  * Manages subscriptions to the Open API streaming service.
  * Once created this will immediately attempt to start the streaming service
- *
- * @class
- * @alias saxo.openapi.Streaming
- * @mixes MicroEmitter
- * @param {Transport} transport - The transport to use for subscribing/unsubscribing.
- * @param {string} baseUrl - The base URL with which to connect. /streaming/connection will be appended to it.
- * @param {Object} authProvider - An instance of the AuthProvider class.
- * @param {Object} [options] - The configuration options for the streaming connection
- * @param {number} [options.connectRetryDelay=1000] - The delay in milliseconds to wait before attempting a new connect after
- *          signal-r has disconnected
- * @param {Object} [options.connectRetryDelayLevels] - The levels of delays in milliseconds for specific retry counts.
- *          Structure: [{ level:Number, delay:Number }].
- * @param {Boolean} [options.waitForPageLoad=true] - Whether the signal-r streaming connection waits for page load before starting
- * @param {Object} [options.parsers={}] - The map of subscription parsers where key is format name and value is parser constructor.
- * @param {Object} [options.parserEngines={}] - The map of subscription parser engines where key is format name and
- *          value is an engine implementation.
- * @param {Array.<string>} [options.transportTypes=['plainWebSockets', 'webSockets', 'longPolling']] - The transports to be used in order by signal-r.
- * @param {Object} [options.messageProtocol={}] - Message serialization protocol used by signalr core
  */
 class Streaming extends MicroEmitter {
     /**
@@ -177,6 +181,12 @@ class Streaming extends MicroEmitter {
     reconnectTimer?: number;
     disposed = false;
 
+    /**
+     * @param transport - The transport to use for subscribing/unsubscribing.
+     * @param baseUrl - The base URL with which to connect. /streaming/connection will be appended to it.
+     * @param authProvider - An instance of the AuthProvider class.
+     * @param options - (optional) The configuration options for the streaming connection
+     */
     constructor(
         transport: ITransport,
         baseUrl: string,
@@ -513,7 +523,7 @@ class Streaming extends MicroEmitter {
 
     /**
      * handles the connection received event from SignalR
-     * @param updates
+     * @param updates - updates
      */
     // @ts-expect-error FIXME once treaming/connection/transports are migrated to TS
     private onReceived(updates) {
@@ -535,7 +545,7 @@ class Streaming extends MicroEmitter {
 
     /**
      * Finds a subscription by referenceId or returns undefined if not found
-     * @param {string} referenceId
+     * @param referenceId - referenceId
      */
     private findSubscriptionByReferenceId(referenceId: string) {
         for (let i = 0; i < this.subscriptions.length; i++) {
@@ -549,7 +559,7 @@ class Streaming extends MicroEmitter {
 
     /**
      * Sends an update to a subscription by finding it and calling its callback
-     * @param update
+     * @param update - update
      */
     // @ts-expect-error FIXME once treaming/connection/transports are migrated to TS
     private sendDataUpdateToSubscribers(update) {
@@ -594,7 +604,7 @@ class Streaming extends MicroEmitter {
 
     /**
      * Handles a control message on the streaming connection
-     * @param {Object} message From open-api
+     * @param message - message from open-api
      */
     // @ts-expect-error FIXME once streaming/connection/transports are migrated to TS
     private handleControlMessage(message) {
@@ -630,7 +640,7 @@ class Streaming extends MicroEmitter {
 
     /**
      * Fires heartbeats to relevant subscriptions
-     * @param {Array.<{OriginatingReferenceId: string, Reason: string}>} heartbeatList
+     * @param heartbeatList - heartbeatList
      */
     private handleControlMessageFireHeartbeats(
         heartbeatList: Array<{
@@ -670,7 +680,7 @@ class Streaming extends MicroEmitter {
     /**
      * Handles the control message to reset subscriptions based on a id list. If no list is given,
      * reset all subscriptions.
-     * @param {Array.<string>} referenceIdList
+     * @param referenceIdList - referenceIdList
      */
     private handleControlMessageResetSubscriptions(referenceIdList: string[]) {
         if (!referenceIdList || !referenceIdList.length) {
@@ -705,7 +715,7 @@ class Streaming extends MicroEmitter {
      * Handles the control message to disconnect,
      * Notify subscriptions about connect unavailability
      * Fire disconnect requested event
-     * @param {Array.<string>} referenceIdList
+     * @param referenceIdList - referenceIdList
      */
     private handleControlMessageDisconnect() {
         log.info(
@@ -779,7 +789,7 @@ class Streaming extends MicroEmitter {
 
     /**
      * Called when an orphan is found - resets that subscription
-     * @param subscription
+     * @param subscription - subscription
      */
     private onOrphanFound(subscription: Subscription) {
         log.info(
@@ -924,22 +934,11 @@ class Streaming extends MicroEmitter {
     /**
      * Constructs a new subscription to the given resource.
      *
-     * @param {string} servicePath - The service path e.g. 'trade'
-     * @param {string} url - The name of the resource to subscribe to, e.g. '/v1/infoprices/subscriptions'.
-     * @param {object} subscriptionArgs - Arguments that detail the subscription.
-     * @param {number} [subscriptionArgs.RefreshRate=1000] - The data refresh rate (passed to OpenAPI).
-     * @param {string} [subscriptionArgs.Format] - The format for the subscription (passed to OpenAPI).
-     * @param {object} [subscriptionArgs.Arguments] - The subscription arguments (passed to OpenAPI).
-     * @param {string} [subscriptionArgs.Tag] - The tag for the subscription (passed to OpenAPI).
-     * @param {objecy} options - Optional parameters
-     * @param {object} [options.headers] - headers to add to the subscription request
-     * @param {function} [options.onUpdate] - A callback function that is invoked when an initial snapshot or update is received.
-     *                              The first argument will be the data received and the second argument will either be
-     *                              subscription.UPDATE_TYPE_DELTA or subscription.UPDATE_TYPE_SNAPSHOT
-     * @param {function} [options.onError] - A callback function that is invoked when an error occurs.
-     * @param {function} [options.onQueueEmpty] - A callback function that is invoked after the last action is dequeued.
-     * @param {function} [options.onNetworkError] - A callback function that is invoked on network error.
-     * @returns {saxo.openapi.StreamingSubscription} A subscription object.
+     * @param servicePath - The service path e.g. 'trade'
+     * @param url - The name of the resource to subscribe to, e.g. '/v1/infoprices/subscriptions'.
+     * @param subscriptionArgs - (optional) Arguments that detail the subscription.
+     * @param options - (optional) streaming options
+     * @returns  A subscription object.
      */
     createSubscription(
         servicePath: string,
@@ -985,7 +984,7 @@ class Streaming extends MicroEmitter {
     /**
      * Makes a subscription start.
      *
-     * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to start.
+     * @param subscription - The subscription to start.
      */
     subscribe(subscription: Subscription) {
         subscription.onSubscribe();
@@ -995,9 +994,9 @@ class Streaming extends MicroEmitter {
      * Makes a subscription start with modification.
      * Modify subscription will keep pending unsubscribe followed by modify subscribe.
      *
-     * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to modify.
-     * @param {Object} args - The target arguments of modified subscription.
-     * @param {Object} options - Options for subscription modification.
+     * @param subscription - The subscription to modify.
+     * @param args - The target arguments of modified subscription.
+     * @param options - Options for subscription modification.
      */
     modify(
         subscription: Subscription,
@@ -1010,7 +1009,7 @@ class Streaming extends MicroEmitter {
     /**
      * Makes a subscription stop (can be restarted). See {@link saxo.openapi.Streaming#disposeSubscription} for permanently stopping a subscription.
      *
-     * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to stop.
+     * @param subscription - The subscription to stop.
      */
     unsubscribe(subscription: Subscription) {
         subscription.onUnsubscribe();
@@ -1019,7 +1018,7 @@ class Streaming extends MicroEmitter {
     /**
      * Disposes a subscription permanently. It will be stopped and not be able to be started.
      *
-     * @param {saxo.openapi.StreamingSubscription} subscription - The subscription to stop and remove.
+     * @param subscription - The subscription to stop and remove.
      */
     disposeSubscription(subscription: Subscription) {
         this.unsubscribe(subscription);
@@ -1030,9 +1029,9 @@ class Streaming extends MicroEmitter {
      * Makes all subscriptions stop at the given service path and url with the given tag (can be restarted)
      * See {@link saxo.openapi.Streaming#disposeSubscriptionByTag} for permanently stopping subscriptions by tag.
      *
-     * @param {string} servicePath - the service path of the subscriptions to unsubscribe
-     * @param {string} url - the url of the subscriptions to unsubscribe
-     * @param {string} tag - the tag of the subscriptions to unsubscribe
+     * @param servicePath - the service path of the subscriptions to unsubscribe
+     * @param url - the url of the subscriptions to unsubscribe
+     * @param tag - the tag of the subscriptions to unsubscribe
      */
     unsubscribeByTag(servicePath: string, url: string, tag: string) {
         this.unsubscribeSubscriptionByTag(servicePath, url, tag, false);
@@ -1041,9 +1040,9 @@ class Streaming extends MicroEmitter {
     /**
      * Disposes all subscriptions at the given service path and url by tag permanently. They will be stopped and not be able to be started.
      *
-     * @param {string} servicePath - the service path of the subscriptions to unsubscribe
-     * @param {string} url - the url of the subscriptions to unsubscribe
-     * @param {string} tag - the tag of the subscriptions to unsubscribe
+     * @param servicePath - the service path of the subscriptions to unsubscribe
+     * @param url - the url of the subscriptions to unsubscribe
+     * @param tag - the tag of the subscriptions to unsubscribe
      */
     disposeSubscriptionByTag(servicePath: string, url: string, tag: string) {
         this.unsubscribeSubscriptionByTag(servicePath, url, tag, true);

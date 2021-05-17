@@ -10,11 +10,10 @@ const LOG_AREA = 'TransportPutPatchDiagnositicsQueue';
 /**
  * TransportPutPatchDiagnositicsQueue Waits on sending put and patch calls until a put/patch diagnostics call is successful.
  * If Either are not successful, it calls setUseXHttpMethodOverride with true on the passed transportCore.
- * @class
- * @alias saxo.openapi.TransportPutPatchDiagnositicsQueue
- * @param {saxo.openapi.TransportAuth|saxo.openapi.TransportBatch|saxo.openapi.TransportCore|saxo.openapi.TransportQueue} transport -
+ *
+ * @param transport -
  *      The transport to wrap.
- * @param {saxo.openapi.TransportCore} [transportCore] - The core transport at the bottom of the chain.
+ * @param transportCore - (optional) The core transport at the bottom of the chain.
  */
 class TransportPutPatchDiagnositicsQueue {
     isQueueing = true;

@@ -329,12 +329,12 @@ function isNumeric(
 
 /**
  * Formats a number to an object of price parts
- * @param numberFormatting
- * @param value
- * @param decimals
- * @param formatFlags
- * @param numeratorDecimals
- * @returns {PriceParts}
+ * @param numberFormatting - numberFormatting
+ * @param value - value
+ * @param decimals - decimals
+ * @param formatFlags - formatFlags
+ * @param numeratorDecimals - numeratorDecimals
+ *
  */
 function formatPriceParts(
     numberFormatting: NumberFormatting,
@@ -395,13 +395,12 @@ function formatPriceParts(
 
 /**
  * Formats a price value with the specified options.
- * @param {NumberFormatting} numberFormatting
- * @param {number} value - The price value to format.
- * @param {number} decimals
- * @param {string|Object.<string, boolean>} [formatFlags="Normal"] - Indicates if the price also include
- *          half-pips (decimal pips), and which format should be used.
- * @param {number} [numeratorDecimals=0] - In the case of Fractions or ModernFractions, this is the number of decimals on the fraction numerator
- * @returns {PriceParts} An object containing the formatted price.
+ * @param numberFormatting - numberFormatting
+ * @param value - The price value to format.
+ * @param decimals - decimals
+ * @param formatOptions- (optional) Indicates if the price also include half-pips (decimal pips), and which format should be used.
+ * @param numeratorDecimals - (optional) In the case of Fractions or ModernFractions, this is the number of decimals on the fraction numerator
+ * @returns An object containing the formatted price.
  */
 function formatPrice(
     numberFormatting: NumberFormatting,

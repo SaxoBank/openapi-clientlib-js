@@ -11,13 +11,17 @@ export interface ILogger {
  * The shared js log, which allows posting messages and listening to them.
  * @example
  * // to log
+ * ```ts
  * log.warn("Area", "Warning... such and so...", { data: context});
- *
+ * ```
  * // to listen to all logs on the console
+ *
+ * ```ts
  * log.on(log.DEBUG, console.debug.bind(console));
  * log.on(log.INFO, console.info.bind(console));
  * log.on(log.WARN, console.info.bind(console));
  * log.on(log.ERROR, console.error.bind(console));
+ * ```
  */
 export class Log extends MicroEmitter implements ILogger {
     /**

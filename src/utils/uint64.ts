@@ -4,8 +4,8 @@ const D = 1000000000;
 /**
  * Converts typed array (Uint8Array) storing 64bit unsigned integer to a string.
  * Useful for message id parsing which is in uint64 format.
- * @param buffer
- * @returns {string} - The string representation of unsigned 64-bit integer.
+ * @param typedArray - typedArray
+ * @returns The string representation of unsigned 64-bit integer.
  */
 export function uint64ToStringLE(typedArray: Uint8Array) {
     const h =

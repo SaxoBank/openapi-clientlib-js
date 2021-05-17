@@ -61,12 +61,8 @@ function union(enumA: Enum, enumB: Enum) {
 
 /**
  * Returns an enumeration of items in enumA that are not in enumB.
- * @param {Array.<string>|string|Object} enumA
- * @param {Array.<string>|string|Object} enumB
- * @returns {Object}
- * @example
- * var enum = enumUtils.union("Percentage,DeciPips", { DeciPips: true });
- * // enum == { Percentage: true }
+ * @param enumA - enumA
+ * @param enumB - enumB
  */
 function exclusion(enumA: Enum, enumB: Enum) {
     enumA = toObject(enumA);

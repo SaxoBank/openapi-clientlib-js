@@ -13,10 +13,12 @@ import type { PriceFormatOption } from './format-options';
 import type { Scenarios } from './types';
 /**
  * Constructs a new PriceFormatting instance that can be used to format and parse prices.
- * @param {Object} [numberOptions] - See {@link saxo.Numbers} for possible number options.
+ * @param numberOptions - (optional) See {@link Numbers} for possible number options.
  * @example
- * var priceFormatting = new PriceFormatting({decimalSeparator: ','});
- * var formattedPrice = priceFormatting.format(1.23, 2);
+ * ```ts
+ * const priceFormatting = new PriceFormatting({decimalSeparator: ','});
+ * const formattedPrice = priceFormatting.format(1.23, 2);
+ * ```
  */
 class PriceFormatting {
     numberFormatting: NumberFormatting;
@@ -27,12 +29,12 @@ class PriceFormatting {
 
     /**
      * Formats a number as a price string.
-     * @param {number} value - Number to format.
-     * @param {number} decimals  - The number of decimal places to display.
-     * @param {string|Array.<string>} [formatOptions="Normal"] - The format flags to use when formatting
+     * @param value - Number to format.
+     * @param decimals  - The number of decimal places to display.
+     * @param formatOptions - (optional) The format flags to use when formatting
      *          If the flag is not recognized, it will be treated as if it is "Normal"
-     * @param {number} [numeratorDecimals=0] - The number of decimal places of the numerator in the case of fractions and modern fractions.
-     * @returns {string} The formatting string.
+     * @param numeratorDecimals - (optional) The number of decimal places of the numerator in the case of fractions and modern fractions. Default = 0
+     * @returns The formatting string.
      */
     format(
         value: number,
@@ -58,10 +60,10 @@ class PriceFormatting {
 
     /**
      * Formats a number as price parts.
-     * @param {number} value - Number to format.
-     * @param {number} decimals - The number of decimal places to display.
-     * @param {string|Array.<string>} formatOptions - The format flags to use when formatting - see {@link saxo.priceFormatOptions}.
-     * @param {number} [numeratorDecimals=0] - The number of decimal places of the numerator in the case of fractions and modern fractions.
+     * @param value - Number to format.
+     * @param decimals - The number of decimal places to display.
+     * @param formatOptions - The format flags to use when formatting - see {@link PriceFormatOption}.
+     * @param numeratorDecimals - (optional) The number of decimal places of the numerator in the case of fractions and modern fractions. Default = 0
      * @returns formatted price parts.
      */
     formatPriceParts(
@@ -81,12 +83,12 @@ class PriceFormatting {
 
     /**
      * Formats a number using a template.
-     * @param {number} value - Number to format.
-     * @param {number} decimals - The number of decimal places to display.
-     * @param {string|Array.<string>} formatOptions - The format flags to use when formatting.
-     * @param {number} [numeratorDecimals=0] - The number of decimal places of the numerator in the case of fractions and modern fractions.
-     * @param {string} [templateStr="{Pre}{First}{Pips}<small>{DeciPips}</small>{Post}"] - The template string to use.
-     * @returns {string} A formatted string.
+     * @param value - Number to format.
+     * @param decimals - The number of decimal places to display.
+     * @param formatOptions - (optional) The format flags to use when formatting.
+     * @param numeratorDecimals - (optional) The number of decimal places of the numerator in the case of fractions and modern fractions.
+     * @param templateStr - (optional) The template string to use. Default = `{Pre}{First}{Pips}<small>{DeciPips}</small>{Post}`
+     * @returns A formatted string.
      */
     formatTemplated(
         value: number,
@@ -110,10 +112,10 @@ class PriceFormatting {
 
     /**
      * Parses a string into a number.
-     * @param {string} str - The number to parse.
-     * @param {number} decimals - The number of decimals.
-     * @param {string|Object.<string, boolean>} formatFlags - The format flags to use when parsing - see {@link saxo.priceFormatOptions}.
-     * @returns {number}
+     * @param str - The number to parse.
+     * @param decimals - The number of decimals.
+     * @param formatFlags - The format flags to use when parsing - see {@link PriceFormatOption}.
+     *
      */
     parse(
         str: string,
@@ -129,8 +131,8 @@ class PriceFormatting {
 
     /**
      * Returns characters valid for entering prices.
-     * @param {{integer: boolean, negative: boolean, price: boolean, numbers: boolean}} includeScenarios - The scenarios to get prices for.
-     * @returns {string}
+     * @param includeScenarios - The scenarios to get prices for.
+     *
      */
     getValidPriceCharacters(includeScenarios: Partial<Scenarios>) {
         return getValidPriceCharacters(this.numberFormatting, includeScenarios);
@@ -138,8 +140,8 @@ class PriceFormatting {
 
     /**
      * Returns regex for validating characters for entering prices.
-     * @param {{integer: boolean, negative: boolean, price: boolean, numbers: boolean}} includeScenarios - The scenarios to get prices for.
-     * @returns {RegExp}
+     * @param includeScenarios - The scenarios to get prices for.
+     *
      */
     getValidPriceRegex(includeScenarios: Partial<Scenarios>) {
         return getValidPriceRegex(this.numberFormatting, includeScenarios);
@@ -147,7 +149,7 @@ class PriceFormatting {
 
     /**
      * Returns the character that should be used as the modern fractions seperator
-     * @returns {String}
+     *
      */
     getModernFractionsSeparator() {
         return getModernFractionsSeparator(this.numberFormatting);

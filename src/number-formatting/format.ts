@@ -10,7 +10,8 @@ function formatNegativeNumber(str: string, options: Options) {
 
 /**
  * converts a number to a decimal string if it is on scientific notation
- * @param number
+ * @param number - number
+ * @param precision - precision
  */
 function convertNumberToString(number: number, precision: number) {
     let numberString = String(number);
@@ -25,9 +26,9 @@ function convertNumberToString(number: number, precision: number) {
 
 /**
  * expands the number of decimals and introduces decimal groups.
- * @param number
- * @param precision
- * @param { groupSizes, groupSeparator, decimalSeparator, isHideZeroTail } options
+ * @param number - number
+ * @param precision - precision
+ * @param options - options
  */
 function expandNumber(number: number, precision: number, options: Options) {
     const {

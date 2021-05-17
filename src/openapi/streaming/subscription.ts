@@ -34,27 +34,75 @@ const stateFlags = {
 export type SubscriptionState = typeof stateFlags[keyof typeof stateFlags];
 
 export interface StreamingOptions {
+    /**
+     * headers to add to the subscription request
+     */
     headers?: Record<string, string>;
+    /**
+     * A callback function that is invoked when an initial snapshot or update is received.
+     * @param data - data received
+     * @param updateType - either be subscription.UPDATE_TYPE_DELTA or subscription.UPDATE_TYPE_SNAPSHOT
+     */
     onUpdate?: (data: unknown, updateType: SubscriptionUpdateTypes) => void;
+    /**
+     * A callback function that is invoked when an error occurs.
+     * @param data - error data
+     */
     onError?: (data: unknown) => void;
+    /**
+     * A callback function that is invoked after the last action is dequeued.
+     */
     onQueueEmpty?: () => void;
+    /**
+     * A callback function that is invoked on network error.
+     */
     onNetworkError?: () => void;
 }
 
 export interface SubscriptionArgs {
+    /**
+     * The format for the subscription (passed to OpenAPI).
+     */
     Format?: string;
+    /**
+     * The subscription arguments (passed to OpenAPI).
+     */
     Arguments?: Record<string, unknown>;
+    /**
+     * The data refresh rate (passed to OpenAPI).
+     */
     RefreshRate?: number;
     Top?: number;
+    /**
+     * The tag for the subscription (passed to OpenAPI).
+     */
     Tag?: string;
 }
 
 interface SubscriptionSuccessResult {
+    /**
+     * The current state
+     */
     State: 'active' | 'suspended';
+    /**
+     * The media type (RFC 2046), of the serialized data updates that are streamed to the client.
+     */
     Format: string;
+    /**
+     * The streaming context id that this response is associated with.
+     */
     ContextId: string;
+    /**
+     * The time (in seconds) that the client should accept the subscription to be inactive before considering it invalid.
+     */
     InactivityTimeout: number;
+    /**
+     * Actual refresh rate assigned to the subscription according to the customers SLA.
+     */
     RefreshRate: number;
+    /**
+     * Snapshot of the current data available
+     */
     Snapshot: Record<string, unknown>;
     Schema?: string;
     SchemaName?: string;
@@ -102,7 +150,6 @@ class Subscription {
     /**
      * Defines the name of the property on data used to indicate that the data item is a deletion, rather than a
      * insertion / update.
-     * @type {string}
      */
     OPENAPI_DELETE_PROPERTY = '__meta_deleted';
 
@@ -308,8 +355,8 @@ class Subscription {
      * Queues or performs an action based on the current state.
      * Supports queue for more then one action, to support consecutive modify requests,
      * which invoke unsubscribe and subscribe one after another.
-     * @param action
-     * @param args
+     * @param action - action
+     * @param args - args
      */
     private tryPerformAction(
         action: QueuedItem['action'],
@@ -343,8 +390,8 @@ class Subscription {
 
     /**
      * Performs an action to a subscription based on the current state.
-     * @param queuedAction
-     * @param isLastQueuedAction
+     * @param queuedAction - queuedAction
+     * @param isLastQueuedAction - isLastQueuedAction
      */
     private performAction(
         queuedAction: QueuedItem | undefined,
@@ -459,14 +506,8 @@ class Subscription {
 
     /**
      * Handles the response to the initial REST request that creates the subscription.
-     * {Object} result
-     * {string} result.State The current state (Active/Suspended)
-     * {string} result.Format The media type (RFC 2046), of the serialized data updates that are streamed to the client.
-     * {string} result.ContextId The streaming context id that this response is associated with.
-     * {number=0} result.InactivityTimeout The time (in seconds) that the client should accept the subscription to be inactive
-     *          before considering it invalid.
-     * {number=0} result.RefreshRate Actual refresh rate assigned to the subscription according to the customers SLA.
-     * {Object} result.Snapshot Snapshot of the current data available
+     * @param referenceId - referenceId
+     * @param result - Result object
      */
     private onSubscribeSuccess(
         referenceId: string,
@@ -551,7 +592,7 @@ class Subscription {
 
     /**
      * Called when a subscribe errors
-     * @param response
+     * @param response - response
      */
     private onSubscribeError(
         referenceId: string,
@@ -710,7 +751,7 @@ class Subscription {
 
     /**
      * Called when a unsubscribe errors
-     * @param response
+     * @param response - response
      */
     private onUnsubscribeError(referenceId: string | null, response: unknown) {
         if (referenceId !== this.referenceId) {
@@ -733,8 +774,8 @@ class Subscription {
 
     /**
      * Called after modify patch is successful
-     * @param referenceId
-     * @param response
+     * @param referenceId - referenceId
+     * @param response - response
      */
     private onModifyPatchSuccess(referenceId: string | null) {
         if (referenceId !== this.referenceId) {
@@ -751,7 +792,7 @@ class Subscription {
 
     /**
      * Called when a unsubscribe errors
-     * @param response
+     * @param response - response
      */
     private onModifyPatchError(referenceId: string | null, response: unknown) {
         if (referenceId !== this.referenceId) {
@@ -916,7 +957,7 @@ class Subscription {
 
     /**
      * Try to subscribe.
-     * @param {Boolean} modify - The modify flag indicates that subscription action is part of subscription modification.
+     * @param modify - The modify flag indicates that subscription action is part of subscription modification.
      *                           If true, any unsubscribe before subscribe will be kept. Otherwise they are dropped.
      */
     onSubscribe() {
@@ -931,7 +972,7 @@ class Subscription {
 
     /**
      * Try to modify.
-     * @param {Object} newArgs - Updated arguments of modified subscription.
+     * @param newArgs - Updated arguments of modified subscription.
      */
     onModify(
         newArgs?: Record<string, unknown>,
@@ -1006,7 +1047,7 @@ class Subscription {
 
     /**
      * Handles the 'data' event raised by Streaming.
-     * @returns {boolean} false if the update is not for this subscription
+     * @returns  false if the update is not for this subscription
      */
     onStreamingData(message: {
         Data?: unknown;

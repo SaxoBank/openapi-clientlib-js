@@ -6,9 +6,23 @@ import shortFormat from './short-format';
 const numberOfZerosRx = /0+$/;
 
 export type NumberOptions = Readonly<{
+    /**
+     * The group sizes for the number.
+     * @example
+     * [3] would be thousands separator and produce 123.456.789,00 where as [2,3] would be "12.34.56.789,00".
+     */
     groupSizes: number[];
+    /**
+     * The character used for group separation E.g. '.' in Danish.
+     */
     groupSeparator: string;
+    /**
+     * The character used for decimal searation E.g.',' in Danish.
+     */
     decimalSeparator: string;
+    /**
+     * The negative pattern to use with `{0}` as the placeholder for the non-negative number.
+     */
     negativePattern: string;
     unitSuffixThousand: string;
     unitSuffixMillion: string;
@@ -26,12 +40,6 @@ export interface NumberFormattingOptions
 
 /**
  * A class which does number formatting and parsing.
- * @param {Object} [options] - Number locale options.
- * @param {Array.<number>} [options.groupSizes=[3]] - The group sizes for the number.
- *          E.g. [3] would be thousands seperator and produce 123.456.789,00 where as [2,3] would be "12.34.56.789,00".
- * @param {string} [options.groupSeparator=","] - The character used for group separation E.g. '.' in Danish.
- * @param {string} [options.decimalSeparator="."] - The character used for decimal searation E.g.',' in Danish.
- * @param {string} [options.negativePattern="-{0}"] - The negative pattern to use with '{0}' as the placeholder for the non-negative number.
  */
 class NumberFormatting implements NumberFormattingOptions {
     groupSizes = [3];
@@ -44,6 +52,9 @@ class NumberFormatting implements NumberFormattingOptions {
     negativePre = '';
     negativePost = '';
 
+    /**
+     * @param options - (optional) Number locale options. {@link NumberOptions}
+     */
     constructor(options?: Partial<NumberOptions>) {
         extend(this, options || {});
 
@@ -58,8 +69,8 @@ class NumberFormatting implements NumberFormattingOptions {
 
     /**
      * Parses a localized string into a number.
-     * @param {string} value - The number to parse.
-     * @returns {number} parsed value
+     * @param value - The number to parse.
+     * @returns  parsed value
      */
     parse(value: string) {
         return parseNumber(value, this);
@@ -67,11 +78,11 @@ class NumberFormatting implements NumberFormattingOptions {
 
     /**
      * Formats a number into a localized string.
-     * @param {number} num - The number to format.
-     * @param {number} [decimals] - The number of decimals to display after the decimal point.
+     * @param num - The number to format.
+     * @param decimals - (optional) The number of decimals to display after the decimal point.
      *                              If undefined then the number is formatted with however many
      *                              decimal places it needs to display the number (upto 8).
-     * @returns {string}
+     *
      */
     format(num: number, decimals?: number) {
         if (decimals === undefined || decimals === null) {
@@ -83,10 +94,10 @@ class NumberFormatting implements NumberFormattingOptions {
 
     /**
      * Formats the number without rounding. e.g. 1.12 formatted with 1 decimal place is "1.12".
-     * @param {number} num - The number to format
-     * @param {number} [minDecimals] - The minimum number of decimals to display after the decimal point.
-     * @param {number} [maxDecimals] - The maximum number of decimals to display after the decimal point.
-     * @returns {string}
+     * @param num - The number to format
+     * @param minDecimals - (optional) The minimum number of decimals to display after the decimal point.
+     * @param maxDecimals - (optional) The maximum number of decimals to display after the decimal point.
+     *
      */
     formatNoRounding(num: number, minDecimals?: number, maxDecimals?: number) {
         if (!minDecimals) {
@@ -108,8 +119,8 @@ class NumberFormatting implements NumberFormattingOptions {
 
     /**
      * Formats a number into a short format, e.g. 10.000 becomes 10k.
-     * @param {number} number
-     * @returns {string}
+     * @param number - number
+     *
      */
     shortFormat(number: number) {
         return shortFormat(number, this);
@@ -117,8 +128,8 @@ class NumberFormatting implements NumberFormattingOptions {
 
     /**
      * Returns the actual number of decimals that a number has.
-     * @param number
-     * @returns {number}
+     * @param number - number
+     *
      */
     getActualDecimals(number: number) {
         number = Math.abs(number);

@@ -26,28 +26,32 @@ interface RetryOptions {
 type HTTPRequestRetryOptions = Partial<Record<HTTPMethodType, RetryOptions>>;
 
 interface Options {
+    /**
+     * The number of ms after that the retry calls should be done.
+     */
     retryTimeout: number;
+    /**
+     * Http methods that should retry. For each method provide an object with `retryLimit` parameter.
+     * Note that the default is to not retry. a call will be retried if it is a network error and retryNetworkError is true or the rejection
+     * includes a status and it is in the statuses list.
+     */
     methods?: HTTPRequestRetryOptions;
 }
 
 /**
  * TransportRetry wraps a transport class to allow the retrying of failed transport calls, so the calls are resent after a timeout.
- * @param {Transport} transport - The transport to wrap.
- * @param {object} [options] - Settings options. Define retry timeout, http methods to retry and max retry limit
- *      per http method type. If not given then calls will run with underlying transport without retry logic.
- * @param {number} [options.retryTimeout=0] - The number of ms after that the retry calls should be done.
- * @param {object.<string,object>} [options.methods] - Http methods that should retry. For each method provide an object with `retryLimit` parameter.
- * Note that the default is to not retry. a call will be retried if it is a network error and retryNetworkError is true or the rejection
- * includes a status and it is in the statuses list.
+ *
  * @example
+ * ```ts
  * // Constructor with parameters
- * var transportRetry = new TransportRetry(transport, {
+ * * const transportRetry = new TransportRetry(transport, {
  *      retryTimeout:10000,
  *      methods:{
  *          'delete':{ retryLimit:3, retryNetworkError: true },
  *          'post':{ retryTimeouts: [1000, 1000, 2000, 3000, 5000], statuses: [504], retryNetworkError: false },
  *      }
  * });
+ * ```
  */
 class TransportRetry extends TransportBase {
     retryTimeout = 0;
@@ -58,6 +62,11 @@ class TransportRetry extends TransportBase {
     retryTimer: ReturnType<typeof setTimeout> | null = null;
     isDisposed = false;
 
+    /**
+     * @param transport - The transport to wrap.
+     * @param options - (optional) Settings options. Define retry timeout, http methods to retry and max retry limit
+     * per http method type. If not given then calls will run with underlying transport without retry logic.
+     */
     constructor(transport: TransportCore, options?: Options) {
         super();
         if (!transport) {

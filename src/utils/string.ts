@@ -7,9 +7,9 @@ const formatRx = /\{([^{]+?)\}/g;
 
 /**
  * Formats text with arguments.
- * @param {string} sTemplate
- * @param {(Object|...string)} args - Accepts either an object with keys or the arguments will be indexed.
- * @returns {string}
+ * @param sTemplate - sTemplate
+ * @param args - Accepts either an object with keys or the arguments will be indexed.
+ *
  */
 function format(sTemplate: string, args: Record<string, any>): string;
 function format(sTemplate: string, ...args: Array<number | string>): string;
@@ -24,10 +24,9 @@ function format(sTemplate: string, ...args: any) {
 
 /**
  * Returns true if the string starts with the needle.
- * @param {string} haystack
- * @param {string} needle
- * @param {boolean} [isCaseSensitive=true] - Whether it is case sensitive. Use false to make insensitive.
- * @returns {boolean}
+ * @param haystack - haystack
+ * @param needle - needle
+ * @param isCaseSensitive - (optional) Whether it is case sensitive. Use false to make insensitive. Default = true
  */
 function startsWith(haystack: string, needle: string, isCaseSensitive = true) {
     if (isCaseSensitive === false) {
@@ -39,10 +38,9 @@ function startsWith(haystack: string, needle: string, isCaseSensitive = true) {
 
 /**
  * Returns true if the string ends with the needle.
- * @param {string} haystack
- * @param {string} needle
- * @param {boolean} [isCaseSensitive=true] - Whether it is case sensitive. Use false to make insensitive.
- * @returns {boolean}
+ * @param haystack - haystack
+ * @param needle - needle
+ * @param isCaseSensitive - (optional) Whether it is case sensitive. Use false to make insensitive. Default = true
  */
 function endsWith(haystack: string, needle: string, isCaseSensitive = true) {
     if (isCaseSensitive === false) {
@@ -54,8 +52,8 @@ function endsWith(haystack: string, needle: string, isCaseSensitive = true) {
 
 /**
  * Creates a new string that has the input string in a number of times
- * @param {string} inputString - The string to repeat
- * @param {number} count - The number of times to repeat
+ * @param inputString - The string to repeat
+ * @param count - The number of times to repeat
  * @example
  * var out = multiply("*", 2);
  * // out === "**"
@@ -71,9 +69,9 @@ function multiply(inputString: string, count: number) {
 /**
  * Pads the left side of a string with a character. The string is padded only if
  * it is shorter than the required output length.
- * @param {string} value - The string to pad
- * @param {number} length - The required output length
- * @param {string} padChar - The character to use for padding
+ * @param value - The string to pad
+ * @param length - The required output length
+ * @param padChar - The character to use for padding
  * @example
  * var out = padLeft("1", 3, "0");
  * // out === "001"
@@ -88,10 +86,10 @@ function padLeft(value: string, length: number, padChar: string) {
 
 /**
  * Formats text with arguments for a URL. All data arguments are uri encoded.
- * @param {string} urlTemplate
- * @param {(Object|...string)} templateArgs - Accepts either an object with keys or the arguments will be indexed.
- * @param {Object} [queryParams] - query params as an object that will be added to the URL e.g. {a:1} => ?a=1
- * @returns {string}
+ * @param urlTemplate - urlTemplate
+ * @param templateArgs - (optional) Accepts either an object with keys or the arguments will be indexed.
+ * @param queryParams - (optional) query params as an object that will be added to the URL e.g. `{a:1} => ?a=1`
+ *
  */
 function formatUrl(
     urlTemplate: string,

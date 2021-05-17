@@ -28,12 +28,6 @@ function getParentRequestId(batchResult: OAPICallResult) {
 /**
  * Creates a wrapper around transport to provide auto-batching functionality. If you use the default of 0ms then this transport will join
  * together all calls that happen inside the current call stack and join them into a batch call.
- * @param {Transport} transport - Instance of the transport class to wrap.
- * @param {string} baseUrl - Base URL for batch requests. This should be an absolute URL.
- * @param {Object} [options]
- * @param {number} [options.timeoutMs=0] - Timeout after starting to que items before sending a batch request.
- * @param {string} [options.host=global.location.host] - The host to use in the batch request. If not set defaults to global.location.host.
- * @param {Object.<string, saxo.ServiceOptions>} [options.services] - Per-service options, keyed by service path.
  */
 
 class TransportBatch extends TransportQueue {
@@ -44,6 +38,11 @@ class TransportBatch extends TransportQueue {
     isQueueing = true;
     nextTickTimer: ReturnType<typeof setTimeout> | boolean = false;
 
+    /**
+     * @param transport - Instance of the transport class to wrap.
+     * @param baseUrl - (optional) Base URL for batch requests. This should be an absolute URL.
+     * @param options - (optional) Transport options
+     */
     constructor(
         transport: ITransport,
         baseUrl?: string | null,
@@ -186,8 +185,9 @@ class TransportBatch extends TransportQueue {
 
     /**
      * Runs a batch call for a number of sub calls
-     * @param {string} serviceGroup
-     * @param {Array.<{method: string, args:Array}>} callList
+     *
+     * @param serviceGroup - serviceGroup
+     * @param callList - call list
      */
     private runBatchCall = (serviceGroup: string, callList: QueueItem[]) => {
         // Request id for container request that contains all child batched requests.

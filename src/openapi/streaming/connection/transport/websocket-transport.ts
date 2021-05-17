@@ -42,9 +42,9 @@ const NOOP = () => {};
  *
  * Supports simple reconnect mechanism in scenarios when webSocket will be closed.
  *
- * @param {string} baseUrl - The base url.
- * @param {Object} restTransport - The Rest Transport.
- * @param {function} failCallback - The Fail callback. If invoked, indicates that something went
+ * @param baseUrl - The base url.
+ * @param restTransport - The Rest Transport.
+ * @param failCallback - The Fail callback. If invoked, indicates that something went
  *          critically wrong and this transport cannot be used anymore.
  */
 class WebsocketTransport implements StreamingTransportInterface {

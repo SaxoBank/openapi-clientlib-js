@@ -34,14 +34,13 @@ class ParserProtobuf extends ParserBase {
 
         /**
          * Processing of supported meta fields of decoded message type.
-         * @type {MetaProtobuf}
          */
         this.metaProcessor = new MetaProcessor();
     }
 
     /**
      * Create root schema and register custom wrappers to support JS types. ie. casting Google.Timestamp to JS Date.
-     * @returns {Root}
+     *
      */
     private createRootSchema() {
         let schemas = this.protobuf.Root.fromJSON(
@@ -79,9 +78,9 @@ class ParserProtobuf extends ParserBase {
 
     /**
      * Parses and adds schema to local schema map.
-     * @param {String} schemaData - The schema data, not parsed, in raw, string format.
-     * @param {String} name - The schema name, under which it will be saved in schema map.
-     * @return {boolean} - Returns true if there were no issues, false otherwise.
+     * @param schemaData - The schema data, not parsed, in raw, string format.
+     * @param name - The schema name, under which it will be saved in schema map.
+     * @returns Returns true if there were no issues, false otherwise.
      */
     addSchema(schemaData: string, name: string) {
         if (this.schemasMap[name]) {
@@ -112,9 +111,9 @@ class ParserProtobuf extends ParserBase {
 
     /**
      * Parse data using given schema. Data should be in base64 format.
-     * @param {String} data - The data to parse. Data should be in base64 format.
-     * @param {String} schemaName - The name of a schema to be used for parsing.
-     * @return {Object} - Result of parsing, if successful. Returns null if parsing fails or there is no data.
+     * @param data - The data to parse. Data should be in base64 format.
+     * @param schemaName - The name of a schema to be used for parsing.
+     * @returns Result of parsing, if successful. Returns null if parsing fails or there is no data.
      */
     parse(data: string | Uint8Array | null | undefined, schemaName: string) {
         if (!data) {

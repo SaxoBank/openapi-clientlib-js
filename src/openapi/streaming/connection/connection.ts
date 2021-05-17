@@ -341,7 +341,7 @@ class Connection {
 
     /**
      * Get underlying transport
-     * @returns {*}
+     *
      */
     getTransport(): StreamingTransportInterface | null {
         if (!this.transport) {

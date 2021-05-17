@@ -32,7 +32,7 @@ class SubscriptionQueue {
      * - duplicates.
      * - ACTION_SUBSCRIBE action before ACTION_UNSUBSCRIBE.
      *
-     * @param {Object} queuedItem - action with arguments to add to the queue.
+     * @param queuedItem - action with arguments to add to the queue.
      */
     /* eslint-disable-next-line complexity */
     enqueue(queuedItem: QueuedItem) {
@@ -122,7 +122,7 @@ class SubscriptionQueue {
 
     /**
      * Returns the action from the beginning of a queue without removing it.
-     * @return {Number} Next action.
+     * @returns  Next action.
      */
     peekAction() {
         if (this.isEmpty()) {
@@ -133,7 +133,7 @@ class SubscriptionQueue {
 
     /**
      * Removes and returns the action from the beginning of a queue.
-     * @return {Number|undefined} First action, if queue is not empty. Otherwise undefined.
+     * @returns  First action, if queue is not empty. Otherwise undefined.
      */
     dequeue() {
         if (this.isEmpty()) {
@@ -170,8 +170,7 @@ class SubscriptionQueue {
     }
 
     /**
-     * Returns true if queue is empty.
-     * @return {boolean} True if empty.
+     * @returns True if empty.
      */
     isEmpty() {
         return this.items.length === 0;

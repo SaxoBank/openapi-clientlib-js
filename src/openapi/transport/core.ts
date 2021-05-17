@@ -10,13 +10,6 @@ import type { StringTemplateArgs } from '../../utils/string';
 /**
  * Handles core transport to the openapi rest service. This is little more than a thin layer on top of fetch, adding
  * cache breaking, language header adding and a convenient mechanism for making transport calls.
- * @class
- * @alias saxo.openapi.TransportCore
- * @param {string} baseUrl - The base url used for all open api requests. This should be an absolute URL.
- * @param {object} [options]
- * @param {string} [options.language] - The language sent as a header if not overridden.
- * @param {boolean} [options.defaultCache=true] - Sets the default caching behaviour if not overridden on a call.
- * @param {Object.<string, saxo.ServiceOptions>} [options.services] - Per-service options, keyed by service path.
  */
 class TransportCore extends TransportBase {
     baseUrl: string;
@@ -26,6 +19,10 @@ class TransportCore extends TransportBase {
     useXHttpMethodOverride = false;
     fetch = fetch;
 
+    /**
+     * @param baseUrl - (optional) The base url used for all open api requests. This should be an absolute URL.
+     * @param options - (optional) Transport options
+     */
     constructor(baseUrl?: string | null, options?: TransportOptions) {
         super();
         if (!baseUrl) {
@@ -106,7 +103,7 @@ class TransportCore extends TransportBase {
     /**
      * Sets whether to replace put/patch/delete calls with a post that has
      * a X-HTTP-Method-Override header
-     * @param {boolean} useXHttpMethodOverride
+     * @param useXHttpMethodOverride - useXHttpMethodOverride
      */
     setUseXHttpMethodOverride(useXHttpMethodOverride: boolean) {
         this.useXHttpMethodOverride = useXHttpMethodOverride;

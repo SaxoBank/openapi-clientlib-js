@@ -33,7 +33,7 @@ class SignalrTransport implements StreamingTransportInterface {
 
     /**
      * Handles any signal-r log, and pipes it through our logging.
-     * @param message
+     * @param message - message
      */
     private handleLog = (message: string) => {
         log.debug(

@@ -1,34 +1,37 @@
 export interface IEventEmitter {
     /**
      * Register an event handler for single invocation (subscribe)
-     * @param {string} eventType - The event type to listen to
-     * @param {function} onFunction - The function to call
-     * @param [that] - The context with which to call onFunction (useful also for unsubscribing only a instance)
+     * @param eventType - The event type to listen to
+     * @param onFunction - The function to call
+     * @param that - (optional) The context with which to call onFunction (useful also for unsubscribing only a instance)
      */
     one(eventType: string, onFunction: Callback, that?: any): this;
+
     /**
      * Register an event handler (subscribe)
-     * @param {string} eventType - The event type to listen to
-     * @param {function} onFunction - The function to call
-     * @param [that] - The context with which to call onFunction (useful also for unsubscribing only a instance)
+     * @param eventType - The event type to listen to
+     * @param onFunction - The function to call
+     * @param that - (optional) The context with which to call onFunction (useful also for unsubscribing only a instance)
      */
 
     on(eventType: string, onFunction: Callback, that?: any): this;
+
     /**
      * Stop listening to events (unsubscribe)
-     * @param {string} [eventType] - The event type to unsubscribe
-     * @param {function} [onFunction] - The function to call
-     * @param [that] - The context with which to call onFunction (useful also for unsubscribing only a instance)
+     * @param eventType - (optional) The event type to unsubscribe
+     * @param onFunction - (optional) The function to call
+     * @param that - (optional) The context with which to call onFunction (useful also for unsubscribing only a instance)
      */
     off(
         eventType?: string | null,
         onFunction?: Callback | null,
         that?: any,
     ): this;
+
     /**
      * Triggers an event
-     * @param {string} eventType - The event type to trigger
-     * @param {...*} [args] - Arguments to pass to all listeners
+     * @param eventType - The event type to trigger
+     * @param args - (optional) Arguments to pass to all listeners
      */
     trigger(eventType: string, ...args: any[]): this;
 }

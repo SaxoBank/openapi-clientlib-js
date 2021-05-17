@@ -7,16 +7,11 @@ const httpCodeRx = /HTTP\/1.1 ([0-9]+)/;
 const LOG_AREA = 'batch';
 
 /**
- * Utilities to build and parse batch requests
- * @namespace saxo.openapi.batchUtil
- */
-
-/**
  * Parses the response from a batch call.
- * @name saxo.openapi.batchUtil.parse
- * @param {string} responseText
- * @param {Number} parentRequestId - The parent request id. Used as a base for calculating batch items request ids.
- * @returns {Array.<{status:string, response: Object}>} An array of responses, in the position of the response id's.
+ *
+ * @param responseText - responseText
+ * @param parentRequestId - The parent request id. Used as a base for calculating batch items request ids.
+ * @returns An array of responses, in the position of the response id's.
  */
 function parse(responseText: string, parentRequestId = 0) {
     if (!responseText) {
@@ -96,10 +91,10 @@ export interface BatchRequest {
 
 /**
  * Builds up a string of the data for a batch request.
- * @name saxo.openapi.batchUtil.build
- * @param {Array.<{method: string, headers: ?Object.<string, string>, url: string, data: ?string}>} subRequests - The sub requests of the batch.
- * @param {string} host - The host of the sender.
- * @returns { body: string, boundary: string }
+ *
+ * @param subRequests - The sub requests of the batch.
+ * @param host - The host of the sender.
+ *
  */
 function build(subRequests: BatchRequest[], host: string) {
     if (!subRequests || !host) {

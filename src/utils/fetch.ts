@@ -26,9 +26,27 @@ export interface NetworkError {
 }
 
 interface Options {
+    /**
+     *  The body of the request. If this is an object, that is not already handled by the body mixin
+     *  it is converted to JSON and the appropriate content-type header added.
+     */
     body?: BodyInit | Record<string, unknown>;
+    /**
+     * Object of header key to header value.
+     */
     headers?: Record<string, string>;
+    /**
+     * Whether or not to cache.
+     */
     cache?: boolean;
+    /**
+     * Whether cookies will be included. Will default to true unless overridden.
+     * "omit" is currently the fetch default {@link https://fetch.spec.whatwg.org/#concept-request-credentials-mode}
+     * and means none will be included.
+     * "same-origin" will include the cookies if on the same domain (this is the XmlHttpRequest default)
+     * "include" will always include the cookies.
+     * @defaultValue "include"
+     */
     credentials?: RequestCredentials;
     useXHttpMethodOverride?: boolean;
 }
@@ -223,20 +241,10 @@ function getBody(
  * Performs a fetch and processes the response.
  * All non 200 responses are converted to rejections. The body can be an object and will be JSON.stringified and the right header added.
  * All responses that contain JSON are converted to objects.
- * @param {string} httMethod - The http method.
- * @param {string} url - The url to fetch.
- * @param {Object} [options]
- * @param {string|Object} [options.body] - The body of the request. If this is an object, that is not already handled by the body mixin,
-                                    it is converted to JSON and the appropriate content-type header added.
- * @param {Object} [options.headers] - Object of header key to header value.
- * @param {boolean} [options.cache] - Whether or not to cache.
- * @param {boolean} [options.useXHttpMethodOverride]
- * @param {string} [options.credentials="include"] - Whether cookies will be included. Will default to true unless overridden.
- *                             "omit" is currently the fetch default
- *                                    {@link https://fetch.spec.whatwg.org/#concept-request-credentials-mode} and means
- *                                    none will be included.
- *                             "same-origin" will include the cookies if on the same domain (this is the XmlHttpRequest default)
- *                             "include" will always include the cookies.
+ *
+ * @param httMethod - The http method.
+ * @param url - The url to fetch.
+ * @param options - (optional)
  */
 function localFetch(
     httMethod: HTTPMethodType | Uppercase<HTTPMethodType>,

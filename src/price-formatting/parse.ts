@@ -47,9 +47,9 @@ const fractionCharsValues = [
 
 /**
  * Returns the index in the haystack of the string that contains needle e.g.
- * @param {string} needle
- * @param {Array.<string>} haystack
- * @returns {string}
+ * @param needle - needle
+ * @param haystack - haystack
+ *
  * @example
  * indexOfArray("b", ["apple", "bannana"]) === 1;
  * indexOfArray("p", ["apple", "bannana"]) === 0;
@@ -68,10 +68,12 @@ function indexOfArray(needle: string, haystack: string[]) {
 
 /**
  * Finds the fractional part of a price formatted with negative decimals.
+ * ```
  * e.g. 1 234 31 / 64
  * ->   1234 31/64
+ * ```
  * So the last whitespace before the last digit(s) before the fractional char.
- * @param value
+ * @param value - value
  */
 function findFractionalPart(value: string) {
     let index = -1;
@@ -246,11 +248,11 @@ function parseFractionalPrice(
 /**
  * From IitClientStation/Parsing.cs TryParsePrice().
  * Parses a text string to a price value.
- * @param numberFormatting
- * @param str
- * @param decimals
- * @param formatOptions
- * @returns {number} The passed value, 0 if not parsed.
+ * @param numberFormatting - numberFormatting
+ * @param str - str
+ * @param decimals - decimals
+ * @param formatOptions - formatOptions
+ * @returns  The passed value, 0 if not parsed.
  */
 function parsePrice(
     numberFormatting: NumberFormatting,

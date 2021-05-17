@@ -4,9 +4,9 @@ type $Object = Record<string, any>;
 
 /**
  * Extends an object with another, following the same syntax as `$.extend` - see {@link http://api.jquery.com/jquery.extend/}.
- * @alias saxo.utils.object.extend
- * @param {boolean} deep - If the argument list begins true the object will be deep copied.
- * @param {...object} objects - Merges properties from later objects on to the first object.
+ *
+ * @param arg1 - If the first argument is `true` the object will be deep copied.
+ * @param restArgs - objects to extend from.
  */
 const extend: ExtendInterface = (
     arg1: true | $Object | null,

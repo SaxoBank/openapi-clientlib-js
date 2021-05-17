@@ -38,15 +38,14 @@ function emptyAccessor() {
 /**
  * Responsible for processing of all custom meta fields of decoded message type.
  * More info: https://wiki/display/OpenAPI/Delta+compression+implementation+of+ProtoBuffers
- * @constructor
  */
 class MetaProtobuf {
     /**
      * Process data using message metadata. Iterate through each field and process supported metadata keys.
      *
-     * @param {Object} message - Protobuf Message Type object.
-     * @param {Object} data - JSON object. Object get's mutated.
-     * @return {Object} The result of meta processing.
+     * @param message - Protobuf Message Type object.
+     * @param data - JSON object. Object get's mutated.
+     * @returns  The result of meta processing.
      */
     process(message: Message | null, data: Data | null): Data | null {
         if (!message || !data) {

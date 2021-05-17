@@ -106,7 +106,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
 
     /**
      * Handles any signal-r log, and pipes it through our logging.
-     * @param message
+     * @param message - message
      */
     private handleLog = (level: number, message: string) => {
         if (level < window.signalrCore.LogLevel.Warning) {

@@ -13,40 +13,6 @@
             "typescript": {}
         }
     },
-    "globals": {
-        // define our own globals since the built-in list contains many false negatives like "find" that are non-standard
-        "window": false,
-        "document": false,
-        "location": false,
-        "escape": false,
-        "unescape": false,
-        "setTimeout": false,
-        "clearTimeout": false,
-        "setInterval": false,
-        "clearInterval": false,
-        "console": false,
-        "sessionStorage": false,
-        "localStorage": false,
-        "XMLHttpRequest": false,
-        "atob": false,
-        "Blob": false,
-        "navigator": false,
-        "MessageChannel": false,
-        "Map": false,
-        "Uint8Array": false,
-        "Promise": false,
-        "HTMLElement": false,
-        "MouseEvent": false,
-        "setImmediate": false,
-        "fetch": false,
-        "Uint16Array": false,
-        "crypto": false,
-        "$": false,
-        "DataView": true,
-        "Int8Array": true,
-        "ArrayBuffer": true,
-        "WebSocket": true
-    },
     "rules": {
         // Possible errors
         "no-await-in-loop": "error",
@@ -465,7 +431,10 @@
             }
         },
         {
-            "files": ["rollup.config.js"],
+            "files": [
+                "rollup.config.js",
+                "jest.config.js"
+            ],
             "env": {
                 "node": true
             },
@@ -478,11 +447,19 @@
             }
         },
         {
-            "files": ["**/*.ts"],
+            "files": [
+                "**/*.ts"
+            ],
             "parser": "@typescript-eslint/parser",
-            "plugins": ["@typescript-eslint"],
-            "extends": ["plugin:@typescript-eslint/recommended"],
+            "plugins": [
+                "@typescript-eslint",
+                "eslint-plugin-tsdoc"
+            ],
+            "extends": [
+                "plugin:@typescript-eslint/recommended"
+            ],
             "rules": {
+                "tsdoc/syntax": "warn",
                 "import/order": "off",
                 "no-loop-func": "off",
                 "@typescript-eslint/no-loop-func": "error",

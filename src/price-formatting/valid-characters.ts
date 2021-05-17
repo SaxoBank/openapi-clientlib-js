@@ -5,9 +5,9 @@ import type { Scenarios } from './types';
 
 /**
  * Returns characters valid for entering prices.
- * @param {NumberFormatting} numberFormatting
- * @param {{integer: boolean, negative: boolean, price: boolean, numbers: boolean}} includeScenarios - The scenarios to get prices for.
- * @returns {string}
+ * @param numberFormatting - numberFormatting
+ * @param includeScenarios - The scenarios to get prices for.
+ *
  */
 function getValidPriceCharacters(
     numberFormatting: NumberFormatting,
@@ -50,9 +50,9 @@ function getValidPriceCharacters(
 
 /**
  * Returns regex for validating characters for entering prices.
- * @param {NumberFormatting} numberFormatting
- * @param {{integer: boolean, negative: boolean, price: boolean, numbers: boolean}} includeScenarios - The scenarios to get prices for.
- * @returns {RegExp}
+ * @param numberFormatting - numberFormatting
+ * @param includeScenarios - The scenarios to get prices for.
+ *
  */
 function getValidPriceRegex(
     numberFormatting: NumberFormatting,

@@ -23,13 +23,13 @@ export type QueueItem = {
 /**
  * TransportQueue wraps a transport class to allow the queueing of transport calls, so that all calls can be paused until after a particular event.
  * 1. This coordinates with authentication so that calls are queued whilst not authenticated
- * 2. The ability to wait for a promise to complete see {@link saxo.openapi.TransportQueue#waitFor}.
+ * 2. The ability to wait for a promise to complete see {@link  TransportQueue#waitFor}.
  *    The old library had an option initLoadBalancerCookies which did
  *    two calls to isalive before allowing any other calls through. This can be implemented with this class.
  * 3. It serves as a base class for auto batching, which by its nature queues calls.
- * @param {saxo.openapi.TransportAuth|saxo.openapi.TransportBatch|saxo.openapi.TransportCore|saxo.openapi.TransportQueue} transport -
+ * @param transport -
  *      The transport to wrap.
- * @param {saxo.openapi.authProvider} [authProvider] - If provided then calls will be queued whilst the token is expired.
+ * @param authProvider - (optional) If provided then calls will be queued whilst the token is expired.
  *      If not given then calls will continue even when the authentication is not expired and no 401 calls will be handled.
  */
 class TransportQueue extends TransportBase {

@@ -1,7 +1,7 @@
 ﻿/**
  * Schedules a micro-task to run after breaking the current call stack
  * - See {@link https://github.com/kriskowal/asap} and {@link https://github.com/YuzuJS/setImmediate}.
- * @param {function} func - The function to run after code has been broken out of.
+ * @param func - The function to run after code has been broken out of.
  */
 let nextTick: (func: () => void) => void; // eslint-disable-line import/no-mutable-exports
 

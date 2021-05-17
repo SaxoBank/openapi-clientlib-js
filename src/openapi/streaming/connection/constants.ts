@@ -44,7 +44,6 @@ export const CONNECTION_STATE_DISCONNECTED = 0x20 as const;
 /**
  * Connection failed with no point of return. Indicates that next transport will be picked if possible.
  * No manual reconnect should be done at this point!
- * @type {number}
  */
 export const CONNECTION_STATE_FAILED = 0x40 as const;
 

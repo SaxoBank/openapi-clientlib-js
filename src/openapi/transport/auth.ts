@@ -17,20 +17,15 @@ const LOG_AREA = 'TransportAuth';
 const DEFAULT_AUTH_ERRORS_DEBOUNCE_PERIOD = 30000; // ms
 
 /**
- * This class builds on top of {@link saxo.openapi.TransportCore} and adds authentication management. You need only
- * construct one or the other, they automatically wrap each other. All of the options from the {@link saxo.openapi.TransportCore}
+ * This class builds on top of {@link TransportCore} and adds authentication management. You need only
+ * construct one or the other, they automatically wrap each other. All of the options from the {@link TransportCore}
  * constructor are valid here as well.
  * For authentication management, this class will wait until just before the authentication expires (see tokenRefreshMarginMs)
  * and will refresh the token generating an event which is picked up by some of the other Transports.
- * @class
- * @alias saxo.openapi.TransportAuth
- * @param {string} baseUrl - The base url used for all open api requests. This should be an absolute URL.
- * @param {Object} authProvider - a AuthProvider to get the token from
- * @param {Object} [options] - Options for auth and for the core transport. See Transport.
- * @param {string} [options.language] - The language sent as a header if not overridden.
- * @param {boolean} [options.defaultCache=true] - Sets the default caching behaviour if not overridden on a call.
- * @param {number} [options.authErrorsDebouncePeriod] - The period within which errors on different tokens cause an endpoint auth errors
- *                                                      to be ignored.
+ *
+ * @param baseUrl - The base url used for all open api requests. This should be an absolute URL.
+ * @param authProvider - a AuthProvider to get the token from
+ * @param options - (optional) Options for auth and for the core transport. See Transport.
  */
 class TransportAuth extends TransportBase {
     authErrorsDebouncePeriod = DEFAULT_AUTH_ERRORS_DEBOUNCE_PERIOD;
@@ -155,9 +150,9 @@ class TransportAuth extends TransportBase {
 
     /**
      * Add a authentication error to the error map
-     * @param {string} url - The url/endpoint at which a auth error occurred
-     * @param {number} authExpiry - The expiry of the token that was rejected
-     * @param {number} timeRequested - The time the request was made
+     * @param url - The url/endpoint at which a auth error occurred
+     * @param authExpiry - The expiry of the token that was rejected
+     * @param timeRequested - The time the request was made
      */
     addAuthError(url: string, authExpiry: number, timeRequested: number) {
         if (this.authorizationErrors.hasOwnProperty(url)) {
@@ -174,9 +169,9 @@ class TransportAuth extends TransportBase {
 
     /**
      * Returns if the auth errors for a url are problematic
-     * @param {string} url - The url/endpoint to check
-     * @param {number} authExpiry - The auth expiry of the request to check
-     * @returns {boolean} Whether it is problematic
+     * @param url - The url/endpoint to check
+     * @param authExpiry - The auth expiry of the request to check
+     * @returns  Whether it is problematic
      */
     areUrlAuthErrorsProblematic(url: string, authExpiry: number) {
         if (this.authorizationErrors.hasOwnProperty(url)) {

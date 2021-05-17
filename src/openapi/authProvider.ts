@@ -30,7 +30,7 @@ const STATE_FAILED = 0x4;
 
 /**
  * Returns the absolute timestamp of the expiry based on the current date and time.
- * @param {number|string} relativeExpiry - The time in seconds until the token expires.
+ * @param relativeExpiry - The time in seconds until the token expires.
  */
 function toAbsoluteTokenExpiry(relativeExpiry: number | string) {
     const relativeExpiryInt =
@@ -48,46 +48,61 @@ function addBearer(newToken: string | null) {
 }
 
 type Options = {
+    /**
+     * The token to use for authentication.
+     */
     token?: string | null;
+    /**
+     * The expiry of that token, assumed to be absolute.
+     */
     expiry?: number;
+    /**
+     * The url for refreshing the token.
+     */
     tokenRefreshUrl?: string;
+    /**
+     * Any headers to be included in the token refresh call. It should be the same format as other calls.
+     * The object key names are the header names and the values the header values.
+     */
     tokenRefreshHeaders?: Record<string, string>;
+    /**
+     * The credentials option passed to fetch.
+     */
     tokenRefreshCredentials?: RequestCredentials;
+    /**
+     *  The http method for refreshing the token e.g. "POST" or "GET" etc.
+     */
     tokenRefreshMethod?: HTTPMethodType;
+    /**
+     * The property name of the token after doing a refresh.
+     */
     tokenRefreshPropertyNameToken?: string;
+    /**
+     * The property name of the relative expiry after doing a refresh.
+     */
     tokenRefreshPropertyNameExpires?: string;
+    /**
+     * The number of ms that the refresh call should be done early.
+     * e.g. if this is 1000 it will be refreshed 1000 ms before the token expires.
+     */
     tokenRefreshMarginMs?: number;
+    /**
+     * The delay before retrying auth
+     */
     retryDelayMs?: number;
+    /**
+     * The maximum number of times to retry the auth url
+     */
     maxRetryCount?: number;
 };
 
 /**
- * This class builds on top of {@link saxo.openapi.TransportCore} and adds authentication management. You need only
- * construct one or the other, they automatically wrap each other. All of the options from the {@link saxo.openapi.TransportCore}
- * constructor are valid here as well.
+ * This class builds on top of {@link TransportCore} and adds authentication management. You need only
+ * construct one or the other, they automatically wrap each other. All of the options from the {@link TransportCore}
+ * class are valid here as well.
  * For authentication management, this class will wait until just before the authentication expires (see tokenRefreshMarginMs)
  * and will refresh the token generating an event which is picked up by some of the other Transports.
- * @class
- * @alias saxo.openapi.TransportAuth
- * @param {Object} [options] - Options for auth and for the core transport. See Transport.
- * @param {string} [options.language] - The language sent as a header if not overridden.
- * @param {boolean} [options.defaultCache=true] - Sets the default caching behaviour if not overridden on a call.
- * @param {string} [options.tokenRefreshUrl] - The url for refreshing the token.
- * @param {Object.<string, string>} [options.tokenRefreshHeaders] - Any headers to be included in the token refresh call.
- *          It should be the same format as other calls.
- *          The object key names are the header names and the values the header values.
- * @param {string} [options.tokenRefreshCredentials="include"] - The credentials option passed to fetch.
- * @param {string} [options.tokenRefreshMethod="POST"] - The http method for refreshing the token e.g. "POST" or "GET" etc.
- * @param {number} [options.tokenRefreshMarginMs=0] - The number of ms that the refresh call should be done early.
- *          e.g. if this is 1000 it will be refreshed 1000 ms before the token expires.
- * @param {string} [options.tokenRefreshPropertyNameToken="token"] - The property name of the token after doing a refresh.
- * @param {string} [options.tokenRefreshPropertyNameExpires="expiry"] - The property name of the relative expiry after doing a refresh.
- * @param {string} [options.token] - The token to use for authentication.
- * @param {string|number} [options.expiry] - The expiry of that token, assumed to be absolute.
- * @param {number} [options.retryDelayMs] - The delay before retrying auth
- * @param {number} [options.maxRetryCount] - The maximum number of times to retry the auth url
  */
-
 class AuthProvider extends MicroEmitter {
     private expiry = 0;
     private token: string | null = null;
@@ -332,7 +347,6 @@ class AuthProvider extends MicroEmitter {
 
     /**
      * Call this method when a 401 unauthenticated is received
-     * See also {@link TransportAuth.onTokenInvalid}.
      */
     tokenRejected(expiryOfRejectedToken?: number) {
         const isFetching = this.isFetchingNewToken();
