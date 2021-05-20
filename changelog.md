@@ -1,3 +1,6 @@
+### v8.4.2
+- Add support for using fetch signal
+
 ### v8.4.0
 - Add pause, resume support to freeze subscriptions
 
