@@ -3,11 +3,11 @@ import * as transportTypes from './transportTypes';
 import WebsocketTransport from './transport/websocket-transport';
 import SignalrTransport from './transport/signalr-transport';
 import SignalrCoreTransport from './transport/signalr-core-transport';
+import type { TransportTypes, ConnectionOptions } from '../types';
 import type {
-    TransportTypes,
-    ConnectionOptions,
-    ConnectionState,
     StreamingTransportInterface,
+    ReceiveCallback,
+    StateChangeCallback,
 } from './types';
 
 type Callback = (...args: any[]) => unknown | void;
@@ -66,7 +66,7 @@ class Connection {
     failCallback: Callback;
     startCallback = NOOP;
     stateChangedCallback = NOOP;
-    receiveCallback = NOOP;
+    receiveCallback: ReceiveCallback = NOOP;
     connectionSlowCallback = NOOP;
     authToken: string | null = null;
     authExpiry: number | null | undefined = null;
@@ -237,7 +237,7 @@ class Connection {
         }
     }
 
-    setStateChangedCallback(callback: (nextState: ConnectionState) => void) {
+    setStateChangedCallback(callback: StateChangeCallback) {
         if (this.transport) {
             this.stateChangedCallback = this.ensureValidState.bind(
                 this,
@@ -248,7 +248,7 @@ class Connection {
         }
     }
 
-    setReceivedCallback(callback: Callback) {
+    setReceivedCallback(callback: ReceiveCallback) {
         if (this.transport) {
             this.receiveCallback = this.ensureValidState.bind(
                 this,

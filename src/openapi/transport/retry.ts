@@ -13,7 +13,7 @@ interface TransportCall {
     resolve: (value?: any) => void;
     reject: (value?: any) => void;
     retryCount: number;
-    retryTimer: ReturnType<typeof setTimeout> | null;
+    retryTimer: number | null;
 }
 
 interface RetryOptions {
@@ -59,7 +59,7 @@ class TransportRetry extends TransportBase {
     transport: TransportCore;
     failedCalls: TransportCall[] = [];
     individualFailedCalls: TransportCall[] = [];
-    retryTimer: ReturnType<typeof setTimeout> | null = null;
+    retryTimer: number | null = null;
     isDisposed = false;
 
     /**
@@ -156,14 +156,14 @@ class TransportRetry extends TransportBase {
         ) {
             // schedule an individual retry timeout
             this.individualFailedCalls.push(transportCall);
-            transportCall.retryTimer = setTimeout(() => {
+            transportCall.retryTimer = window.setTimeout(() => {
                 this.retryIndividualFailedCall(transportCall);
             }, callOptions.retryTimeouts[transportCall.retryCount]);
         } else {
             this.failedCalls.push(transportCall);
             if (!this.retryTimer) {
                 // schedule a retry timeout for all failed calls
-                this.retryTimer = setTimeout(() => {
+                this.retryTimer = window.setTimeout(() => {
                     this.retryFailedCalls();
                 }, this.retryTimeout);
             }

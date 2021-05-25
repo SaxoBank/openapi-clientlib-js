@@ -24,7 +24,7 @@ abstract class ParserBase {
     }
 
     abstract parse(
-        _data: string | Uint8Array | null | undefined,
+        _data: string | Uint8Array | Record<string, any> | null | undefined,
         _schemaName: string,
     ): unknown;
 

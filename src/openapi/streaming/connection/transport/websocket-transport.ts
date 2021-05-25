@@ -12,6 +12,7 @@ import fetch from '../../../../utils/fetch';
 import type { OAPIRequestResult } from '../../../../types';
 import { getRequestId } from '../../../../utils/request';
 import * as transportTypes from '../transportTypes';
+import type { DataFormat, StreamingMessage } from '../../types';
 import type { StreamingTransportInterface } from '../types';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
@@ -63,7 +64,7 @@ class WebsocketTransport implements StreamingTransportInterface {
     isReconnectPending = false;
 
     lastMessageId: null | Uint8Array = null;
-    reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    reconnectTimeout: number | null = null;
     reconnectCount = 0;
     lastOrphanFound = 0;
     lastSubscribeNetworkError = 0;
@@ -76,7 +77,7 @@ class WebsocketTransport implements StreamingTransportInterface {
     failCallback: Callback;
     logCallback = NOOP;
     stateChangedCallback: Callback = NOOP;
-    receivedCallback: Callback = NOOP;
+    receivedCallback: (data: StreamingMessage[]) => void = NOOP;
     connectionSlowCallback = NOOP;
     startedCallback = NOOP;
     closeCallback = NOOP;
@@ -124,7 +125,7 @@ class WebsocketTransport implements StreamingTransportInterface {
 
     private parseMessage(rawData: ArrayBuffer) {
         let index = 0;
-        const messages = [];
+        const messages: StreamingMessage[] = [];
 
         while (index < rawData.byteLength) {
             const message = new DataView(rawData);
@@ -179,7 +180,7 @@ class WebsocketTransport implements StreamingTransportInterface {
             messages.push({
                 ReservedField: reservedField,
                 ReferenceId: referenceId,
-                DataFormat: dataFormat,
+                DataFormat: dataFormat as DataFormat,
                 Data: data,
             });
         }
@@ -187,7 +188,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         return messages;
     }
 
-    private handleSocketMessage = (messageEvent: { data: ArrayBuffer }) => {
+    private handleSocketMessage = (messageEvent: MessageEvent<ArrayBuffer>) => {
         this.lastMessageTime = Date.now();
 
         if (messageEvent.data instanceof ArrayBuffer) {
@@ -307,7 +308,7 @@ class WebsocketTransport implements StreamingTransportInterface {
             return;
         }
 
-        this.reconnectTimeout = setTimeout(
+        this.reconnectTimeout = window.setTimeout(
             this.restartConnection,
             DEFAULT_RECONNECT_DELAY,
         );

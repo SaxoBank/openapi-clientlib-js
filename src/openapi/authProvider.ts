@@ -92,6 +92,16 @@ type Options = {
     maxRetryCount?: number;
 };
 
+const EVENT_TOKEN_REFRESH = 'tokenRefresh' as const;
+const EVENT_TOKEN_RECEIVED = 'tokenReceived' as const;
+const EVENT_TOKEN_REFRESH_FAILED = 'tokenRefreshFailed' as const;
+
+type EmittedEvents = {
+    [EVENT_TOKEN_REFRESH]: () => void;
+    [EVENT_TOKEN_RECEIVED]: (token?: string, refresh?: number) => void;
+    [EVENT_TOKEN_REFRESH_FAILED]: () => void;
+};
+
 /**
  * This class builds on top of {@link TransportCore} and adds authentication management. You need only
  * construct one or the other, they automatically wrap each other. All of the options from the {@link TransportCore}
@@ -99,7 +109,7 @@ type Options = {
  * For authentication management, this class will wait until just before the authentication expires (see tokenRefreshMarginMs)
  * and will refresh the token generating an event which is picked up by some of the other Transports.
  */
-class AuthProvider extends MicroEmitter {
+class AuthProvider extends MicroEmitter<EmittedEvents> {
     private expiry = 0;
     private token: string | null = null;
     tokenRefreshUrl?: string;
@@ -114,14 +124,14 @@ class AuthProvider extends MicroEmitter {
     state = 1;
     retries = 0;
     tokenRefreshTimerFireTime = 0;
-    tokenRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+    tokenRefreshTimer: number | null = null;
     lastTokenFetchTime = 0;
     // Type of event that occurs when the token is refreshing.
-    EVENT_TOKEN_REFRESH = 'tokenRefresh';
+    EVENT_TOKEN_REFRESH = EVENT_TOKEN_REFRESH;
     // Type of event that occurs when the token is received.
-    EVENT_TOKEN_RECEIVED = 'tokenReceived';
+    EVENT_TOKEN_RECEIVED = EVENT_TOKEN_RECEIVED;
     // Type of event that occurs when the token refresh fails.
-    EVENT_TOKEN_REFRESH_FAILED = 'tokenRefreshFailed';
+    EVENT_TOKEN_REFRESH_FAILED = EVENT_TOKEN_REFRESH_FAILED;
 
     constructor(options: Options) {
         super();
@@ -271,7 +281,7 @@ class AuthProvider extends MicroEmitter {
             this.state = STATE_WAITING;
             this.retries++;
             this.tokenRefreshTimerFireTime = Date.now() + this.retryDelayMs;
-            this.tokenRefreshTimer = setTimeout(
+            this.tokenRefreshTimer = window.setTimeout(
                 this.refreshToken,
                 this.retryDelayMs,
             );
@@ -306,7 +316,7 @@ class AuthProvider extends MicroEmitter {
                 elapse = 0;
             }
             this.tokenRefreshTimerFireTime = Date.now() + elapse;
-            this.tokenRefreshTimer = setTimeout(
+            this.tokenRefreshTimer = window.setTimeout(
                 this.refreshOpenApiToken,
                 elapse,
             );

@@ -14,10 +14,7 @@ import Streaming, { findRetryDelay } from './streaming';
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import Subscription from './subscription';
 import type { SubscriptionState } from './subscription';
-import type {
-    RetryDelayLevel,
-    StreamingConfigurableOptions,
-} from './streaming';
+import type { RetryDelayLevel, StreamingConfigurableOptions } from './types';
 import * as connectionConstants from './connection/constants';
 import * as streamingTransports from './connection/transportTypes';
 import 'fast-text-encoding';

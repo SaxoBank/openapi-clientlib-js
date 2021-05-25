@@ -12,6 +12,7 @@ import type { QueuedItem } from './subscription-queue';
 import ParserFacade from './parser/parser-facade';
 import type { ITransport } from '../transport/transport-base';
 import type { RequestOptions } from '../../types';
+import type { StreamingMessage } from './types';
 
 const updateTypes = {
     UPDATE_TYPE_SNAPSHOT: 1,
@@ -182,8 +183,8 @@ class Subscription {
     onNetworkError;
     connectionAvailable;
     currentState: SubscriptionState = this.STATE_UNSUBSCRIBED;
-    updatesBeforeSubscribed: null | Record<string, unknown>[] = null;
-    networkErrorSubscribingTimer: null | ReturnType<typeof setTimeout> = null;
+    updatesBeforeSubscribed: null | StreamingMessage[] = null;
+    networkErrorSubscribingTimer: null | number = null;
     inactivityTimeout: number | undefined;
     latestActivity: number | undefined;
     SchemaName: string | undefined | null;
@@ -575,7 +576,7 @@ class Subscription {
                 contextId: this.currentStreamingContextId as string,
                 referenceId,
             })
-            .catch((error: unknown) => {
+            .catch((error: any) => {
                 log.debug(
                     LOG_AREA,
                     'Failed to remove duplicate request subscription',
@@ -684,7 +685,7 @@ class Subscription {
             );
 
             // let streaming know we got a network error
-            this.networkErrorSubscribingTimer = setTimeout(() => {
+            this.networkErrorSubscribingTimer = window.setTimeout(() => {
                 this.networkErrorSubscribingTimer = null;
 
                 // we did not go offline and we did not receive any commands in the meantime
@@ -841,10 +842,7 @@ class Subscription {
         }
     }
 
-    processUpdate(
-        message: { Data?: unknown; [p: string]: unknown },
-        type: SubscriptionUpdateTypes,
-    ) {
+    processUpdate(message: StreamingMessage, type: SubscriptionUpdateTypes) {
         let nextMessage;
         try {
             nextMessage = {
@@ -1043,10 +1041,7 @@ class Subscription {
      * Handles the 'data' event raised by Streaming.
      * @returns  false if the update is not for this subscription
      */
-    onStreamingData(message: {
-        Data?: unknown;
-        [p: string]: unknown;
-    }): false | void {
+    onStreamingData(message: StreamingMessage): false | void {
         this.onActivity();
 
         switch (this.currentState) {

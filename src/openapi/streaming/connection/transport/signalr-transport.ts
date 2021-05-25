@@ -1,6 +1,7 @@
 import log from '../../../../log';
 import * as transportTypes from '../transportTypes';
 import * as constants from '../constants';
+import type { StreamingMessage } from '../../types';
 import type { StreamingTransportInterface } from '../types';
 
 const LOG_AREA = 'SignalRTransport';
@@ -74,7 +75,7 @@ class SignalrTransport implements StreamingTransportInterface {
                 return constants.CONNECTION_STATE_RECONNECTING;
 
             default:
-                log.warn(LOG_AREA, 'Unrecognised state', state);
+                log.warn(LOG_AREA, 'Unrecognised state', { state });
                 break;
         }
 
@@ -101,7 +102,7 @@ class SignalrTransport implements StreamingTransportInterface {
         this.stateChangedCallback = callback;
     }
 
-    setReceivedCallback(callback: Callback) {
+    setReceivedCallback(callback: (data: StreamingMessage) => any) {
         this.connection.received(callback);
     }
 

@@ -85,7 +85,7 @@ class StreamingOrphanFinder {
             log.info(
                 LOG_AREA,
                 'Update occurred much later than requested, assuming wake from sleep and will retry',
-                oldNextUpdateIn,
+                { oldNextUpdateIn },
             );
 
             this.minCheckTime = now + this.startDelay;

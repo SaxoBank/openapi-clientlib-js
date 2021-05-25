@@ -4,8 +4,12 @@ import * as constants from '../constants';
 import type {
     ConnectionState,
     TransportTypes,
+    StreamingMessage,
+} from '../../types';
+import type {
     StreamingTransportOptions,
     StreamingTransportInterface,
+    StreamingData,
 } from '../types';
 import type SignalR from '@microsoft/signalr';
 
@@ -17,24 +21,12 @@ declare global {
 
 type Callback = (...args: any[]) => any;
 
-type StreamingData = Record<string, unknown> | BufferSource | string;
-
-type StreamingMessage = {
+type RawCoreSignalRStreamingMessage = {
     ReferenceId: string;
     PayloadFormat: 1 | 2;
     Payload: StreamingData;
     MessageId: string;
 };
-
-type DataFormat =
-    | typeof constants.DATA_FORMAT_JSON
-    | typeof constants.DATA_FORMAT_PROTOBUF;
-interface NomrmalizedStreamingMessge {
-    ReferenceId: string;
-    MessageId: string;
-    DataFormat: DataFormat;
-    Data: StreamingData;
-}
 
 const LOG_AREA = 'SignalrCoreTransport';
 const NOOP = () => {};
@@ -63,7 +55,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
     state: ConnectionState = constants.CONNECTION_STATE_DISCONNECTED;
 
     stateChangedCallback: (state: ConnectionState) => void = NOOP;
-    receivedCallback: (data: StreamingData) => void = NOOP;
+    receivedCallback: (data: StreamingMessage) => void = NOOP;
     errorCallback = NOOP;
     unauthorizedCallback = NOOP;
     setConnectionSlowCallback = NOOP;
@@ -186,9 +178,9 @@ class SignalrCoreTransport implements StreamingTransportInterface {
     };
 
     private normalizeMessage = (
-        message: StreamingMessage,
+        message: RawCoreSignalRStreamingMessage,
         protocol: SignalR.IHubProtocol,
-    ): NomrmalizedStreamingMessge => {
+    ): StreamingMessage => {
         const { ReferenceId, PayloadFormat, Payload, MessageId } = message;
 
         let dataFormat;
@@ -208,8 +200,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         if (protocol.name === 'json') {
             data = new Uint8Array(
                 window
-                    // @ts-expect-error assuming data is string here
-                    .atob(data)
+                    .atob(data as string)
                     .split('')
                     .map((char) => char.charCodeAt(0)),
             );
@@ -218,17 +209,15 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         return {
             ReferenceId,
             MessageId,
-            DataFormat: dataFormat as
-                | DataFormat
-                | typeof constants.DATA_FORMAT_PROTOBUF,
+            DataFormat: dataFormat,
             Data: data,
         };
     };
 
     private parseMessage(
-        message: NomrmalizedStreamingMessge,
+        message: StreamingMessage,
         utf8Decoder: TextDecoder,
-    ) {
+    ): StreamingMessage {
         const { ReferenceId, DataFormat, MessageId } = message;
         let data = message.Data;
 
@@ -446,7 +435,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
     }
 
     handleNextMessage(
-        message: StreamingMessage,
+        message: RawCoreSignalRStreamingMessage,
         protocol: SignalR.IHubProtocol,
     ) {
         if (!this.connection) {
@@ -466,7 +455,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
             const normalizedMessage = this.normalizeMessage(message, protocol);
             const data = this.parseMessage(normalizedMessage, this.utf8Decoder);
 
-            this.lastMessageId = data.MessageId;
+            this.lastMessageId = data.MessageId as string;
             this.receivedCallback(data);
         } catch (error) {
             const errorMessage = error.message || '';
@@ -618,7 +607,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         this.stateChangedCallback = callback;
     }
 
-    setReceivedCallback(callback: (data: StreamingData) => void) {
+    setReceivedCallback(callback: (data: StreamingMessage) => void) {
         this.receivedCallback = callback;
     }
 

@@ -14,11 +14,10 @@ import WebSocketTransport from './connection/transport/websocket-transport';
 import * as original from './connection/connection';
 import mockMathRandom from '../../test/mocks/math-random';
 import Streaming from './streaming';
-import type { StreamingConfigurableOptions } from './streaming';
+import type { StreamingConfigurableOptions, ConnectionState } from './types';
 import * as constants from './connection/constants';
 import mockAuthProvider from '../../test/mocks/authProvider';
 import Subscription from './subscription';
-import type { ConnectionState } from './connection/types';
 
 const mockedConnection = original as jest.Mocked<typeof original>;
 const Connection = mockedConnection.default;
@@ -76,7 +75,7 @@ describe('openapi Streaming', () => {
         );
 
         Connection.prototype.setReceivedCallback.mockImplementation(
-            (callback: () => void) => {
+            (callback: (args: any) => void) => {
                 receivedCallback = callback;
             },
         );

@@ -1,11 +1,20 @@
-export interface IEventEmitter {
+export type EventTypes = Record<string, Callback>;
+
+export interface IEventEmitter<
+    Events extends EventTypes,
+    ChainedType = IEventEmitter<any, any>
+> {
     /**
      * Register an event handler for single invocation (subscribe)
      * @param eventType - The event type to listen to
      * @param onFunction - The function to call
      * @param that - (optional) The context with which to call onFunction (useful also for unsubscribing only a instance)
      */
-    one(eventType: string, onFunction: Callback, that?: any): this;
+    one<Event extends keyof Events>(
+        eventType: Event,
+        onFunction: Events[Event],
+        that?: any,
+    ): ChainedType extends IEventEmitter<any> ? this : ChainedType;
 
     /**
      * Register an event handler (subscribe)
@@ -13,8 +22,11 @@ export interface IEventEmitter {
      * @param onFunction - The function to call
      * @param that - (optional) The context with which to call onFunction (useful also for unsubscribing only a instance)
      */
-
-    on(eventType: string, onFunction: Callback, that?: any): this;
+    on<Event extends keyof Events>(
+        eventType: Event,
+        onFunction: Events[Event],
+        that?: any,
+    ): ChainedType extends IEventEmitter<any> ? this : ChainedType;
 
     /**
      * Stop listening to events (unsubscribe)
@@ -22,36 +34,39 @@ export interface IEventEmitter {
      * @param onFunction - (optional) The function to call
      * @param that - (optional) The context with which to call onFunction (useful also for unsubscribing only a instance)
      */
-    off(
-        eventType?: string | null,
-        onFunction?: Callback | null,
+    off<Event extends keyof Events>(
+        eventType?: Event | null,
+        onFunction?: Events[Event] | null,
         that?: any,
-    ): this;
+    ): ChainedType extends IEventEmitter<any> ? this : ChainedType;
 
     /**
      * Triggers an event
      * @param eventType - The event type to trigger
      * @param args - (optional) Arguments to pass to all listeners
      */
-    trigger(eventType: string, ...args: any[]): this;
+    trigger<Event extends keyof Events>(
+        eventType: Event,
+        ...args: Parameters<Events[Event]>
+    ): ChainedType extends IEventEmitter<any> ? this : ChainedType;
 }
 
-interface Callback {
+export interface Callback {
     (...args: any[]): void;
 }
 
-interface Subscriber {
-    onFunction: (...args: any) => void;
+interface Subscriber<C = Callback> {
+    onFunction: C;
     that: any;
     isOne: boolean;
 }
 
-class MicroEmitter implements IEventEmitter {
-    private subscribers: Record<string, Subscriber[]> = {};
+class MicroEmitter<Events extends EventTypes> implements IEventEmitter<Events> {
+    private subscribers: Partial<Record<keyof Events, Subscriber[]>> = {};
 
-    private addSubscriber(
-        eventType: string,
-        onFunction: Callback,
+    private addSubscriber<Event extends keyof Events>(
+        eventType: Event,
+        onFunction: Events[Event],
         that: any,
         isOne: boolean,
     ) {
@@ -73,17 +88,29 @@ class MicroEmitter implements IEventEmitter {
         eventSubscribers.push({ onFunction, that, isOne });
     }
 
-    one(eventType: string, onFunction: Callback, that?: any) {
+    one<Event extends keyof Events>(
+        eventType: Event,
+        onFunction: Events[Event],
+        that?: any,
+    ) {
         this.addSubscriber(eventType, onFunction, that, true);
         return this;
     }
 
-    on(eventType: string, onFunction: Callback, that?: any) {
+    on<Event extends keyof Events>(
+        eventType: Event,
+        onFunction: Events[Event],
+        that?: any,
+    ) {
         this.addSubscriber(eventType, onFunction, that, false);
         return this;
     }
 
-    off(eventType?: string | null, onFunction?: Callback | null, that?: any) {
+    off<Event extends keyof Events>(
+        eventType?: Event | null,
+        onFunction?: Events[Event] | null,
+        that?: any,
+    ) {
         if (eventType) {
             const eventSubscribers = this.subscribers[eventType];
             if (eventSubscribers) {
@@ -101,20 +128,27 @@ class MicroEmitter implements IEventEmitter {
                 }
             }
         } else {
-            for (eventType in this.subscribers) {
-                if (this.subscribers.hasOwnProperty(eventType)) {
-                    this.off(eventType, onFunction, that);
+            for (const subscriberEventType in this.subscribers) {
+                if (this.subscribers.hasOwnProperty(subscriberEventType)) {
+                    // @ts-expect-error
+                    this.off(subscriberEventType, onFunction, that);
                 }
             }
         }
         return this;
     }
 
-    trigger(eventType: string, ...args: any[]) {
+    trigger<Event extends keyof Events>(
+        eventType: Event,
+        ...args: Parameters<Events[Event]>
+    ) {
         const eventSubscribers = this.subscribers[eventType];
         if (eventSubscribers) {
             for (let i = eventSubscribers.length - 1; i >= 0; i--) {
-                const subscriber = eventSubscribers[i];
+                const subscriber = eventSubscribers[i] as Subscriber<
+                    Events[Event]
+                >;
+
                 if (subscriber.isOne) {
                     this.off(eventType, subscriber.onFunction, subscriber.that);
                 }

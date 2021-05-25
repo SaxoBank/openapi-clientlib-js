@@ -78,7 +78,7 @@ class TransportAuth extends TransportBase {
                 log.error(
                     LOG_AREA,
                     'Too many authorization errors occurred for different tokens within a specified time-frame for a specific endpoint',
-                    result.url,
+                    { url: result.url },
                 );
                 throw {
                     message: 'Auth overload',

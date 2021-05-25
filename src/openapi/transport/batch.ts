@@ -36,7 +36,7 @@ class TransportBatch extends TransportQueue {
     timeoutMs = 0;
     services: Services = {};
     isQueueing = true;
-    nextTickTimer: ReturnType<typeof setTimeout> | boolean = false;
+    nextTickTimer: number | boolean = false;
 
     /**
      * @param transport - Instance of the transport class to wrap.
@@ -117,7 +117,9 @@ class TransportBatch extends TransportQueue {
     ) => {
         // Previously occurred due to a bug in the auth transport
         if (!(batchResult && batchResult.response)) {
-            log.error('Received success call without response', batchResult);
+            log.error(LOG_AREA, 'Received success call without response', {
+                batchResult,
+            });
             this.batchCallFailure(callList, batchResult);
             return;
         }
@@ -259,7 +261,7 @@ class TransportBatch extends TransportQueue {
                 if (this.nextTickTimer) {
                     return;
                 }
-                this.nextTickTimer = setTimeout(
+                this.nextTickTimer = window.setTimeout(
                     this.runBatches,
                     this.timeoutMs,
                 );
