@@ -217,12 +217,6 @@
         "lines-around-comment": "off",
         "lines-around-directive": "off",
         "max-depth": ["error", 6],
-        "max-len": [
-            "error",
-            {
-                "code": 150
-            }
-        ],
         "max-lines": [
             "error",
             {

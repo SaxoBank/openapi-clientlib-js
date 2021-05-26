@@ -531,8 +531,7 @@ class Subscription {
 
         this.inactivityTimeout = responseData.InactivityTimeout || 0;
 
-        // @ts-expect-error FIXME this always evaluates to false - find out what to do with this
-        if (!responseData.InactivityTimeout === 0) {
+        if (responseData.InactivityTimeout === 0) {
             // this mostly happens when there is some other problem e.g. the response cannot be parsed
             log.warn(
                 LOG_AREA,

@@ -303,8 +303,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             this.authProvider.one(
                 this.authProvider.EVENT_TOKEN_RECEIVED,
                 () => {
-                    // FIXME looks like this block is currently never executed since
-                    // isReconnection arg is never provided
                     if (isReconnection && !this.reconnecting) {
                         log.debug(
                             LOG_AREA,
@@ -551,7 +549,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             return message.Data[0].Heartbeats;
         }
 
-        return null;
+        return [];
     }
 
     private getTargetReferenceIds(message: types.ResetControlMessage) {
@@ -606,12 +604,11 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * @param heartbeatList - heartbeatList
      */
     private handleControlMessageFireHeartbeats(
-        heartbeatList: types.Heartbeats[] | null,
+        heartbeatList: types.Heartbeats[],
     ) {
         log.debug(LOG_AREA, 'heartbeats received', { heartbeatList });
-        // @ts-expect-error FIXME heartbeatList may be null, decide whether to throw or use an empty array as a default
+
         for (let i = 0; i < heartbeatList.length; i++) {
-            // @ts-expect-error
             const heartbeat = heartbeatList[i];
             const subscription = this.findSubscriptionByReferenceId(
                 heartbeat.OriginatingReferenceId,

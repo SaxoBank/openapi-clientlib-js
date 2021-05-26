@@ -1,5 +1,3 @@
-/* eslint-disable max-len */
-
 type Obj = Record<string, any>;
 
 export interface ExtendInterface {

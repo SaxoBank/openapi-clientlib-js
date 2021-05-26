@@ -88,8 +88,6 @@ class SignalrCoreTransport implements StreamingTransportInterface {
             typeof window.signalrCore.HubConnectionBuilder === 'function' &&
             typeof window.Uint8Array === 'function' &&
             typeof window.TextDecoder === 'function' &&
-            // This check can be removed once signalr team resolves below issue
-            // https://github.com/dotnet/aspnetcore/issues/29424
             (typeof fetch === 'undefined' ||
                 typeof window.AbortController === 'function')
         );

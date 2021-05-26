@@ -1,7 +1,5 @@
 import type { RequestOptions, StringTemplateArgs } from '../../types';
 
-export type HTTPStatusCode = 401 | 404 | 200 | 201 | 500;
-
 export type UseCloud = {
     useCloud?: boolean | string | (() => boolean | string);
 };

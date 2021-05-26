@@ -9,7 +9,6 @@ import type {
 } from '../../types';
 import type { ITransport } from './transport-base';
 
-// fix-me typo
 const LOG_AREA = 'TransportPutPatchDiagnosticsQueue';
 
 /**

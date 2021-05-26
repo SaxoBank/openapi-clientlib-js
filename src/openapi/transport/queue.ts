@@ -1,5 +1,5 @@
 import type AuthProvider from '../authProvider';
-import type { HTTPMethodInputArgs, HTTPStatusCode } from './types';
+import type { HTTPMethodInputArgs } from './types';
 import type {
     OAPIRequestResult,
     HTTPMethodType,
@@ -138,8 +138,7 @@ class TransportQueue extends TransportBase {
             (...args: any[]) => {
                 item.resolve(...args);
             },
-            // @ts-expect-error as it should return promise but returning direct void
-            (result: { status: HTTPStatusCode }, ...args: [any]) => {
+            (result: { status: number }, ...args: any[]) => {
                 if (this.authProvider && result && result.status === 401) {
                     this.addToQueue(item);
                     // if we are fetching a new token, wait
