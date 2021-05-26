@@ -1135,6 +1135,8 @@ class Subscription {
         // once subscribed, orphan finder will be notified.
         if (
             !this.connectionAvailable ||
+            this.latestActivity === undefined ||
+            this.inactivityTimeout === undefined ||
             this.inactivityTimeout === 0 ||
             this.currentState === this.STATE_UNSUBSCRIBED ||
             this.currentState === this.STATE_UNSUBSCRIBE_REQUESTED ||
@@ -1145,13 +1147,8 @@ class Subscription {
 
         // Follows the same pattern as the old library, not giving any grace period for receiving a heartbeat
         // if it was required, it could be added on here
-
-        // @ts-expect-error FIXME this.latestActivity  may be undefined since it was not
-        // initialized in the old code - verify whether it can be undefined at this point or initialized with 0 in  the constructor
         const diff = now - this.latestActivity;
 
-        // @ts-expect-error FIXME this.inactivityTimeout  may be undefined since it was not
-        // initialized in the old code - verify whether it can be undefined at this point or initialized with 0 in the constructor
         return this.inactivityTimeout * 1000 - diff;
     }
 }
