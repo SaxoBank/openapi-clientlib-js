@@ -5,16 +5,12 @@ import type {
     TransportTypes,
 } from '../types';
 
-interface Callback {
-    (): unknown;
-}
-
 export interface ReceiveCallback {
-    (data: StreamingMessage): void;
+    (data: StreamingMessage | StreamingMessage[]): void;
 }
 
 export interface StateChangeCallback {
-    (nextState: ConnectionState): void;
+    (nextState: ConnectionState | null): void;
 }
 
 export interface StreamingTransportOptions extends ConnectionOptions {
@@ -27,7 +23,7 @@ export interface StreamingTransportInterface {
 
     start(
         transportOptions: StreamingTransportOptions,
-        startCallback?: Callback,
+        startCallback?: () => void,
     ): void;
     stop(hasTransportError?: boolean): void;
     name: string;
@@ -41,12 +37,18 @@ export interface StreamingTransportInterface {
     ): void;
 
     onOrphanFound?(): unknown;
+
     getTransport?(): StreamingTransportInterface;
+
     onSubscribeNetworkError?: () => void;
+
     setReceivedCallback(callback: ReceiveCallback): void;
+
     setStateChangedCallback(callback: StateChangeCallback): void;
-    setUnauthorizedCallback(callback: Callback): void;
-    setConnectionSlowCallback(callback: Callback): void;
+
+    setUnauthorizedCallback(callback: () => void): void;
+
+    setConnectionSlowCallback(callback: () => void): void;
 }
 
 export type StreamingData =

@@ -58,7 +58,7 @@ export function findRetryDelay(
 
 type EmittedEvents = {
     [connectionConstants.EVENT_CONNECTION_STATE_CHANGED]: (
-        connectionState: types.ConnectionState,
+        connectionState: types.ConnectionState | null,
     ) => void;
     [connectionConstants.EVENT_STREAMING_FAILED]: () => void;
     [connectionConstants.EVENT_CONNECTION_SLOW]: () => void;
@@ -124,7 +124,8 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         connectionConstants.READABLE_CONNECTION_STATE_MAP;
 
     retryCount = 0;
-    connectionState: types.ConnectionState = this.CONNECTION_STATE_INITIALIZING;
+    connectionState: types.ConnectionState | null = this
+        .CONNECTION_STATE_INITIALIZING;
     baseUrl: string;
     authProvider: AuthProvider;
     transport: ITransport;
@@ -367,14 +368,14 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     /**
      * Handles connection state change
      */
-    private onConnectionStateChanged(nextState: types.ConnectionState) {
+    private onConnectionStateChanged(nextState: types.ConnectionState | null) {
         const connectionTransport = this.getActiveTransportName();
 
         if (nextState === this.connectionState) {
-            log.warn(LOG_AREA, 'Tring to set same state as current one', {
-                connectionState: this.READABLE_CONNECTION_STATE_MAP[
-                    this.connectionState
-                ],
+            log.warn(LOG_AREA, 'Trying to set same state as current one', {
+                connectionState:
+                    this.connectionState &&
+                    this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
                 mechanism: connectionTransport,
                 reconnecting: this.reconnecting,
             });
@@ -387,9 +388,9 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             LOG_AREA,
             'Connection state changed',
             {
-                changedTo: this.READABLE_CONNECTION_STATE_MAP[
-                    this.connectionState
-                ],
+                changedTo:
+                    this.connectionState &&
+                    this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
                 mechanism: connectionTransport,
                 reconnecting: this.reconnecting,
             },

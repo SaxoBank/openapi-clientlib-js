@@ -10,8 +10,6 @@ import type {
     StateChangeCallback,
 } from './types';
 
-type Callback = (...args: any[]) => unknown | void;
-
 const LOG_AREA = 'Connection';
 const DEFAULT_TRANSPORTS = [
     transportTypes.PLAIN_WEBSOCKETS,
@@ -63,7 +61,7 @@ const STATE_DISPOSED = 'connection-state-disposed';
  */
 class Connection {
     baseUrl: string;
-    failCallback: Callback;
+    failCallback: () => void;
     startCallback = NOOP;
     stateChangedCallback = NOOP;
     receiveCallback: ReceiveCallback = NOOP;
@@ -122,7 +120,7 @@ class Connection {
     }
 
     private ensureValidState = (
-        callback: (...args: any) => void,
+        callback: (...args: any[]) => void,
         callbackType: string,
         ...args: unknown[]
     ) => {
@@ -226,7 +224,7 @@ class Connection {
         return supported;
     }
 
-    setUnauthorizedCallback(callback: Callback) {
+    setUnauthorizedCallback(callback: () => void) {
         if (this.transport) {
             this.unauthorizedCallback = this.ensureValidState.bind(
                 this,
@@ -259,7 +257,7 @@ class Connection {
         }
     }
 
-    setConnectionSlowCallback(callback: Callback) {
+    setConnectionSlowCallback(callback: () => void) {
         if (this.transport) {
             this.connectionSlowCallback = this.ensureValidState.bind(
                 this,
@@ -272,7 +270,7 @@ class Connection {
         }
     }
 
-    start(callback: Callback) {
+    start(callback: () => void) {
         if (this.transport) {
             this.state = STATE_STARTED;
             this.startCallback = callback;
@@ -322,21 +320,15 @@ class Connection {
     }
 
     getQuery() {
-        if (this.transport) {
-            return this.transport.getQuery?.();
-        }
+        return this.transport?.getQuery?.();
     }
 
     onOrphanFound() {
-        if (this.transport?.onOrphanFound) {
-            this.transport.onOrphanFound();
-        }
+        this.transport?.onOrphanFound?.();
     }
 
     onSubscribeNetworkError() {
-        if (this.transport && this.transport.onSubscribeNetworkError) {
-            this.transport.onSubscribeNetworkError();
-        }
+        this.transport?.onSubscribeNetworkError?.();
     }
 
     /**

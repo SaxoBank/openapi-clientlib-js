@@ -10,6 +10,8 @@ import type {
     StreamingTransportOptions,
     StreamingTransportInterface,
     StreamingData,
+    StateChangeCallback,
+    ReceiveCallback,
 } from '../types';
 import type SignalR from '@microsoft/signalr';
 
@@ -18,8 +20,6 @@ declare global {
         signalrCore: typeof SignalR;
     }
 }
-
-type Callback = (...args: any[]) => any;
 
 type RawCoreSignalRStreamingMessage = {
     ReferenceId: string;
@@ -54,9 +54,8 @@ class SignalrCoreTransport implements StreamingTransportInterface {
     hasTransportError = false;
     state: ConnectionState = constants.CONNECTION_STATE_DISCONNECTED;
 
-    stateChangedCallback: (state: ConnectionState) => void = NOOP;
-    receivedCallback: (data: StreamingMessage) => void = NOOP;
-    errorCallback = NOOP;
+    stateChangedCallback: StateChangeCallback = NOOP;
+    receivedCallback: ReceiveCallback = NOOP;
     unauthorizedCallback = NOOP;
     setConnectionSlowCallback = NOOP;
     transportFailCallback;
@@ -245,7 +244,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         if (this.connection) {
             log.warn(
                 LOG_AREA,
-                'connection already exist, close the exisiting conection before starting new one',
+                'connection already exist, close the existing connection before starting new one',
             );
             return;
         }
@@ -603,19 +602,15 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         this.stateChangedCallback(state);
     }
 
-    setStateChangedCallback(callback: (state: ConnectionState) => void) {
+    setStateChangedCallback(callback: StateChangeCallback) {
         this.stateChangedCallback = callback;
     }
 
-    setReceivedCallback(callback: (data: StreamingMessage) => void) {
+    setReceivedCallback(callback: ReceiveCallback) {
         this.receivedCallback = callback;
     }
 
-    setErrorCallback(callback: Callback) {
-        this.errorCallback = callback;
-    }
-
-    setUnauthorizedCallback(callback: Callback) {
+    setUnauthorizedCallback(callback: () => void) {
         this.unauthorizedCallback = callback;
     }
 }

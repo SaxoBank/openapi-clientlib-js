@@ -13,11 +13,13 @@ import type { OAPIRequestResult } from '../../../../types';
 import { getRequestId } from '../../../../utils/request';
 import * as transportTypes from '../transportTypes';
 import type { DataFormat, StreamingMessage } from '../../types';
-import type { StreamingTransportInterface } from '../types';
+import type {
+    StreamingTransportInterface,
+    StateChangeCallback,
+    ReceiveCallback,
+} from '../types';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
-
-type Callback = (...args: any[]) => any;
 
 interface CustomError extends Error {
     payload?: any;
@@ -74,17 +76,20 @@ class WebsocketTransport implements StreamingTransportInterface {
     authorizePromise: Promise<OAPIRequestResult | null> | null = null;
     authToken: string | null = null;
     // Callbacks
-    failCallback: Callback;
+    failCallback;
     logCallback = NOOP;
-    stateChangedCallback: Callback = NOOP;
-    receivedCallback: (data: StreamingMessage[]) => void = NOOP;
+    stateChangedCallback: StateChangeCallback = NOOP;
+    receivedCallback: ReceiveCallback = NOOP;
     connectionSlowCallback = NOOP;
     startedCallback = NOOP;
     closeCallback = NOOP;
     unauthorizedCallback = NOOP;
     utf8Decoder!: TextDecoder;
 
-    constructor(baseUrl: string, failCallback: Callback = NOOP) {
+    constructor(
+        baseUrl: string,
+        failCallback: (data?: { message: string }) => void = NOOP,
+    ) {
         // Urls
         this.connectionUrl = `${baseUrl}/streamingws/connect`;
         this.authorizeUrl = `${baseUrl}/streamingws/authorize`;
@@ -374,19 +379,19 @@ class WebsocketTransport implements StreamingTransportInterface {
 
     isSupported = WebsocketTransport.isSupported;
 
-    setUnauthorizedCallback(callback: Callback) {
+    setUnauthorizedCallback(callback: () => void) {
         this.unauthorizedCallback = callback;
     }
 
-    setStateChangedCallback(callback: Callback) {
+    setStateChangedCallback(callback: StateChangeCallback) {
         this.stateChangedCallback = callback;
     }
 
-    setReceivedCallback(callback: Callback) {
+    setReceivedCallback(callback: ReceiveCallback) {
         this.receivedCallback = callback;
     }
 
-    setConnectionSlowCallback(callback: Callback) {
+    setConnectionSlowCallback(callback: () => void) {
         this.connectionSlowCallback = callback;
     }
 
@@ -446,7 +451,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         return this.authorizePromise;
     }
 
-    start(_options?: unknown, callback?: Callback) {
+    start(_options?: unknown, callback?: () => void) {
         this.startedCallback = callback || NOOP;
 
         if (!this.isSupported()) {

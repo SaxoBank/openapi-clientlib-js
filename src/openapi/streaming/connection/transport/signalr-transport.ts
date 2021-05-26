@@ -1,13 +1,14 @@
 import log from '../../../../log';
 import * as transportTypes from '../transportTypes';
 import * as constants from '../constants';
-import type { StreamingMessage } from '../../types';
-import type { StreamingTransportInterface } from '../types';
+import type {
+    StateChangeCallback,
+    StreamingTransportInterface,
+    ReceiveCallback,
+} from '../types';
 
 const LOG_AREA = 'SignalRTransport';
 const NOOP = () => {};
-
-type Callback = (...args: any) => any;
 
 /**
  * SignalR Transport which supports both webSocket and longPolling with internal fallback mechanism.
@@ -15,7 +16,7 @@ type Callback = (...args: any) => any;
 class SignalrTransport implements StreamingTransportInterface {
     name = transportTypes.LEGACY_SIGNALR;
     transport = null;
-    stateChangedCallback: (arg0?: number | null) => void | number = NOOP;
+    stateChangedCallback: StateChangeCallback = NOOP;
     unauthorizedCallback = NOOP;
     baseUrl: string;
     connectionUrl: string;
@@ -94,23 +95,23 @@ class SignalrTransport implements StreamingTransportInterface {
         return true;
     }
 
-    setUnauthorizedCallback(callback: Callback) {
+    setUnauthorizedCallback(callback: () => void) {
         this.unauthorizedCallback = callback;
     }
 
-    setStateChangedCallback(callback: Callback) {
+    setStateChangedCallback(callback: StateChangeCallback) {
         this.stateChangedCallback = callback;
     }
 
-    setReceivedCallback(callback: (data: StreamingMessage) => any) {
+    setReceivedCallback(callback: ReceiveCallback) {
         this.connection.received(callback);
     }
 
-    setConnectionSlowCallback(callback: Callback) {
+    setConnectionSlowCallback(callback: () => void) {
         this.connection.connectionSlow(callback);
     }
 
-    start(options: SignalR.ConnectionOptions, callback?: Callback) {
+    start(options: SignalR.ConnectionOptions, callback?: () => void) {
         this.connection.start(options, callback || NOOP);
     }
 
