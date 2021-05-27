@@ -24,6 +24,10 @@ interface Options {
      */
     credentials?: RequestCredentials;
     useXHttpMethodOverride?: boolean;
+    /**
+     * An AbortSignal to set request's signal.
+     */
+    signal?: AbortSignal | null;
 }
 
 const LOG_AREA = 'Fetch';
@@ -230,6 +234,7 @@ function localFetch<Response = any>(
     const cache = options?.cache;
     const credentials = options?.credentials || 'include';
     const useXHttpMethodOverride = options?.useXHttpMethodOverride;
+    const signal = options?.signal;
 
     // encode objects. Batch calls come through as strings.
     if (shouldBeStringified(body)) {
@@ -262,7 +267,7 @@ function localFetch<Response = any>(
         });
     }, 30000);
 
-    return fetch(url, { headers, method, body, credentials })
+    return fetch(url, { headers, method, body, credentials, signal })
         .catch(convertFetchReject.bind(null, url, body, timerId))
         .then(convertFetchSuccess.bind(null, url, body, timerId));
 }
