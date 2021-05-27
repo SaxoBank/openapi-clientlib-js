@@ -1,3 +1,10 @@
+### v9.0.0
+
+#### Breaking
+- micro-emitter becomes a class and needs to be instantiated instead of mixed into an existing object. The class is now exported using the pascal case - MicroEmitter
+- Removed typo - TransportPutPatchDiagnositicsQueue renamed to TransportPutPatchDiagnosticsQueue
+
+
 ### v8.4.0
 - Add pause, resume support to freeze subscriptions
 
@@ -100,7 +107,7 @@
 
 ### v6.1.0
 
-- Add TransportPutPatchDiagnositicsQueue which waits on any put/patch until a diagnostics call has been made to check if a proxy rejects it and revert to POST instead.
+- Add TransportPutPatchDiagnosticsQueue which waits on any put/patch until a diagnostics call has been made to check if a proxy rejects it and revert to POST instead.
 
 #### v6.0.4
 

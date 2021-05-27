@@ -1,5 +1,7 @@
 node_modules
 libs
 dist
+esnext
+coverage
 doc
 output-template.js
