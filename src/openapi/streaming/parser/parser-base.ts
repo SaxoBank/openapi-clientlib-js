@@ -30,7 +30,7 @@ abstract class ParserBase {
         _schemaName: string,
     ): unknown;
 
-    abstract stringify(_data: unknown, _schemaName?: string): string | null;
+    abstract stringify(_data: unknown, _schemaName: string): string | null;
 
     abstract getFormatName(): string;
 }
