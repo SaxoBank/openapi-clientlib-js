@@ -1,14 +1,14 @@
-import microEmitter from './micro-emitter';
+import EventEmitter from './micro-emitter';
+import type { IEventEmitter } from './micro-emitter';
 
 describe('microEmitter', () => {
-    let eventEmitter;
-    let spyTest;
-    let spyTest1;
-    let spyOrange;
+    let eventEmitter: IEventEmitter<any>;
+    let spyTest: jest.Mock;
+    let spyTest1: jest.Mock;
+    let spyOrange: jest.Mock;
 
     beforeEach(() => {
-        eventEmitter = {};
-        microEmitter.mixinTo(eventEmitter);
+        eventEmitter = new EventEmitter<any>();
         spyTest = jest.fn().mockName('test');
         spyTest1 = jest.fn().mockName('test1');
         spyOrange = jest.fn().mockName('orange');
@@ -157,13 +157,13 @@ describe('microEmitter', () => {
     });
 
     it('can cope with multiple calls to off', () => {
-        eventEmitter.on('test', spyTest);
-        eventEmitter.on('test', spyTest1);
-        eventEmitter.off('test', spyTest1);
-        eventEmitter.off('test', spyTest1);
-        eventEmitter.off('test', spyTest1);
-
-        eventEmitter.trigger('test');
+        eventEmitter
+            .on('test', spyTest)
+            .on('test', spyTest1)
+            .off('test', spyTest1)
+            .off('test', spyTest1)
+            .off('test', spyTest1)
+            .trigger('test');
 
         expect(spyTest.mock.calls.length).toEqual(1);
         expect(spyTest1.mock.calls.length).toEqual(0);
@@ -186,8 +186,7 @@ describe('microEmitter', () => {
     });
 
     it('triggers a one() registered subscriber once', () => {
-        eventEmitter.one('test', spyTest);
-        eventEmitter.on('test', spyTest1);
+        eventEmitter.one('test', spyTest).on('test', spyTest1);
 
         eventEmitter.trigger('test');
         eventEmitter.trigger('test');

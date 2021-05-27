@@ -1,3 +1,9 @@
+### v9.0.0
+
+#### Breaking
+- micro-emitter becomes a class and needs to be instantiated instead of mixed into an existing object. The class is now exported using the pascal case - MicroEmitter
+- Removed typo - TransportPutPatchDiagnositicsQueue renamed to TransportPutPatchDiagnosticsQueue
+
 ### v8.4.2
 - Add support for using fetch signal
 

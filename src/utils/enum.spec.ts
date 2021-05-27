@@ -88,6 +88,17 @@ describe('utils enum', () => {
             expect(union.Two).toBe(true);
             expect(union.Three).toBe(true);
         });
+
+        it('with mixed values', () => {
+            const union = enumUtils.union('Two', {
+                One: true,
+                Three: true,
+            });
+
+            expect(union.One).toBe(true);
+            expect(union.Two).toBe(true);
+            expect(union.Three).toBe(true);
+        });
     });
 
     describe('exclusion', () => {
@@ -111,7 +122,7 @@ describe('utils enum', () => {
 
         it('becomes empty if all properties excluded', () => {
             const exclusion = enumUtils.exclusion(
-                'One, Two',
+                { One: true, Two: true },
                 'One, Two, Three, Four',
             );
 

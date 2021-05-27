@@ -1,78 +1,49 @@
-/**
- * @module saxo/utils/enum
- * @ignore
- */
-
 import { extend } from './object';
 
-// -- Local variables section --
-
-// -- Local methods section --
-
-// -- Exported methods section --
+type ObjectEnum<T extends string = string> = Record<T, boolean>;
+export type Enum = string | ObjectEnum;
 
 /**
- * @namespace saxo.utils.enum
+ * Converts a comma separated strings or an array of strings to an object with each string being the property name.
  */
+function toObject<T extends string = string, R extends string = T>(
+    values: T | Array<T> | ObjectEnum<R>,
+): ObjectEnum<R> {
+    const obj = {} as ObjectEnum;
 
-/**
- * Converts from a comma separated object or an array of strings to an object with each string being the property name.
- * @alias saxo.utils.enum.toObject
- * @param {Array.<string>|string|Object} values
- * @returns {Object}
- * @example
- * var enumUtils = require("saxo/utils/enum");    // AMD
- * var enumUtils = saxo.utils.enum;                // Namespaces
- * var obj = enumUtils.toObject("DeciPips,Percentage");
- * if (obj.DeciPips) {
- *     assert("We should reach here");
- * }
- * var otherFormats = enumUtils.toObject(["DeciPips", "Percentage"]);
- */
-function toObject(values) {
     if (Array.isArray(values)) {
-        const obj = {};
-        for (let i = 0, l = values.length; i < l; i++) {
-            const value = values[i];
+        values.forEach((value) => {
             if (value) {
                 obj[value] = true;
             }
-        }
+        });
         return obj;
     }
-    if (typeof values !== 'string') {
-        return values;
+
+    if (typeof values === 'string') {
+        const valueList = values.split(',');
+        valueList.forEach((value) => {
+            const trimmedValue = value.trim();
+            if (trimmedValue) {
+                obj[trimmedValue] = true;
+            }
+        });
+
+        return obj;
     }
-    const obj = {};
-    const valueList = values.split(',');
-    for (let i = 0, l = valueList.length; i < l; i++) {
-        const value = valueList[i].trim();
-        if (value) {
-            obj[value] = true;
-        }
-    }
-    return obj;
+
+    return values;
 }
 
 /**
  * Makes an enum definition.
- * @alias saxo.utils.enum.makeDefinition
- * @param {Array} values
- * @returns {Object}
- * @example
- * var enum = enumUtils.makeDefinition(["Percentage", "DeciPips"]);
- * // enum =
- * //     {
- * //     "Percentage": "Percentage",
- * //     "DeciPips": "DeciPips"
- * //     }
  */
-function makeDefinition(values) {
-    const enumDefinition = {};
+function makeDefinition<T extends string | number>(values: T[]): Record<T, T> {
+    const enumDefinition = {} as Record<T, T>;
 
-    for (let i = 0, l = values.length; i < l; i++) {
-        enumDefinition[values[i]] = values[i];
-    }
+    values.forEach((value) => {
+        enumDefinition[value] = value;
+    });
 
     Object.freeze(enumDefinition);
 
@@ -81,14 +52,8 @@ function makeDefinition(values) {
 
 /**
  * Produces the union of two enumerations.
- * @param {Array.<string>|string|Object} enumA
- * @param {Array.<string>|string|Object} enumB
- * @returns {Object}
- * @example
- * var enum = enumUtils.union("Percentage", { DeciPips: true });
- * // enum == { Percentage: true, DeciPips: true }
  */
-function union(enumA, enumB) {
+function union(enumA: Enum, enumB: Enum) {
     enumA = toObject(enumA);
     enumB = toObject(enumB);
     return extend({}, enumA, enumB);
@@ -96,17 +61,13 @@ function union(enumA, enumB) {
 
 /**
  * Returns an enumeration of items in enumA that are not in enumB.
- * @param {Array.<string>|string|Object} enumA
- * @param {Array.<string>|string|Object} enumB
- * @returns {Object}
- * @example
- * var enum = enumUtils.union("Percentage,DeciPips", { DeciPips: true });
- * // enum == { Percentage: true }
+ * @param enumA - enumA
+ * @param enumB - enumB
  */
-function exclusion(enumA, enumB) {
+function exclusion(enumA: Enum, enumB: Enum) {
     enumA = toObject(enumA);
     enumB = toObject(enumB);
-    const enumResult = {};
+    const enumResult: ObjectEnum = {};
 
     for (const value in enumA) {
         if (
@@ -122,13 +83,8 @@ function exclusion(enumA, enumB) {
 
 /**
  * Converts an object representation of an enumeration to a string
- * @param {Object} enumA
- * @returns {String}
- * @example
- * var str = enumUtils.union({ DeciPips: true, Percentage: true });
- * // str == "DeciPips, Percentage"
  */
-function toString(enumA) {
+function toString(enumA: ObjectEnum) {
     const items = [];
     for (const key in enumA) {
         if (enumA.hasOwnProperty(key) && enumA[key]) {
@@ -137,7 +93,5 @@ function toString(enumA) {
     }
     return items.join(', ');
 }
-
-// -- Export section --
 
 export { toObject, makeDefinition, exclusion, union, toString };

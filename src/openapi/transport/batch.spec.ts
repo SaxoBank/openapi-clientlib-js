@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import {
     setTimeout,
     multiline,
@@ -11,15 +12,15 @@ import TransportBatch from './batch';
 
 jest.mock('../../utils/function', () => {
     return {
-        nextTick(fn) {
-            global.setTimeout(fn);
+        nextTick(fn: () => void) {
+            global.setTimeout(fn, 0);
         },
     };
 });
 
 describe('openapi TransportBatch', () => {
     const validBaseUrl = 'localhost/';
-    let transport;
+    let transport: any;
     let transportBatch;
 
     beforeEach(() => {
@@ -29,10 +30,11 @@ describe('openapi TransportBatch', () => {
 
         jest.spyOn(Math, 'random').mockReturnValue(0.1);
 
+        // @ts-ignore
         global.location = {
             host: 'localhost',
         };
-
+        // @ts-ignore
         global.crypto = {
             getRandomValues: jest.fn(),
         };
@@ -46,6 +48,7 @@ describe('openapi TransportBatch', () => {
             });
         }).toThrow();
         expect(function () {
+            // @ts-expect-error testing invalid argument
             transportBatch = new TransportBatch(null, validBaseUrl, {});
         }).toThrow();
         expect(function () {
@@ -230,7 +233,7 @@ describe('openapi TransportBatch', () => {
                     '',
                 ),
                 cache: false,
-                requestId: 1,
+                requestId: '1',
             },
         ]);
 
@@ -320,7 +323,7 @@ describe('openapi TransportBatch', () => {
                     '',
                 ),
                 cache: false,
-                requestId: 1,
+                requestId: '1',
             },
         ]);
     });
@@ -377,7 +380,7 @@ describe('openapi TransportBatch', () => {
                     '',
                 ),
                 cache: false,
-                requestId: 1,
+                requestId: '1',
             },
         ]);
 
@@ -385,14 +388,14 @@ describe('openapi TransportBatch', () => {
     });
 
     it('appends extended asset types header if found in at least one subrequest', function () {
-        transportBatch = new TransportBatch(transport, validBaseUrl, null, {
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
         transportBatch.get(
             'port',
             'ref/v1/instruments/details/{InstrumentId}/{Type}',
             { InstrumentId: 1518824, Type: 'CfdOnFutures' },
-            { headers: { MyHeader: true } },
+            { headers: { MyHeader: 'true' } },
         );
         transportBatch.get(
             'port',
@@ -440,7 +443,7 @@ describe('openapi TransportBatch', () => {
                     '',
                 ),
                 cache: false,
-                requestId: 1,
+                requestId: '1',
             },
         ]);
 
@@ -448,7 +451,7 @@ describe('openapi TransportBatch', () => {
     });
 
     it('allows not having any authentication passed in and picks it up off the calls', function () {
-        transportBatch = new TransportBatch(transport, validBaseUrl, null, {
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
         transportBatch.get(
@@ -500,7 +503,7 @@ describe('openapi TransportBatch', () => {
                     '',
                 ),
                 cache: false,
-                requestId: 1,
+                requestId: '1',
             },
         ]);
 
@@ -1010,6 +1013,7 @@ describe('openapi TransportBatch', () => {
                 '--+',
                 'Content-Type:application/http; msgtype=response',
                 '',
+                // eslint-disable-next-line max-lines
                 'HTTP/1.1 299 Edge Case',
                 'Location: ',
                 'X-Request-Id:5',
@@ -1129,7 +1133,7 @@ describe('openapi TransportBatch', () => {
                     '',
                 ),
                 cache: false,
-                requestId: 1,
+                requestId: '1',
             },
         ]);
     });
@@ -1181,15 +1185,15 @@ describe('openapi TransportBatch', () => {
                     '',
                 ),
                 cache: false,
-                requestId: 1,
+                requestId: '1',
             },
         ]);
     });
 
     it('disposes okay', () => {
         transportBatch = new TransportBatch(transport, validBaseUrl);
-        transportBatch.get();
-        transportBatch.get();
+        transportBatch.get('foo', 'bar');
+        transportBatch.get('foo', 'bar');
         transportBatch.dispose();
         expect(transportBatch.queue).toEqual([]);
         expect(transport.dispose.mock.calls.length).toEqual(1);

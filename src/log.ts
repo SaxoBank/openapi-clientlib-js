@@ -1,98 +1,104 @@
-/**
- * The Shared JS Log. use it to log or listen to log messages.
- * Use the {@link MicroEmitter} mixed into log to listen for log messages.
- * When using namespaces, access with `saxo.log`.
- * @module saxo/log
- * @ignore
- */
+import MicroEmitter from './micro-emitter';
 
-import emitter from './micro-emitter';
+const ERROR = 'error';
+const WARN = 'warn';
+const INFO = 'info';
+const DEBUG = 'debug';
 
-// -- Local variables section --
+type EventNames = typeof ERROR | typeof WARN | typeof INFO | typeof DEBUG;
 
-// -- Local methods section --
+type EmittedEvents = {
+    [name in EventNames]: (
+        logArea: string,
+        message: string,
+        context?: Record<string, any>,
+        options?: Record<string, any>,
+    ) => void;
+};
 
-// -- Exported methods section --
+type LogParams = Parameters<EmittedEvents[typeof ERROR]>;
 
 /**
  * The shared js log, which allows posting messages and listening to them.
- * @namespace saxo.log
- * @mixes MicroEmitter
  * @example
  * // to log
+ * ```ts
  * log.warn("Area", "Warning... such and so...", { data: context});
- *
+ * ```
  * // to listen to all logs on the console
+ *
+ * ```ts
  * log.on(log.DEBUG, console.debug.bind(console));
  * log.on(log.INFO, console.info.bind(console));
  * log.on(log.WARN, console.info.bind(console));
  * log.on(log.ERROR, console.error.bind(console));
+ * ```
  */
-const log = {};
+export class Log extends MicroEmitter<EmittedEvents> {
+    /**
+     * The Debug event constant.
+     */
+    readonly DEBUG = DEBUG;
+    /**
+     * The info event constant.
+     */
+    readonly INFO = INFO;
+    /**
+     * The warn event constant.
+     */
+    readonly WARN = WARN;
+    /**
+     * the error event constant.
+     */
+    readonly ERROR = ERROR;
 
-/**
- * The Debug event constant.
- * @alias saxo.log.DEBUG
- */
+    constructor() {
+        super();
+        this.error = this.error.bind(this);
+        this.warn = this.warn.bind(this);
+        this.info = this.info.bind(this);
+        this.debug = this.debug.bind(this);
+    }
 
-log.DEBUG = 'debug';
-/**
- * The info event constant.
- * @alias saxo.log.INFO
- */
-log.INFO = 'info';
+    /**
+     * @param area - The area of the code e.g. "Streaming" or "TransportBatch".
+     * @param message - The error message e.g. "Something has gone wrong".
+     * @param context - (optional) Data associated with the event.
+     * @param options - (optional) Options object
+     */
+    error(...args: LogParams) {
+        return this.trigger(this.ERROR, ...args);
+    }
 
-/**
- * The warn event constant.
- * @alias saxo.log.WARN
- */
-log.WARN = 'warn';
+    /**
+     * @param area - The area of the code e.g. "Streaming" or "TransportBatch".
+     * @param message - The error message e.g. "Something has gone wrong".
+     * @param context - (optional) Data associated with the event.
+     * @param options - (optional) Options object
+     */
+    warn(...args: LogParams) {
+        return this.trigger(this.WARN, ...args);
+    }
 
-/**
- * the error event constant.
- * @alias saxo.log.ERROR
- */
-log.ERROR = 'error';
+    /**
+     * @param area - The area of the code e.g. "Streaming" or "TransportBatch".
+     * @param message - The error message e.g. "Something has gone wrong".
+     * @param context - (optional) Data associated with the event.
+     * @param options - (optional) Options object
+     */
+    info(...args: LogParams) {
+        return this.trigger(this.INFO, ...args);
+    }
 
-emitter.mixinTo(log);
+    /**
+     * @param area - The area of the code e.g. "Streaming" or "TransportBatch".
+     * @param message - The error message e.g. "Something has gone wrong".
+     * @param context - (optional) Data associated with the event.
+     * @param options - (optional) Options object
+     */
+    debug(...args: LogParams) {
+        return this.trigger(this.DEBUG, ...args);
+    }
+}
 
-/**
- * @function
- * @alias saxo.log.debug
- * @param {string} area - The area of the code e.g. "Streaming" or "TransportBatch".
- * @param {string} message - The error message e.g. "Something has gone wrong".
- * @param {Object|string} [data] - Data associated with the event.
- */
-log.debug = log.trigger.bind(log, log.DEBUG);
-
-/**
- * @function
- * @alias saxo.log.info
- * @param {string} area - The area of the code e.g. "Streaming" or "TransportBatch".
- * @param {string} message - The error message e.g. "Something has gone wrong".
- * @param {Object|string} [data] - Data associated with the event.
- */
-log.info = log.trigger.bind(log, log.INFO);
-
-/**
- * @function
- * @alias saxo.log.warn
- * @param {string} area - The area of the code e.g. "Streaming" or "TransportBatch".
- * @param {string} message - The error message e.g. "Something has gone wrong".
- * @param {Object|string} [data] - Data associated with the event.
- * @param {boolean} isPersist - if true then log is always persisted
- */
-log.warn = log.trigger.bind(log, log.WARN);
-
-/**
- * @function
- * @alias saxo.log.error
- * @param {string} area - The area of the code e.g. "Streaming" or "TransportBatch".
- * @param {string} message - The error message e.g. "Something has gone wrong".
- * @param {Object|string} [data] - Data associated with the event.
- */
-log.error = log.trigger.bind(log, log.ERROR);
-
-// -- Export section --
-
-export default log;
+export default new Log();

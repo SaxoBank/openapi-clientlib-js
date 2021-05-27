@@ -1,8 +1,8 @@
 import { de_ch, da_dk, fr_fr, ar_eg, hi_in } from '../test/locales';
-import PriceFormatting from './price-formatting';
+import PriceFormatting from '.';
 import priceFormatOptions from './format-options';
 
-function _multiply(s, count) {
+function _multiply(s: string, count: number) {
     let res = '';
     for (let i = 0; i < count; i++) {
         res += s;
@@ -66,8 +66,11 @@ describe('price-formatting format', () => {
     });
 
     it('requires decimals to be set and positive', () => {
+        // @ts-expect-error
         expect(() => priceFormatting.format(1, null)).toThrow();
+        // @ts-expect-error
         expect(() => priceFormatting.format(1, undefined)).toThrow();
+        // @ts-expect-error
         expect(() => priceFormatting.format(1, '0')).toThrow();
         expect(() => priceFormatting.format(1, -1)).toThrow();
     });
@@ -1321,6 +1324,76 @@ describe('price-formatting format', () => {
                 '<a>{Pre}</a><b>{First}</b><c>{Pips}</c><d>{DeciPips}</d><e>{Post}</e>',
             ),
         ).toEqual('<a>-</a><b>1.98</b><c>76</c><d>5</d><e></e>');
+    });
+
+    it('handles no-numeric inputs when formatting parts', () => {
+        expect(priceFormatting.formatPriceParts(undefined, 4))
+            .toMatchInlineSnapshot(`
+            Object {
+              "DeciPips": "",
+              "First": "",
+              "Pips": "",
+              "Post": "",
+              "Pre": "",
+            }
+        `);
+
+        expect(
+            priceFormatting.formatPriceParts(null, 4, [
+                priceFormatOptions.AllowTwoDecimalPips,
+                priceFormatOptions.FormatAsPips,
+            ]),
+        ).toMatchInlineSnapshot(`
+            Object {
+              "DeciPips": "",
+              "First": "",
+              "Pips": "",
+              "Post": "",
+              "Pre": "",
+            }
+        `);
+
+        expect(
+            priceFormatting.formatPriceParts('fooo', 0, [
+                priceFormatOptions.DeciPipsFraction,
+                priceFormatOptions.DeciPipsSpaceForZero,
+            ]),
+        ).toMatchInlineSnapshot(`
+            Object {
+              "DeciPips": "",
+              "First": "",
+              "Pips": "",
+              "Post": "",
+              "Pre": "",
+            }
+        `);
+    });
+
+    it('handles numeric strings when formatting price parts', () => {
+        expect(priceFormatting.formatPriceParts('1.9876', 4))
+            .toMatchInlineSnapshot(`
+            Object {
+              "DeciPips": "",
+              "First": "1.98",
+              "Pips": "76",
+              "Post": "",
+              "Pre": "",
+            }
+        `);
+        expect(
+            priceFormatting.formatPriceParts('1543.15', 1, [
+                priceFormatOptions.DeciPipsDecimalSeparator,
+                priceFormatOptions.AllowDecimalPips,
+            ]),
+        ).toMatchInlineSnapshot(`
+            Object {
+              "DeciPips": ".5",
+              "First": "1,54",
+              "Pips": "3.1",
+              "Post": "",
+              "Pre": "",
+            }
+        `);
     });
 
     it('supports parts', () => {

@@ -11,9 +11,9 @@ import TransportAuth from './auth';
 
 describe('openapi TransportAuth', () => {
     const noop = () => {};
-    let transportAuth;
-    let fetch;
-    let authProvider;
+    let transportAuth: TransportAuth;
+    let fetch: ReturnType<typeof mockFetch>;
+    let authProvider: any;
 
     beforeEach(() => {
         installClock();
@@ -24,21 +24,26 @@ describe('openapi TransportAuth', () => {
         uninstallClock();
         if (transportAuth) {
             transportAuth.dispose();
+            // @ts-expect-error this can not be null, just being used to flush out
             transportAuth = null;
         }
     });
 
     it('throws an exception if created without a base url and auth provider', () => {
         expect(() => {
+            // @ts-expect-error testing error throw
             new TransportAuth();
         }).toThrow();
         expect(() => {
+            // @ts-expect-error testing error throw
             new TransportAuth('');
         }).toThrow();
         expect(() => {
+            // @ts-expect-error testing error throw
             new TransportAuth('baseUrl');
         }).toThrow();
         expect(() => {
+            // @ts-expect-error testing error throw
             new TransportAuth(null, {});
         }).toThrow();
     });
@@ -92,7 +97,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             );
@@ -105,7 +110,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             );
@@ -125,7 +130,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -134,7 +139,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -143,7 +148,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -152,7 +157,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                         'Content-Type': expect.any(String),
                     },
                 }),
@@ -162,7 +167,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -184,7 +189,7 @@ describe('openapi TransportAuth', () => {
                 expect.objectContaining({
                     headers: {
                         Authorization: 'Bearer TOKEN',
-                        'X-Request-Id': expect.any(Number),
+                        'X-Request-Id': expect.any(String),
                     },
                 }),
             ]);
@@ -200,7 +205,6 @@ describe('openapi TransportAuth', () => {
             ).toBe(undefined);
 
             transportAuth.post('service_path', 'url').catch(noop);
-            transportAuth.state = 1;
             fetch.resolve(401, {
                 error: 401,
                 message: 'Authorization exception',
@@ -231,7 +235,6 @@ describe('openapi TransportAuth', () => {
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 1);
                     transportAuth.post('service_path', 'url').catch(catchError);
-                    transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
                         message: 'Authorization exception',
@@ -248,7 +251,6 @@ describe('openapi TransportAuth', () => {
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 2);
                     transportAuth.post('service_path', 'url').catch(catchError);
-                    transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
                         message: 'Authorization exception',
@@ -266,9 +268,7 @@ describe('openapi TransportAuth', () => {
                         Array [
                           Array [
                             Object {
-                              "headers": Object {
-                                "get": [Function],
-                              },
+                              "headers": Headers {},
                               "response": Object {
                                 "error": 401,
                                 "message": "Authorization exception",
@@ -312,7 +312,6 @@ describe('openapi TransportAuth', () => {
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 1);
                     transportAuth.post('service_path', 'url').catch(noop);
-                    transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
                         message: 'Authorization exception',
@@ -321,7 +320,6 @@ describe('openapi TransportAuth', () => {
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 2);
                     transportAuth.post('service_path', 'url').catch(noop);
-                    transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
                         message: 'Authorization exception',
@@ -339,7 +337,6 @@ describe('openapi TransportAuth', () => {
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 3);
                     transportAuth.post('service_path', 'url-2').catch(noop);
-                    transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
                         message: 'Authorization exception',
@@ -376,7 +373,6 @@ describe('openapi TransportAuth', () => {
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 1);
                     transportAuth.post('service_path', 'url').catch(noop);
-                    transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
                         message: 'Authorization exception',
@@ -385,7 +381,6 @@ describe('openapi TransportAuth', () => {
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 2);
                     transportAuth.post('service_path', 'url').catch(noop);
-                    transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
                         message: 'Authorization exception',
@@ -430,7 +425,6 @@ describe('openapi TransportAuth', () => {
                 () => {
                     authProvider.getExpiry.mockImplementation(() => 1);
                     transportAuth.post('service_path', 'url').catch(noop);
-                    transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
                         message: 'Authorization exception',
@@ -441,7 +435,6 @@ describe('openapi TransportAuth', () => {
 
                     authProvider.getExpiry.mockImplementation(() => 2);
                     transportAuth.post('service_path', 'url').catch(noop);
-                    transportAuth.state = 1;
                     fetch.resolve(401, {
                         error: 401,
                         message: 'Authorization exception',
@@ -461,8 +454,11 @@ describe('openapi TransportAuth', () => {
             transportAuth = new TransportAuth('localhost', authProvider);
 
             transportAuth.authorizationErrors = {
-                'new-url': [{ authExpiry: 1 }],
-                'new-url-2': [{ authExpiry: 1 }, { authExpiry: 2 }],
+                'new-url': [{ authExpiry: 1, added: 0 }],
+                'new-url-2': [
+                    { authExpiry: 1, added: 0 },
+                    { authExpiry: 2, added: 0 },
+                ],
             };
 
             expect(
@@ -480,8 +476,11 @@ describe('openapi TransportAuth', () => {
             transportAuth = new TransportAuth('localhost', authProvider);
 
             transportAuth.authorizationErrors = {
-                'new-url': [{ authExpiry: 1 }],
-                'new-url-2': [{ authExpiry: 1 }, { authExpiry: 2 }],
+                'new-url': [{ authExpiry: 1, added: 0 }],
+                'new-url-2': [
+                    { authExpiry: 1, added: 0 },
+                    { authExpiry: 2, added: 0 },
+                ],
             };
 
             expect(

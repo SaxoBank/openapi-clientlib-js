@@ -1,31 +1,38 @@
-/**
- * Parser Base
- * @constructor
- */
-function ParserBase(name, engine = null) {
-    // Parser name, used for lookup.
-    this.name = name;
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import type * as ProtoBuf from 'protobufjs';
 
-    // Optional parsing engine.
-    this.engine = engine;
+abstract class ParserBase {
+    getSchemaNames(): string[] | undefined {
+        return undefined;
+    }
+
+    getSchemaType(
+        _schemaName: string,
+        _schemaType: string,
+    ): ProtoBuf.Type | null | undefined {
+        return undefined;
+    }
+
+    getSchemaName(): string | null | undefined {
+        return undefined;
+    }
+
+    getSchema(_schemaName: string): ProtoBuf.IParserResult | undefined {
+        return undefined;
+    }
+
+    addSchema(_schema: string, _schemaName: string): boolean | undefined {
+        return undefined;
+    }
+
+    abstract parse(
+        _data: string | Uint8Array | null | undefined,
+        _schemaName: string,
+    ): unknown;
+
+    abstract stringify(_data: unknown, _schemaName: string): string | null;
+
+    abstract getFormatName(): string;
 }
-
-ParserBase.prototype.getSchemaNames = function () {};
-
-ParserBase.prototype.getSchemaType = function (schemaName, schemaType) {};
-
-ParserBase.prototype.getSchemaName = function (name) {};
-
-ParserBase.prototype.getSchema = function (name) {};
-
-ParserBase.prototype.addSchema = function (schema, name) {};
-
-ParserBase.prototype.parse = function (data, schemaName) {};
-
-ParserBase.prototype.stringify = function (data, schemaName) {};
-
-ParserBase.prototype.getFormatName = function () {
-    return this.prototype.FORMAT_NAME;
-};
 
 export default ParserBase;

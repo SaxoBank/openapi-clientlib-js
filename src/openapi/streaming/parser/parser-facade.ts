@@ -1,25 +1,34 @@
 import { extend } from '../../../utils/object';
 import ParserJson from './parser-json';
+import type ParserBase from './parser-base';
 
-const parserCreators = {
+type EnginesMap = Record<string, unknown>;
+type ParsersMap = Record<string, ParserBase>;
+type ParserCreatorsMap = Record<string, new (...args: any) => ParserBase>;
+
+const parserCreators: ParserCreatorsMap = {
     [ParserJson.FORMAT_NAME]: ParserJson,
 };
 
 /**
  * Map of engines per format. ie
- * { 'application/x-protobuf: protobuf }
+ * `{ 'application/x-protobuf: protobuf }`
  */
-const enginesMap = {};
+const enginesMap: EnginesMap = {};
 
 /**
  * Map of parsers per format. ie.
- * { 'application/x-protobuf: ParserProtobuf }
+ * `{ 'application/x-protobuf: ParserProtobuf }`
  */
-const parsersMap = {};
+const parsersMap: ParsersMap = {};
 
 const defaultParser = ParserJson;
 
-const getId = (format, servicePath, url) => {
+const getId = (
+    format: string | undefined | null,
+    servicePath: string,
+    url: string,
+) => {
     if (format === ParserJson.FORMAT_NAME || !format) {
         // Makes sure that all JSON formats share same single parser.
         return ParserJson.FORMAT_NAME;
@@ -32,66 +41,70 @@ const getId = (format, servicePath, url) => {
 /**
  * Parser facade for multiple parsing solution.
  */
-const ParserFacade = {};
+const ParserFacade = {
+    /**
+     * Add parser engine for given endpoint.
+     * Use case:
+     *     Protobuf parsing, where protobufjs library is imported in userspace and provided as configuration to openapi-clientlib.
+     *     Allows for keeping openapi-library size low, and configuring only 'what we need' for given platform.
+     *     For example, omitting protobuf from phone platform.
+     *
+     * @param engines - The engine map, where key is format name and value is engine object/constructor.
+     *     Example: `{ 'applications/x-protobuf': protobuf }`
+     */
+    addEngines(engines: EnginesMap) {
+        extend(enginesMap, engines);
+    },
 
-/**
- * Add parser engine for given endpoint.
- * Use case:
- *     Protobuf parsing, where protobufjs library is imported in userspace and provided as configuration to openapi-clientlib.
- *     Allows for keeping openapi-library size low, and configuring only 'what we need' for given platform.
- *     For example, omitting protobuf from phone platform.
- *
- * @param {Object} map - The engine map, where key is format name and value is engine object/constructor.
- *     Example: { 'applications/x-protobuf': protobuf }
- */
-ParserFacade.addEngines = function (map) {
-    extend(enginesMap, map);
-};
+    /**
+     * Add parsing methods.
+     * @param parsersCreatorsMap - The parser map, where key is format name and value is factory for parser.
+     */
+    addParsers(parsersCreatorsMap: ParserCreatorsMap) {
+        extend(parserCreators, parsersCreatorsMap);
+    },
 
-/**
- * Add parsing methods.
- * @param {Object} map - The parser map, where key is format name and value is factory for parser.
- */
-ParserFacade.addParsers = function (map) {
-    extend(parserCreators, map);
-};
+    getDefaultFormat() {
+        return defaultParser.FORMAT_NAME;
+    },
 
-ParserFacade.getDefaultFormat = function () {
-    return defaultParser.FORMAT_NAME;
-};
+    /**
+     * Check if given format is supported by available parser.
+     * @param format - Data format ie. application/json
+     * @returns Returns true if format is supported. Returns false if format is not supported by available parsing methods.
+     */
+    isFormatSupported(format?: string | null) {
+        return Boolean(parserCreators[String(format)]);
+    },
 
-/**
- * Check if given format is supported by available parser.
- * @param {String} format - Data format ie. application/json
- * @return {Boolean} - Returns true if format is supported. Returns false if format is not supported by available parsing methods.
- */
-ParserFacade.isFormatSupported = function (format) {
-    return Boolean(parserCreators[format]);
-};
+    /**
+     * Get parser for given format name, service path and url.
+     * Parsers are mapped per name, service and url, to keep schemas per endpoints.
+     * Such approach is required as schemas are currently not namespaced and reuse similar message names with different structures.
+     * Due to that, we need to keep per endpoint parsers for protobuf parsing type.
+     *
+     * @param format - The format name. ie. "application/json"
+     * @param servicePath - The service path
+     * @param url - The url for given endpoint
+     * @returns  Parser
+     */
+    getParser(
+        format: string | undefined | null,
+        servicePath: string,
+        url: string,
+    ) {
+        const id = getId(format, servicePath, url);
 
-/**
- * Get parser for given format name, service path and url.
- * Parsers are mapped per name, service and url, to keep schemas per endpoints.
- * Such approach is required as schemas are currently not namespaced and reuse similar message names with different structures.
- * Due to that, we need to keep per endpoint parsers for protobuf parsing type.
- *
- * @param {String} format - The format name. ie. "application/json"
- * @param {String} servicePath - The service path
- * @param {String} url - The url for given endpoint
- * @return {Object} Parser
- */
-ParserFacade.getParser = function (format, servicePath, url) {
-    const id = getId.call(this, format, servicePath, url);
+        if (parsersMap[id]) {
+            return parsersMap[id];
+        }
+        const Parser = (format && parserCreators[format]) || defaultParser;
+        const engine = format && enginesMap[format];
 
-    if (parsersMap[id]) {
+        parsersMap[id] = new Parser(id, engine);
+
         return parsersMap[id];
-    }
-    const Parser = parserCreators[format] || defaultParser;
-    const engine = enginesMap[format];
-
-    parsersMap[id] = new Parser(id, engine);
-
-    return parsersMap[id];
+    },
 };
 
 export default ParserFacade;

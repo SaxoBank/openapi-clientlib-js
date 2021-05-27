@@ -1,5 +1,6 @@
-import protobuf from 'protobufjs/dist/protobuf';
+import protobuf from 'protobufjs';
 import ParserFacade from './parser-facade';
+import ParserJson from './parser-json';
 import ParserProtobuf from './parser-protobuf';
 
 ParserFacade.addEngines({
@@ -18,7 +19,7 @@ describe('Parser Facade', () => {
                 'port',
                 'v1/balances',
             );
-            expect(parser.constructor.name).toEqual('ParserJson');
+            expect(parser).toBeInstanceOf(ParserJson);
             expect(parser.getFormatName()).toEqual('application/json');
         });
 
@@ -28,21 +29,24 @@ describe('Parser Facade', () => {
                 'port',
                 'v1/balances',
             );
-            expect(parser.constructor.name).toEqual('ParserProtobuf');
+            expect(parser).toBeInstanceOf(ParserProtobuf);
             expect(parser.getFormatName()).toEqual('application/x-protobuf');
         });
 
         it('should return default parser', () => {
+            // @ts-expect-error
             let parser = ParserFacade.getParser('');
-            expect(parser.constructor.name).toEqual('ParserJson');
+            expect(parser).toBeInstanceOf(ParserJson);
             expect(parser.getFormatName()).toEqual('application/json');
 
+            // @ts-expect-error
             parser = ParserFacade.getParser(null);
-            expect(parser.constructor.name).toEqual('ParserJson');
+            expect(parser).toBeInstanceOf(ParserJson);
             expect(parser.getFormatName()).toEqual('application/json');
 
+            // @ts-expect-error
             parser = ParserFacade.getParser(undefined);
-            expect(parser.constructor.name).toEqual('ParserJson');
+            expect(parser).toBeInstanceOf(ParserJson);
             expect(parser.getFormatName()).toEqual('application/json');
         });
     });

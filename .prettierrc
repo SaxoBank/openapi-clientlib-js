@@ -1,0 +1,24 @@
+{
+  "trailingComma": "all",
+  "tabWidth": 4,
+  "singleQuote": true,
+  "arrowParens": "always",
+  "endOfLine": "crlf",
+  "overrides": [
+    {
+      "files": "**/*/utils/types.ts",
+      "options": {
+        "printWidth": 200
+      }
+    },
+    {
+      "files": [
+        "package.json",
+        "package-lock.json"
+      ],
+      "options": {
+        "endOfLine": "lf"
+      }
+    }
+  ]
+}

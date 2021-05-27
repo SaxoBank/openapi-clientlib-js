@@ -1,13 +1,20 @@
 import { de_ch, da_dk, fr_fr, ar_eg, hi_in } from '../test/locales';
-import PriceFormatting from './price-formatting';
+import PriceFormatting from '.';
 import priceFormatOptions from './format-options';
+import type { PriceFormatOption } from './format-options';
+import type { NumberOptions } from '../number-formatting';
+import type { FormatFlags } from './format';
 
 function testConversion(
-    value,
-    decimals,
-    priceFormatOption,
-    numeratorDecimals,
-    options,
+    value: number,
+    decimals: number,
+    priceFormatOption?:
+        | PriceFormatOption
+        | PriceFormatOption[]
+        | FormatFlags
+        | null,
+    numeratorDecimals?: number,
+    options?: Partial<NumberOptions>,
 ) {
     if (options != null) {
         expect(typeof options).toEqual('object');
@@ -28,11 +35,11 @@ function testConversion(
 }
 
 function testConversionChanged(
-    value,
-    newValue,
-    decimals,
-    priceFormatOption,
-    options,
+    value: number,
+    newValue: number,
+    decimals: number,
+    priceFormatOption?: PriceFormatOption | PriceFormatOption[] | FormatFlags,
+    options?: Partial<NumberOptions>,
 ) {
     const prices = new PriceFormatting(options);
     expect(
@@ -248,15 +255,21 @@ describe('price-formatting parse', () => {
     it('handles bad input', () => {
         const prices = new PriceFormatting();
 
+        // @ts-expect-error bad input handling
         expect(prices.parse(null)).toEqual(NaN);
+        // @ts-expect-error bad input handling
         expect(prices.parse(undefined)).toEqual(NaN);
+        // @ts-expect-error bad input handling
         expect(prices.parse('')).toEqual(NaN);
+        // @ts-expect-error bad input handling
         expect(prices.parse('abc')).toEqual(NaN);
 
         expect(
+            // @ts-expect-error bad input handling
             prices.parse(null, 6, priceFormatOptions.ModernFractions),
         ).toEqual(NaN);
         expect(
+            // @ts-expect-error bad input handling
             prices.parse(undefined, 6, priceFormatOptions.ModernFractions),
         ).toEqual(NaN);
         expect(prices.parse('', 6, priceFormatOptions.ModernFractions)).toEqual(
@@ -266,10 +279,12 @@ describe('price-formatting parse', () => {
             prices.parse('abc', 6, priceFormatOptions.ModernFractions),
         ).toEqual(NaN);
 
+        // @ts-expect-error bad input handling
         expect(prices.parse(null, 6, priceFormatOptions.Fractions)).toEqual(
             NaN,
         );
         expect(
+            // @ts-expect-error bad input handling
             prices.parse(undefined, 6, priceFormatOptions.Fractions),
         ).toEqual(NaN);
         expect(prices.parse('', 6, priceFormatOptions.Fractions)).toEqual(NaN);

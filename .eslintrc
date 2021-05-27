@@ -1,46 +1,17 @@
 {
     "root": true,
     "parserOptions": {
-        "ecmaVersion": 2019,
+        "ecmaVersion": 2020,
         "sourceType": "module"
     },
     "plugins": ["import", "destructuring", "switch-case", "promise"],
     "settings": {
-        "import/ignore": ["libs", "node_modules"]
-    },
-    "globals": {
-        // define our own globals since the built-in list contains many false negatives like "find" that are non-standard
-        "window": false,
-        "document": false,
-        "location": false,
-        "escape": false,
-        "unescape": false,
-        "setTimeout": false,
-        "clearTimeout": false,
-        "setInterval": false,
-        "clearInterval": false,
-        "console": false,
-        "sessionStorage": false,
-        "localStorage": false,
-        "XMLHttpRequest": false,
-        "atob": false,
-        "Blob": false,
-        "navigator": false,
-        "MessageChannel": false,
-        "Map": false,
-        "Uint8Array": false,
-        "Promise": false,
-        "HTMLElement": false,
-        "MouseEvent": false,
-        "setImmediate": false,
-        "fetch": false,
-        "Uint16Array": false,
-        "crypto": false,
-        "$": false,
-        "DataView": true,
-        "Int8Array": true,
-        "ArrayBuffer": true,
-        "WebSocket": true
+        "import/parsers": {
+            "@typescript-eslint/parser": [".ts"]
+        },
+        "import/resolver": {
+            "typescript": {}
+        }
     },
     "rules": {
         // Possible errors
@@ -246,12 +217,6 @@
         "lines-around-comment": "off",
         "lines-around-directive": "off",
         "max-depth": ["error", 6],
-        "max-len": [
-            "error",
-            {
-                "code": 150
-            }
-        ],
         "max-lines": [
             "error",
             {
@@ -326,7 +291,6 @@
         "no-confusing-arrow": "off",
         "no-const-assign": "error",
         "no-dupe-class-members": "error",
-        "no-duplicate-imports": "error",
         "no-new-symbol": "error",
         "no-restricted-imports": "error",
         "no-this-before-super": "error",
@@ -443,7 +407,7 @@
     },
     "overrides": [
         {
-            "files": ["*.spec.js", "src/test/**/*"],
+            "files": ["*.spec.[jt]s", "src/test/**/*.[jt]s"],
             "env": {
                 "jest": true
             },
@@ -461,7 +425,10 @@
             }
         },
         {
-            "files": ["rollup.config.js"],
+            "files": [
+                "rollup.config.js",
+                "jest.config.js"
+            ],
             "env": {
                 "node": true
             },
@@ -471,6 +438,58 @@
             "rules": {
                 "import/no-commonjs": "off",
                 "import/no-nodejs-modules": "off"
+            }
+        },
+        {
+            "files": [
+                "**/*.ts"
+            ],
+            "parser": "@typescript-eslint/parser",
+            "plugins": [
+                "@typescript-eslint",
+                "eslint-plugin-tsdoc"
+            ],
+            "extends": [
+                "plugin:@typescript-eslint/recommended"
+            ],
+            "rules": {
+                "tsdoc/syntax": "warn",
+                "import/order": "off",
+                "no-loop-func": "off",
+                "@typescript-eslint/no-loop-func": "error",
+                "no-redeclare": "off",
+                "@typescript-eslint/no-redeclare": "error",
+                "no-shadow": "off",
+                "@typescript-eslint/no-shadow": "error",
+                "no-unused-expressions": "off",
+                "@typescript-eslint/no-unused-expressions": "error",
+                "no-unused-vars": "off",
+                "@typescript-eslint/no-unused-vars": [
+                    "error",
+                    {
+                        "vars": "all",
+                        "args": "after-used",
+                        "ignoreRestSiblings": true
+                    }
+                ],
+                "no-use-before-define": "off",
+                "@typescript-eslint/no-use-before-define": ["error", "nofunc"],
+                "no-useless-constructor": "off",
+                "@typescript-eslint/no-useless-constructor": "error",
+                "@typescript-eslint/ban-ts-comment": "off",
+                "@typescript-eslint/explicit-module-boundary-types": "off",
+                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-empty-function": "off",
+                "@typescript-eslint/consistent-indexed-object-style": [
+                    "error",
+                    "record"
+                ],
+                "@typescript-eslint/consistent-type-assertions": [
+                    "error",
+                    { "assertionStyle": "as" }
+                ],
+                "@typescript-eslint/consistent-type-imports": "error",
+                "@typescript-eslint/no-non-null-assertion": "error"
             }
         }
     ]

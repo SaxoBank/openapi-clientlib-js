@@ -1,19 +1,35 @@
 import { en_us, ar_eg } from '../test/locales';
-import NumberFormatting from './number-formatting';
+import NumberFormatting from '.';
+import type { NumberFormattingOptions } from '.';
 
-function formatNumberNoRounding(number, minDecimals, maxDecimals) {
+function formatNumberNoRounding(
+    number: number | string | null | undefined,
+    minDecimals?: number,
+    maxDecimals?: number,
+) {
     const numbers = new NumberFormatting();
     return numbers.formatNoRounding(number, minDecimals, maxDecimals);
 }
 
-function shortFormat(number, options) {
+function shortFormat(
+    number: number | undefined | null | string,
+    options?: Partial<NumberFormattingOptions>,
+) {
     const numbers = new NumberFormatting(options);
     return numbers.shortFormat(number);
 }
 
-function formatNumber(number, decimals, options) {
+function formatNumber(
+    number: number | null | undefined | string,
+    decimals?: number | null,
+    options?: Partial<NumberFormattingOptions>,
+) {
     const numbers = new NumberFormatting(options);
     return numbers.format(number, decimals);
+}
+function getActualDecimals(number: number) {
+    const numbers = new NumberFormatting();
+    return numbers.getActualDecimals(number);
 }
 
 describe('NumberFormatting format', () => {
@@ -39,6 +55,15 @@ describe('NumberFormatting format', () => {
             expect(formatNumberNoRounding(-1.126, 1, 2)).toEqual('-1.13');
             expect(formatNumberNoRounding(-1.1, 4, 5)).toEqual('-1.1000');
             expect(formatNumberNoRounding(-5e-7, 4, 8)).toEqual('-0.0000005');
+        });
+        it('handles numeric strings', () => {
+            expect(formatNumberNoRounding('1.1', 4)).toEqual('1.1000');
+            expect(formatNumberNoRounding('1.1212', 1)).toEqual('1.1212');
+        });
+        it('returns empty string for invalid number', () => {
+            expect(formatNumberNoRounding(undefined, 1)).toEqual('');
+            expect(formatNumberNoRounding(null, 1, 2)).toEqual('');
+            expect(formatNumberNoRounding('foo', 1, 5)).toEqual('');
         });
     });
 
@@ -108,6 +133,19 @@ describe('NumberFormatting format', () => {
                 shortFormat(1000000000, { unitSuffixBillion: 'Bn' }),
             ).toEqual('1Bn');
         });
+
+        it('returns an empty string for null or undefined or not numeric strings', () => {
+            expect(shortFormat(null)).toBe('');
+            expect(shortFormat(undefined)).toBe('');
+        });
+
+        it('returns proper value for numeric strings', () => {
+            expect(shortFormat('100000000.11')).toBe('100m');
+            expect(shortFormat('999500000')).toBe('1bn');
+            expect(shortFormat('999500000', { unitSuffixBillion: 'Bn' })).toBe(
+                '1Bn',
+            );
+        });
     });
 
     describe('formatNumber', () => {
@@ -132,9 +170,18 @@ describe('NumberFormatting format', () => {
         });
         it('handles non numbers', () => {
             expect(formatNumber(undefined, 2, en_us)).toEqual('');
+            expect(formatNumber(undefined)).toEqual('');
+            expect(formatNumber(null)).toEqual('');
             expect(formatNumber(NaN, 2, en_us)).toEqual('');
             expect(formatNumber(null, 2, en_us)).toEqual('');
             expect(formatNumber('', 2, en_us)).toEqual('');
+            expect(formatNumber('string', 2, en_us)).toEqual('');
+            expect(formatNumber('string')).toEqual('');
+        });
+        it('handles numeric strings properly', () => {
+            expect(formatNumber('1.3')).toEqual('1.3');
+            expect(formatNumber('2.5', 2)).toEqual('2.50');
+            expect(formatNumber('2.4', 0)).toEqual('2');
         });
         it('uses away from zero rounding', () => {
             expect(formatNumber(-1.5, 0, en_us)).toEqual('-2');
@@ -162,6 +209,15 @@ describe('NumberFormatting format', () => {
             expect(formatNumber(0.01, 1, en_us)).toEqual('0.0');
             expect(formatNumber(5e-7, 6, en_us)).toEqual('0.000001');
             expect(formatNumber(-5e-7, 6, en_us)).toEqual('-0.000001');
+        });
+    });
+    describe('getActualDecimals', () => {
+        it('returns proper number of decimals', () => {
+            expect(getActualDecimals(545750.43)).toEqual(2);
+            expect(getActualDecimals(1.756)).toEqual(3);
+            expect(getActualDecimals(1)).toEqual(0);
+            expect(getActualDecimals(0)).toEqual(0);
+            expect(getActualDecimals(0)).toEqual(0);
         });
     });
 });

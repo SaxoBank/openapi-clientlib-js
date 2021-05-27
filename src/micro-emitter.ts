@@ -1,86 +1,75 @@
-/**
- * @module saxo/micro-emitter
- * @ignore
- */
+export type EventTypes = Record<string, Callback>;
 
-// -- Local variables section --
+export interface IEventEmitter<
+    Events extends EventTypes,
+    ChainedType = IEventEmitter<any, any>
+> {
+    /**
+     * Register an event handler for single invocation (subscribe)
+     * @param eventType - The event type to listen to
+     * @param onFunction - The function to call
+     * @param that - (optional) The context with which to call onFunction (useful also for unsubscribing only a instance)
+     */
+    one<Event extends keyof Events>(
+        eventType: Event,
+        onFunction: Events[Event],
+        that?: any,
+    ): ChainedType extends IEventEmitter<any> ? this : ChainedType;
 
-// -- Local methods section --
+    /**
+     * Register an event handler (subscribe)
+     * @param eventType - The event type to listen to
+     * @param onFunction - The function to call
+     * @param that - (optional) The context with which to call onFunction (useful also for unsubscribing only a instance)
+     */
+    on<Event extends keyof Events>(
+        eventType: Event,
+        onFunction: Events[Event],
+        that?: any,
+    ): ChainedType extends IEventEmitter<any> ? this : ChainedType;
 
-// -- Exported methods section --
+    /**
+     * Stop listening to events (unsubscribe)
+     * @param eventType - (optional) The event type to unsubscribe
+     * @param onFunction - (optional) The function to call
+     * @param that - (optional) The context with which to call onFunction (useful also for unsubscribing only a instance)
+     */
+    off<Event extends keyof Events>(
+        eventType?: Event | null,
+        onFunction?: Events[Event] | null,
+        that?: any,
+    ): ChainedType extends IEventEmitter<any> ? this : ChainedType;
 
-/**
- * This set of functions can be mixed into any class or object.
- * @see saxo.microEmitter.mixinTo
- * @mixin MicroEmitter
- * @global
- */
+    /**
+     * Triggers an event
+     * @param eventType - The event type to trigger
+     * @param args - (optional) Arguments to pass to all listeners
+     */
+    trigger<Event extends keyof Events>(
+        eventType: Event,
+        ...args: Parameters<Events[Event]>
+    ): ChainedType extends IEventEmitter<any> ? this : ChainedType;
+}
 
-/**
- * Register an event handler for single invocation (subscribe)
- * @method MicroEmitter#one
- * @param {string} eventType - The event type to listen to
- * @param {function} onFunction - The function to call
- * @param [that] - The context with which to call onFunction (useful also for unsubscribing only a instance)
- */
+export interface Callback {
+    (...args: any[]): void;
+}
 
-/**
- * Register an event handler (subscribe)
- * @method MicroEmitter#on
- * @param {string} eventType - The event type to listen to
- * @param {function} onFunction - The function to call
- * @param [that] - The context with which to call onFunction (useful also for unsubscribing only a instance)
- */
+interface Subscriber<C = Callback> {
+    onFunction: C;
+    that: any;
+    isOne: boolean;
+}
 
-/**
- * Stop listening to events (unsubscribe)
- * @method MicroEmitter#off
- * @param {string} [eventType] - The event type to unsubscribe
- * @param {function} [onFunction] - The function to call
- * @param [that] - The context with which to call onFunction (useful also for unsubscribing only a instance)
- */
+class MicroEmitter<Events extends EventTypes> implements IEventEmitter<Events> {
+    private subscribers: Partial<Record<keyof Events, Subscriber[]>> = {};
 
-/**
- * Triggers an event
- * @method MicroEmitter#trigger
- * @param {string} eventType - The event type to trigger
- * @param {...*} [arg] - Arguments to pass to all listeners
- */
-
-/**
- * This provides a method to mix an emitter into an object.
- * @namespace saxo.microEmitter
- */
-
-/**
- * mixes the {@link MicroEmitter} into the target
- * @function
- * @alias saxo.microEmitter.mixinTo
- * @param {object} target - The object to mix values into
- * @example
- * // mix into a static object
- * var myObj = {};
- * saxo.microEmitter.mixinTo(myObj);
- * myObj.on("event", function() { console.log("received event"); });
- * myObj.trigger("event");
- *
- * // mix into a function prototype
- * var myClass = function() {};
- * saxo.microEmitter.mixinTo(myClass.prototype);
- * var myInstance = new myClass();
- * myInstance.on("event", function() { console.log("received event"); });
- * myInstance.trigger("event");
- */
-function mixinEmitter(target) {
-    const subscribers = {};
-
-    if (target.on || target.off || target.trigger) {
-        throw new Error(
-            'Mixing in would hide existing implementations of on/off/trigger',
-        );
-    }
-
-    function addSubscriber(eventType, onFunction, that, isOne) {
+    private addSubscriber<Event extends keyof Events>(
+        eventType: Event,
+        onFunction: Events[Event],
+        that: any,
+        isOne: boolean,
+    ) {
         if (!eventType) {
             const methodName = isOne ? 'one' : 'on';
             throw new Error(
@@ -91,26 +80,39 @@ function mixinEmitter(target) {
         if (!onFunction) {
             throw new Error('Subscribing without a function to call');
         }
-        let eventSubscribers = subscribers[eventType];
+
+        let eventSubscribers = this.subscribers[eventType];
         if (!eventSubscribers) {
-            eventSubscribers = subscribers[eventType] = [];
+            eventSubscribers = this.subscribers[eventType] = [];
         }
         eventSubscribers.push({ onFunction, that, isOne });
     }
 
-    target.one = function (eventType, onFunction, that) {
-        addSubscriber(eventType, onFunction, that, true);
+    one<Event extends keyof Events>(
+        eventType: Event,
+        onFunction: Events[Event],
+        that?: any,
+    ) {
+        this.addSubscriber(eventType, onFunction, that, true);
         return this;
-    };
+    }
 
-    target.on = function (eventType, onFunction, that) {
-        addSubscriber(eventType, onFunction, that, false);
+    on<Event extends keyof Events>(
+        eventType: Event,
+        onFunction: Events[Event],
+        that?: any,
+    ) {
+        this.addSubscriber(eventType, onFunction, that, false);
         return this;
-    };
+    }
 
-    target.off = function (eventType, onFunction, that) {
+    off<Event extends keyof Events>(
+        eventType?: Event | null,
+        onFunction?: Events[Event] | null,
+        that?: any,
+    ) {
         if (eventType) {
-            const eventSubscribers = subscribers[eventType];
+            const eventSubscribers = this.subscribers[eventType];
             if (eventSubscribers) {
                 for (let i = eventSubscribers.length - 1; i >= 0; i--) {
                     const subscriber = eventSubscribers[i];
@@ -122,39 +124,39 @@ function mixinEmitter(target) {
                     }
                 }
                 if (eventSubscribers.length === 0) {
-                    delete subscribers[eventType];
+                    delete this.subscribers[eventType];
                 }
             }
         } else {
-            for (eventType in subscribers) {
-                if (subscribers.hasOwnProperty(eventType)) {
-                    target.off(eventType, onFunction, that);
+            for (const subscriberEventType in this.subscribers) {
+                if (this.subscribers.hasOwnProperty(subscriberEventType)) {
+                    // @ts-expect-error
+                    this.off(subscriberEventType, onFunction, that);
                 }
             }
         }
         return this;
-    };
+    }
 
-    target.trigger = function (eventType) {
-        const eventSubscribers = subscribers[eventType];
+    trigger<Event extends keyof Events>(
+        eventType: Event,
+        ...args: Parameters<Events[Event]>
+    ) {
+        const eventSubscribers = this.subscribers[eventType];
         if (eventSubscribers) {
-            const args = Array.prototype.slice.call(arguments, 1);
             for (let i = eventSubscribers.length - 1; i >= 0; i--) {
-                const subscriber = eventSubscribers[i];
+                const subscriber = eventSubscribers[i] as Subscriber<
+                    Events[Event]
+                >;
+
                 if (subscriber.isOne) {
-                    target.off(
-                        eventType,
-                        subscriber.onFunction,
-                        subscriber.that,
-                    );
+                    this.off(eventType, subscriber.onFunction, subscriber.that);
                 }
                 subscriber.onFunction.apply(subscriber.that, args);
             }
         }
         return this;
-    };
+    }
 }
 
-// -- Export section --
-
-export default { mixinTo: mixinEmitter };
+export default MicroEmitter;

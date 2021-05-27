@@ -1,4 +1,4 @@
-import protobuf from 'protobufjs/dist/protobuf';
+import protobuf from 'protobufjs';
 import * as mockProtoPrice from '../../../test/mocks/proto-price';
 import * as mockProtoMeta from '../../../test/mocks/proto-meta';
 import ParserProtobuf from './parser-protobuf';
@@ -28,7 +28,7 @@ describe('Parser Protobuf', () => {
                     message: null,
                 }),
             );
-            expect(data.__meta_nulls).toBeFalsy();
+            expect(data?.__meta_nulls).toBeFalsy();
         });
 
         it('should return json object with collection envelope', () => {
@@ -180,7 +180,7 @@ describe('Parser Protobuf', () => {
             );
 
             expect(schemas).not.toBeFalsy();
-            expect(schemaObject.name).toBe('InstrumentPriceDetails');
+            expect(schemaObject?.name).toBe('InstrumentPriceDetails');
             expect(rootMessage).toBe('InstrumentPriceDetails');
         });
 
@@ -191,7 +191,7 @@ describe('Parser Protobuf', () => {
 
             expect(schemaObject).not.toBeFalsy();
 
-            expect(JSON.parse(JSON.stringify(schemaObject.fields))).toEqual(
+            expect(JSON.parse(JSON.stringify(schemaObject?.fields))).toEqual(
                 expect.objectContaining(mockProtoPrice.fields),
             );
         });
@@ -204,6 +204,7 @@ describe('Parser Protobuf', () => {
             );
 
             expect(done).toBe(false);
+            // @ts-expect-error testing invalid usage
             expect(parser.getSchemaType('InvalidSchema')).toBeFalsy();
         });
     });
