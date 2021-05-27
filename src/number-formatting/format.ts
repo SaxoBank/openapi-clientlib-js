@@ -18,7 +18,7 @@ function convertNumberToString(number: number, precision: number) {
 
     // if the number is in scientific notation, convert to decimal
     if (/\d+\.?\d*e[+-]*\d+/i.test(numberString)) {
-        numberString = number.toFixed(precision).trim();
+        numberString = number.toFixed(precision);
     }
 
     return numberString;
