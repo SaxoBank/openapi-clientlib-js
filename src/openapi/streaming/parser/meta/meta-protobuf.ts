@@ -22,7 +22,7 @@ const CUSTOM_ENVELOPES: Record<string, (data: Data) => Data> = {
  * Map of supported meta types that should be processed.
  * As an example, __meta_delete doesn't require any processing in this scope.
  */
-const META_TYPES = {
+const META_TYPES: Flags = {
     [META_NULLS]: true,
     [META_EMPTY]: true,
 };
@@ -68,7 +68,7 @@ class MetaProtobuf {
         data: Record<string, any>,
     ) {
         for (const key in data) {
-            if (data.hasOwnProperty(key) && !(META_TYPES as Flags)[key]) {
+            if (data.hasOwnProperty(key) && !META_TYPES[key]) {
                 const nextData = data[key];
                 if (typeof nextData === 'object') {
                     this.processChild(message[key], data[key]);

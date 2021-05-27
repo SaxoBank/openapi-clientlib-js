@@ -8,11 +8,13 @@ export default {
                     return this.fromObject(object);
                 },
 
-                toObject(message: Message): Record<string, any> {
-                    // casting type since it's not able to tel TS that the message contains proper types
+                // @ts-expect-error invalid return type of IWrapper.toObject
+                // We normalize timestamp to the format supported by OAPI and return string instead of an object
+                // see {@link https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/timestamp.proto#L110}
+                toObject(message: Message) {
                     const { seconds, nanos } = (message as unknown) as {
-                        nanos?: number;
-                        seconds?: number;
+                        nanos?: any;
+                        seconds?: any;
                     };
 
                     // Date with support for nano precision
@@ -21,10 +23,6 @@ export default {
                             Math.floor(Number(nanos) / 1000000),
                     );
 
-                    // @ts-expect-error FIXME TS is complaining that a string is returned,
-                    // instead of an object - verify if it's a bug or expected since the lib
-                    // returns object for timestamp type:
-                    // https://github.com/protobufjs/protobuf.js/blob/95b56817ef6fb9bdcb14d956c159da49d0889bff/src/common.js#L93;
                     return date.toJSON();
                 },
             };

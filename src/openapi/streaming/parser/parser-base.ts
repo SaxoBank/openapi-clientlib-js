@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import type * as ProtoBuf from 'protobufjs';
+
 abstract class ParserBase {
     getSchemaNames(): string[] | undefined {
         return undefined;
@@ -7,7 +9,7 @@ abstract class ParserBase {
     getSchemaType(
         _schemaName: string,
         _schemaType: string,
-    ): unknown | undefined {
+    ): ProtoBuf.Type | null | undefined {
         return undefined;
     }
 
@@ -15,7 +17,7 @@ abstract class ParserBase {
         return undefined;
     }
 
-    getSchema(_schemaName: string): unknown | undefined {
+    getSchema(_schemaName: string): ProtoBuf.IParserResult | undefined {
         return undefined;
     }
 
@@ -24,7 +26,7 @@ abstract class ParserBase {
     }
 
     abstract parse(
-        _data: string | Uint8Array | Record<string, any> | null | undefined,
+        _data: string | Uint8Array | null | undefined,
         _schemaName: string,
     ): unknown;
 

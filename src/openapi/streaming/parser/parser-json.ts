@@ -10,8 +10,8 @@ class ParserJson extends ParserBase {
     parse<T>(data?: T, _?: any): T | undefined {
         return data;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    stringify(data: any, _?: any) {
+
+    stringify(data: any) {
         return JSON.stringify(data);
     }
 
