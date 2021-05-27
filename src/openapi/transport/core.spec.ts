@@ -866,4 +866,31 @@ describe('openapi TransportCore', () => {
             fetch.mockClear();
         });
     });
+
+    describe('abort signal', () => {
+        beforeEach(() => {
+            transport = new TransportCore('localhost');
+        });
+
+        afterEach(() => transport.dispose());
+
+        it('passes the abort signal down to fetch', () => {
+            const signal = new AbortController().signal;
+
+            transport.get('service_path', 'url', null, { signal });
+
+            expect(fetch.mock.calls.length).toEqual(1);
+            expect(fetch.mock.calls[0][1]).toEqual(
+                expect.objectContaining({ signal }),
+            );
+
+            transport.get('service_path', 'url');
+
+            expect(fetch.mock.calls.length).toEqual(2);
+            expect(fetch.mock.calls[1][1]).toEqual(
+                expect.objectContaining({ signal: undefined }),
+            );
+            fetch.mockClear();
+        });
+    });
 });
