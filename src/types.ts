@@ -51,4 +51,5 @@ export interface RequestOptions {
     readonly body?: any;
     readonly cache?: boolean;
     readonly requestId?: string;
+    readonly signal?: AbortSignal | null;
 }
