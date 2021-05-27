@@ -49,10 +49,8 @@ class TransportCore extends TransportBase {
             templateArgs?: StringTemplateArgs,
             options?: RequestOptions,
         ) => {
-            let body;
             let headers: Record<string, string> = {};
             let cache = this.defaultCache;
-            let queryParams;
 
             if (!servicePath || !urlTemplate) {
                 throw new Error(
@@ -64,15 +62,16 @@ class TransportCore extends TransportBase {
                 if (options.headers) {
                     headers = options.headers;
                 }
-                body = options.body;
                 if (typeof options.cache === 'boolean') {
                     cache = options.cache;
                 }
-
-                queryParams = options.queryParams;
             }
 
-            const url = formatUrl(urlTemplate, templateArgs, queryParams);
+            const url = formatUrl(
+                urlTemplate,
+                templateArgs,
+                options?.queryParams,
+            );
 
             if (this.language) {
                 if (!headers['Accept-Language']) {
@@ -94,10 +93,11 @@ class TransportCore extends TransportBase {
                 method,
                 this.baseUrl + basePath + '/' + servicePath + '/' + url,
                 {
-                    body,
+                    body: options?.body,
                     headers,
                     cache,
                     useXHttpMethodOverride: this.useXHttpMethodOverride,
+                    signal: options?.signal,
                 },
             );
         };
