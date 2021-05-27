@@ -1,11 +1,11 @@
 import { setTimeout, installClock, uninstallClock } from '../../test/utils';
 import mockTransport from '../../test/mocks/transport';
-import TransportPutPatchDiagnositicsQueue from './putPatchDiagnosticsQueue';
+import TransportPutPatchDiagnosticsQueue from './putPatchDiagnosticsQueue';
 
-describe('openapi TransportPutPatchDiagnositicsQueue', () => {
-    let transport;
-    let transportCore;
-    let transportPutPatch;
+describe('openapi TransportPutPatchDiagnosticsQueue', () => {
+    let transport: any;
+    let transportCore: any;
+    let transportPutPatch: any;
 
     beforeEach(() => {
         transport = mockTransport();
@@ -18,13 +18,16 @@ describe('openapi TransportPutPatchDiagnositicsQueue', () => {
 
     it('requires both arguments to the constructor', () => {
         expect(function () {
-            transportPutPatch = new TransportPutPatchDiagnositicsQueue();
+            // @ts-expect-error
+            transportPutPatch = new TransportPutPatchDiagnosticsQueue();
         }).toThrow();
         expect(function () {
-            transportPutPatch = new TransportPutPatchDiagnositicsQueue({});
+            // @ts-expect-error
+            transportPutPatch = new TransportPutPatchDiagnosticsQueue({});
         }).toThrow();
         expect(function () {
-            transportPutPatch = new TransportPutPatchDiagnositicsQueue(
+            transportPutPatch = new TransportPutPatchDiagnosticsQueue(
+                // @ts-expect-error
                 null,
                 {},
             );
@@ -40,7 +43,7 @@ describe('openapi TransportPutPatchDiagnositicsQueue', () => {
     `(
         'Calls through straight away for non put/patch - $method',
         ({ method }) => {
-            transportPutPatch = new TransportPutPatchDiagnositicsQueue(
+            transportPutPatch = new TransportPutPatchDiagnosticsQueue(
                 transport,
                 transportCore,
             );
@@ -63,58 +66,62 @@ describe('openapi TransportPutPatchDiagnositicsQueue', () => {
         method
         ${'put'}
         ${'patch'}
-    `('Handles a $method failure', ({ method }, done) => {
-        transportPutPatch = new TransportPutPatchDiagnositicsQueue(
-            transport,
-            transportCore,
-        );
-        expect(transportPutPatch.isQueueing).toEqual(true);
+    `(
+        'Handles a $method failure',
+        // @ts-ignore its breaking next test if we remove done but somehow its picking wrong type definition from JEST
+        ({ method }, done) => {
+            transportPutPatch = new TransportPutPatchDiagnosticsQueue(
+                transport,
+                transportCore,
+            );
+            expect(transportPutPatch.isQueueing).toEqual(true);
 
-        const templateArgs = {};
-        const options = {};
-        transportPutPatch[method]('sg', 'url', templateArgs, options);
+            const templateArgs = {};
+            const options = {};
+            transportPutPatch[method]('sg', 'url', templateArgs, options);
 
-        expect(transport[method]).not.toHaveBeenCalled();
-        expect(transportCore[method]).toHaveBeenCalledTimes(1);
-        expect(transportCore[method]).toHaveBeenCalledWith(
-            'root',
-            `v1/diagnostics/${method}`,
-        );
-
-        transportCore[method + 'Reject']();
-        setTimeout(() => {
-            expect(
-                transportCore.setUseXHttpMethodOverride,
-            ).toHaveBeenCalledTimes(1);
-            expect(
-                transportCore.setUseXHttpMethodOverride,
-            ).toHaveBeenCalledWith(true);
-            expect(transportPutPatch.isQueueing).toEqual(false);
-
-            expect(transport[method]).toHaveBeenCalledTimes(1);
-            expect(transport[method]).toHaveBeenCalledWith(
-                'sg',
-                'url',
-                templateArgs,
-                options,
+            expect(transport[method]).not.toHaveBeenCalled();
+            expect(transportCore[method]).toHaveBeenCalledTimes(1);
+            expect(transportCore[method]).toHaveBeenCalledWith(
+                'root',
+                `v1/diagnostics/${method}`,
             );
 
-            // test it now works without queuing
-            transport[method].mockClear();
-            transportPutPatch[method]('sg2', 'url2', templateArgs, options);
-            expect(transport[method]).toHaveBeenCalledTimes(1);
-            expect(transport[method]).toHaveBeenCalledWith(
-                'sg2',
-                'url2',
-                templateArgs,
-                options,
-            );
-            done();
-        });
-    });
+            transportCore[method + 'Reject']();
+            setTimeout(() => {
+                expect(
+                    transportCore.setUseXHttpMethodOverride,
+                ).toHaveBeenCalledTimes(1);
+                expect(
+                    transportCore.setUseXHttpMethodOverride,
+                ).toHaveBeenCalledWith(true);
+                expect(transportPutPatch.isQueueing).toEqual(false);
+
+                expect(transport[method]).toHaveBeenCalledTimes(1);
+                expect(transport[method]).toHaveBeenCalledWith(
+                    'sg',
+                    'url',
+                    templateArgs,
+                    options,
+                );
+
+                // test it now works without queuing
+                transport[method].mockClear();
+                transportPutPatch[method]('sg2', 'url2', templateArgs, options);
+                expect(transport[method]).toHaveBeenCalledTimes(1);
+                expect(transport[method]).toHaveBeenCalledWith(
+                    'sg2',
+                    'url2',
+                    templateArgs,
+                    options,
+                );
+                done();
+            });
+        },
+    );
 
     it('handles successful put/patch', (done) => {
-        transportPutPatch = new TransportPutPatchDiagnositicsQueue(
+        transportPutPatch = new TransportPutPatchDiagnosticsQueue(
             transport,
             transportCore,
         );

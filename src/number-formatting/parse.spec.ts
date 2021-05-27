@@ -1,6 +1,6 @@
-﻿import NumberFormatting from './number-formatting';
+﻿import NumberFormatting from '.';
 
-function parse(number) {
+function parse(number: string | null | undefined) {
     const numbers = new NumberFormatting();
     return numbers.parse(number);
 }

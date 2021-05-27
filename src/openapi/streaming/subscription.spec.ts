@@ -1,4 +1,4 @@
-import protobuf from 'protobufjs/dist/protobuf';
+import protobuf from 'protobufjs';
 import {
     setTimeout,
     installClock,
@@ -21,14 +21,14 @@ ParserFacade.addParsers({
 });
 
 describe('openapi StreamingSubscription', () => {
-    let transport;
-    let updateSpy;
-    let createdSpy;
-    let errorSpy;
-    let authManager;
-    let networkErrorSpy;
+    let transport: any;
+    let updateSpy: jest.Mock;
+    let createdSpy: jest.Mock;
+    let errorSpy: jest.Mock;
+    let authManager: { getAuth: jest.Mock };
+    let networkErrorSpy: jest.Mock;
 
-    function sendInitialResponse(response) {
+    function sendInitialResponse(response?: Record<string, any>) {
         if (!response) {
             response = { Snapshot: { Data: [1, 'fish', 3] } };
         }
@@ -52,7 +52,7 @@ describe('openapi StreamingSubscription', () => {
     });
 
     describe('unsubscribe by tag behaviour', () => {
-        let subscription;
+        let subscription: Subscription;
 
         beforeEach(() => {
             subscription = new Subscription(
@@ -159,7 +159,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                null,
+                undefined,
                 { headers: { Header: 'header' } },
             );
             subscription.onSubscribe();
@@ -193,14 +193,14 @@ describe('openapi StreamingSubscription', () => {
         });
 
         it('does not carry over headers mutation', (done) => {
-            const headers = { Header: 'header' };
+            const headers: Record<string, string> = { Header: 'header' };
             const subscription = new Subscription(
                 '123',
                 transport,
                 'servicePath',
                 'src/test/resource',
                 {},
-                null,
+                undefined,
                 { headers },
             );
 
@@ -377,7 +377,7 @@ describe('openapi StreamingSubscription', () => {
                 expect(updateSpy.mock.calls.length).toEqual(1);
 
                 const streamingData = {
-                    ReferenceId: subscription.referenceId,
+                    ReferenceId: subscription.referenceId as string,
                     Data: [1, 3],
                 };
                 subscription.onStreamingData(streamingData);
@@ -391,7 +391,7 @@ describe('openapi StreamingSubscription', () => {
     });
 
     describe('streamed update', () => {
-        let subscription;
+        let subscription: Subscription;
         beforeEach((done) => {
             subscription = new Subscription(
                 '123',
@@ -412,7 +412,7 @@ describe('openapi StreamingSubscription', () => {
 
         it('handles updates with the correct referenceId', () => {
             const streamingData = {
-                ReferenceId: subscription.referenceId,
+                ReferenceId: subscription.referenceId as string,
                 Data: [1, 3],
             };
             subscription.onStreamingData(streamingData);
@@ -427,7 +427,7 @@ describe('openapi StreamingSubscription', () => {
 
         it('handles single-valued updates', () => {
             const streamingData = {
-                ReferenceId: subscription.referenceId,
+                ReferenceId: subscription.referenceId as string,
                 Data: ['foo'],
             };
             subscription.onStreamingData(streamingData);
@@ -447,7 +447,7 @@ describe('openapi StreamingSubscription', () => {
             );
 
             const streamingData = {
-                ReferenceId: subscription.referenceId,
+                ReferenceId: subscription.referenceId as string,
                 Data: ['foo'],
             };
             subscription.onStreamingData(streamingData);
@@ -466,7 +466,7 @@ describe('openapi StreamingSubscription', () => {
 
             expect(() =>
                 subscription.onStreamingData({
-                    ReferenceId: subscription.referenceId,
+                    ReferenceId: subscription.referenceId as string,
                     Data: 'foo',
                 }),
             ).not.toThrowError();
@@ -476,11 +476,11 @@ describe('openapi StreamingSubscription', () => {
             updateSpy.mockImplementation(() => subscription.onUnsubscribe());
 
             subscription.onStreamingData({
-                ReferenceId: subscription.referenceId,
+                ReferenceId: subscription.referenceId as string,
                 Data: 'foo',
             });
             subscription.onStreamingData({
-                ReferenceId: subscription.referenceId,
+                ReferenceId: subscription.referenceId as string,
                 Data: 'foo',
             });
 
@@ -503,7 +503,7 @@ describe('openapi StreamingSubscription', () => {
             subscription.onSubscribe();
 
             const streamingDelta = {
-                ReferenceId: subscription.referenceId,
+                ReferenceId: subscription.referenceId as string,
                 Data: ['foo'],
             };
             subscription.onStreamingData(streamingDelta);
@@ -536,7 +536,7 @@ describe('openapi StreamingSubscription', () => {
             );
 
             subscription.onStreamingData({
-                ReferenceId: subscription.referenceId,
+                ReferenceId: subscription.referenceId as string,
                 Data: 'foo',
             });
             expect(updateSpy.mock.calls.length).toEqual(0);
@@ -550,7 +550,7 @@ describe('openapi StreamingSubscription', () => {
                 expect(updateSpy.mock.calls.length).toEqual(1);
 
                 subscription.onStreamingData({
-                    ReferenceId: subscription.referenceId,
+                    ReferenceId: subscription.referenceId as string,
                     Data: 'foo',
                 });
 
@@ -559,7 +559,7 @@ describe('openapi StreamingSubscription', () => {
                 subscription.onUnsubscribe();
 
                 subscription.onStreamingData({
-                    ReferenceId: subscription.referenceId,
+                    ReferenceId: subscription.referenceId as string,
                     Data: 'foo',
                 });
 
@@ -583,7 +583,7 @@ describe('openapi StreamingSubscription', () => {
             subscription.onUnsubscribe();
 
             subscription.onStreamingData({
-                ReferenceId: subscription.referenceId,
+                ReferenceId: subscription.referenceId as string,
                 Data: 'foo',
             });
             const initialResponse = { Snapshot: { Data: [1, 'fish', 3] } };
@@ -973,7 +973,7 @@ describe('openapi StreamingSubscription', () => {
                 { onUpdate: updateSpy },
             );
 
-            jest.spyOn(log, 'error');
+            const logError = jest.spyOn(log, 'error');
 
             subscription.onUnsubscribe();
             subscription.onUnsubscribe();
@@ -1030,7 +1030,7 @@ describe('openapi StreamingSubscription', () => {
                     expect(transport.post.mock.calls.length).toEqual(0);
                     expect(transport.delete.mock.calls.length).toEqual(0);
 
-                    expect(log.error.mock.calls.length).toEqual(0);
+                    expect(logError.mock.calls.length).toEqual(0);
 
                     done();
                 });
@@ -1051,7 +1051,7 @@ describe('openapi StreamingSubscription', () => {
                 { onUpdate: updateSpy },
             );
 
-            jest.spyOn(log, 'error');
+            const logError = jest.spyOn(log, 'error');
 
             subscription.onSubscribe();
             transport.post.mockClear();
@@ -1065,7 +1065,7 @@ describe('openapi StreamingSubscription', () => {
                 expect(transport.post.mock.calls.length).toEqual(0);
                 expect(transport.delete.mock.calls.length).toEqual(0);
 
-                expect(log.error.mock.calls.length).toEqual(0);
+                expect(logError.mock.calls.length).toEqual(0);
 
                 done();
             });
@@ -1267,7 +1267,7 @@ describe('openapi StreamingSubscription', () => {
                     1 * 1000,
                 );
                 subscription.onStreamingData({
-                    ReferenceId: subscription.referenceId,
+                    ReferenceId: subscription.referenceId as string,
                     Data: [1, 3],
                 });
                 expect(subscription.timeTillOrphaned(Date.now())).toEqual(
@@ -1276,7 +1276,7 @@ describe('openapi StreamingSubscription', () => {
 
                 tick(4956);
                 subscription.onStreamingData({
-                    ReferenceId: subscription.referenceId,
+                    ReferenceId: subscription.referenceId as string,
                     Data: [1, 3],
                 });
                 expect(subscription.timeTillOrphaned(Date.now())).toEqual(
@@ -1333,7 +1333,6 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                updateSpy,
             );
 
             subscription.reset(); // reset before subscribed
@@ -1382,7 +1381,6 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                updateSpy,
             );
 
             subscription.reset(); // reset before subscribed
@@ -1430,7 +1428,6 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                updateSpy,
             );
 
             expect(transport.post.mock.calls.length).toEqual(0);
@@ -1747,7 +1744,7 @@ describe('openapi StreamingSubscription', () => {
 
                 const parser = subscription.parser;
 
-                const schemaObject = parser.getSchemaType(
+                const schemaObject: any = parser.getSchemaType(
                     'Price',
                     'PriceResponse',
                 );
@@ -1793,7 +1790,7 @@ describe('openapi StreamingSubscription', () => {
                 expect(transport.post.mock.calls.length).toEqual(1);
 
                 const streamingData = {
-                    ReferenceId: subscription.referenceId,
+                    ReferenceId: subscription.referenceId as string,
                     Data: mockProtoPrice.encodedMessage,
                     SchemaName: 'PriceResponse',
                 };
@@ -1912,7 +1909,7 @@ describe('openapi StreamingSubscription', () => {
                 expect(transport.post.mock.calls.length).toEqual(1);
 
                 const streamingData = {
-                    ReferenceId: subscription.referenceId,
+                    ReferenceId: subscription.referenceId as string,
                     Data: mockProtoPrice.objectMessage,
                 };
 
@@ -2075,7 +2072,6 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                updateSpy,
             );
             subscription.onSubscribe();
 
@@ -2127,7 +2123,6 @@ describe('openapi StreamingSubscription', () => {
                 'src/test/resource',
                 {},
                 createdSpy,
-                updateSpy,
             );
             subscription.onSubscribe();
 

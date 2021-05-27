@@ -1,13 +1,9 @@
-/**
- * @module saxo/price-formatting/parse
- * @ignore
- */
-
 import * as enumUtils from '../utils/enum';
 import { parseNumberNegativePattern } from '../number-formatting/parse';
 import { getModernFractionsSeparator } from './modern-fractions-character';
-
-// -- Local variables section --
+import type NumberFormatting from '../number-formatting';
+import type { FormatFlags } from './format';
+import type { PriceFormatOption } from './format-options';
 
 const divisionChars = [
     '/',
@@ -49,19 +45,17 @@ const fractionCharsValues = [
     7 / 8,
 ];
 
-// -- Local methods section --
-
 /**
  * Returns the index in the haystack of the string that contains needle e.g.
- * @param {string} needle
- * @param {Array.<string>} haystack
- * @returns {string}
+ * @param needle - needle
+ * @param haystack - haystack
+ *
  * @example
  * indexOfArray("b", ["apple", "bannana"]) === 1;
  * indexOfArray("p", ["apple", "bannana"]) === 0;
  * indexOfArray("z", ["apple", "bannana"]) === -1;
  */
-function indexOfArray(needle, haystack) {
+function indexOfArray(needle: string, haystack: string[]) {
     let index;
     for (let i = 0; i < haystack.length; i++) {
         index = needle.indexOf(haystack[i]);
@@ -74,12 +68,14 @@ function indexOfArray(needle, haystack) {
 
 /**
  * Finds the fractional part of a price formatted with negative decimals.
+ * ```
  * e.g. 1 234 31 / 64
  * ->   1234 31/64
+ * ```
  * So the last whitespace before the last digit(s) before the fractional char.
- * @param value
+ * @param value - value
  */
-function findFractionalPart(value) {
+function findFractionalPart(value: string) {
     let index = -1;
 
     const divIndex = indexOfArray(value, divisionChars);
@@ -94,6 +90,7 @@ function findFractionalPart(value) {
                 isNaN(parseInt(value.substring(index, index + 1), 10))
             ) {
                 break;
+                // @ts-expect-error
             } else if (!isNaN(value.substring(index, index + 1))) {
                 foundDigit = true;
             }
@@ -110,7 +107,11 @@ function findFractionalPart(value) {
     return index;
 }
 
-function parseDecimalprice(numberFormatting, s, formatFlags) {
+function parseDecimalPrice(
+    numberFormatting: NumberFormatting,
+    s: string,
+    formatFlags: FormatFlags,
+) {
     if (formatFlags.Percentage) {
         s = s.replace(/\s*%\s*$/, '');
     }
@@ -131,10 +132,14 @@ function parseDecimalprice(numberFormatting, s, formatFlags) {
     return 0;
 }
 
-function parseModernFractionalPrice(numberFormatting, s, decimals) {
+function parseModernFractionalPrice(
+    numberFormatting: NumberFormatting,
+    s: string,
+    decimals: number | null | undefined,
+) {
     let result;
     const separator = getModernFractionsSeparator(numberFormatting);
-    const denominator = 1 << decimals;
+    const denominator = 1 << (decimals || 0);
 
     const signInfo = parseNumberNegativePattern(s, numberFormatting);
     const isNegative = signInfo[0] === '-';
@@ -171,7 +176,10 @@ function parseModernFractionalPrice(numberFormatting, s, decimals) {
     return result;
 }
 
-function parseNonModernFractionalPrice(numberFormatting, s, decimals) {
+function parseNonModernFractionalPrice(
+    numberFormatting: NumberFormatting,
+    s: string,
+) {
     let result;
     const fracIndex = findFractionalPart(s);
 
@@ -224,37 +232,48 @@ function parseNonModernFractionalPrice(numberFormatting, s, decimals) {
     return result;
 }
 
-function parseFractionalPrice(numberFormatting, s, formatFlags, decimals) {
+function parseFractionalPrice(
+    numberFormatting: NumberFormatting,
+    s: string,
+    formatFlags: FormatFlags,
+    decimals: number | null | undefined,
+) {
     if (formatFlags.ModernFractions) {
         // special futures
         return parseModernFractionalPrice(numberFormatting, s, decimals);
     }
-    return parseNonModernFractionalPrice(numberFormatting, s, decimals);
+    return parseNonModernFractionalPrice(numberFormatting, s);
 }
-
-// -- Exported methods section --
 
 /**
  * From IitClientStation/Parsing.cs TryParsePrice().
  * Parses a text string to a price value.
- * @param numberFormatting
- * @param str
- * @param decimals
- * @param formatFlags
- * @returns {number} The passed value, 0 if not parsed.
+ * @param numberFormatting - numberFormatting
+ * @param str - str
+ * @param decimals - decimals
+ * @param formatOptions - formatOptions
+ * @returns  The passed value, 0 if not parsed.
  */
-function parsePrice(numberFormatting, str, decimals, formatFlags) {
+function parsePrice(
+    numberFormatting: NumberFormatting,
+    str: string,
+    decimals: number | null | undefined,
+    formatOptions?:
+        | PriceFormatOption
+        | PriceFormatOption[]
+        | FormatFlags
+        | null,
+) {
     if (str == null) {
         return NaN;
     }
 
-    if (formatFlags) {
-        formatFlags = enumUtils.toObject(formatFlags);
-    } else {
-        formatFlags = { Normal: true };
+    let formatFlags: FormatFlags = { Normal: true };
+    if (formatOptions) {
+        formatFlags = enumUtils.toObject(formatOptions);
     }
 
-    if (decimals < 0) {
+    if (decimals && decimals < 0) {
         throw new Error(
             'This library supports the openapi format specification, so fractions are done with ' +
                 'positive decimals and the Fractions or ModernFractions flag',
@@ -284,12 +303,10 @@ function parsePrice(numberFormatting, str, decimals, formatFlags) {
                 decimals,
             );
         }
-        return parseDecimalprice(numberFormatting, s, formatFlags);
+        return parseDecimalPrice(numberFormatting, s, formatFlags);
     } catch (e) {
         return NaN;
     }
 }
-
-// -- Export section --
 
 export default parsePrice;

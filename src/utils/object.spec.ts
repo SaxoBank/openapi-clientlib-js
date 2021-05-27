@@ -12,6 +12,32 @@ describe('utils object', () => {
                 extend({ apple: false, banana: true }, { banana: false }),
             ).toEqual({ apple: false, banana: false });
         });
+        it('mutates the first object argument', () => {
+            const foo = { apple: false };
+
+            extend(foo, { banana: true });
+
+            expect(foo).toEqual({
+                apple: false,
+                banana: true,
+            });
+
+            extend(
+                true,
+                foo,
+                { fruit: { apple: true, banana: true } },
+                { fruit: { banana: false } },
+            );
+
+            expect(foo).toEqual({
+                apple: false,
+                banana: true,
+                fruit: {
+                    apple: true,
+                    banana: false,
+                },
+            });
+        });
         it('copes with multiple arguments in shallow mode', () => {
             expect(extend({}, { banana: true }, { apple: true })).toEqual({
                 banana: true,

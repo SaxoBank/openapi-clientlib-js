@@ -1,240 +1,215 @@
-﻿/**
- * @module saxo/openapi/transport/retry
- * @ignore
- */
+﻿import type { HTTPMethodInputArgs } from './types';
+import type {
+    OAPIRequestResult,
+    HTTPMethodType,
+    NetworkError,
+} from '../../types';
+import type TransportCore from './core';
+import TransportBase from './transport-base';
 
-// -- Local variables section --
-
-// -- Local methods section --
-
-function transportMethod(method) {
-    return function () {
-        // checking if http method call should be handled by RetryTransport
-        if (
-            this.methods[method] &&
-            (this.methods[method].retryLimit > 0 ||
-                this.methods[method].retryTimeouts)
-        ) {
-            return new Promise((resolve, reject) => {
-                const transportCall = {
-                    method,
-                    args: arguments,
-                    resolve,
-                    reject,
-                    retryCount: 0,
-                    retryTimer: null,
-                };
-
-                this.sendTransportCall(transportCall);
-            });
-        }
-        // calls underlying transport http method
-        return this.transport[method].apply(this.transport, arguments);
-    };
+interface TransportCall {
+    method: HTTPMethodType;
+    args: HTTPMethodInputArgs;
+    resolve: (value?: any) => void;
+    reject: (value?: any) => void;
+    retryCount: number;
+    retryTimer: number | null;
 }
 
-// -- Exported methods section --
+interface RetryOptions {
+    retryTimeouts?: number[];
+    statuses?: number[];
+    retryNetworkError?: boolean;
+    retryLimit?: number;
+}
+
+type HTTPRequestRetryOptions = Partial<Record<HTTPMethodType, RetryOptions>>;
+
+interface Options {
+    /**
+     * The number of ms after that the retry calls should be done.
+     */
+    retryTimeout: number;
+    /**
+     * Http methods that should retry. For each method provide an object with `retryLimit` parameter.
+     * Note that the default is to not retry. a call will be retried if it is a network error and retryNetworkError is true or the rejection
+     * includes a status and it is in the statuses list.
+     */
+    methods?: HTTPRequestRetryOptions;
+}
 
 /**
  * TransportRetry wraps a transport class to allow the retrying of failed transport calls, so the calls are resent after a timeout.
- * @class
- * @alias saxo.openapi.TransportRetry
- * @param {Transport} transport - The transport to wrap.
- * @param {object} [options] - Settings options. Define retry timeout, http methods to retry and max retry limit
- *      per http method type. If not given then calls will run with underlying transport without retry logic.
- * @param {number} [options.retryTimeout=0] - The number of ms after that the retry calls should be done.
- * @param {object.<string,object>} [options.methods] - Http methods that should retry. For each method provide an object with `retryLimit` parameter.
- * Note that the default is to not retry. a call will be retried if it is a network error and retryNetworkError is true or the rejection
- * includes a status and it is in the statuses list.
+ *
  * @example
+ * ```ts
  * // Constructor with parameters
- * var transportRetry = new TransportRetry(transport, {
+ * * const transportRetry = new TransportRetry(transport, {
  *      retryTimeout:10000,
  *      methods:{
  *          'delete':{ retryLimit:3, retryNetworkError: true },
  *          'post':{ retryTimeouts: [1000, 1000, 2000, 3000, 5000], statuses: [504], retryNetworkError: false },
  *      }
  * });
+ * ```
  */
-function TransportRetry(transport, options) {
-    if (!transport) {
-        throw new Error(
-            'Missing required parameter: transport in TransportRetry',
-        );
+class TransportRetry extends TransportBase {
+    retryTimeout = 0;
+    methods: HTTPRequestRetryOptions;
+    transport: TransportCore;
+    failedCalls: TransportCall[] = [];
+    individualFailedCalls: TransportCall[] = [];
+    retryTimer: number | null = null;
+    isDisposed = false;
+
+    /**
+     * @param transport - The transport to wrap.
+     * @param options - (optional) Settings options. Define retry timeout, http methods to retry and max retry limit
+     * per http method type. If not given then calls will run with underlying transport without retry logic.
+     */
+    constructor(transport: TransportCore, options?: Options) {
+        super();
+        if (!transport) {
+            throw new Error(
+                'Missing required parameter: transport in TransportRetry',
+            );
+        }
+        if (options?.retryTimeout && options.retryTimeout > 0) {
+            this.retryTimeout = options.retryTimeout;
+        }
+        this.methods = options?.methods ? options.methods : {};
+
+        this.transport = transport;
     }
-    this.retryTimeout =
-        options && options.retryTimeout > 0 ? options.retryTimeout : 0;
-    this.methods = options && options.methods ? options.methods : {};
-    this.transport = transport;
-    this.failedCalls = [];
-    this.individualFailedCalls = [];
-    this.retryTimer = null;
-    this.isDisposed = false;
-}
 
-/**
- * Performs a get request.
- * @see {@link saxo.openapi.TransportRetry#get}
- * @function
- */
-TransportRetry.prototype.get = transportMethod('get');
+    prepareTransportMethod(method: HTTPMethodType) {
+        return (...args: HTTPMethodInputArgs) => {
+            const methodRetryOptions = this.methods[method];
 
-/**
- * Performs a post request.
- * @see {@link saxo.openapi.TransportRetry#post}
- * @function
- */
-TransportRetry.prototype.post = transportMethod('post');
+            // checking if http method call should be handled by RetryTransport
+            if (
+                methodRetryOptions &&
+                ((methodRetryOptions.retryLimit &&
+                    methodRetryOptions.retryLimit > 0) ||
+                    methodRetryOptions.retryTimeouts)
+            ) {
+                return new Promise<OAPIRequestResult>((resolve, reject) => {
+                    const transportCall = {
+                        method,
+                        args,
+                        resolve,
+                        reject,
+                        retryCount: 0,
+                        retryTimer: null,
+                    };
 
-/**
- * Performs a put request.
- * @see {@link saxo.openapi.TransportRetry#put}
- * @function
- */
-TransportRetry.prototype.put = transportMethod('put');
+                    this.sendTransportCall(transportCall);
+                });
+            }
+            // calls underlying transport http method
+            return this.transport[method](...args);
+        };
+    }
 
-/**
- * Performs a delete request.
- * @see {@link saxo.openapi.TransportRetry#delete}
- * @function
- */
-TransportRetry.prototype.delete = transportMethod('delete');
+    protected sendTransportCall = (transportCall: TransportCall) => {
+        this.transport[transportCall.method](...transportCall.args).then(
+            transportCall.resolve,
+            (response: OAPIRequestResult | NetworkError) => {
+                const callOptions = this.methods[
+                    transportCall.method
+                ] as RetryOptions;
+                const isRetryForStatus =
+                    response?.status &&
+                    callOptions?.statuses?.includes(response.status);
 
-/**
- * Performs a patch request.
- * @see {@link saxo.openapi.TransportRetry#patch}
- * @function
- */
-TransportRetry.prototype.patch = transportMethod('patch');
-
-/**
- * Performs a patch request.
- * @see {@link saxo.openapi.TransportRetry#head}
- * @function
- */
-TransportRetry.prototype.head = transportMethod('head');
-
-/**
- * Performs a patch request.
- * @see {@link saxo.openapi.TransportRetry#options}
- * @function
- */
-TransportRetry.prototype.options = transportMethod('options');
-
-/**
- * @protected
- * @param transportCall
- */
-TransportRetry.prototype.sendTransportCall = function (transportCall) {
-    this.transport[transportCall.method]
-        .apply(this.transport, transportCall.args)
-        .then(transportCall.resolve, (response) => {
-            const callOptions = this.methods[transportCall.method];
-            const isRetryForStatus =
-                response &&
-                response.status &&
-                callOptions.statuses &&
-                callOptions.statuses.indexOf(response.status) >= 0;
-            const isRetryRequest =
-                response && response.isNetworkError
+                const isRetryRequest = response?.isNetworkError
                     ? callOptions.retryNetworkError
                     : isRetryForStatus;
-            const isWithinRetryLimitOption =
-                callOptions.retryLimit > 0 &&
-                transportCall.retryCount < callOptions.retryLimit;
-            const isWithinRetryTimeoutsOption =
-                callOptions.retryTimeouts &&
-                transportCall.retryCount < callOptions.retryTimeouts.length;
 
-            if (
-                isRetryRequest &&
-                (isWithinRetryLimitOption || isWithinRetryTimeoutsOption) &&
-                !this.isDisposed
-            ) {
-                this.addFailedCall(transportCall);
-            } else {
-                transportCall.reject(response);
+                const isWithinRetryLimitOption =
+                    callOptions.retryLimit &&
+                    callOptions.retryLimit > 0 &&
+                    transportCall.retryCount < callOptions.retryLimit;
+
+                const isWithinRetryTimeoutsOption =
+                    callOptions.retryTimeouts &&
+                    transportCall.retryCount < callOptions.retryTimeouts.length;
+
+                if (
+                    isRetryRequest &&
+                    (isWithinRetryLimitOption || isWithinRetryTimeoutsOption) &&
+                    !this.isDisposed
+                ) {
+                    this.addFailedCall(transportCall);
+                } else {
+                    transportCall.reject(response);
+                }
+            },
+        );
+    };
+
+    protected addFailedCall(transportCall: TransportCall) {
+        const callOptions = this.methods[transportCall.method] as RetryOptions;
+        if (
+            callOptions.retryTimeouts &&
+            callOptions.retryTimeouts.length > transportCall.retryCount
+        ) {
+            // schedule an individual retry timeout
+            this.individualFailedCalls.push(transportCall);
+            transportCall.retryTimer = window.setTimeout(() => {
+                this.retryIndividualFailedCall(transportCall);
+            }, callOptions.retryTimeouts[transportCall.retryCount]);
+        } else {
+            this.failedCalls.push(transportCall);
+            if (!this.retryTimer) {
+                // schedule a retry timeout for all failed calls
+                this.retryTimer = window.setTimeout(() => {
+                    this.retryFailedCalls();
+                }, this.retryTimeout);
+            }
+        }
+        transportCall.retryCount++;
+    }
+
+    protected retryFailedCalls() {
+        this.retryTimer = null;
+        while (this.failedCalls.length > 0) {
+            this.sendTransportCall(this.failedCalls.shift() as TransportCall);
+        }
+    }
+
+    protected retryIndividualFailedCall(transportCall: TransportCall) {
+        transportCall.retryTimer = null;
+        const individualFailedCallsIndex = this.individualFailedCalls.indexOf(
+            transportCall,
+        );
+        if (individualFailedCallsIndex >= 0) {
+            this.individualFailedCalls.splice(individualFailedCallsIndex, 1);
+        }
+        this.sendTransportCall(transportCall);
+    }
+
+    dispose() {
+        this.isDisposed = true;
+        this.individualFailedCalls.forEach((failedCall) => {
+            if (failedCall.retryTimer != null) {
+                clearTimeout(failedCall.retryTimer);
+                failedCall.retryTimer = null;
             }
         });
-};
-
-/**
- * Retries a failed call
- * @protected
- * @param transportCall
- */
-TransportRetry.prototype.addFailedCall = function (transportCall) {
-    const callOptions = this.methods[transportCall.method];
-    if (
-        callOptions.retryTimeouts &&
-        callOptions.retryTimeouts.length > transportCall.retryCount
-    ) {
-        // schedule an individual retry timeout
-        this.individualFailedCalls.push(transportCall);
-        transportCall.retryTimer = setTimeout(() => {
-            this.retryIndividualFailedCall(transportCall);
-        }, callOptions.retryTimeouts[transportCall.retryCount]);
-    } else {
-        this.failedCalls.push(transportCall);
-        if (!this.retryTimer) {
-            // schedule a retry timeout for all failed calls
-            this.retryTimer = setTimeout(() => {
-                this.retryFailedCalls();
-            }, this.retryTimeout);
+        if (this.retryTimer) {
+            clearTimeout(this.retryTimer);
+            this.retryTimer = null;
         }
+        this.individualFailedCalls
+            .concat(this.failedCalls)
+            .forEach((transportCall) => {
+                transportCall.reject();
+            });
+        this.individualFailedCalls.length = 0;
+        this.failedCalls.length = 0;
+        this.transport.dispose();
     }
-    transportCall.retryCount++;
-};
+}
 
-/**
- * @protected
- */
-TransportRetry.prototype.retryFailedCalls = function () {
-    this.retryTimer = null;
-    while (this.failedCalls.length > 0) {
-        this.sendTransportCall(this.failedCalls.shift());
-    }
-};
-
-/**
- * @protected
- * @param transportCall
- */
-TransportRetry.prototype.retryIndividualFailedCall = function (transportCall) {
-    transportCall.retryTimer = null;
-    const individualFailedCallsIndex = this.individualFailedCalls.indexOf(
-        transportCall,
-    );
-    if (individualFailedCallsIndex >= 0) {
-        this.individualFailedCalls.splice(individualFailedCallsIndex, 1);
-    }
-    this.sendTransportCall(transportCall);
-};
-
-/**
- * Disposes the underlying transport, the failed calls queue and clears retry timers.
- */
-TransportRetry.prototype.dispose = function () {
-    this.isDisposed = true;
-    this.individualFailedCalls.forEach((failedCall) => {
-        if (failedCall.retryTimer != null) {
-            clearTimeout(failedCall.retryTimer);
-            failedCall.retryTimer = null;
-        }
-    });
-    if (this.retryTimer) {
-        clearTimeout(this.retryTimer);
-        this.retryTimer = null;
-    }
-    this.individualFailedCalls
-        .concat(this.failedCalls)
-        .forEach((transportCall) => {
-            transportCall.reject.apply(null);
-        });
-    this.individualFailedCalls.length = 0;
-    this.failedCalls.length = 0;
-    this.transport.dispose();
-};
-
-// -- Export section --
 export default TransportRetry;

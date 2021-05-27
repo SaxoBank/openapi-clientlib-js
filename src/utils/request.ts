@@ -9,7 +9,10 @@ function getRequestId() {
     return ++requestCounter;
 }
 
-function globalToLocalRequestId(globalRequestId, parentRequestId) {
+function globalToLocalRequestId(
+    globalRequestId: number,
+    parentRequestId: number,
+) {
     return Math.max(globalRequestId - parentRequestId - 1, 0);
 }
 

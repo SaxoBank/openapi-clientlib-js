@@ -1,8 +1,9 @@
+/* eslint-disable import/no-named-as-default-member */
+
 import mockDate from 'mockdate';
 
-function multiline() {
-    const lines = Array.prototype.slice.call(arguments);
-    return lines.join('\r\n');
+function multiline(...args: string[]) {
+    return args.join('\r\n');
 }
 
 let clock = false;
@@ -12,7 +13,7 @@ function installClock() {
     clock = true;
 }
 
-function tick(n) {
+function tick(n: number) {
     mockDate.set(new Date(Date.now() + n));
     jest.advanceTimersByTime(n);
 }
@@ -27,9 +28,9 @@ function uninstallClock() {
 }
 
 const unMockedSetTimeout = global.setTimeout;
-const setTimeout = (fn) => unMockedSetTimeout(fn, 0);
+const setTimeout = (fn: () => void) => unMockedSetTimeout(fn, 0);
 
-const waterfallTimeout = (arr, startIndex) => {
+const waterfallTimeout = (arr: Array<() => void>, startIndex?: number) => {
     unMockedSetTimeout(() => {
         startIndex = startIndex || 0;
         arr[startIndex]();
@@ -40,8 +41,8 @@ const waterfallTimeout = (arr, startIndex) => {
 };
 
 const getResolvablePromise = () => {
-    let resolver;
-    let rejecter;
+    let resolver: (value?: unknown) => void;
+    let rejecter: (value?: unknown) => void;
 
     const promise = new Promise((resolve, reject) => {
         resolver = resolve;
@@ -50,7 +51,9 @@ const getResolvablePromise = () => {
 
     return {
         promise,
+        // @ts-expect-error TS complains that variable is used before initialized
         resolve: resolver,
+        // @ts-expect-error TS complains that variable is used before initialized
         reject: rejecter,
     };
 };

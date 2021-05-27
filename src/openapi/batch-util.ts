@@ -1,48 +1,35 @@
-/**
- * @module saxo/openapi/batch-util
- * @ignore
- */
-
 import log from '../log';
 import { getRequestId, globalToLocalRequestId } from '../utils/request';
-
-// -- Local variables section --
 
 const requestRx = /X-Request-Id: ([0-9]+)/;
 const httpCodeRx = /HTTP\/1.1 ([0-9]+)/;
 
 const LOG_AREA = 'batch';
 
-// -- Local methods section --
-
-// -- Exported methods section --
-
-/**
- * Utilities to build and parse batch requests
- * @namespace saxo.openapi.batchUtil
- */
-
 /**
  * Parses the response from a batch call.
- * @name saxo.openapi.batchUtil.parse
- * @param {string} responseText
- * @param {Number} parentRequestId - The parent request id. Used as a base for calculating batch items request ids.
- * @returns {Array.<{status:string, response: Object}>} An array of responses, in the position of the response id's.
+ *
+ * @param responseText - responseText
+ * @param parentRequestId - The parent request id. Used as a base for calculating batch items request ids.
+ * @returns An array of responses, in the position of the response id's.
  */
-function parse(responseText, parentRequestId = 0) {
+function parse(responseText: string, parentRequestId = 0) {
     if (!responseText) {
         throw new Error('Required Parameter: responseText in batch parse');
     }
 
     const lines = responseText.split('\r\n');
     const responseBoundary = lines[0];
-    let currentData = null;
+    let currentData: {
+        status?: number;
+        response?: Record<string, any>;
+    } | null = null;
     let requestId = null;
     const responseData = [];
     for (let i = 0, l = lines.length; i < l; i++) {
         const line = lines[i];
         if (line.length) {
-            if (!responseData[requestId]) {
+            if (requestId === null || !responseData[requestId]) {
                 requestId = line.match(requestRx);
                 if (requestId) {
                     requestId = parseInt(requestId[1], 10);
@@ -95,14 +82,21 @@ function parse(responseText, parentRequestId = 0) {
     return responseData;
 }
 
+export interface BatchRequest {
+    method: string;
+    headers?: Record<string, string>;
+    url: string;
+    data?: string;
+}
+
 /**
  * Builds up a string of the data for a batch request.
- * @name saxo.openapi.batchUtil.build
- * @param {Array.<{method: string, headers: ?Object.<string, string>, url: string, data: ?string}>} subRequests - The sub requests of the batch.
- * @param {string} host - The host of the sender.
- * @returns { body: string, boundary: string }
+ *
+ * @param subRequests - The sub requests of the batch.
+ * @param host - The host of the sender.
+ *
  */
-function build(subRequests, host) {
+function build(subRequests: BatchRequest[], host: string) {
     if (!subRequests || !host) {
         throw new Error(
             'Missing required parameters: batch build requires sub requests and host',
@@ -156,7 +150,5 @@ function build(subRequests, host) {
         boundary: boundary.substr(2),
     };
 }
-
-// -- Export section --
 
 export { parse, build };

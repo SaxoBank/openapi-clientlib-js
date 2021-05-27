@@ -1,18 +1,9 @@
-﻿/**
- * @module saxo/price-formatting/modern-fractions-character
- * @ignore
- */
-
-// -- Local variables section --
+﻿import type NumberFormatting from '../number-formatting';
 
 const modernFractionsSeparator = "'"; // US T-Bond/T-Note future decimal separator (104'16.5)
 const altModernFractionsSeparator = '"'; // For the people using ' as thousand separator
 
-// -- Local methods section --
-
-// -- Exported methods section --
-
-function getModernFractionsSeparator(numberFormatting) {
+function getModernFractionsSeparator(numberFormatting: NumberFormatting) {
     let separator = modernFractionsSeparator;
 
     if (numberFormatting.groupSeparator === modernFractionsSeparator) {
@@ -20,7 +11,5 @@ function getModernFractionsSeparator(numberFormatting) {
     }
     return separator;
 }
-
-// -- Export section --
 
 export { getModernFractionsSeparator };
