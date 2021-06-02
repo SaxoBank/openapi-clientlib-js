@@ -382,21 +382,13 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
         this.connectionState = nextState;
 
-        log.info(
-            LOG_AREA,
-            'Connection state changed',
-            {
-                changedTo:
-                    this.connectionState &&
-                    this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
-                mechanism: connectionTransport,
-                reconnecting: this.reconnecting,
-            },
-            {
-                persist:
-                    connectionTransport === streamingTransports.SIGNALR_CORE,
-            },
-        );
+        log.info(LOG_AREA, 'Connection state changed', {
+            changedTo:
+                this.connectionState &&
+                this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
+            mechanism: connectionTransport,
+            reconnecting: this.reconnecting,
+        });
 
         this.trigger(this.EVENT_CONNECTION_STATE_CHANGED, this.connectionState);
 
