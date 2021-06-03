@@ -16,6 +16,7 @@ export interface ConnectionOptions {
     waitForPageLoad?: boolean;
     transport?: Array<TransportTypes>;
     messageSerializationProtocol?: IHubProtocol;
+    isWebsocketStreamingHeartBeatEnabled?: boolean;
 }
 
 export type ConnectionState =
@@ -107,4 +108,8 @@ export interface StreamingConfigurableOptions {
      */
     messageProtocol?: Record<string, any>;
     messageSerializationProtocol?: IHubProtocol;
+    /**
+     * If true we wll get streaming heartbeat messages for websocket connection
+     */
+    isWebsocketStreamingHeartBeatEnabled?: boolean;
 }
