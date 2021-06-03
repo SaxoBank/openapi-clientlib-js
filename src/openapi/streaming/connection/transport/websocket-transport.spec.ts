@@ -498,4 +498,69 @@ describe('openapi WebSocket Transport', () => {
             });
         });
     });
+
+    describe('websocket inactivity finder', (done) => {
+        it('start and stop should work correctly', () => {
+            const transport = new WebSocketTransport(BASE_URL, undefined, {
+                isWebsocketStreamingHeartBeatEnabled: true,
+            });
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start({}, () => {});
+            fetchMock.resolve(200, {});
+
+            transport.authorizePromise.then(() => {
+                // on ws open should start
+                transport.socket.readyState = 1; // WebSocket internal state equal open
+                transport.socket.onopen();
+
+                expect(transport.inactivityFinderEnabled).toBe(true);
+                expect(
+                    transport.inactivityFinderNextUpdateTimeoutId,
+                ).to.not.equal(null);
+
+                // on ws close should stop
+                transport.socket.readyState = 3; // WebSocket internal state equal closed
+                transport.socket.onclose({ code: 1001 });
+
+                expect(transport.inactivityFinderEnabled).toBe(null);
+                expect(transport.inactivityFinderNextUpdateTimeoutId).to.equal(
+                    null,
+                );
+                done();
+            });
+        });
+
+        it('should reconnect if connection is established and there is no messages for more than 2.5 seconds', (done) => {
+            const transport = new WebSocketTransport(BASE_URL, undefined, {
+                isWebsocketStreamingHeartBeatEnabled: true,
+            });
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start({}, () => {});
+            fetchMock.resolve(200, {});
+
+            transport.authorizePromise.then(() => {
+                expect(global.WebSocket).toBeCalledTimes(1);
+                transport.socket.readyState = 1;
+                transport.socket.onopen();
+
+                const dataBuffer = new window.TextEncoder().encode(
+                    JSON.stringify(jsonPayload),
+                );
+                const payload = new Uint8Array(
+                    new ArrayBuffer(dataBuffer.length + 17),
+                );
+                payload.set(
+                    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 134, 12, 0, 0],
+                    0,
+                );
+                payload.set(dataBuffer, 17);
+                transport.socket.onmessage({ data: payload.buffer });
+
+                tick(6000);
+                expect(global.WebSocket).toBeCalledTimes(2);
+
+                done();
+            });
+        });
+    });
 });

@@ -200,7 +200,16 @@ class Connection {
             return this.createTransport(baseUrl);
         }
 
-        return new SelectedTransport(baseUrl, this.onTransportFail);
+        let options;
+        if (this.options && this.options.isWebsocketStreamingHeartBeatEnabled) {
+            if (SelectedTransport.name === 'WebsocketTransport') {
+                options = {
+                    isWebsocketStreamingHeartBeatEnabled: true,
+                };
+            }
+        }
+
+        return new SelectedTransport(baseUrl, this.onTransportFail, options);
     }
 
     private getSupportedTransports(
