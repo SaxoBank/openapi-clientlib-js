@@ -11,7 +11,7 @@ import NumberFormatting from './number-formatting';
 import log from './log';
 import MicroEmitter from './micro-emitter';
 
-import * as batch from './openapi/batch-util';
+import * as batchUtil from './openapi/batch-util';
 import TransportCore from './openapi/transport/core';
 import TransportAuth from './openapi/transport/auth';
 import TransportBatch from './openapi/transport/batch';
@@ -30,47 +30,28 @@ export type {
     RequestOptions,
 } from './types';
 export type { StreamingMessage } from './openapi/streaming/types';
-export type { default as TransportCore } from './openapi/transport/core';
-export type { default as TransportAuth } from './openapi/transport/auth';
-export type { default as TransportBatch } from './openapi/transport/batch';
-export type { default as TransportQueue } from './openapi/transport/queue';
-export type { default as TransportRetry } from './openapi/transport/retry';
-export type { default as TransportPutPatchDiagnosticsQueue } from './openapi/transport/putPatchDiagnosticsQueue';
-export type { default as Streaming } from './openapi/streaming/streaming';
-export type { default as AuthProvider } from './openapi/authProvider';
 export type { default as Subscription } from './openapi/streaming/subscription';
-export type { default as PriceFormatting } from './price-formatting';
-export type { default as priceFormatOptions } from './price-formatting/format-options';
-export type { default as NumberFormatting } from './number-formatting';
-export type {
-    default as MicroEmitter,
-    IEventEmitter,
-    EventTypes,
-} from './micro-emitter';
+export type { IEventEmitter, EventTypes } from './micro-emitter';
 
-export default {
+export {
     log,
     MicroEmitter,
     NumberFormatting,
     PriceFormatting,
     priceFormatOptions,
-    openapi: {
-        AuthProvider,
-        batch,
-        TransportCore,
-        TransportAuth,
-        TransportBatch,
-        TransportQueue,
-        TransportRetry,
-        TransportPutPatchDiagnosticsQueue,
-        Streaming,
-        streamingTransports,
-    },
-    utils: {
-        enum: utilsEnum,
-        function: utilsFunction,
-        object: utilsObject,
-        string: utilsString,
-        fetch: utilsFetch,
-    },
+    AuthProvider,
+    batchUtil,
+    TransportCore,
+    TransportAuth,
+    TransportBatch,
+    TransportQueue,
+    TransportRetry,
+    TransportPutPatchDiagnosticsQueue,
+    Streaming,
+    streamingTransports,
+    utilsEnum,
+    utilsFunction,
+    utilsObject,
+    utilsString,
+    utilsFetch,
 };
