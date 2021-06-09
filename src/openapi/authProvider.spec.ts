@@ -500,7 +500,7 @@ describe('openapi AuthProvider', () => {
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();
-            tick(600000);
+            tick(60000);
             expect(fetch).toBeCalledTimes(1);
 
             // ignored because fetch is in progress

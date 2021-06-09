@@ -1,7 +1,3 @@
-/* eslint-disable import/no-named-as-default-member */
-
-import mockDate from 'mockdate';
-
 function multiline(...args: string[]) {
     return args.join('\r\n');
 }
@@ -9,12 +5,11 @@ function multiline(...args: string[]) {
 let clock = false;
 function installClock() {
     jest.useFakeTimers();
-    mockDate.set(new Date(2015, 3, 27));
+    jest.setSystemTime(new Date(2015, 3, 27));
     clock = true;
 }
 
 function tick(n: number) {
-    mockDate.set(new Date(Date.now() + n));
     jest.advanceTimersByTime(n);
 }
 
@@ -64,7 +59,6 @@ export {
     multiline,
     installClock,
     uninstallClock,
-    mockDate,
     waterfallTimeout,
     getResolvablePromise,
 };
