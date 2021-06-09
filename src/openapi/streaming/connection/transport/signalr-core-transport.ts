@@ -287,13 +287,12 @@ class SignalrCoreTransport implements StreamingTransportInterface {
 
             this.setState(constants.CONNECTION_STATE_RECONNECTING);
 
-            const baseUrl = (this
-                .connection as SignalR.HubConnection).baseUrl.replace(
-                /&messageId=\d+/,
-                '',
-            );
-            (this
-                .connection as SignalR.HubConnection).baseUrl = `${baseUrl}&messageId=${this.lastMessageId}`;
+            const baseUrl = (
+                this.connection as SignalR.HubConnection
+            ).baseUrl.replace(/&messageId=\d+/, '');
+            (
+                this.connection as SignalR.HubConnection
+            ).baseUrl = `${baseUrl}&messageId=${this.lastMessageId}`;
         });
         this.connection.onreconnected(() => {
             // recreate message stream

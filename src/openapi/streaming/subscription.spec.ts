@@ -1797,10 +1797,8 @@ describe('openapi StreamingSubscription', () => {
 
                 subscription.onStreamingData(streamingData);
 
-                const [
-                    lastMessageArgument,
-                    lastTypeArgument,
-                ] = updateSpy.mock.calls[updateSpy.mock.calls.length - 1];
+                const [lastMessageArgument, lastTypeArgument] =
+                    updateSpy.mock.calls[updateSpy.mock.calls.length - 1];
 
                 expect(lastTypeArgument).toEqual(
                     subscription.UPDATE_TYPE_DELTA,
@@ -1915,10 +1913,8 @@ describe('openapi StreamingSubscription', () => {
 
                 subscription.onStreamingData(streamingData);
 
-                const [
-                    lastMessageArgument,
-                    lastTypeArgument,
-                ] = updateSpy.mock.calls[updateSpy.mock.calls.length - 1];
+                const [lastMessageArgument, lastTypeArgument] =
+                    updateSpy.mock.calls[updateSpy.mock.calls.length - 1];
 
                 expect(lastTypeArgument).toEqual(
                     subscription.UPDATE_TYPE_DELTA,

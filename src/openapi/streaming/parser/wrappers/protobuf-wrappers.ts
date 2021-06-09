@@ -12,7 +12,7 @@ export default {
                 // We normalize timestamp to the format supported by OAPI and return string instead of an object
                 // see {@link https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/timestamp.proto#L110}
                 toObject(message: Message) {
-                    const { seconds, nanos } = (message as unknown) as {
+                    const { seconds, nanos } = message as unknown as {
                         nanos?: any;
                         seconds?: any;
                     };

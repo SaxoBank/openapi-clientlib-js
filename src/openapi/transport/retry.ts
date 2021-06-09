@@ -180,9 +180,8 @@ class TransportRetry extends TransportBase {
 
     protected retryIndividualFailedCall(transportCall: TransportCall) {
         transportCall.retryTimer = null;
-        const individualFailedCallsIndex = this.individualFailedCalls.indexOf(
-            transportCall,
-        );
+        const individualFailedCallsIndex =
+            this.individualFailedCalls.indexOf(transportCall);
         if (individualFailedCallsIndex >= 0) {
             this.individualFailedCalls.splice(individualFailedCallsIndex, 1);
         }

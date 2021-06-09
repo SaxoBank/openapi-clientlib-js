@@ -67,10 +67,8 @@ class TransportAuth extends TransportBase {
         if (result?.status === 401) {
             this.addAuthError(result.url, oldTokenExpiry, timeRequested);
             this.cleanupAuthErrors();
-            const areUrlAuthErrorsProblematic = this.areUrlAuthErrorsProblematic(
-                result.url,
-                oldTokenExpiry,
-            );
+            const areUrlAuthErrorsProblematic =
+                this.areUrlAuthErrorsProblematic(result.url, oldTokenExpiry);
 
             if (areUrlAuthErrorsProblematic) {
                 // Blocking infinite loop of authorization re-requests which might be caused by invalid

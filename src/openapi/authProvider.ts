@@ -114,10 +114,12 @@ class AuthProvider extends MicroEmitter<EmittedEvents> {
     private token: string | null = null;
     tokenRefreshUrl?: string;
     tokenRefreshHeaders?: Record<string, string> = {};
-    tokenRefreshCredentials: RequestCredentials = DEFAULT_TOKEN_REFRESH_CREDENTIALS;
+    tokenRefreshCredentials: RequestCredentials =
+        DEFAULT_TOKEN_REFRESH_CREDENTIALS;
     tokenRefreshMethod: HTTPMethodType = DEFAULT_TOKEN_REFRESH_METHOD;
     tokenRefreshPropertyNameToken = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_TOKEN;
-    tokenRefreshPropertyNameExpires = DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES;
+    tokenRefreshPropertyNameExpires =
+        DEFAULT_TOKEN_REFRESH_PROPERTY_NAME_EXPIRES;
     tokenRefreshMarginMs = DEFAULT_TOKEN_REFRESH_MARGIN_MS;
     retryDelayMs = DEFAULT_RETRY_DELAY_MS;
     maxRetryCount = DEFAULT_MAX_RETRY_COUNT;
