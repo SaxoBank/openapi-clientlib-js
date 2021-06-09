@@ -34,7 +34,7 @@ describe('openapi TransportPutPatchDiagnosticsQueue', () => {
         }).toThrow();
     });
 
-    test.each`
+    it.each`
         method
         ${'delete'}
         ${'get'}
@@ -62,7 +62,7 @@ describe('openapi TransportPutPatchDiagnosticsQueue', () => {
         },
     );
 
-    test.each`
+    it.each`
         method
         ${'put'}
         ${'patch'}
