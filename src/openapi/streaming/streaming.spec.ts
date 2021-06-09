@@ -366,6 +366,7 @@ describe('openapi Streaming', () => {
                 streaming.CONNECTION_STATE_STARTED,
             ]);
         });
+
         it('becomes started when the connection callback returns', () => {
             givenStreaming();
             startCallback();
@@ -378,6 +379,7 @@ describe('openapi Streaming', () => {
                 streaming.CONNECTION_STATE_STARTED,
             ]);
         });
+
         it('goes to the connecting state', () => {
             givenStreaming();
             stateChangedCallback({ newState: 0 /* connecting */ });
@@ -394,6 +396,7 @@ describe('openapi Streaming', () => {
                 subscription.onConnectionAvailable.mock.calls.length,
             ).toEqual(0);
         });
+
         it('goes to the connected state', () => {
             givenStreaming();
             stateChangedCallback({ newState: 1 /* connected */ });
@@ -413,6 +416,7 @@ describe('openapi Streaming', () => {
                 [],
             );
         });
+
         it('stays connected if started is called after connected state change', () => {
             // this does happen - timing can go either way in the wild
             givenStreaming();
@@ -425,6 +429,7 @@ describe('openapi Streaming', () => {
                 streaming.CONNECTION_STATE_CONNECTED,
             );
         });
+
         it('goes to the reconnected state', () => {
             givenStreaming();
             stateChangedCallback({ newState: 2 /* reconnecting */ });
@@ -441,6 +446,7 @@ describe('openapi Streaming', () => {
                 subscription.onConnectionAvailable.mock.calls.length,
             ).toEqual(0);
         });
+
         it('goes to the disconnected state', () => {
             givenStreaming();
             stateChangedCallback({ newState: 4 /* disconnected */ });
@@ -682,7 +688,7 @@ describe('openapi Streaming', () => {
             stateChangedCallback({ newState: 0 /* connecting */ });
             stateChangedCallback({ newState: 1 /* connected */ });
 
-            expect(subscription.streamingContextId).toEqual('0000750000');
+            expect(subscription.streamingContextId).toEqual('0000500000');
             expect(subscription.streamingContextId).toEqual(
                 streaming.contextId,
             );
@@ -697,7 +703,7 @@ describe('openapi Streaming', () => {
             stateChangedCallback({ newState: 0 /* connecting */ });
             stateChangedCallback({ newState: 1 /* connected */ });
 
-            expect(subscription.streamingContextId).toEqual('0001450000');
+            expect(subscription.streamingContextId).toEqual('0001000000');
             expect(subscription.streamingContextId).toEqual(
                 streaming.contextId,
             );
@@ -712,7 +718,7 @@ describe('openapi Streaming', () => {
             stateChangedCallback({ newState: 0 /* connecting */ });
             stateChangedCallback({ newState: 1 /* connected */ });
 
-            expect(subscription.streamingContextId).toEqual('0002150000');
+            expect(subscription.streamingContextId).toEqual('0001700000');
             expect(subscription.streamingContextId).toEqual(
                 streaming.contextId,
             );
