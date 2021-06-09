@@ -1,3 +1,8 @@
+### v10.0.0
+
+#### Breaking
+- Changed exports to be flat and made package side effect free so that tree shaking can occur (e.g. you do not use streaming)
+
 ### v9.0.0
 
 #### Breaking
