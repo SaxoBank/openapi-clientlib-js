@@ -36,7 +36,7 @@
 }
 
 function mockFetch() {
-    const fetch = (jest.fn() as unknown) as jest.MockedFunction<
+    const fetch = jest.fn() as unknown as jest.MockedFunction<
         typeof window.fetch & {
             resolve: (
                 status: number,

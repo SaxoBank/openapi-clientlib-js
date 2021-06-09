@@ -13,7 +13,8 @@ export const EVENT_STREAMING_FAILED = 'streamingFailed' as const;
 /**
  * Event that occurs when the _disconnect control message is received from server.
  */
-export const EVENT_DISCONNECT_REQUESTED = 'streamingDisconnectRequested' as const;
+export const EVENT_DISCONNECT_REQUESTED =
+    'streamingDisconnectRequested' as const;
 
 /**
  * Streaming has been created but has not yet started the connection.

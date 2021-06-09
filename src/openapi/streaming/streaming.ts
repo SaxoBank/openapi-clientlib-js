@@ -124,8 +124,8 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         connectionConstants.READABLE_CONNECTION_STATE_MAP;
 
     retryCount = 0;
-    connectionState: types.ConnectionState | null = this
-        .CONNECTION_STATE_INITIALIZING;
+    connectionState: types.ConnectionState | null =
+        this.CONNECTION_STATE_INITIALIZING;
     baseUrl: string;
     authProvider: AuthProvider;
     transport: ITransport;
@@ -647,9 +647,8 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         const subscriptionsToReset = [];
         for (let i = 0; i < referenceIdList.length; i++) {
             const referenceId = referenceIdList[i];
-            const subscription = this.findSubscriptionByReferenceId(
-                referenceId,
-            );
+            const subscription =
+                this.findSubscriptionByReferenceId(referenceId);
             if (subscription) {
                 subscriptionsToReset.push(subscription);
             } else {

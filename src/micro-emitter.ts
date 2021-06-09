@@ -2,7 +2,7 @@ export type EventTypes = Record<string, Callback>;
 
 export interface IEventEmitter<
     Events extends EventTypes,
-    ChainedType = IEventEmitter<any, any>
+    ChainedType = IEventEmitter<any, any>,
 > {
     /**
      * Register an event handler for single invocation (subscribe)

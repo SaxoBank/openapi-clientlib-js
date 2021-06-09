@@ -18,7 +18,8 @@ export interface ConnectionOptions {
     messageSerializationProtocol?: IHubProtocol;
 }
 
-export type ConnectionState = keyof typeof connectionConstants.READABLE_CONNECTION_STATE_MAP;
+export type ConnectionState =
+    keyof typeof connectionConstants.READABLE_CONNECTION_STATE_MAP;
 
 export type DataFormat =
     | typeof connectionConstants.DATA_FORMAT_JSON

@@ -31,12 +31,8 @@ function convertNumberToString(number: number, precision: number) {
  * @param options - options
  */
 function expandNumber(number: number, precision: number, options: Options) {
-    const {
-        groupSizes,
-        groupSeparator,
-        decimalSeparator,
-        isHideZeroTail,
-    } = options;
+    const { groupSizes, groupSeparator, decimalSeparator, isHideZeroTail } =
+        options;
     let curSize = groupSizes[0];
     let curGroupIndex = 1;
     let numberString = convertNumberToString(number, precision);
