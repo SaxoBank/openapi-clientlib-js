@@ -160,7 +160,6 @@ class NumberFormatting implements NumberFormattingOptions {
         }
 
         // used by formatNoRounding
-        // using toFixed will not give exact decimal values for large numbers + it does rounding
         const sNumber = number.toString();
         if (sNumber.match(expoenetialRx)) {
             // handled case where sNumber still has exponential notation in case of negative power
