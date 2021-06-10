@@ -56,6 +56,18 @@ describe('NumberFormatting format', () => {
             expect(formatNumberNoRounding(-1.1, 4, 5)).toEqual('-1.1000');
             expect(formatNumberNoRounding(-5e-7, 4, 8)).toEqual('-0.0000005');
         });
+
+        it('handles large numeric value', () => {
+            expect(formatNumberNoRounding(92893282191.78, 2)).toEqual(
+                '92,893,282,191.78',
+            );
+            expect(formatNumberNoRounding(12345678912345.6, 4)).toEqual(
+                '12,345,678,912,345.6000',
+            );
+            expect(formatNumberNoRounding(12345678912.3456, 1, 3)).toEqual(
+                '12,345,678,912.346',
+            );
+        });
         it('handles numeric strings', () => {
             expect(formatNumberNoRounding('1.1', 4)).toEqual('1.1000');
             expect(formatNumberNoRounding('1.1212', 1)).toEqual('1.1212');

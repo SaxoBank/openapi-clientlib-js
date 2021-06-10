@@ -5,6 +5,8 @@ import shortFormat from './short-format';
 
 const numberOfZerosRx = /0+$/;
 
+const expoenetialRx = /[0-9]+([eE][-+]?[0-9]+)/;
+
 export type NumberOptions = Readonly<{
     /**
      * The group sizes for the number.
@@ -122,7 +124,10 @@ class NumberFormatting implements NumberFormattingOptions {
             num,
             Math.min(
                 maxDecimals,
-                Math.max(minDecimals, this.getActualDecimals(Number(num))),
+                Math.max(
+                    minDecimals,
+                    this.getActualDecimals(Number(num), true),
+                ),
             ),
             this,
         );
@@ -144,12 +149,30 @@ class NumberFormatting implements NumberFormattingOptions {
      * Returns the actual number of decimals that a number has.
      * @param number - number or numeric string
      */
-    getActualDecimals(number: number) {
+    getActualDecimals(number: number, isNoRounding?: boolean) {
         number = Math.abs(number);
-        return (number - Math.floor(number))
-            .toFixed(8)
-            .substring(2, 10)
-            .replace(numberOfZerosRx, '').length;
+        // used by priceFormatting.format as it expects rounding done by toFixed
+        if (!isNoRounding) {
+            return (number - Math.floor(number))
+                .toFixed(8)
+                .substring(2, 10)
+                .replace(numberOfZerosRx, '').length;
+        }
+
+        // used by formatNoRounding
+        // using toFixed will not give exact decimal values for large numbers + it does rounding
+        const sNumber = number.toString();
+        if (sNumber.match(expoenetialRx)) {
+            // handled case where sNumber still has exponential notation in case of negative power
+            // number of type 1e-7, with negative power -7
+            // toFixed is used to get the approximate value
+            return number.toFixed(8).split('.')[1].replace(numberOfZerosRx, '')
+                .length;
+        }
+
+        const decimal = number.toString().split('.')[1];
+        const decimalLength = decimal ? decimal.length : 0;
+        return Math.min(decimalLength, 8);
     }
 }
 
