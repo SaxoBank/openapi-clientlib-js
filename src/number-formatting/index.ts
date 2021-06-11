@@ -148,6 +148,7 @@ class NumberFormatting implements NumberFormattingOptions {
     /**
      * Returns the actual number of decimals that a number has.
      * @param number - number or numeric string
+     * @param isNoRounding - oprional or boolean
      */
     getActualDecimals(number: number, isNoRounding?: boolean) {
         number = Math.abs(number);
@@ -169,7 +170,7 @@ class NumberFormatting implements NumberFormattingOptions {
                 .length;
         }
 
-        const decimal = number.toString().split('.')[1];
+        const decimal = sNumber.split('.')[1];
         const decimalLength = decimal ? decimal.length : 0;
         return Math.min(decimalLength, 8);
     }
