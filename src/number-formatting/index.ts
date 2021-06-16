@@ -5,7 +5,8 @@ import shortFormat from './short-format';
 
 const numberOfZerosRx = /0+$/;
 
-const expoenetialRx = /[0-9]+([eE][-+]?[0-9]+)/;
+// browsers [ie,chromium,firefox] start rounding of decimal number after 16-17 chars.
+const maxChars = 16;
 
 export type NumberOptions = Readonly<{
     /**
@@ -124,10 +125,7 @@ class NumberFormatting implements NumberFormattingOptions {
             num,
             Math.min(
                 maxDecimals,
-                Math.max(
-                    minDecimals,
-                    this.getActualDecimals(Number(num), true),
-                ),
+                Math.max(minDecimals, this.getActualDecimals(Number(num))),
             ),
             this,
         );
@@ -148,31 +146,17 @@ class NumberFormatting implements NumberFormattingOptions {
     /**
      * Returns the actual number of decimals that a number has.
      * @param number - number or numeric string
-     * @param isNoRounding - oprional or boolean
      */
-    getActualDecimals(number: number, isNoRounding?: boolean) {
+    getActualDecimals(number: number) {
         number = Math.abs(number);
-        // used by priceFormatting.format as it expects rounding done by toFixed
-        if (!isNoRounding) {
-            return (number - Math.floor(number))
-                .toFixed(8)
-                .substring(2, 10)
-                .replace(numberOfZerosRx, '').length;
-        }
 
-        // used by formatNoRounding
-        const sNumber = number.toString();
-        if (sNumber.match(expoenetialRx)) {
-            // handled case where sNumber still has exponential notation in case of negative power
-            // number of type 1e-7, with negative power -7
-            // toFixed is used to get the approximate value
-            return number.toFixed(8).split('.')[1].replace(numberOfZerosRx, '')
-                .length;
-        }
+        let maxDecimals = maxChars - Math.floor(number).toString().length;
+        maxDecimals = Math.max(0, Math.min(maxDecimals, 8));
 
-        const decimal = sNumber.split('.')[1];
-        const decimalLength = decimal ? decimal.length : 0;
-        return Math.min(decimalLength, 8);
+        return (number - Math.floor(number))
+            .toFixed(maxDecimals)
+            .substring(2, 10)
+            .replace(numberOfZerosRx, '').length;
     }
 }
 
