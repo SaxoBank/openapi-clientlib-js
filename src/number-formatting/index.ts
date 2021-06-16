@@ -155,7 +155,7 @@ class NumberFormatting implements NumberFormattingOptions {
 
         return (number - Math.floor(number))
             .toFixed(maxDecimals)
-            .substring(2, 10)
+            .substring(2, 2 + maxDecimals)
             .replace(numberOfZerosRx, '').length;
     }
 }
