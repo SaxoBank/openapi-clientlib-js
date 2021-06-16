@@ -7,7 +7,6 @@ import { shouldUseCloud } from './options';
 import type { QueueItem } from './queue';
 import type { URLDetails, Services, TransportOptions } from './types';
 import TransportQueue from './queue';
-
 import type { OAPIRequestResult, NetworkError } from '../../types';
 import type { ITransport } from './transport-base';
 
