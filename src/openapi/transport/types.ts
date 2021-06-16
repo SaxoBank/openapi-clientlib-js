@@ -1,7 +1,16 @@
 import type { RequestOptions, StringTemplateArgs } from '../../types';
 
+export type URLDetails = {
+    method: string;
+    servicePath: string;
+    url: string;
+};
+
 export type UseCloud = {
-    useCloud?: boolean | string | (() => boolean | string);
+    useCloud?:
+        | boolean
+        | string
+        | ((urlDetails?: URLDetails) => boolean | string);
 };
 
 export type Services = {
