@@ -42,27 +42,27 @@ describe('openapi TransportBatch', () => {
     afterEach(() => uninstallClock());
 
     it('requires baseUrl', () => {
-        expect(function() {
+        expect(function () {
             transportBatch = new TransportBatch(transport, null, {
                 timeoutMs: 0,
             });
         }).toThrow();
-        expect(function() {
+        expect(function () {
             // @ts-expect-error testing invalid argument
             transportBatch = new TransportBatch(null, validBaseUrl, {});
         }).toThrow();
-        expect(function() {
+        expect(function () {
             transportBatch = new TransportBatch(transport, validBaseUrl, {});
         }).not.toThrow();
-        expect(function() {
+        expect(function () {
             transportBatch = new TransportBatch(transport, validBaseUrl, null);
         }).not.toThrow();
-        expect(function() {
+        expect(function () {
             transportBatch = new TransportBatch(transport, validBaseUrl);
         }).not.toThrow();
     });
 
-    it('handles different base url\'s', function() {
+    it("handles different base url's", function () {
         // for this to be valid, open api would have to be hosted at the same level or above on the current server
         expect(() => {
             transportBatch = new TransportBatch(transport, '/');
@@ -82,19 +82,19 @@ describe('openapi TransportBatch', () => {
         expect(transportBatch.basePath).toEqual('/foo/openapi/');
     });
 
-    it('defaults to timeout 0', function() {
+    it('defaults to timeout 0', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl);
         expect(transportBatch.timeoutMs).toEqual(0);
     });
 
-    it('overrides timeout', function() {
+    it('overrides timeout', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 9999,
         });
         expect(transportBatch.timeoutMs).toEqual(9999);
     });
 
-    it('does not batch if only a single call is to be made', function() {
+    it('does not batch if only a single call is to be made', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -113,7 +113,7 @@ describe('openapi TransportBatch', () => {
         expect(transport.post.mock.calls.length).toEqual(0);
     });
 
-    it('does not batch calls to services configured to use cloud', function() {
+    it('does not batch calls to services configured to use cloud', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             services: {
                 'usersettings/v2': { useCloud: true },
@@ -125,7 +125,7 @@ describe('openapi TransportBatch', () => {
         expect(transport.get.mock.calls.length).toEqual(1);
     });
 
-    it('when useCloud function returns false does not batch calls to services ', function() {
+    it('when useCloud function returns false does not batch calls to services ', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             services: {
                 'usersettings/v2': {
@@ -139,7 +139,7 @@ describe('openapi TransportBatch', () => {
         expect(transport.get.mock.calls.length).toEqual(1);
     });
 
-    it('batches calls to services configured to use on-prem', function() {
+    it('batches calls to services configured to use on-prem', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
             services: {
@@ -154,7 +154,7 @@ describe('openapi TransportBatch', () => {
         expect(transport.get.mock.calls.length).toEqual(1);
     });
 
-    it('queues up calls immediately if timeout is 0', function() {
+    it('queues up calls immediately if timeout is 0', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -257,7 +257,7 @@ describe('openapi TransportBatch', () => {
         expect(transport.patch.mock.calls.length).toEqual(0);
     });
 
-    it('queues up calls and executes after the timeout if the timeout is not 0', function() {
+    it('queues up calls and executes after the timeout if the timeout is not 0', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 10,
         });
@@ -342,7 +342,7 @@ describe('openapi TransportBatch', () => {
         ]);
     });
 
-    it('accepts an object or a string in the body argument', function() {
+    it('accepts an object or a string in the body argument', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -401,7 +401,7 @@ describe('openapi TransportBatch', () => {
         expect(transport.put.mock.calls.length).toEqual(0);
     });
 
-    it('appends extended asset types header if found in at least one subrequest', function() {
+    it('appends extended asset types header if found in at least one subrequest', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -464,7 +464,7 @@ describe('openapi TransportBatch', () => {
         expect(transport.get.mock.calls.length).toEqual(0);
     });
 
-    it('allows not having any authentication passed in and picks it up off the calls', function() {
+    it('allows not having any authentication passed in and picks it up off the calls', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -524,7 +524,7 @@ describe('openapi TransportBatch', () => {
         expect(transport.get.mock.calls.length).toEqual(0);
     });
 
-    it('processes the batch response', function(done) {
+    it('processes the batch response', function (done) {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -670,7 +670,7 @@ describe('openapi TransportBatch', () => {
         });
     });
 
-    it('passes on failures', function(done) {
+    it('passes on failures', function (done) {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -767,7 +767,7 @@ describe('openapi TransportBatch', () => {
         });
     });
 
-    it('passes on network errors', function(done) {
+    it('passes on network errors', function (done) {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -864,7 +864,7 @@ describe('openapi TransportBatch', () => {
         });
     });
 
-    it('passes on a failure when the promise resolves without a batch', function(done) {
+    it('passes on a failure when the promise resolves without a batch', function (done) {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -947,7 +947,7 @@ describe('openapi TransportBatch', () => {
         });
     });
 
-    it('detects a non 2xx status code as a rejection', function(done) {
+    it('detects a non 2xx status code as a rejection', function (done) {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -1102,7 +1102,7 @@ describe('openapi TransportBatch', () => {
         });
     });
 
-    it('uri-encodes arguments', function() {
+    it('uri-encodes arguments', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
@@ -1152,7 +1152,7 @@ describe('openapi TransportBatch', () => {
         ]);
     });
 
-    it('supports queryParams', function() {
+    it('supports queryParams', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,
         });
