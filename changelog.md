@@ -1,3 +1,7 @@
+### v10.0.1
+- Enhanced getActualDecimals function to support large numbers.
+
+
 ### v10.0.0
 
 #### Breaking

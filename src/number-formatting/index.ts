@@ -5,6 +5,17 @@ import shortFormat from './short-format';
 
 const numberOfZerosRx = /0+$/;
 
+/**
+ * Come up with this number through experimentation.
+ * In js if the number is greater than 16/17 chars then it starts to round off
+ * @example
+ * let c = 123456789123456789 , c becomes 123456789123456780
+ * 123456789123456.789 becomes 123456789123456.78
+ * 1234567891234567.1 becomes 1234567891234567
+ * 1234567891234567.8 becomes 1234567891234567.8
+ **/
+const maxChars = 16;
+
 export type NumberOptions = Readonly<{
     /**
      * The group sizes for the number.
@@ -146,9 +157,13 @@ class NumberFormatting implements NumberFormattingOptions {
      */
     getActualDecimals(number: number) {
         number = Math.abs(number);
+
+        let maxDecimals = maxChars - Math.floor(number).toString().length;
+        maxDecimals = Math.max(0, Math.min(maxDecimals, 8));
+
         return (number - Math.floor(number))
-            .toFixed(8)
-            .substring(2, 10)
+            .toFixed(maxDecimals)
+            .substring(2, 2 + maxDecimals)
             .replace(numberOfZerosRx, '').length;
     }
 }
