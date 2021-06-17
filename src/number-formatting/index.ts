@@ -5,7 +5,15 @@ import shortFormat from './short-format';
 
 const numberOfZerosRx = /0+$/;
 
-// browsers [ie,chromium,firefox] start rounding of decimal number after 16-17 chars.
+/**
+ * Come up with this number through experimentation.
+ * In js if the number is greater than 16/17 chars then it starts to round off
+ * @example
+ * let c = 123456789123456789 , c becomes 123456789123456780
+ * 123456789123456.789 becomes 123456789123456.78
+ * 1234567891234567.1 becomes 1234567891234567
+ * 1234567891234567.8 becomes 1234567891234567.8
+ **/
 const maxChars = 16;
 
 export type NumberOptions = Readonly<{
