@@ -125,6 +125,20 @@ describe('openapi TransportBatch', () => {
         expect(transport.get.mock.calls.length).toEqual(1);
     });
 
+    it('when useCloud function returns false does not batch calls to services ', function () {
+        transportBatch = new TransportBatch(transport, validBaseUrl, {
+            services: {
+                'usersettings/v2': {
+                    useCloud: (options) => options?.url === 'common',
+                },
+            },
+        });
+
+        transportBatch.get('usersettings/v2', 'common');
+
+        expect(transport.get.mock.calls.length).toEqual(1);
+    });
+
     it('batches calls to services configured to use on-prem', function () {
         transportBatch = new TransportBatch(transport, validBaseUrl, {
             timeoutMs: 0,

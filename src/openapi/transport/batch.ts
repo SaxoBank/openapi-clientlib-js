@@ -6,7 +6,7 @@ import log from '../../log';
 import { shouldUseCloud } from './options';
 import type { QueueItem } from './queue';
 import TransportQueue from './queue';
-import type { Services, TransportOptions } from './types';
+import type { URLDetails, Services, TransportOptions } from './types';
 import type { OAPIRequestResult, NetworkError } from '../../types';
 import type { ITransport } from './transport-base';
 
@@ -81,7 +81,12 @@ class TransportBatch extends TransportQueue {
     }
 
     protected shouldQueue(item: QueueItem) {
-        return !shouldUseCloud(this.services[item.servicePath]);
+        const urlDetails: URLDetails = {
+            method: item.method,
+            servicePath: item.servicePath,
+            url: item.urlTemplate,
+        };
+        return !shouldUseCloud(this.services[item.servicePath], urlDetails);
     }
 
     private batchCallFailure = (

@@ -2,7 +2,7 @@ import { formatUrl } from '../../utils/string';
 import fetch from '../../utils/fetch';
 import { getRequestId } from '../../utils/request';
 import { shouldUseCloud } from './options';
-import type { TransportOptions, Services } from './types';
+import type { TransportOptions, Services, URLDetails } from './types';
 import type {
     HTTPMethodType,
     StringTemplateArgs,
@@ -85,7 +85,15 @@ class TransportCore extends TransportBase {
                     (options && options.requestId) || getRequestId().toString();
             }
 
-            const basePath = shouldUseCloud(this.services[servicePath])
+            const urlDetails: URLDetails = {
+                method,
+                servicePath,
+                url,
+            };
+            const basePath = shouldUseCloud(
+                this.services[servicePath],
+                urlDetails,
+            )
                 ? '/oapi'
                 : '/openapi';
 
