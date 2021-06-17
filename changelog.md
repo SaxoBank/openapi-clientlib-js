@@ -1,3 +1,7 @@
+### v10.0.1
+
+- Add second argument to shouldUseCloud to have more details and decide if specific endpoint should use cloud (e.g. if supported)
+
 ### v10.0.0
 
 #### Breaking
