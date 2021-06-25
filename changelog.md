@@ -1,3 +1,6 @@
+### v10.1.0
+- Add a way to use a heartbeat on pure websockets to detect network issues
+
 ### v10.0.1
 - Enhanced getActualDecimals function to support large numbers.
 - Add second argument to shouldUseCloud to have more details and decide if specific endpoint should use cloud (e.g. if supported)
