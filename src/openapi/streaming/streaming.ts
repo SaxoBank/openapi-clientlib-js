@@ -404,7 +404,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             case this.CONNECTION_STATE_DISCONNECTED:
                 log.info(
                     LOG_AREA,
-                    'Connection is disconnected',
+                    'Connection disconnected',
                     { contextMessageCount: this.contextMessageCount },
                     { persist: true },
                 );
@@ -428,7 +428,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             case this.CONNECTION_STATE_RECONNECTING:
                 log.info(
                     LOG_AREA,
-                    'Connection is reconnecting',
+                    'Connection disconnected. Reconnecting...',
                     { contextMessageCount: this.contextMessageCount },
                     { persist: true },
                 );
