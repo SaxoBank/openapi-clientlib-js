@@ -12,7 +12,11 @@ import fetch from '../../../../utils/fetch';
 import type { OAPIRequestResult } from '../../../../types';
 import { getRequestId } from '../../../../utils/request';
 import * as transportTypes from '../transportTypes';
-import type { DataFormat, StreamingMessage } from '../../types';
+import type {
+    DataFormat,
+    StreamingMessage,
+    ConnectionOptions,
+} from '../../types';
 import type {
     StreamingTransportInterface,
     StateChangeCallback,
@@ -35,6 +39,7 @@ const CLOSE_REASON_DESTROY = 'Normal Close due to connection destroy action';
 
 const DEFAULT_RECONNECT_DELAY = 2000;
 const DEFAULT_RECONNECT_LIMIT = 10;
+const MAX_INACTIVITY_WAIT_TIME = 3000;
 
 const NOOP = () => {};
 
@@ -85,6 +90,9 @@ class WebsocketTransport implements StreamingTransportInterface {
     closeCallback = NOOP;
     unauthorizedCallback = NOOP;
     utf8Decoder!: TextDecoder;
+    isWebsocketStreamingHeartBeatEnabled = false;
+    inactivityFinderRunning: boolean;
+    inactivityFinderNextUpdateTimeoutId: number | null = null;
 
     constructor(
         baseUrl: string,
@@ -95,6 +103,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         this.authorizeUrl = `${baseUrl}/streamingws/authorize`;
 
         this.failCallback = failCallback;
+        this.inactivityFinderRunning = false;
 
         try {
             this.utf8Decoder = new window.TextDecoder();
@@ -125,6 +134,9 @@ class WebsocketTransport implements StreamingTransportInterface {
 
             log.debug(LOG_AREA, 'Socket opened');
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
+            if (this.isWebsocketStreamingHeartBeatEnabled) {
+                this.startInactivityFinder();
+            }
         }
     };
 
@@ -290,7 +302,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         }
     }
 
-    private reconnect(isImmediate: boolean) {
+    private reconnect(isImmediate?: boolean) {
         if (this.reconnectCount >= DEFAULT_RECONNECT_LIMIT) {
             this.stop();
             return;
@@ -340,6 +352,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         socket.onmessage = null;
         socket.onclose = null;
         socket.close(socketCloseCodes.NORMAL_CLOSURE, CLOSE_REASON_DESTROY);
+        this.stopInactivityFinder();
     }
 
     /**
@@ -376,6 +389,54 @@ class WebsocketTransport implements StreamingTransportInterface {
             this.reconnect(true);
         }
     }
+
+    private startInactivityFinder = () => {
+        if (this.inactivityFinderRunning) {
+            log.warn(
+                LOG_AREA,
+                'Starting inactivityFinder when already started',
+            );
+            return;
+        }
+        this.inactivityFinderRunning = true;
+        this.inactivityFinderNextUpdateTimeoutId = window.setTimeout(
+            this.onInactivityFinderUpdate,
+            MAX_INACTIVITY_WAIT_TIME,
+        );
+    };
+
+    private stopInactivityFinder = () => {
+        if (this.inactivityFinderNextUpdateTimeoutId) {
+            clearTimeout(this.inactivityFinderNextUpdateTimeoutId);
+            this.inactivityFinderNextUpdateTimeoutId = null;
+        }
+        this.inactivityFinderRunning = false;
+    };
+
+    private onInactivityFinderUpdate = () => {
+        if (!this.inactivityFinderRunning) {
+            return;
+        }
+
+        const now = Date.now();
+        if (
+            !this.isReconnectPending &&
+            this.lastMessageTime &&
+            now - this.lastMessageTime >= MAX_INACTIVITY_WAIT_TIME
+        ) {
+            // no message on tranport since MAX_INACTIVITY_WAIT_TIME duration so reconnect
+            log.info(
+                LOG_AREA,
+                'Inactivity finder reconnecting since no message recieved since 3 seconds',
+            );
+            this.reconnect();
+        }
+
+        this.inactivityFinderNextUpdateTimeoutId = window.setTimeout(
+            this.onInactivityFinderUpdate,
+            MAX_INACTIVITY_WAIT_TIME,
+        );
+    };
 
     isSupported = WebsocketTransport.isSupported;
 
@@ -450,10 +511,12 @@ class WebsocketTransport implements StreamingTransportInterface {
 
         return this.authorizePromise;
     }
-
-    start(_options?: unknown, callback?: () => void) {
+    start(_options?: ConnectionOptions, callback?: () => void) {
         this.startedCallback = callback || NOOP;
-
+        if (_options && _options.isWebsocketStreamingHeartBeatEnabled) {
+            // if set we will recieve _connectionheartbeat after 2 seconds of inactivity on a streaming connection
+            this.isWebsocketStreamingHeartBeatEnabled = true;
+        }
         if (!this.isSupported()) {
             log.error(LOG_AREA, 'WebSocket Transport is not supported');
 
@@ -527,6 +590,9 @@ class WebsocketTransport implements StreamingTransportInterface {
         )}&Authorization=${encodeURIComponent(authToken)}`;
         let lastMessageIdString;
 
+        if (this.isWebsocketStreamingHeartBeatEnabled) {
+            query += '&sendHeartbeats=true';
+        }
         if (this.lastMessageId !== null && this.lastMessageId !== undefined) {
             lastMessageIdString = uint64utils.uint64ToStringLE(
                 this.lastMessageId,

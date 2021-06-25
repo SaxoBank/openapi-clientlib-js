@@ -498,4 +498,81 @@ describe('openapi WebSocket Transport', () => {
             });
         });
     });
+
+    describe('websocket inactivity finder', () => {
+        it('start and stop should work correctly', (done) => {
+            const transport = new WebSocketTransport(BASE_URL, undefined);
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start({ isWebsocketStreamingHeartBeatEnabled: true });
+            fetchMock.resolve(200, {});
+
+            transport.authorizePromise?.then(() => {
+                // on ws open should start
+                // @ts-expect-error its a readonly property
+                transport.socket.readyState = 1; // WebSocket internal state equal open
+                // @ts-ignore referring to socket method instead of WebSocketTransport
+                transport.socket.onopen();
+
+                expect(transport.inactivityFinderRunning).toBe(true);
+                expect(transport.inactivityFinderNextUpdateTimeoutId).not.toBe(
+                    null,
+                );
+
+                // on ws close should stop
+                // @ts-expect-error its a readonly property
+                transport.socket.readyState = 3; // WebSocket internal state equal closed
+                // @ts-expect-error
+                transport.socket.onclose({ code: 1001 });
+
+                expect(transport.inactivityFinderRunning).toBe(false);
+                expect(transport.inactivityFinderNextUpdateTimeoutId).toBe(
+                    null,
+                );
+                done();
+            });
+        });
+
+        it('should reconnect if connection is established and there is no message since 3 seconds', (done) => {
+            const stateChangedSpy: jest.Mock = jest
+                .fn()
+                .mockName('stateChanged');
+            const transport = new WebSocketTransport(BASE_URL, undefined);
+            transport.setStateChangedCallback(stateChangedSpy);
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start({
+                isWebsocketStreamingHeartBeatEnabled: true,
+            });
+            fetchMock.resolve(200, {});
+
+            transport.authorizePromise?.then(() => {
+                expect(global.WebSocket).toBeCalledTimes(1);
+                // @ts-expect-error its a readonly property
+                transport.socket.readyState = 1;
+                // @ts-ignore referring to socket method instead of WebSocketTransport
+                transport.socket.onopen();
+
+                const dataBuffer = new window.TextEncoder().encode(
+                    JSON.stringify(jsonPayload),
+                );
+                const payload = new Uint8Array(
+                    new ArrayBuffer(dataBuffer.length + 17),
+                );
+                payload.set(
+                    [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 134, 12, 0, 0],
+                    0,
+                );
+                payload.set(dataBuffer, 17);
+                transport.socket?.onmessage?.({ data: payload.buffer } as any);
+                expect(stateChangedSpy.mock.calls[1]).toEqual([
+                    constants.CONNECTION_STATE_CONNECTED,
+                ]);
+                tick(3001);
+                expect(stateChangedSpy.mock.calls[2]).toEqual([
+                    constants.CONNECTION_STATE_RECONNECTING,
+                ]);
+
+                done();
+            });
+        });
+    });
 });
