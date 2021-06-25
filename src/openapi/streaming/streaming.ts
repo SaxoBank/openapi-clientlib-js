@@ -744,11 +744,11 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * @param subscription - subscription
      */
     private onOrphanFound(subscription: Subscription) {
-        log.info(
-            LOG_AREA,
-            'Subscription has become orphaned - resetting',
-            subscription,
-        );
+        log.info(LOG_AREA, 'Subscription has become orphaned - resetting', {
+            referenceId: subscription.referenceId,
+            streamingContextId: subscription.streamingContextId,
+            servicePath: subscription.servicePath,
+        });
         this.connection.onOrphanFound();
         subscription.reset();
     }
