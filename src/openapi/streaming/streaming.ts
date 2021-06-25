@@ -143,6 +143,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     };
     reconnecting = false;
     contextId!: string;
+    contextMessageCount!: number;
     retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
     retryDelayLevels?: types.RetryDelayLevel[];
     reconnectTimer?: number;
@@ -291,6 +292,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
         const startConnection = () => {
             this.setNewContextId();
+            this.contextMessageCount = 0;
             this.updateConnectionQuery();
 
             this.connection.start(this.onConnectionStarted.bind(this));
@@ -400,6 +402,13 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
         switch (this.connectionState) {
             case this.CONNECTION_STATE_DISCONNECTED:
+                log.info(
+                    LOG_AREA,
+                    'Connection is disconnected',
+                    { contextMessageCount: this.contextMessageCount },
+                    { persist: true },
+                );
+
                 this.orphanFinder.stop();
 
                 if (this.isReset) {
@@ -417,6 +426,13 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 break;
 
             case this.CONNECTION_STATE_RECONNECTING:
+                log.info(
+                    LOG_AREA,
+                    'Connection is reconnecting',
+                    { contextMessageCount: this.contextMessageCount },
+                    { persist: true },
+                );
+
                 // tell all subscriptions not to do anything
                 // as we may have lost internet and the subscriptions may not be reset
                 for (let i = 0; i < this.subscriptions.length; i++) {
@@ -430,6 +446,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
             case this.CONNECTION_STATE_CONNECTED:
                 this.retryCount = 0;
+
                 // if *we* are reconnecting (as opposed to transport reconnecting, which we do not need to handle specially)
                 if (this.reconnecting || this.isReset) {
                     this.resetSubscriptions(this.subscriptions);
@@ -492,12 +509,11 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         }
 
         if (!Array.isArray(updates)) {
-            this.processUpdate(updates);
-            return;
+            updates = [updates];
         }
 
-        for (let i = 0; i < updates.length; i++) {
-            const update = updates[i];
+        for (const update of updates) {
+            this.contextMessageCount++;
             this.processUpdate(update);
         }
     }
