@@ -144,6 +144,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     reconnecting = false;
     contextId!: string;
     contextMessageCount!: number;
+    contextLastMessageReceived!: string;
     retryDelay = DEFAULT_CONNECT_RETRY_DELAY;
     retryDelayLevels?: types.RetryDelayLevel[];
     reconnectTimer?: number;
@@ -293,6 +294,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         const startConnection = () => {
             this.setNewContextId();
             this.contextMessageCount = 0;
+            this.contextLastMessageReceived = '';
             this.updateConnectionQuery();
 
             this.connection.start(this.onConnectionStarted.bind(this));
@@ -405,7 +407,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 log.info(
                     LOG_AREA,
                     'Connection disconnected',
-                    { contextMessageCount: this.contextMessageCount },
+                    {
+                        contextMessageCount: this.contextMessageCount,
+                        contextLastMessageReceived: this.contextLastMessageReceived,
+                    },
                     { persist: true },
                 );
 
@@ -429,7 +434,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 log.info(
                     LOG_AREA,
                     'Connection disconnected. Reconnecting...',
-                    { contextMessageCount: this.contextMessageCount },
+                    {
+                        contextMessageCount: this.contextMessageCount,
+                        contextLastMessageReceived: this.contextLastMessageReceived,
+                    },
                     { persist: true },
                 );
 
@@ -514,6 +522,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
         for (const update of updates) {
             this.contextMessageCount++;
+            this.contextLastMessageReceived = new Date().toISOString();
             this.processUpdate(update);
         }
     }
