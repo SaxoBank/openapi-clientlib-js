@@ -63,6 +63,7 @@ type EmittedEvents = {
     [connectionConstants.EVENT_STREAMING_FAILED]: () => void;
     [connectionConstants.EVENT_CONNECTION_SLOW]: () => void;
     [connectionConstants.EVENT_DISCONNECT_REQUESTED]: () => void;
+    [connectionConstants.EVENT_MULTIPLE_ORPHANS_FOUND]: () => void;
 };
 
 /**
