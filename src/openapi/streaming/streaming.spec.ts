@@ -1053,6 +1053,7 @@ describe('openapi Streaming', () => {
             streaming.orphanFinder.onOrphanFound(subscription1);
             // @ts-expect-error using mocked subscription
             streaming.orphanFinder.onOrphanFound(subscription2);
+            tick(16);
 
             expect(mockEventListener).toHaveBeenCalledTimes(1);
         });
@@ -1087,6 +1088,7 @@ describe('openapi Streaming', () => {
             streaming.orphanFinder.onOrphanFound(subscription1);
             // @ts-expect-error using mocked subscription
             streaming.orphanFinder.onOrphanFound(subscription2);
+            tick(16);
 
             expect(mockEventListener).not.toHaveBeenCalled();
         });
@@ -1121,6 +1123,7 @@ describe('openapi Streaming', () => {
             streaming.orphanFinder.onOrphanFound(subscription1);
             // @ts-expect-error using mocked subscription
             streaming.orphanFinder.onOrphanFound(subscription2);
+            tick(16);
 
             expect(mockEventListener).not.toHaveBeenCalled();
         });
