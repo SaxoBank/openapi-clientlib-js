@@ -714,7 +714,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         this.reconnect();
     }
 
-    private reconnect() {
+    reconnect() {
         this.isReset = true;
 
         // tell all subscriptions not to do anything
