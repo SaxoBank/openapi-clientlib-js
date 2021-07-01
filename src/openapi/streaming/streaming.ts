@@ -773,9 +773,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             });
 
             const now = Date.now();
-            const lastMinute = now - 60 * 1000;
+            // most subscriptions time out after 60 seconds. So we use 70s to give us 10s leniency to detect multiple unsubscribes
+            const ignoreBefore = now - 70 * 1000;
             this.orphanEvents = this.orphanEvents.filter(
-                (orphanEvent) => orphanEvent.datetime < lastMinute,
+                (orphanEvent) => orphanEvent.datetime > ignoreBefore,
             );
             this.orphanEvents.push({
                 datetime: now,
@@ -818,7 +819,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             }
 
             // multiple service paths have failed multiple times, more than 20 seconds apart, within the same minute
-            if (servicePathFailures > 2) {
+            if (servicePathFailures >= 2) {
                 // debugging information...
                 const activities = this.subscriptions.map((sub) => ({
                     latestActivity: sub.latestActivity,

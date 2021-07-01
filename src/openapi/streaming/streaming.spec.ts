@@ -1023,6 +1023,108 @@ describe('openapi Streaming', () => {
             expect(subscription.reset.mock.calls.length).toEqual(1);
         });
 
+        it.only('fires an error when multiple service paths orphan >20s apart', () => {
+            const streaming = new Streaming(transport, 'testUrl', authProvider);
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            const subscription1 = mockSubscription();
+            const subscription2 = mockSubscription();
+            subscription1.referenceId = 'Sub1';
+            subscription1.servicePath = 'sp1';
+            subscription2.referenceId = 'Sub2';
+            subscription2.servicePath = 'sp2';
+            // @ts-expect-error using mocked subscription
+            streaming.subscriptions.push(subscription1);
+            // @ts-expect-error using mocked subscription
+            streaming.subscriptions.push(subscription2);
+
+            const mockEventListener = jest.fn();
+            streaming.on(
+                streaming.EVENT_MULTIPLE_ORPHANS_FOUND,
+                mockEventListener,
+            );
+
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription1);
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription2);
+            tick(21000);
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription1);
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription2);
+
+            expect(mockEventListener).toHaveBeenCalledTimes(1);
+        });
+
+        it.only('does not fire an error when multiple service paths orphan >70s apart', () => {
+            const streaming = new Streaming(transport, 'testUrl', authProvider);
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            const subscription1 = mockSubscription();
+            const subscription2 = mockSubscription();
+            subscription1.referenceId = 'Sub1';
+            subscription1.servicePath = 'sp1';
+            subscription2.referenceId = 'Sub2';
+            subscription2.servicePath = 'sp2';
+            // @ts-expect-error using mocked subscription
+            streaming.subscriptions.push(subscription1);
+            // @ts-expect-error using mocked subscription
+            streaming.subscriptions.push(subscription2);
+
+            const mockEventListener = jest.fn();
+            streaming.on(
+                streaming.EVENT_MULTIPLE_ORPHANS_FOUND,
+                mockEventListener,
+            );
+
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription1);
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription2);
+            tick(71000);
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription1);
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription2);
+
+            expect(mockEventListener).not.toHaveBeenCalled();
+        });
+
+        it('does not fire an error when multiple service paths orphan <20s apart', () => {
+            const streaming = new Streaming(transport, 'testUrl', authProvider);
+            stateChangedCallback({ newState: 1 /* connected */ });
+
+            const subscription1 = mockSubscription();
+            const subscription2 = mockSubscription();
+            subscription1.referenceId = 'Sub1';
+            subscription1.servicePath = 'sp1';
+            subscription2.referenceId = 'Sub2';
+            subscription2.servicePath = 'sp2';
+            // @ts-expect-error using mocked subscription
+            streaming.subscriptions.push(subscription1);
+            // @ts-expect-error using mocked subscription
+            streaming.subscriptions.push(subscription2);
+
+            const mockEventListener = jest.fn();
+            streaming.on(
+                streaming.EVENT_MULTIPLE_ORPHANS_FOUND,
+                mockEventListener,
+            );
+
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription1);
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription2);
+            tick(19000);
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription1);
+            // @ts-expect-error using mocked subscription
+            streaming.orphanFinder.onOrphanFound(subscription2);
+
+            expect(mockEventListener).not.toHaveBeenCalled();
+        });
+
         it('passes on subscribe calls', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
             stateChangedCallback({ newState: 1 /* connected */ });
