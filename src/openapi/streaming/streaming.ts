@@ -91,6 +91,12 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     EVENT_DISCONNECT_REQUESTED = connectionConstants.EVENT_DISCONNECT_REQUESTED;
 
     /**
+     * Event that occurs when we detect a problem with multiple orphans found
+     */
+    EVENT_MULTIPLE_ORPHANS_FOUND =
+        connectionConstants.EVENT_MULTIPLE_ORPHANS_FOUND;
+
+    /**
      * Streaming has been created but has not yet started the connection.
      */
     CONNECTION_STATE_INITIALIZING =
@@ -124,6 +130,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         connectionConstants.READABLE_CONNECTION_STATE_MAP;
 
     retryCount = 0;
+    latestActivity = 0;
     connectionState: types.ConnectionState | null =
         this.CONNECTION_STATE_INITIALIZING;
     baseUrl: string;
@@ -463,6 +470,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
     private processUpdate(update: types.StreamingMessage) {
         try {
+            this.latestActivity = Date.now();
             if (update.ReferenceId[0] === OPENAPI_CONTROL_MESSAGE_PREFIX) {
                 this.handleControlMessage(update as types.ControlMessage);
             } else {
@@ -749,64 +757,84 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * @param subscription - subscription
      */
     private onOrphanFound(subscription: Subscription) {
-        log.info(LOG_AREA, 'Subscription has become orphaned - resetting', {
-            referenceId: subscription.referenceId,
-            streamingContextId: subscription.streamingContextId,
-            servicePath: subscription.servicePath,
-        });
+        try {
+            log.info(LOG_AREA, 'Subscription has become orphaned - resetting', {
+                referenceId: subscription.referenceId,
+                streamingContextId: subscription.streamingContextId,
+                servicePath: subscription.servicePath,
+            });
 
-        const now = Date.now();
-        const lastMinute = now - 60 * 1000;
-        this.orphanEvents = this.orphanEvents.filter(
-            (orphanEvent) => orphanEvent.datetime < lastMinute,
-        );
-        this.orphanEvents.push({
-            datetime: now,
-            servicePath: subscription.servicePath,
-        });
+            const now = Date.now();
+            const lastMinute = now - 60 * 1000;
+            this.orphanEvents = this.orphanEvents.filter(
+                (orphanEvent) => orphanEvent.datetime < lastMinute,
+            );
+            this.orphanEvents.push({
+                datetime: now,
+                servicePath: subscription.servicePath,
+            });
 
-        const orphansByServicePath: Record<
-            string,
-            { min: number; max: number }
-        > = {};
-        for (const orphanEvent of this.orphanEvents) {
-            const orphanSpInfo = orphansByServicePath[orphanEvent.servicePath];
-            if (orphanSpInfo) {
-                orphanSpInfo.min = Math.min(
-                    orphanSpInfo.min,
-                    orphanEvent.datetime,
-                );
-                orphanSpInfo.max = Math.max(
-                    orphanSpInfo.max,
-                    orphanEvent.datetime,
-                );
-            } else {
-                orphansByServicePath[orphanEvent.servicePath] = {
-                    min: orphanEvent.datetime,
-                    max: orphanEvent.datetime,
-                };
+            const orphansByServicePath: Record<
+                string,
+                { min: number; max: number }
+            > = {};
+            for (const orphanEvent of this.orphanEvents) {
+                const orphanSpInfo =
+                    orphansByServicePath[orphanEvent.servicePath];
+                if (orphanSpInfo) {
+                    orphanSpInfo.min = Math.min(
+                        orphanSpInfo.min,
+                        orphanEvent.datetime,
+                    );
+                    orphanSpInfo.max = Math.max(
+                        orphanSpInfo.max,
+                        orphanEvent.datetime,
+                    );
+                } else {
+                    orphansByServicePath[orphanEvent.servicePath] = {
+                        min: orphanEvent.datetime,
+                        max: orphanEvent.datetime,
+                    };
+                }
             }
-        }
 
-        let servicePathFailures = 0;
-        for (const servicePath of Object.keys(orphansByServicePath)) {
-            if (
-                orphansByServicePath[servicePath].max -
-                    orphansByServicePath[servicePath].min >
-                20 * 1000
-            ) {
-                servicePathFailures++;
+            let servicePathFailures = 0;
+            for (const servicePath of Object.keys(orphansByServicePath)) {
+                if (
+                    orphansByServicePath[servicePath].max -
+                        orphansByServicePath[servicePath].min >
+                    20 * 1000
+                ) {
+                    servicePathFailures++;
+                }
             }
-        }
 
-        // multiple service paths have failed multiple times, more than 20 seconds apart, within the same minute
-        if (servicePathFailures > 2) {
+            // multiple service paths have failed multiple times, more than 20 seconds apart, within the same minute
+            if (servicePathFailures > 2) {
+                // debugging information...
+                const activities = this.subscriptions.map((sub) => ({
+                    latestActivity: sub.latestActivity,
+                    servicePath: sub.servicePath,
+                    currentState: sub.currentState,
+                    inactivityTimeout: sub.inactivityTimeout,
+                }));
+                log.error(
+                    LOG_AREA,
+                    'Detected multiple service paths hitting orphans, multiple times',
+                    {
+                        orphanEvents: this.orphanEvents,
+                        activities,
+                        latestActivity: this.latestActivity,
+                    },
+                );
+                this.trigger(this.EVENT_MULTIPLE_ORPHANS_FOUND);
+            }
+        } catch (e) {
             log.error(
                 LOG_AREA,
-                'Detected multiple service paths hitting orphans, multiple times',
+                'Exception thrown when trying to work out multiple orphans found',
+                e,
             );
-            this.reconnect();
-            return;
         }
 
         this.connection.onOrphanFound();
