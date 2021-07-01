@@ -610,7 +610,14 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     private handleControlMessageFireHeartbeats(
         heartbeatList: types.Heartbeats[],
     ) {
-        log.debug(LOG_AREA, 'heartbeats received', { heartbeatList });
+        log.debug(
+            LOG_AREA,
+            'heartbeats received',
+            { heartbeatList },
+            {
+                persist: true,
+            },
+        );
 
         for (let i = 0; i < heartbeatList.length; i++) {
             const heartbeat = heartbeatList[i];
