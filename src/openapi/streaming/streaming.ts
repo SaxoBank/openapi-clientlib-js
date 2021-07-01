@@ -141,7 +141,8 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     isReset = false;
     paused = false;
     orphanFinder: StreamingOrphanFinder;
-    orphanEvents: Array<{ datetime: number; servicePath: string }> = [];
+    private orphanEvents: Array<{ datetime: number; servicePath: string }> = [];
+    private multipleOrphanDetectorTimeoutId: null | number = null;
     connection!: Connection;
     connectionOptions: types.ConnectionOptions = {
         waitForPageLoad: false,
@@ -156,6 +157,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     retryDelayLevels?: types.RetryDelayLevel[];
     reconnectTimer?: number;
     disposed = false;
+    private heartBeatLog: Array<[number, ReadonlyArray<string>]> = [];
 
     /**
      * @param transport - The transport to use for subscribing/unsubscribing.
@@ -610,14 +612,16 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     private handleControlMessageFireHeartbeats(
         heartbeatList: types.Heartbeats[],
     ) {
-        log.debug(
-            LOG_AREA,
-            'heartbeats received',
-            { heartbeatList },
-            {
-                persist: true,
-            },
+        this.heartBeatLog = this.heartBeatLog.filter(
+            ([time]) => time < Date.now() - 70 * 1000,
         );
+        this.heartBeatLog.push([
+            Date.now(),
+            heartbeatList.map(
+                ({ OriginatingReferenceId }) => OriginatingReferenceId,
+            ),
+        ]);
+        log.debug(LOG_AREA, 'heartbeats received', { heartbeatList });
 
         for (let i = 0; i < heartbeatList.length; i++) {
             const heartbeat = heartbeatList[i];
@@ -656,12 +660,16 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         referenceIdList: string[] | null,
     ) {
         if (!referenceIdList || !referenceIdList.length) {
-            log.debug(LOG_AREA, 'Resetting all subscriptions');
+            log.debug(LOG_AREA, 'Resetting all subscriptions', {
+                persist: true,
+            });
             this.resetSubscriptions(this.subscriptions.slice(0));
             return;
         }
 
-        log.debug(LOG_AREA, 'Resetting subscriptions', referenceIdList);
+        log.debug(LOG_AREA, 'Resetting subscriptions', referenceIdList, {
+            persist: true,
+        });
 
         const subscriptionsToReset = [];
         for (let i = 0; i < referenceIdList.length; i++) {
@@ -760,28 +768,13 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         this.orphanFinder.update();
     }
 
-    /**
-     * Called when an orphan is found - resets that subscription
-     * @param subscription - subscription
-     */
-    private onOrphanFound(subscription: Subscription) {
-        try {
-            log.info(LOG_AREA, 'Subscription has become orphaned - resetting', {
-                referenceId: subscription.referenceId,
-                streamingContextId: subscription.streamingContextId,
-                servicePath: subscription.servicePath,
-            });
+    private detectMultipleOrphans() {
+        if (this.multipleOrphanDetectorTimeoutId) {
+            return;
+        }
 
-            const now = Date.now();
-            // most subscriptions time out after 60 seconds. So we use 70s to give us 10s leniency to detect multiple unsubscribes
-            const ignoreBefore = now - 70 * 1000;
-            this.orphanEvents = this.orphanEvents.filter(
-                (orphanEvent) => orphanEvent.datetime > ignoreBefore,
-            );
-            this.orphanEvents.push({
-                datetime: now,
-                servicePath: subscription.servicePath,
-            });
+        this.multipleOrphanDetectorTimeoutId = setTimeout(() => {
+            this.multipleOrphanDetectorTimeoutId = null;
 
             const orphansByServicePath: Record<
                 string,
@@ -823,14 +816,18 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 // debugging information...
                 const activities = this.subscriptions.map((sub) => ({
                     latestActivity: sub.latestActivity,
+                    heartBeatLog: this.heartBeatLog,
                     servicePath: sub.servicePath,
+                    url: sub.url,
                     currentState: sub.currentState,
                     inactivityTimeout: sub.inactivityTimeout,
+                    referenceId: sub.referenceId,
                 }));
                 log.error(
                     LOG_AREA,
                     'Detected multiple service paths hitting orphans, multiple times',
                     {
+                        now: Date.now(),
                         orphanEvents: this.orphanEvents,
                         activities,
                         latestActivity: this.latestActivity,
@@ -838,6 +835,33 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 );
                 this.trigger(this.EVENT_MULTIPLE_ORPHANS_FOUND);
             }
+        });
+    }
+
+    /**
+     * Called when an orphan is found - resets that subscription
+     * @param subscription - subscription
+     */
+    private onOrphanFound(subscription: Subscription) {
+        try {
+            log.info(LOG_AREA, 'Subscription has become orphaned - resetting', {
+                referenceId: subscription.referenceId,
+                streamingContextId: subscription.streamingContextId,
+                servicePath: subscription.servicePath,
+            });
+
+            const now = Date.now();
+            // most subscriptions time out after 60 seconds. So we use 70s to give us 10s leniency to detect multiple unsubscribes
+            const ignoreBefore = now - 70 * 1000;
+            this.orphanEvents = this.orphanEvents.filter(
+                (orphanEvent) => orphanEvent.datetime > ignoreBefore,
+            );
+            this.orphanEvents.push({
+                datetime: now,
+                servicePath: subscription.servicePath,
+            });
+
+            this.detectMultipleOrphans();
         } catch (e) {
             log.error(
                 LOG_AREA,
