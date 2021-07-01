@@ -613,7 +613,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         heartbeatList: types.Heartbeats[],
     ) {
         this.heartBeatLog = this.heartBeatLog.filter(
-            ([time]) => time < Date.now() - 70 * 1000,
+            ([time]) => time > Date.now() - 70 * 1000,
         );
         this.heartBeatLog.push([
             Date.now(),
