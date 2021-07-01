@@ -1023,7 +1023,7 @@ describe('openapi Streaming', () => {
             expect(subscription.reset.mock.calls.length).toEqual(1);
         });
 
-        it.only('fires an error when multiple service paths orphan >20s apart', () => {
+        it('fires an error when multiple service paths orphan >20s apart', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
             stateChangedCallback({ newState: 1 /* connected */ });
 
@@ -1057,7 +1057,7 @@ describe('openapi Streaming', () => {
             expect(mockEventListener).toHaveBeenCalledTimes(1);
         });
 
-        it.only('does not fire an error when multiple service paths orphan >70s apart', () => {
+        it('does not fire an error when multiple service paths orphan >70s apart', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
             stateChangedCallback({ newState: 1 /* connected */ });
 
