@@ -1,3 +1,6 @@
+### v10.2.2
+- Add logging on disconnection
+
 ### v10.2.1
 - Debounce detection of multiple orphans
 
