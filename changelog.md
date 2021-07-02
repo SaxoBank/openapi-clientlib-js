@@ -1,3 +1,6 @@
+### v10.2.2
+- Move heartbeat log data to the right place in the log data
+
 ### v10.2.1
 - Debounce detection of multiple orphans
 
