@@ -1,3 +1,9 @@
+### v10.2.1
+- Debounce detection of multiple orphans
+
+### v10.2.0
+- Add a new event fired when multiple orphans are found
+
 ### v10.1.0
 - Add a way to use a heartbeat on pure websockets to detect network issues
 
