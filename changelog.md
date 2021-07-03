@@ -1,3 +1,6 @@
+### v10.2.3
+- Add logging message count on disconnection
+
 ### v10.2.2
 - Move heartbeat log data to the right place in the log data
 
