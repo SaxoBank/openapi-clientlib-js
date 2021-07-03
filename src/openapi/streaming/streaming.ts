@@ -838,7 +838,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 // debugging information...
                 const activities = this.subscriptions.map((sub) => ({
                     latestActivity: sub.latestActivity,
-                    heartBeatLog: this.heartBeatLog,
                     servicePath: sub.servicePath,
                     url: sub.url,
                     currentState: sub.currentState,
@@ -853,6 +852,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                         orphanEvents: this.orphanEvents,
                         activities,
                         latestActivity: this.latestActivity,
+                        heartBeatLog: this.heartBeatLog,
                     },
                 );
                 this.trigger(this.EVENT_MULTIPLE_ORPHANS_FOUND);

@@ -1,5 +1,8 @@
+### v10.2.3
+- Add logging message count on disconnection
+
 ### v10.2.2
-- Add logging on disconnection
+- Move heartbeat log data to the right place in the log data
 
 ### v10.2.1
 - Debounce detection of multiple orphans
