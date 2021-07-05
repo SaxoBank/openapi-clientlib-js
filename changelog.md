@@ -1,5 +1,6 @@
 ### v10.2.4
 - Make Orphan finder more lenient
+- Log if messages are detected that are not continuous
 
 ### v10.2.3
 - Add logging message count on disconnection
