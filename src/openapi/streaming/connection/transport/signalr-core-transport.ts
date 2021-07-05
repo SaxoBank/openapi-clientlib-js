@@ -25,7 +25,7 @@ type RawCoreSignalRStreamingMessage = {
     ReferenceId: string;
     PayloadFormat: 1 | 2;
     Payload: StreamingData;
-    MessageId: string;
+    MessageId: number;
 };
 
 const LOG_AREA = 'SignalrCoreTransport';
@@ -48,7 +48,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
     authExpiry: number | null = null;
     contextId: string | null = null;
     messageStream: SignalR.IStreamResult<any> | null = null;
-    lastMessageId: string | null = null;
+    lastMessageId: number | null = null;
     hasStreamingStarted = false;
     isDisconnecting = false;
     hasTransportError = false;
@@ -107,7 +107,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
 
     private getRetryPolicy = (
         authExpiry: number,
-        lastMessageId?: string | null,
+        lastMessageId: number | null,
     ) => {
         return {
             nextRetryDelayInMilliseconds(retryContext: SignalR.RetryContext) {
@@ -123,7 +123,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
 
                 // If messages were not received before connection close, don't retry
                 // instead create a new connection with different context id
-                // Server relies on this to determine wheter its reconnection or not
+                // Server relies on this to determine whether its reconnection or not
                 if (lastMessageId === undefined || lastMessageId === null) {
                     return null;
                 }
@@ -451,7 +451,21 @@ class SignalrCoreTransport implements StreamingTransportInterface {
             const normalizedMessage = this.normalizeMessage(message, protocol);
             const data = this.parseMessage(normalizedMessage, this.utf8Decoder);
 
-            this.lastMessageId = data.MessageId as string;
+            if (
+                this.lastMessageId &&
+                data.MessageId !== this.lastMessageId + 1
+            ) {
+                log.error(
+                    LOG_AREA,
+                    'Missing a streaming signalr-core message',
+                    {
+                        lastMessageId: this.lastMessageId,
+                        messageId: data.MessageId,
+                    },
+                );
+            }
+
+            this.lastMessageId = data.MessageId as number;
             this.receivedCallback(data);
         } catch (error) {
             const errorMessage = error.message || '';
