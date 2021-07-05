@@ -22,7 +22,6 @@ import type {
     StateChangeCallback,
     ReceiveCallback,
 } from '../types';
-import { uint64ToNumber } from '../../../../utils/uint64';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
 

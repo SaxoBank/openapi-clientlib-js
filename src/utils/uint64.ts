@@ -5,8 +5,7 @@
  */
 export function uint64ToNumber(typedArray: Uint8Array) {
     let value = 0;
-    // Running sum of octets, doing a 2's complement
-    for (let i = 7, multiplier = 1; i >= 0; i--, multiplier *= 256) {
+    for (let i = 0, multiplier = 1; i <= 7; i++, multiplier *= 256) {
         value += typedArray[i] * multiplier;
     }
     return value;
