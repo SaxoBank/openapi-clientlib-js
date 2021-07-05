@@ -1,5 +1,8 @@
 ﻿import { installClock, uninstallClock, tick } from '../../test/utils';
-import StreamingOrphanFinder from './orphan-finder';
+import StreamingOrphanFinder, {
+    DEFAULT_START_DELAY,
+    INACTIVITY_LENIENCY,
+} from './orphan-finder';
 import type Subscription from './subscription';
 
 describe('openapi StreamingOrphanFinder', () => {
@@ -26,19 +29,19 @@ describe('openapi StreamingOrphanFinder', () => {
     }
 
     beforeEach(() => {
-        orphanedSubscriptionTime = { time: -1 };
+        orphanedSubscriptionTime = { time: -(1 + INACTIVITY_LENIENCY) };
         orphanedSubscription = mockSubscription(orphanedSubscriptionTime);
 
-        notOrphanedSubscriptionTime = { time: 1 };
+        notOrphanedSubscriptionTime = { time: -INACTIVITY_LENIENCY + 1 };
         notOrphanedSubscription = mockSubscription(notOrphanedSubscriptionTime);
 
         transitioningSubscriptionTime = { time: Infinity };
         mockSubscription(transitioningSubscriptionTime);
 
-        orphanIn20SubscriptionTime = { time: 20000 };
+        orphanIn20SubscriptionTime = { time: 20000 - INACTIVITY_LENIENCY };
         orphanIn20Subscription = mockSubscription(orphanIn20SubscriptionTime);
 
-        orphanIn30SubscriptionTime = { time: 30000 };
+        orphanIn30SubscriptionTime = { time: 30000 - INACTIVITY_LENIENCY };
         orphanIn30Subscription = mockSubscription(orphanIn30SubscriptionTime);
 
         orphanFoundCallback = jest.fn().mockName('orphanFound');
@@ -81,7 +84,7 @@ describe('openapi StreamingOrphanFinder', () => {
         );
 
         streamingOrphanFinder.start();
-        tick(2000);
+        tick(DEFAULT_START_DELAY);
 
         subscriptions.push(orphanedSubscription);
         streamingOrphanFinder.update();
@@ -106,8 +109,8 @@ describe('openapi StreamingOrphanFinder', () => {
         );
 
         tick(10000);
-        orphanIn30SubscriptionTime.time = 20000;
-        orphanIn20SubscriptionTime.time = 10000;
+        orphanIn30SubscriptionTime.time = 20000 - INACTIVITY_LENIENCY;
+        orphanIn20SubscriptionTime.time = 10000 - INACTIVITY_LENIENCY;
 
         subscriptions.push(orphanIn20Subscription);
         streamingOrphanFinder.update();
@@ -131,8 +134,8 @@ describe('openapi StreamingOrphanFinder', () => {
         );
 
         tick(10000);
-        orphanIn30SubscriptionTime.time = 20000;
-        orphanIn20SubscriptionTime.time = 10000;
+        orphanIn30SubscriptionTime.time = 20000 - INACTIVITY_LENIENCY;
+        orphanIn20SubscriptionTime.time = 10000 - INACTIVITY_LENIENCY;
 
         subscriptions.push(orphanIn30Subscription);
         streamingOrphanFinder.update();
@@ -155,7 +158,7 @@ describe('openapi StreamingOrphanFinder', () => {
             Date.now() + 20000,
         );
 
-        orphanIn20SubscriptionTime.time = 0;
+        orphanIn20SubscriptionTime.time = -INACTIVITY_LENIENCY;
         tick(20000);
 
         expect(streamingOrphanFinder.nextUpdateTimeoutId).toBeFalsy();
@@ -191,15 +194,19 @@ describe('openapi StreamingOrphanFinder', () => {
         );
         streamingOrphanFinder.start();
         expect(orphanFoundCallback.mock.calls.length).toEqual(0);
-        expect(streamingOrphanFinder.nextUpdateTime).toEqual(Date.now() + 1000);
+        expect(streamingOrphanFinder.nextUpdateTime).toEqual(
+            Date.now() + DEFAULT_START_DELAY,
+        );
 
-        tick(500);
+        tick(DEFAULT_START_DELAY / 2);
 
         streamingOrphanFinder.update();
         expect(orphanFoundCallback.mock.calls.length).toEqual(0);
-        expect(streamingOrphanFinder.nextUpdateTime).toEqual(Date.now() + 500);
+        expect(streamingOrphanFinder.nextUpdateTime).toEqual(
+            Date.now() + DEFAULT_START_DELAY / 2,
+        );
 
-        tick(500);
+        tick(DEFAULT_START_DELAY / 2);
 
         expect(orphanFoundCallback.mock.calls.length).toEqual(1);
         expect(orphanFoundCallback.mock.calls[0]).toEqual([
@@ -215,15 +222,19 @@ describe('openapi StreamingOrphanFinder', () => {
         );
         streamingOrphanFinder.start();
         expect(orphanFoundCallback.mock.calls.length).toEqual(0);
-        expect(streamingOrphanFinder.nextUpdateTime).toEqual(Date.now() + 1000);
+        expect(streamingOrphanFinder.nextUpdateTime).toEqual(
+            Date.now() + DEFAULT_START_DELAY,
+        );
 
-        tick(500);
+        tick(DEFAULT_START_DELAY / 2);
 
         streamingOrphanFinder.update();
         expect(orphanFoundCallback.mock.calls.length).toEqual(0);
-        expect(streamingOrphanFinder.nextUpdateTime).toEqual(Date.now() + 500);
+        expect(streamingOrphanFinder.nextUpdateTime).toEqual(
+            Date.now() + DEFAULT_START_DELAY / 2,
+        );
 
-        tick(500);
+        tick(DEFAULT_START_DELAY / 2);
 
         expect(orphanFoundCallback.mock.calls.length).toEqual(0);
         expect(streamingOrphanFinder.nextUpdateTime).toEqual(Date.now() + 1);
@@ -265,7 +276,7 @@ describe('openapi StreamingOrphanFinder', () => {
         tick(30 * 60 * 1000); // now go forward 30 minutes
         global.setTimeout = spySetTimeout;
 
-        orphanIn20SubscriptionTime.time = -100000; // make our subscription orphaned
+        orphanIn20SubscriptionTime.time = -(100000 + INACTIVITY_LENIENCY); // make our subscription orphaned
         expect(orphanFoundCallback.mock.calls.length).toEqual(0);
 
         // @ts-ignore

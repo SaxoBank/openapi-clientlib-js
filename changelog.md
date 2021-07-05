@@ -1,3 +1,6 @@
+### v10.2.4
+- Make Orphan finder more lenient
+
 ### v10.2.3
 - Add logging message count on disconnection
 
