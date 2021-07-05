@@ -34,7 +34,7 @@ export interface Heartbeats {
 export interface StreamingMessage<T = unknown, R = string> {
     ReferenceId: R;
     Timestamp?: string;
-    MessageId?: string | null;
+    MessageId?: number;
     ReservedField?: number;
     DataFormat?: DataFormat;
     Data: T;
