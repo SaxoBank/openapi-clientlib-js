@@ -192,10 +192,21 @@ class WebsocketTransport implements StreamingTransportInterface {
 
             const messageId = uint64utils.uint64ToNumber(messageIdBuffer);
             if (this.lastMessageId && messageId !== this.lastMessageId + 1) {
-                log.error(LOG_AREA, 'Missing messages in websocket transport', {
-                    messageId,
-                    lastMessageId: this.lastMessageId,
-                });
+                if (messageId !== 1) {
+                    log.warn(LOG_AREA, 'Message id reset to 1', {
+                        messageId,
+                        lastMessageId: this.lastMessageId,
+                    });
+                } else {
+                    log.error(
+                        LOG_AREA,
+                        'Missing messages in websocket transport',
+                        {
+                            messageId,
+                            lastMessageId: this.lastMessageId,
+                        },
+                    );
+                }
             }
             this.lastMessageId = messageId;
 
@@ -330,6 +341,9 @@ class WebsocketTransport implements StreamingTransportInterface {
         this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
 
         this.destroySocket();
+
+        // need to update the last message id
+        this.updateQuery(this.authToken as string, this.contextId as string);
 
         if (isImmediate) {
             this.restartConnection();
@@ -596,6 +610,9 @@ class WebsocketTransport implements StreamingTransportInterface {
         _authExpiry?: number,
         forceAuth = false,
     ) {
+        if (contextId !== this.contextId) {
+            this.lastMessageId = null;
+        }
         let query = `?contextId=${encodeURIComponent(
             contextId,
         )}&Authorization=${encodeURIComponent(authToken)}`;

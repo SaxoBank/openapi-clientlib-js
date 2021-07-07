@@ -513,6 +513,10 @@ class SignalrCoreTransport implements StreamingTransportInterface {
             forceAuth,
         });
 
+        if (contextId !== this.contextId) {
+            this.lastMessageId = null;
+        }
+
         this.contextId = contextId;
         this.authExpiry = authExpiry;
         this.authToken = authToken.replace('BEARER ', '');
