@@ -1708,6 +1708,93 @@ describe('openapi StreamingSubscription', () => {
                 });
             });
         });
+
+        describe('3 resets within 1 minute', () => {
+            it('should unsubscribe immediately if unsubscribe requested while waiting for publisher to respond', (done) => {
+                const subscription = new Subscription(
+                    '123',
+                    transport,
+                    'servicePath',
+                    'src/test/resource',
+                    {},
+                    createdSpy,
+                    { onUpdate: updateSpy },
+                );
+
+                subscription.reset();
+                subscription.reset();
+                subscription.reset();
+
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_PUBLISHER_DOWN,
+                );
+                expect(
+                    subscription.waitForPublisherToRespondTimer,
+                ).toBeTruthy();
+
+                // should unsubscribe immediately if requested
+                subscription.onUnsubscribe();
+
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_UNSUBSCRIBE_REQUESTED,
+                );
+                expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
+
+                done();
+            });
+
+            it('should wait for publisher to respond', (done) => {
+                const subscription = new Subscription(
+                    '123',
+                    transport,
+                    'servicePath',
+                    'src/test/resource',
+                    {},
+                    createdSpy,
+                    { onUpdate: updateSpy },
+                );
+
+                subscription.reset();
+                subscription.reset();
+                subscription.reset();
+
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_PUBLISHER_DOWN,
+                );
+                expect(
+                    subscription.waitForPublisherToRespondTimer,
+                ).toBeTruthy();
+
+                // should queue actions while waiting
+                subscription.onSubscribe();
+                expect(subscription.queue).toMatchInlineSnapshot(`
+                    SubscriptionQueue {
+                      "items": Array [
+                        Object {
+                          "action": 1,
+                          "args": undefined,
+                        },
+                      ],
+                    }
+                `);
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_PUBLISHER_DOWN,
+                );
+
+                // should reset after 1 minute
+                tick(60000);
+                expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
+                expect(subscription.queue).toMatchInlineSnapshot(`
+                        SubscriptionQueue {
+                          "items": Array [],
+                        }
+                    `);
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_SUBSCRIBE_REQUESTED,
+                );
+                done();
+            });
+        });
     });
 
     describe('protobuf parsing', () => {
