@@ -290,9 +290,13 @@ class WebsocketTransport implements StreamingTransportInterface {
 
     private createSocket() {
         try {
-            const url = this.normalizeWebSocketUrl(
+            let url = this.normalizeWebSocketUrl(
                 `${this.connectionUrl}${this.query}`,
             );
+
+            if (this.isWebsocketStreamingHeartBeatEnabled) {
+                url += '&sendHeartbeats=true';
+            }
 
             log.debug(LOG_AREA, 'Creating WebSocket connection', { url });
             const socket = new WebSocket(url);
@@ -595,9 +599,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         let query = `?contextId=${encodeURIComponent(
             contextId,
         )}&Authorization=${encodeURIComponent(authToken)}`;
-        if (this.isWebsocketStreamingHeartBeatEnabled) {
-            query += '&sendHeartbeats=true';
-        }
+
         if (this.lastMessageId != null) {
             query += `&messageid=${this.lastMessageId}`;
         }
