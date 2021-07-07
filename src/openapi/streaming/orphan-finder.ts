@@ -3,8 +3,12 @@ import type Subscription from './subscription';
 
 const LOG_AREA = 'StreamingOrphanFinder';
 
-const DEFAULT_START_DELAY = 1000;
+export const DEFAULT_START_DELAY = 5000;
 const MAX_UPDATE_DELAY = 5000;
+// It is rare that orphan finder is needed and yet it happens all the time - if the socket gets delayed
+// by 10 seconds then we do not get the update - resubscribing is a big operation and we don't want to be
+// doing it all the time
+export const INACTIVITY_LENIENCY = 15000;
 
 interface OnOrphanFoundHandler {
     (subscription: Subscription): void;
@@ -99,7 +103,8 @@ class StreamingOrphanFinder {
 
         for (let i = 0; i < this.subscriptions.length; i++) {
             const subscription = this.subscriptions[i];
-            const timeTillOrphaned = subscription.timeTillOrphaned(now);
+            const timeTillOrphaned =
+                subscription.timeTillOrphaned(now) + INACTIVITY_LENIENCY;
             if (timeTillOrphaned <= 0) {
                 orphanedSubscriptions.push(subscription);
             } else if (timeTillOrphaned < newNextUpdateIn) {

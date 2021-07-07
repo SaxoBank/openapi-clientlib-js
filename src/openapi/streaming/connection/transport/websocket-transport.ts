@@ -70,7 +70,7 @@ class WebsocketTransport implements StreamingTransportInterface {
     // If socket closes due to unauthorized token, we wait for authorization with new token before reconnecting
     isReconnectPending = false;
 
-    lastMessageId: null | Uint8Array = null;
+    lastMessageId: null | number = null;
     reconnectTimeout: number | null = null;
     reconnectCount = 0;
     lastOrphanFound = 0;
@@ -148,7 +148,7 @@ class WebsocketTransport implements StreamingTransportInterface {
             const message = new DataView(rawData);
 
             // First 8 bytes make up the message id. A 64 bit integer.
-            const messageId = new Uint8Array(rawData, index, 8);
+            const messageIdBuffer = new Uint8Array(rawData, index, 8);
             index += 8;
             // 2 bytes make up the reserved field.This field is reserved for future use and it should be ignored by the client.
             const reservedField = message.getInt16(index);
@@ -190,6 +190,13 @@ class WebsocketTransport implements StreamingTransportInterface {
                 data = new Uint8Array(rawData, index, payloadSize);
             }
 
+            const messageId = uint64utils.uint64ToNumber(messageIdBuffer);
+            if (this.lastMessageId && messageId !== this.lastMessageId + 1) {
+                log.error(LOG_AREA, 'Missing messages in websocket transport', {
+                    messageId,
+                    lastMessageId: this.lastMessageId,
+                });
+            }
             this.lastMessageId = messageId;
 
             index += payloadSize;
@@ -588,22 +595,17 @@ class WebsocketTransport implements StreamingTransportInterface {
         let query = `?contextId=${encodeURIComponent(
             contextId,
         )}&Authorization=${encodeURIComponent(authToken)}`;
-        let lastMessageIdString;
-
         if (this.isWebsocketStreamingHeartBeatEnabled) {
             query += '&sendHeartbeats=true';
         }
-        if (this.lastMessageId !== null && this.lastMessageId !== undefined) {
-            lastMessageIdString = uint64utils.uint64ToStringLE(
-                this.lastMessageId,
-            );
-            query += `&messageid=${lastMessageIdString}`;
+        if (this.lastMessageId != null) {
+            query += `&messageid=${this.lastMessageId}`;
         }
 
         log.debug(LOG_AREA, 'Updated query', {
             query,
             contextId,
-            lastMessageId: lastMessageIdString,
+            lastMessageId: this.lastMessageId,
         });
 
         this.query = query;
