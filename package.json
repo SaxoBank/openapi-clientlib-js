@@ -41,7 +41,7 @@
         "@babel/preset-typescript": "7.14.5",
         "@microsoft/signalr": "5.0.7",
         "@types/jest": "26.0.23",
-        "@types/signalr": "2.2.36",
+        "@types/signalr": "2.2.37",
         "@typescript-eslint/eslint-plugin": "4.28.2",
         "@typescript-eslint/parser": "4.28.2",
         "babel-jest": "27.0.6",
