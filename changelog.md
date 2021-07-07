@@ -1,3 +1,6 @@
+### v10.2.5
+- Do not reset a subscription more than 3 times in a minute
+
 ### v10.2.4
 - Make Orphan finder more lenient
 - Log if messages are detected that are not continuous
