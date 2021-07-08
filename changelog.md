@@ -1,3 +1,6 @@
+### v10.2.6
+- Fixes to websocket streaming transport heartbeat to send the parameter on the initial connection
+
 ### v10.2.5
 - Do not reset a subscription more than 3 times in a minute
 
