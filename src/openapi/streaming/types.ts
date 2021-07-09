@@ -5,7 +5,7 @@ import type {
     OPENAPI_CONTROL_MESSAGE_HEARTBEAT,
     OPENAPI_CONTROL_MESSAGE_RECONNECT,
     OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
-} from './streaming';
+} from './control-messages';
 import type { TRANSPORT_NAME_MAP } from './connection/connection';
 import type * as connectionConstants from './connection/constants';
 import type { StreamingData } from './connection/types';
