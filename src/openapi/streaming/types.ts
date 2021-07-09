@@ -38,13 +38,14 @@ export interface StreamingMessage<T = unknown, R = string> {
     ReservedField?: number;
     DataFormat?: DataFormat;
     Data: T;
-}
-
-interface StreamingControlMessage<T = StreamingData, R = string>
-    extends StreamingMessage<T, R> {
     Heartbeats?: Heartbeats[];
     TargetReferenceIds?: string[];
 }
+
+type StreamingControlMessage<T = StreamingData, R = string> = StreamingMessage<
+    T,
+    R
+>;
 
 export type HeartbeatsControlMessage = StreamingControlMessage<
     {

@@ -22,7 +22,11 @@ import type {
     StateChangeCallback,
     ReceiveCallback,
 } from '../types';
-import { OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS } from '../../control-messages';
+import {
+    OPENAPI_CONTROL_MESSAGE_DISCONNECT,
+    OPENAPI_CONTROL_MESSAGE_RECONNECT,
+    OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
+} from '../../control-messages';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
 
@@ -191,11 +195,15 @@ class WebsocketTransport implements StreamingTransportInterface {
 
             const messageId = uint64utils.uint64ToNumber(messageIdBuffer);
             if (this.lastMessageId && messageId !== this.lastMessageId + 1) {
+                const firstReferenceId = data[0]?.ReferenceId;
                 if (
                     messageId === 1 &&
-                    data[0]?.ReferenceId ===
+                    ((firstReferenceId ===
                         OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS &&
-                    !data[0].TargetReferenceIds?.length
+                        !data[0].TargetReferenceIds?.length) ||
+                        firstReferenceId ===
+                            OPENAPI_CONTROL_MESSAGE_RECONNECT ||
+                        firstReferenceId === OPENAPI_CONTROL_MESSAGE_DISCONNECT)
                 ) {
                     log.info(LOG_AREA, 'Message id reset to 1', {
                         messageId,

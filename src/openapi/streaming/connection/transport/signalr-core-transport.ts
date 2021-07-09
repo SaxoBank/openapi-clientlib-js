@@ -14,6 +14,11 @@ import type {
     ReceiveCallback,
 } from '../types';
 import type SignalR from '@microsoft/signalr';
+import {
+    OPENAPI_CONTROL_MESSAGE_DISCONNECT,
+    OPENAPI_CONTROL_MESSAGE_RECONNECT,
+    OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
+} from '../../control-messages';
 
 declare global {
     interface Window {
@@ -455,14 +460,29 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                 this.lastMessageId &&
                 data.MessageId !== this.lastMessageId + 1
             ) {
-                log.error(
-                    LOG_AREA,
-                    'Missing a streaming signalr-core message',
-                    {
+                if (
+                    data.MessageId === 0 &&
+                    ((data.ReferenceId ===
+                        OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS &&
+                        !data.TargetReferenceIds?.length) ||
+                        data.ReferenceId ===
+                            OPENAPI_CONTROL_MESSAGE_RECONNECT ||
+                        data.ReferenceId === OPENAPI_CONTROL_MESSAGE_DISCONNECT)
+                ) {
+                    log.info(LOG_AREA, 'Message id reset to 0', {
                         lastMessageId: this.lastMessageId,
                         messageId: data.MessageId,
-                    },
-                );
+                    });
+                } else {
+                    log.error(
+                        LOG_AREA,
+                        'Missing a streaming signalr-core message',
+                        {
+                            lastMessageId: this.lastMessageId,
+                            messageId: data.MessageId,
+                        },
+                    );
+                }
             }
 
             this.lastMessageId = data.MessageId as number;
