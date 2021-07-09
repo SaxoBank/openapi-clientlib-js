@@ -11,13 +11,13 @@ import * as streamingTransports from './connection/transportTypes';
 import type * as types from './types';
 import type AuthProvider from '../authProvider';
 import type { ITransport } from '../transport/transport-base';
-
-export const OPENAPI_CONTROL_MESSAGE_PREFIX = '_';
-export const OPENAPI_CONTROL_MESSAGE_HEARTBEAT = '_heartbeat';
-export const OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS =
-    '_resetsubscriptions';
-export const OPENAPI_CONTROL_MESSAGE_RECONNECT = '_reconnect';
-export const OPENAPI_CONTROL_MESSAGE_DISCONNECT = '_disconnect';
+import {
+    OPENAPI_CONTROL_MESSAGE_PREFIX,
+    OPENAPI_CONTROL_MESSAGE_DISCONNECT,
+    OPENAPI_CONTROL_MESSAGE_HEARTBEAT,
+    OPENAPI_CONTROL_MESSAGE_RECONNECT,
+    OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
+} from './control-messages';
 
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
 

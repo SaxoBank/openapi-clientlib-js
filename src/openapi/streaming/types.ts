@@ -5,7 +5,7 @@ import type {
     OPENAPI_CONTROL_MESSAGE_HEARTBEAT,
     OPENAPI_CONTROL_MESSAGE_RECONNECT,
     OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
-} from './streaming';
+} from './control-messages';
 import type { TRANSPORT_NAME_MAP } from './connection/connection';
 import type * as connectionConstants from './connection/constants';
 import type { StreamingData } from './connection/types';
@@ -38,13 +38,14 @@ export interface StreamingMessage<T = unknown, R = string> {
     ReservedField?: number;
     DataFormat?: DataFormat;
     Data: T;
-}
-
-interface StreamingControlMessage<T = StreamingData, R = string>
-    extends StreamingMessage<T, R> {
     Heartbeats?: Heartbeats[];
     TargetReferenceIds?: string[];
 }
+
+type StreamingControlMessage<T = StreamingData, R = string> = StreamingMessage<
+    T,
+    R
+>;
 
 export type HeartbeatsControlMessage = StreamingControlMessage<
     {

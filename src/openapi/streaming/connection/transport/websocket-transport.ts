@@ -22,6 +22,11 @@ import type {
     StateChangeCallback,
     ReceiveCallback,
 } from '../types';
+import {
+    OPENAPI_CONTROL_MESSAGE_DISCONNECT,
+    OPENAPI_CONTROL_MESSAGE_RECONNECT,
+    OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
+} from '../../control-messages';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
 
@@ -82,12 +87,10 @@ class WebsocketTransport implements StreamingTransportInterface {
     authToken: string | null = null;
     // Callbacks
     failCallback;
-    logCallback = NOOP;
     stateChangedCallback: StateChangeCallback = NOOP;
     receivedCallback: ReceiveCallback = NOOP;
     connectionSlowCallback = NOOP;
     startedCallback = NOOP;
-    closeCallback = NOOP;
     unauthorizedCallback = NOOP;
     utf8Decoder!: TextDecoder;
     isWebsocketStreamingHeartBeatEnabled = false;
@@ -192,10 +195,30 @@ class WebsocketTransport implements StreamingTransportInterface {
 
             const messageId = uint64utils.uint64ToNumber(messageIdBuffer);
             if (this.lastMessageId && messageId !== this.lastMessageId + 1) {
-                log.error(LOG_AREA, 'Missing messages in websocket transport', {
-                    messageId,
-                    lastMessageId: this.lastMessageId,
-                });
+                const firstReferenceId = data[0]?.ReferenceId;
+                if (
+                    messageId === 1 &&
+                    ((firstReferenceId ===
+                        OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS &&
+                        !data[0].TargetReferenceIds?.length) ||
+                        firstReferenceId ===
+                            OPENAPI_CONTROL_MESSAGE_RECONNECT ||
+                        firstReferenceId === OPENAPI_CONTROL_MESSAGE_DISCONNECT)
+                ) {
+                    log.info(LOG_AREA, 'Message id reset to 1', {
+                        messageId,
+                        lastMessageId: this.lastMessageId,
+                    });
+                } else {
+                    log.error(
+                        LOG_AREA,
+                        'Messages out of order in websocket transport',
+                        {
+                            messageId,
+                            lastMessageId: this.lastMessageId,
+                        },
+                    );
+                }
             }
             this.lastMessageId = messageId;
 
@@ -330,6 +353,9 @@ class WebsocketTransport implements StreamingTransportInterface {
         this.stateChangedCallback(constants.CONNECTION_STATE_RECONNECTING);
 
         this.destroySocket();
+
+        // need to update the last message id
+        this.updateQuery(this.authToken as string, this.contextId as string);
 
         if (isImmediate) {
             this.restartConnection();
@@ -596,6 +622,9 @@ class WebsocketTransport implements StreamingTransportInterface {
         _authExpiry?: number,
         forceAuth = false,
     ) {
+        if (contextId !== this.contextId) {
+            this.lastMessageId = null;
+        }
         let query = `?contextId=${encodeURIComponent(
             contextId,
         )}&Authorization=${encodeURIComponent(authToken)}`;

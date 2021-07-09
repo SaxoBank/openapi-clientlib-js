@@ -1,3 +1,7 @@
+### v10.2.7
+- Do not warn on messages out of order on reconnections
+- make sure the last message id is passed on reconnect
+
 ### v10.2.6
 - Fixes to websocket streaming transport heartbeat to send the parameter on the initial connection
 
