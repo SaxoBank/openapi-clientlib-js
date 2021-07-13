@@ -1,3 +1,6 @@
+### v10.2.8
+- Convert HTTP method names passed to fetch to uppercase (see: https://bugs.chromium.org/p/chromium/issues/detail?id=1228178)
+
 ### v10.2.7
 - Do not warn on messages out of order on reconnections
 - make sure the last message id is passed on reconnect
