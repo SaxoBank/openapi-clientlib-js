@@ -10,7 +10,7 @@ export interface QueuedItem {
     action: SubscriptionAction;
     args?: {
         force?: boolean;
-        resubscribe?: boolean;
+        replace?: boolean;
         [p: string]: any;
     };
 }

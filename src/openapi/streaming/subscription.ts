@@ -299,7 +299,7 @@ class Subscription {
     /**
      * Call to actually do a subscribe.
      */
-    private subscribe(replace = false) {
+    private subscribe({ replace = false } = {}) {
         const previousReferenceId = this.referenceId;
 
         // capture the reference id so we can tell in the response whether it is the latest call
@@ -451,9 +451,9 @@ class Subscription {
             case ACTION_SUBSCRIBE:
                 switch (this.currentState) {
                     case this.STATE_SUBSCRIBED:
-                        if (args?.resubscribe) {
+                        if (args?.replace) {
                             this.queue.clearPatches();
-                            this.subscribe(true);
+                            this.subscribe({ replace: true });
                         }
                         break;
 
@@ -1011,17 +1011,15 @@ class Subscription {
 
     /**
      * Try to subscribe.
-     * @param modify - The modify flag indicates that subscription action is part of subscription modification.
-     *                           If true, any unsubscribe before subscribe will be kept. Otherwise they are dropped.
      */
-    onSubscribe(resubscribe?: boolean) {
+    onSubscribe({ replace = false } = {}) {
         if (this.isDisposed) {
             throw new Error(
                 'Subscribing a disposed subscription - you will not get data',
             );
         }
 
-        this.tryPerformAction(ACTION_SUBSCRIBE, { resubscribe });
+        this.tryPerformAction(ACTION_SUBSCRIBE, { replace });
     }
 
     /**
@@ -1049,7 +1047,7 @@ class Subscription {
             }
             this.tryPerformAction(ACTION_MODIFY_PATCH, options.patchArgsDelta);
         } else if (options?.isReplace) {
-            this.onSubscribe(true);
+            this.onSubscribe({ replace: true });
         } else {
             // resubscribe with new arguments
             this.onUnsubscribe(true);
