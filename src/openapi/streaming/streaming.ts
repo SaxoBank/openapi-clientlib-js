@@ -1120,7 +1120,11 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     modify(
         subscription: Subscription,
         args: Record<string, unknown>,
-        options: { isPatch: boolean; patchArgsDelta: Record<string, unknown> },
+        options: {
+            isPatch: boolean;
+            isReplace: boolean;
+            patchArgsDelta: Record<string, unknown>;
+        },
     ) {
         subscription.onModify(args, options);
     }
