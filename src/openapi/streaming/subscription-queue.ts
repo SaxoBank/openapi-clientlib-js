@@ -8,7 +8,11 @@ import type { SubscriptionAction } from './subscription-actions';
 
 export interface QueuedItem {
     action: SubscriptionAction;
-    args?: { force?: boolean; [p: string]: any };
+    args?: {
+        force?: boolean;
+        resubscribe?: boolean;
+        [p: string]: any;
+    };
 }
 
 /**

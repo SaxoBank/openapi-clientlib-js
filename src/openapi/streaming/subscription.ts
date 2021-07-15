@@ -299,7 +299,9 @@ class Subscription {
     /**
      * Call to actually do a subscribe.
      */
-    private subscribe() {
+    private subscribe(replace = false) {
+        const previousReferenceId = this.referenceId;
+
         // capture the reference id so we can tell in the response whether it is the latest call
         const referenceId = String(referenceIdCounter++);
         this.referenceId = referenceId;
@@ -316,6 +318,7 @@ class Subscription {
             ...this.subscriptionData,
             ContextId: this.streamingContextId,
             ReferenceId: referenceId,
+            ReplaceReferenceId: replace ? previousReferenceId : undefined,
             KnownSchemas: this.parser.getSchemaNames(),
         };
         let options: RequestOptions = { body: data };
@@ -448,6 +451,10 @@ class Subscription {
             case ACTION_SUBSCRIBE:
                 switch (this.currentState) {
                     case this.STATE_SUBSCRIBED:
+                        if (args?.resubscribe) {
+                            this.queue.clearPatches();
+                            this.subscribe(true);
+                        }
                         break;
 
                     case this.STATE_UNSUBSCRIBED:
@@ -1007,14 +1014,14 @@ class Subscription {
      * @param modify - The modify flag indicates that subscription action is part of subscription modification.
      *                           If true, any unsubscribe before subscribe will be kept. Otherwise they are dropped.
      */
-    onSubscribe() {
+    onSubscribe(resubscribe?: boolean) {
         if (this.isDisposed) {
             throw new Error(
                 'Subscribing a disposed subscription - you will not get data',
             );
         }
 
-        this.tryPerformAction(ACTION_SUBSCRIBE);
+        this.tryPerformAction(ACTION_SUBSCRIBE, { resubscribe });
     }
 
     /**
@@ -1041,6 +1048,8 @@ class Subscription {
                 throw new Error('Modify options patchArgsDelta is not defined');
             }
             this.tryPerformAction(ACTION_MODIFY_PATCH, options.patchArgsDelta);
+        } else if (options?.isReplace) {
+            this.onSubscribe(true);
         } else {
             // resubscribe with new arguments
             this.onUnsubscribe(true);
