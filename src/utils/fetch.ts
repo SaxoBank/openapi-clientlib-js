@@ -204,10 +204,10 @@ export function convertFetchSuccess(
     return convertedPromise;
 }
 
-function getBody(method: HTTPMethodType, options?: Options): any {
+function getBody(method: Uppercase<HTTPMethodType>, options?: Options): any {
     // If PATCH without body occurs, create empty payload.
     // Reason: Some proxies and default configs for CDNs like Akamai have issues with accepting PATCH with content-length: 0.
-    if (method === 'patch' && !options?.body) {
+    if (method === 'PATCH' && !options?.body) {
         return {};
     }
 
@@ -228,7 +228,7 @@ function localFetch<Response = any>(
     url: string,
     options?: Options,
 ): Promise<OAPIRequestResult<Response>> {
-    let method = httMethod.toLowerCase() as HTTPMethodType;
+    let method = httMethod.toUpperCase() as Uppercase<HTTPMethodType>;
     let body = getBody(method, options);
     const headers = options?.headers || {};
     const cache = options?.cache;
@@ -244,14 +244,14 @@ function localFetch<Response = any>(
 
     if (
         useXHttpMethodOverride &&
-        (method === 'put' || method === 'delete' || method === 'patch')
+        (method === 'PUT' || method === 'DELETE' || method === 'PATCH')
     ) {
         headers['X-HTTP-Method-Override'] = method;
-        method = 'post';
+        method = 'POST';
     }
 
     if (cache === false) {
-        if (method === 'get') {
+        if (method === 'GET') {
             const cacheBreak = String(cacheBreakNum++);
             url += (url.indexOf('?') > 0 ? '&_=' : '?_=') + cacheBreak;
         }

@@ -289,7 +289,7 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/service_path/account/info/te/st',
                 {
                     body: undefined,
-                    method: 'get',
+                    method: 'GET',
                     headers: { 'X-Request-Id': expect.any(String) },
                     // credentials: 'include' adds cookies.
                     // Cookies used by some open api operations. if we don't default here make sure it is sent through with subscription requests.
@@ -312,7 +312,7 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/service_path/account/info/te/st',
                 {
                     body: '{"Test":true}',
-                    method: 'post',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json; charset=UTF-8',
                         'X-Request-Id': expect.any(String),
@@ -338,7 +338,7 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/service_path/account/info/te/st',
                 {
                     body: '{"Test":true}',
-                    method: 'post',
+                    method: 'POST',
                     headers: { 'X-Request-Id': expect.any(String) },
                     credentials: 'include',
                 },
@@ -366,7 +366,7 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/platform/v1/media/fleeb',
                 {
                     body: expect.any(window.FormData),
-                    method: 'post',
+                    method: 'POST',
                     headers: { 'X-Request-Id': expect.any(String) },
                     credentials: 'include',
                 },
@@ -392,7 +392,7 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/platform/v1/media/fleeb',
                 {
                     body: expect.any(window.Blob),
-                    method: 'post',
+                    method: 'POST',
                     headers: { 'X-Request-Id': expect.any(String) },
                     credentials: 'include',
                 },
@@ -417,7 +417,7 @@ describe('openapi TransportCore', () => {
                 'localhost/openapi/platform/v1/media/fleeb',
                 {
                     body: expect.any(window.URLSearchParams),
-                    method: 'post',
+                    method: 'POST',
                     headers: { 'X-Request-Id': expect.any(String) },
                     credentials: 'include',
                 },
@@ -778,7 +778,7 @@ describe('openapi TransportCore', () => {
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'get',
+                    method: 'GET',
                     headers: { 'X-Request-Id': expect.any(String) },
                 }),
             ]);
@@ -789,9 +789,9 @@ describe('openapi TransportCore', () => {
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'post',
+                    method: 'POST',
                     headers: {
-                        'X-HTTP-Method-Override': 'put',
+                        'X-HTTP-Method-Override': 'PUT',
                         'X-Request-Id': expect.any(String),
                     },
                 }),
@@ -803,7 +803,7 @@ describe('openapi TransportCore', () => {
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'post',
+                    method: 'POST',
                     headers: { 'X-Request-Id': expect.any(String) },
                 }),
             ]);
@@ -814,9 +814,9 @@ describe('openapi TransportCore', () => {
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'post',
+                    method: 'POST',
                     headers: {
-                        'X-HTTP-Method-Override': 'delete',
+                        'X-HTTP-Method-Override': 'DELETE',
                         'X-Request-Id': expect.any(String),
                     },
                 }),
@@ -831,7 +831,7 @@ describe('openapi TransportCore', () => {
                     body: '{}',
                     headers: {
                         'Content-Type': 'application/json; charset=UTF-8',
-                        'X-HTTP-Method-Override': 'patch',
+                        'X-HTTP-Method-Override': 'PATCH',
                         'X-Request-Id': expect.any(String),
                     },
                 }),
@@ -855,7 +855,7 @@ describe('openapi TransportCore', () => {
             expect(fetch.mock.calls[0]).toEqual([
                 expect.anything(),
                 expect.objectContaining({
-                    method: 'patch',
+                    method: 'PATCH',
                     body: '{"exampleField":"test"}',
                     headers: {
                         'Content-Type': 'application/json; charset=UTF-8',
