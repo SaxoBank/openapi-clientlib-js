@@ -2307,5 +2307,49 @@ describe('openapi StreamingSubscription', () => {
                 });
             });
         });
+
+        it('handles modify replace error', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                createdSpy,
+            );
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            setTimeout(() => {
+                expect(subscription.currentState).toBe(
+                    subscription.STATE_SUBSCRIBED,
+                );
+
+                subscription.onModify(
+                    { newArgs: 'test' },
+                    { isPatch: false, isReplace: true, patchArgsDelta: {} },
+                );
+                expect(subscription.currentState).toBe(
+                    subscription.STATE_REPLACE_REQUESTED,
+                );
+
+                transport.postReject({
+                    status: '500',
+                    response: 'Internal server error',
+                });
+
+                setTimeout(() => {
+                    expect(subscription.currentState).toBe(
+                        subscription.STATE_SUBSCRIBED,
+                    );
+
+                    done();
+                });
+            });
+        });
     });
 });
