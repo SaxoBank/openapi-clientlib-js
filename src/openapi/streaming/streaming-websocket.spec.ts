@@ -813,7 +813,11 @@ describe('openapi Streaming', () => {
             streaming.subscriptions.push(subscription);
 
             const args = {};
-            const options = { isPatch: false, patchArgsDelta: {} };
+            const options = {
+                isPatch: false,
+                isReplace: false,
+                patchArgsDelta: {},
+            };
             streaming.modify(subscription, args, options);
 
             expect(subscription.onModify.mock.calls.length).toEqual(1);

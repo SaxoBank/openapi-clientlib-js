@@ -443,7 +443,7 @@ describe('openapi StreamingSubscription', () => {
             const patchArgsDelta = { argsDelta: 'delta' };
             subscription.onModify(
                 { args: 'test' },
-                { isPatch: true, patchArgsDelta },
+                { isPatch: true, isReplace: false, patchArgsDelta },
             );
 
             const streamingData = {
@@ -1501,11 +1501,13 @@ describe('openapi StreamingSubscription', () => {
                     },
                     Object {
                       "action": 1,
-                      "args": undefined,
+                      "args": Object {
+                        "replace": false,
+                      },
                     },
                   ],
                 }
-                `);
+            `);
 
             expect(transport.post.mock.calls.length).toEqual(0);
             expect(transport.delete.mock.calls.length).toEqual(0);
@@ -1580,11 +1582,13 @@ describe('openapi StreamingSubscription', () => {
                     },
                     Object {
                       "action": 1,
-                      "args": undefined,
+                      "args": Object {
+                        "replace": false,
+                      },
                     },
                   ],
                 }
-                `);
+            `);
 
             expect(transport.post.mock.calls.length).toEqual(0);
             expect(transport.delete.mock.calls.length).toEqual(0);
@@ -1772,7 +1776,9 @@ describe('openapi StreamingSubscription', () => {
                       "items": Array [
                         Object {
                           "action": 1,
-                          "args": undefined,
+                          "args": Object {
+                            "replace": false,
+                          },
                         },
                       ],
                     }
@@ -2044,6 +2050,7 @@ describe('openapi StreamingSubscription', () => {
                 const patchArgsDelta = { testArgs: 'argsDelta' };
                 subscription.onModify(newArgs, {
                     isPatch: true,
+                    isReplace: false,
                     patchArgsDelta,
                 });
                 // new arguments assigned to the subscription
@@ -2118,10 +2125,12 @@ describe('openapi StreamingSubscription', () => {
                 const newArgs = { args: 'newArgs' };
                 subscription.onModify(args, {
                     isPatch: true,
+                    isReplace: false,
                     patchArgsDelta: { newArgs: 'firstArgs' },
                 });
                 subscription.onModify(newArgs, {
                     isPatch: true,
+                    isReplace: false,
                     patchArgsDelta: { newArgs: 'secondArgs' },
                 });
 
@@ -2171,7 +2180,7 @@ describe('openapi StreamingSubscription', () => {
 
                 subscription.onModify(
                     { newArgs: 'test' },
-                    { isPatch: true, patchArgsDelta },
+                    { isPatch: true, isReplace: false, patchArgsDelta },
                 );
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_PATCH_REQUESTED,
@@ -2222,7 +2231,7 @@ describe('openapi StreamingSubscription', () => {
 
                 subscription.onModify(
                     { newArgs: 'test' },
-                    { isPatch: true, patchArgsDelta },
+                    { isPatch: true, isReplace: false, patchArgsDelta },
                 );
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_PATCH_REQUESTED,
