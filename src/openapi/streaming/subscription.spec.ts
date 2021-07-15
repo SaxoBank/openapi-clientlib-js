@@ -2065,6 +2065,56 @@ describe('openapi StreamingSubscription', () => {
             });
         });
 
+        it('resubscribes in one HTTP call with new arguments on modify with replace method option', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
+
+            const initialArgs = { initialArgs: 'initialArgs' };
+            subscription.subscriptionData.Arguments = initialArgs;
+            subscription.onSubscribe();
+            transport.post.mockClear();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            setTimeout(() => {
+                const previousReferenceId = subscription.referenceId;
+                const newArgs = { newArgs: 'test' };
+                subscription.onModify(newArgs, {
+                    isPatch: false,
+                    isReplace: true,
+                    patchArgsDelta: {},
+                });
+                // subscribed with new arguments
+                expect(subscription.subscriptionData.Arguments).toEqual(
+                    newArgs,
+                );
+                // requests delete as part of the subscribe call
+                expect(transport.delete).not.toBeCalled();
+                expect(transport.post).toBeCalledWith(
+                    'servicePath',
+                    'src/test/resource',
+                    null,
+                    {
+                        body: expect.objectContaining({
+                            ReplaceReferenceId: previousReferenceId,
+                        }),
+                    },
+                );
+
+                done();
+            });
+        });
+
         it('resubscribes with new arguments on modify without patch method option', (done) => {
             const subscription = new Subscription(
                 '123',
