@@ -2,17 +2,14 @@ import {
     ACTION_SUBSCRIBE,
     ACTION_UNSUBSCRIBE,
     ACTION_MODIFY_PATCH,
+    ACTION_MODIFY_REPLACE,
     ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
 } from './subscription-actions';
 import type { SubscriptionAction } from './subscription-actions';
 
 export interface QueuedItem {
     action: SubscriptionAction;
-    args?: {
-        force?: boolean;
-        replace?: boolean;
-        [p: string]: any;
-    };
+    args?: { force?: boolean; [p: string]: any };
 }
 
 /**
@@ -102,23 +99,25 @@ class SubscriptionQueue {
 
     /**
      * This is called at the point of subscribing.
-     * We know at that point we do not need any follow up patches
+     * We know at that point we do not need any follow up modifys
      * or subscribes.
      */
-    clearPatches() {
+    clearModifys() {
         const newItems = [];
-        let reachedNonPatchSubscribe = false;
+        let reachedNonModifySubscribe = false;
         for (let i = 0; i < this.items.length; i++) {
             const action = this.items[i].action;
             if (
-                !reachedNonPatchSubscribe &&
+                !reachedNonModifySubscribe &&
                 action !== ACTION_SUBSCRIBE &&
-                action !== ACTION_MODIFY_PATCH
+                action !== ACTION_MODIFY_PATCH &&
+                action !== ACTION_MODIFY_REPLACE
+                //
             ) {
                 // The unit tests don't hit this and I can't think of a way they would
                 // but I'm keeping it in because I'm not fully confident we can just reset the list
                 newItems.push(this.items[i]);
-                reachedNonPatchSubscribe = true;
+                reachedNonModifySubscribe = true;
             }
         }
         this.items = newItems;

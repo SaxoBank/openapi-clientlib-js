@@ -6,6 +6,7 @@ import {
     ACTION_UNSUBSCRIBE,
     ACTION_MODIFY_PATCH,
     ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
+    ACTION_MODIFY_REPLACE,
 } from './subscription-actions';
 import SubscriptionQueue from './subscription-queue';
 import type { QueuedItem } from './subscription-queue';
@@ -358,8 +359,10 @@ class Subscription {
             .then(() => this.onUnsubscribeSuccess(referenceId))
             .catch(this.onUnsubscribeError.bind(this, referenceId));
     }
+
     /**
      * Does subscription modification through PATCH request
+     * Only works for endpoints that support PATCH.
      */
     private modifyPatch(args?: QueuedItem['args']) {
         this.setState(this.STATE_PATCH_REQUESTED);
@@ -377,6 +380,15 @@ class Subscription {
             )
             .then(() => this.onModifyPatchSuccess(referenceId))
             .catch(this.onModifyPatchError.bind(this, referenceId));
+    }
+
+    /**
+     * Does subscription modification through delete & resubscribe in one HTTP call.
+     * Works for all endpoints.
+     */
+    private modifyReplace() {
+        this.queue.clearModifys();
+        this.subscribe({ replace: true });
     }
 
     private unsubscribeByTagPending() {
@@ -451,14 +463,10 @@ class Subscription {
             case ACTION_SUBSCRIBE:
                 switch (this.currentState) {
                     case this.STATE_SUBSCRIBED:
-                        if (args?.replace) {
-                            this.queue.clearPatches();
-                            this.subscribe({ replace: true });
-                        }
                         break;
 
                     case this.STATE_UNSUBSCRIBED:
-                        this.queue.clearPatches();
+                        this.queue.clearModifys();
                         this.subscribe();
                         break;
 
@@ -486,6 +494,24 @@ class Subscription {
                         log.error(
                             LOG_AREA,
                             'Unanticipated state in performAction Patch',
+                            {
+                                state: this.currentState,
+                                action,
+                            },
+                        );
+                }
+                break;
+
+            case ACTION_MODIFY_REPLACE:
+                switch (this.currentState) {
+                    case this.STATE_SUBSCRIBED:
+                        this.modifyReplace();
+                        break;
+
+                    default:
+                        log.error(
+                            LOG_AREA,
+                            'Unanticipated state in performAction Replace',
                             {
                                 state: this.currentState,
                                 action,
@@ -1047,7 +1073,7 @@ class Subscription {
             }
             this.tryPerformAction(ACTION_MODIFY_PATCH, options.patchArgsDelta);
         } else if (options?.isReplace) {
-            this.onSubscribe({ replace: true });
+            this.tryPerformAction(ACTION_MODIFY_REPLACE);
         } else {
             // resubscribe with new arguments
             this.onUnsubscribe(true);
