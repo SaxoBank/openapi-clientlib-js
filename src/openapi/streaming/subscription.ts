@@ -456,6 +456,7 @@ class Subscription {
      * @param queuedAction - queuedAction
      * @param isLastQueuedAction - isLastQueuedAction
      */
+    // eslint-disable-next-line complexity
     private performAction(
         queuedAction: QueuedItem | undefined,
         isLastQueuedAction?: boolean,
