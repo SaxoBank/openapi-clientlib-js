@@ -58,6 +58,10 @@ describe('openapi SubscriptionQueue', () => {
             return { action: SubscriptionActions.ACTION_MODIFY_PATCH };
         }
 
+        function modifyReplace() {
+            return { action: SubscriptionActions.ACTION_MODIFY_REPLACE };
+        }
+
         function unsubscribeByTagPending() {
             return {
                 action: SubscriptionActions.ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
@@ -255,6 +259,14 @@ describe('openapi SubscriptionQueue', () => {
                     modifyPatch(),
                 ],
                 [forceUnsubscribe(), subscribe(), 'clearModifys'],
+            ],
+
+            // modify-replace
+            [
+                'should discard the earlier of a consecutive pair of modify-replace actions',
+                // unlike with patch, here we send all the arguments, so can do this
+                [modifyReplace(), modifyReplace()],
+                [modifyReplace()],
             ],
 
             // tag tests
