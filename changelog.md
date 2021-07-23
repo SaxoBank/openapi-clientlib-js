@@ -1,3 +1,6 @@
+### v10.2.9
+- Add shouldSubscribeBeforeStreamingSetup option. New options enables subscribe before streaming setup.
+
 ### v10.2.8
 - Convert HTTP method names passed to fetch to uppercase (see: https://bugs.chromium.org/p/chromium/issues/detail?id=1228178)
 
