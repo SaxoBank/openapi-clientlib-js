@@ -113,4 +113,8 @@ export interface StreamingConfigurableOptions {
      * If true we wll get streaming heartbeat messages for websocket connection
      */
     isWebsocketStreamingHeartBeatEnabled?: boolean;
+    /**
+     *  Flag to control whether we should subscribe before streaming setup during initial subscribe
+     */
+    shouldSubscribeBeforeStreamingSetup?: boolean;
 }

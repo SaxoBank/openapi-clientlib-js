@@ -1224,6 +1224,52 @@ describe('openapi Streaming', () => {
                 transport: ['webSockets'],
             });
         });
+
+        describe('shouldSubscribeBeforeStreamingSetup flag enabled', () => {
+            it('subscription should subscribe immediately until first reconnect, disconnect or fail happens', () => {
+                const streaming = new Streaming(
+                    transport,
+                    'testUrl',
+                    authProvider,
+                    {
+                        waitForPageLoad: true,
+                        transport: ['webSockets'],
+                        shouldSubscribeBeforeStreamingSetup: true,
+                    },
+                );
+
+                // streaming Initializing state
+                expect(streaming.shouldSubscribeBeforeStreamingSetup).toBe(
+                    true,
+                );
+                streaming.createSubscription('root', '/test/test', {});
+                expect(streaming.subscriptions[0].connectionAvailable).toBe(
+                    true,
+                );
+
+                // streaming Connected state
+                expect(streaming.subscriptions[0].latestActivity).toBeFalsy();
+                stateChangedCallback({ newState: 1 /* Connected */ });
+                expect(streaming.subscriptions[0].latestActivity).toBeTruthy();
+                expect(streaming.shouldSubscribeBeforeStreamingSetup).toBe(
+                    false,
+                );
+                streaming.createSubscription('root', '/test/test', {});
+                expect(streaming.subscriptions[1].connectionAvailable).toBe(
+                    true,
+                );
+
+                // // streaming Disconnected state
+                stateChangedCallback({ newState: 4 /* Disconnected */ });
+                expect(streaming.shouldSubscribeBeforeStreamingSetup).toBe(
+                    false,
+                );
+                streaming.createSubscription('root', '/test/test', {});
+                expect(streaming.subscriptions[2].connectionAvailable).toBe(
+                    false,
+                );
+            });
+        });
     });
 
     describe('unsubscribeByTag', () => {
