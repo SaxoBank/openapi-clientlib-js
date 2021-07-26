@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import MicroEmitter from '../../micro-emitter';
 import log from '../../log';
 import { padLeft } from '../../utils/string';
