@@ -58,6 +58,10 @@ describe('openapi SubscriptionQueue', () => {
             return { action: SubscriptionActions.ACTION_MODIFY_PATCH };
         }
 
+        function modifyReplace() {
+            return { action: SubscriptionActions.ACTION_MODIFY_REPLACE };
+        }
+
         function unsubscribeByTagPending() {
             return {
                 action: SubscriptionActions.ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
@@ -169,7 +173,7 @@ describe('openapi SubscriptionQueue', () => {
                 ],
             ],
             [
-                'should clear patches if doing a subscribe and calling clearPatches',
+                'should clear patches if doing a subscribe and calling clearModifys',
                 [
                     // See above but in this case we call clear Patches when subscribing
                     subscribe(),
@@ -179,7 +183,7 @@ describe('openapi SubscriptionQueue', () => {
                     unsubscribe(),
                     subscribe(),
                 ],
-                [subscribe(), 'clearPatches'],
+                [subscribe(), 'clearModifys'],
             ],
             [
                 'should clear patches if doing a unsubscribe even if we have a modify on a unsubscribe',
@@ -210,7 +214,7 @@ describe('openapi SubscriptionQueue', () => {
                     subscribe(),
                     modifyPatch(),
                 ],
-                [unsubscribe(), modifyPatch(), subscribe(), 'clearPatches'],
+                [unsubscribe(), modifyPatch(), subscribe(), 'clearModifys'],
             ],
             [
                 'should drop all actions except unsubscribe force followed by subscribe',
@@ -254,7 +258,15 @@ describe('openapi SubscriptionQueue', () => {
                     subscribe(),
                     modifyPatch(),
                 ],
-                [forceUnsubscribe(), subscribe(), 'clearPatches'],
+                [forceUnsubscribe(), subscribe(), 'clearModifys'],
+            ],
+
+            // modify-replace
+            [
+                'should discard the earlier of a consecutive pair of modify-replace actions',
+                // unlike with patch, here we send all the arguments, so can do this
+                [modifyReplace(), modifyReplace()],
+                [modifyReplace()],
             ],
 
             // tag tests
@@ -283,8 +295,8 @@ describe('openapi SubscriptionQueue', () => {
                 queue.enqueue(action);
             }
             for (const action of expectedActions) {
-                if (action === 'clearPatches') {
-                    queue.clearPatches();
+                if (action === 'clearModifys') {
+                    queue.clearModifys();
                 } else {
                     expect(queue.dequeue()).toStrictEqual(action);
                 }

@@ -443,7 +443,7 @@ describe('openapi StreamingSubscription', () => {
             const patchArgsDelta = { argsDelta: 'delta' };
             subscription.onModify(
                 { args: 'test' },
-                { isPatch: true, patchArgsDelta },
+                { isPatch: true, isReplace: false, patchArgsDelta },
             );
 
             const streamingData = {
@@ -1501,11 +1501,13 @@ describe('openapi StreamingSubscription', () => {
                     },
                     Object {
                       "action": 1,
-                      "args": undefined,
+                      "args": Object {
+                        "replace": false,
+                      },
                     },
                   ],
                 }
-                `);
+            `);
 
             expect(transport.post.mock.calls.length).toEqual(0);
             expect(transport.delete.mock.calls.length).toEqual(0);
@@ -1580,11 +1582,13 @@ describe('openapi StreamingSubscription', () => {
                     },
                     Object {
                       "action": 1,
-                      "args": undefined,
+                      "args": Object {
+                        "replace": false,
+                      },
                     },
                   ],
                 }
-                `);
+            `);
 
             expect(transport.post.mock.calls.length).toEqual(0);
             expect(transport.delete.mock.calls.length).toEqual(0);
@@ -1772,7 +1776,9 @@ describe('openapi StreamingSubscription', () => {
                       "items": Array [
                         Object {
                           "action": 1,
-                          "args": undefined,
+                          "args": Object {
+                            "replace": false,
+                          },
                         },
                       ],
                     }
@@ -2044,6 +2050,7 @@ describe('openapi StreamingSubscription', () => {
                 const patchArgsDelta = { testArgs: 'argsDelta' };
                 subscription.onModify(newArgs, {
                     isPatch: true,
+                    isReplace: false,
                     patchArgsDelta,
                 });
                 // new arguments assigned to the subscription
@@ -2053,6 +2060,56 @@ describe('openapi StreamingSubscription', () => {
                 });
                 // sends patch request on modify
                 expect(transport.patch.mock.calls.length).toEqual(1);
+
+                done();
+            });
+        });
+
+        it('resubscribes in one HTTP call with new arguments on modify with replace method option', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                createdSpy,
+                { onUpdate: updateSpy },
+            );
+
+            const initialArgs = { initialArgs: 'initialArgs' };
+            subscription.subscriptionData.Arguments = initialArgs;
+            subscription.onSubscribe();
+            transport.post.mockClear();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            setTimeout(() => {
+                const previousReferenceId = subscription.referenceId;
+                const newArgs = { newArgs: 'test' };
+                subscription.onModify(newArgs, {
+                    isPatch: false,
+                    isReplace: true,
+                    patchArgsDelta: {},
+                });
+                // subscribed with new arguments
+                expect(subscription.subscriptionData.Arguments).toEqual(
+                    newArgs,
+                );
+                // requests delete as part of the subscribe call
+                expect(transport.delete).not.toBeCalled();
+                expect(transport.post).toBeCalledWith(
+                    'servicePath',
+                    'src/test/resource',
+                    null,
+                    {
+                        body: expect.objectContaining({
+                            ReplaceReferenceId: previousReferenceId,
+                        }),
+                    },
+                );
 
                 done();
             });
@@ -2118,10 +2175,12 @@ describe('openapi StreamingSubscription', () => {
                 const newArgs = { args: 'newArgs' };
                 subscription.onModify(args, {
                     isPatch: true,
+                    isReplace: false,
                     patchArgsDelta: { newArgs: 'firstArgs' },
                 });
                 subscription.onModify(newArgs, {
                     isPatch: true,
+                    isReplace: false,
                     patchArgsDelta: { newArgs: 'secondArgs' },
                 });
 
@@ -2171,7 +2230,7 @@ describe('openapi StreamingSubscription', () => {
 
                 subscription.onModify(
                     { newArgs: 'test' },
-                    { isPatch: true, patchArgsDelta },
+                    { isPatch: true, isReplace: false, patchArgsDelta },
                 );
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_PATCH_REQUESTED,
@@ -2222,7 +2281,7 @@ describe('openapi StreamingSubscription', () => {
 
                 subscription.onModify(
                     { newArgs: 'test' },
-                    { isPatch: true, patchArgsDelta },
+                    { isPatch: true, isReplace: false, patchArgsDelta },
                 );
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_PATCH_REQUESTED,
@@ -2242,6 +2301,50 @@ describe('openapi StreamingSubscription', () => {
                 setTimeout(() => {
                     expect(subscription.currentState).toEqual(
                         subscription.STATE_SUBSCRIBE_REQUESTED,
+                    );
+
+                    done();
+                });
+            });
+        });
+
+        it('handles modify replace error', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                createdSpy,
+            );
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            setTimeout(() => {
+                expect(subscription.currentState).toBe(
+                    subscription.STATE_SUBSCRIBED,
+                );
+
+                subscription.onModify(
+                    { newArgs: 'test' },
+                    { isPatch: false, isReplace: true, patchArgsDelta: {} },
+                );
+                expect(subscription.currentState).toBe(
+                    subscription.STATE_REPLACE_REQUESTED,
+                );
+
+                transport.postReject({
+                    status: '500',
+                    response: 'Internal server error',
+                });
+
+                setTimeout(() => {
+                    expect(subscription.currentState).toBe(
+                        subscription.STATE_SUBSCRIBED,
                     );
 
                     done();

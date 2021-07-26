@@ -6,6 +6,7 @@ import {
     ACTION_UNSUBSCRIBE,
     ACTION_MODIFY_PATCH,
     ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
+    ACTION_MODIFY_REPLACE,
 } from './subscription-actions';
 import SubscriptionQueue from './subscription-queue';
 import type { QueuedItem } from './subscription-queue';
@@ -27,8 +28,9 @@ const stateFlags = {
     UNSUBSCRIBE_REQUESTED: 4,
     UNSUBSCRIBED: 8,
     PATCH_REQUESTED: 16,
-    READY_FOR_UNSUBSCRIBE_BY_TAG: 32,
-    PUBLISHER_DOWN: 64,
+    REPLACE_REQUESTED: 32,
+    READY_FOR_UNSUBSCRIBE_BY_TAG: 64,
+    PUBLISHER_DOWN: 128,
 } as const;
 
 export type SubscriptionState = typeof stateFlags[keyof typeof stateFlags];
@@ -140,13 +142,15 @@ class Subscription {
     STATE_UNSUBSCRIBE_REQUESTED = 4 as const;
     STATE_UNSUBSCRIBED = 8 as const;
     STATE_PATCH_REQUESTED = 16 as const;
-    STATE_READY_FOR_UNSUBSCRIBE_BY_TAG = 32 as const;
-    STATE_PUBLISHER_DOWN = 64 as const;
+    STATE_REPLACE_REQUESTED = 32 as const;
+    STATE_READY_FOR_UNSUBSCRIBE_BY_TAG = 64 as const;
+    STATE_PUBLISHER_DOWN = 128 as const;
 
     TRANSITIONING_STATES =
         this.STATE_SUBSCRIBE_REQUESTED |
         this.STATE_UNSUBSCRIBE_REQUESTED |
         this.STATE_PATCH_REQUESTED |
+        this.STATE_REPLACE_REQUESTED |
         this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG |
         this.STATE_PUBLISHER_DOWN;
 
@@ -299,7 +303,9 @@ class Subscription {
     /**
      * Call to actually do a subscribe.
      */
-    private subscribe() {
+    private subscribe({ replace = false } = {}) {
+        const previousReferenceId = this.referenceId;
+
         // capture the reference id so we can tell in the response whether it is the latest call
         const referenceId = String(referenceIdCounter++);
         this.referenceId = referenceId;
@@ -316,6 +322,7 @@ class Subscription {
             ...this.subscriptionData,
             ContextId: this.streamingContextId,
             ReferenceId: referenceId,
+            ReplaceReferenceId: replace ? previousReferenceId : undefined,
             KnownSchemas: this.parser.getSchemaNames(),
         };
         let options: RequestOptions = { body: data };
@@ -330,7 +337,11 @@ class Subscription {
             servicePath: this.servicePath,
             url: subscribeUrl,
         });
-        this.setState(this.STATE_SUBSCRIBE_REQUESTED);
+        this.setState(
+            replace
+                ? this.STATE_REPLACE_REQUESTED
+                : this.STATE_SUBSCRIBE_REQUESTED,
+        );
 
         this.currentStreamingContextId = this.streamingContextId;
         this.transport
@@ -355,8 +366,10 @@ class Subscription {
             .then(() => this.onUnsubscribeSuccess(referenceId))
             .catch(this.onUnsubscribeError.bind(this, referenceId));
     }
+
     /**
      * Does subscription modification through PATCH request
+     * Only works for endpoints that support PATCH.
      */
     private modifyPatch(args?: QueuedItem['args']) {
         this.setState(this.STATE_PATCH_REQUESTED);
@@ -374,6 +387,15 @@ class Subscription {
             )
             .then(() => this.onModifyPatchSuccess(referenceId))
             .catch(this.onModifyPatchError.bind(this, referenceId));
+    }
+
+    /**
+     * Does subscription modification through delete & resubscribe in one HTTP call.
+     * Works for all endpoints.
+     */
+    private modifyReplace() {
+        this.queue.clearModifys();
+        this.subscribe({ replace: true });
     }
 
     private unsubscribeByTagPending() {
@@ -434,6 +456,7 @@ class Subscription {
      * @param queuedAction - queuedAction
      * @param isLastQueuedAction - isLastQueuedAction
      */
+    // eslint-disable-next-line complexity
     private performAction(
         queuedAction: QueuedItem | undefined,
         isLastQueuedAction?: boolean,
@@ -451,7 +474,7 @@ class Subscription {
                         break;
 
                     case this.STATE_UNSUBSCRIBED:
-                        this.queue.clearPatches();
+                        this.queue.clearModifys();
                         this.subscribe();
                         break;
 
@@ -487,9 +510,28 @@ class Subscription {
                 }
                 break;
 
+            case ACTION_MODIFY_REPLACE:
+                switch (this.currentState) {
+                    case this.STATE_SUBSCRIBED:
+                        this.modifyReplace();
+                        break;
+
+                    default:
+                        log.error(
+                            LOG_AREA,
+                            'Unanticipated state in performAction Replace',
+                            {
+                                state: this.currentState,
+                                action,
+                            },
+                        );
+                }
+                break;
+
             case ACTION_UNSUBSCRIBE:
                 switch (this.currentState) {
                     case this.STATE_SUBSCRIBED:
+                    case this.STATE_REPLACE_REQUESTED:
                     case this.STATE_PUBLISHER_DOWN:
                         this.unsubscribe();
                         if (this.waitForPublisherToRespondTimer) {
@@ -656,8 +698,11 @@ class Subscription {
 
         const nextAction = this.queue.peekAction();
         const willUnsubscribe = nextAction && nextAction & ACTION_UNSUBSCRIBE;
+        const isReplace = this.currentState === this.STATE_REPLACE_REQUESTED;
 
-        this.setState(this.STATE_UNSUBSCRIBED);
+        this.setState(
+            isReplace ? this.STATE_SUBSCRIBED : this.STATE_UNSUBSCRIBED,
+        );
 
         // if we are a duplicate response, we should unsubscribe now
         const isDupeRequest =
@@ -761,6 +806,7 @@ class Subscription {
                     servicePath: this.servicePath,
                     ContextId: this.currentStreamingContextId,
                     ReferenceId: referenceId,
+                    isReplace,
                     subscriptionData: this.subscriptionData,
                 },
             );
@@ -963,6 +1009,7 @@ class Subscription {
                 return;
 
             case this.STATE_SUBSCRIBE_REQUESTED:
+            case this.STATE_REPLACE_REQUESTED:
             case this.STATE_SUBSCRIBED: {
                 // we could have been in the process of subscribing when we got a reset. We can only assume that the new thing we are subscribing to
                 // was also reset. or we are subscribed / patch requested.. either way we now need to unsubscribe.
@@ -1004,17 +1051,15 @@ class Subscription {
 
     /**
      * Try to subscribe.
-     * @param modify - The modify flag indicates that subscription action is part of subscription modification.
-     *                           If true, any unsubscribe before subscribe will be kept. Otherwise they are dropped.
      */
-    onSubscribe() {
+    onSubscribe({ replace = false } = {}) {
         if (this.isDisposed) {
             throw new Error(
                 'Subscribing a disposed subscription - you will not get data',
             );
         }
 
-        this.tryPerformAction(ACTION_SUBSCRIBE);
+        this.tryPerformAction(ACTION_SUBSCRIBE, { replace });
     }
 
     /**
@@ -1023,7 +1068,11 @@ class Subscription {
      */
     onModify(
         newArgs?: Record<string, unknown>,
-        options?: { isPatch: boolean; patchArgsDelta: Record<string, unknown> },
+        options?: {
+            isPatch: boolean;
+            patchArgsDelta: Record<string, unknown>;
+            isReplace: boolean;
+        },
     ) {
         if (this.isDisposed) {
             throw new Error(
@@ -1037,6 +1086,8 @@ class Subscription {
                 throw new Error('Modify options patchArgsDelta is not defined');
             }
             this.tryPerformAction(ACTION_MODIFY_PATCH, options.patchArgsDelta);
+        } else if (options?.isReplace) {
+            this.tryPerformAction(ACTION_MODIFY_REPLACE);
         } else {
             // resubscribe with new arguments
             this.onUnsubscribe(true);
@@ -1113,6 +1164,7 @@ class Subscription {
 
             // we received a delta before we got initial data
             case this.STATE_SUBSCRIBE_REQUESTED:
+            case this.STATE_REPLACE_REQUESTED:
                 this.updatesBeforeSubscribed =
                     this.updatesBeforeSubscribed || [];
                 this.updatesBeforeSubscribed.push(message);
@@ -1154,7 +1206,10 @@ class Subscription {
      * Handles a heartbeat from the server.
      */
     onHeartbeat() {
-        if (this.currentState === this.STATE_SUBSCRIBE_REQUESTED) {
+        if (
+            this.currentState === this.STATE_SUBSCRIBE_REQUESTED ||
+            this.currentState === this.STATE_REPLACE_REQUESTED
+        ) {
             log.debug(
                 LOG_AREA,
                 'Received heartbeat for a subscription we havent subscribed to yet',
@@ -1201,6 +1256,7 @@ class Subscription {
             this.currentState === this.STATE_UNSUBSCRIBED ||
             this.currentState === this.STATE_UNSUBSCRIBE_REQUESTED ||
             this.currentState === this.STATE_SUBSCRIBE_REQUESTED ||
+            this.currentState === this.STATE_REPLACE_REQUESTED ||
             this.currentState === this.STATE_PUBLISHER_DOWN
         ) {
             return Infinity;

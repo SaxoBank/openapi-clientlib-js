@@ -1,3 +1,6 @@
+### v10.3.0
+- Add new `isReplace` option for more efficient subscription modifications when an endpoint doesn't support `PATCH`.
+
 ### v10.2.9
 - Add shouldSubscribeBeforeStreamingSetup option. New options enables subscribe before streaming setup.
 
