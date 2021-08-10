@@ -26,6 +26,7 @@ import {
     OPENAPI_CONTROL_MESSAGE_DISCONNECT,
     OPENAPI_CONTROL_MESSAGE_RECONNECT,
     OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
+    OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT,
 } from '../../control-messages';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
@@ -194,33 +195,45 @@ class WebsocketTransport implements StreamingTransportInterface {
             }
 
             const messageId = uint64utils.uint64ToNumber(messageIdBuffer);
-            if (this.lastMessageId && messageId !== this.lastMessageId + 1) {
-                const firstReferenceId = data[0]?.ReferenceId;
+            const firstReferenceId = data[0]?.ReferenceId;
+
+            // _connectionheartbeat control message don't have message id
+            if (
+                firstReferenceId !==
+                OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT
+            ) {
                 if (
-                    messageId === 1 &&
-                    ((firstReferenceId ===
-                        OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS &&
-                        !data[0].TargetReferenceIds?.length) ||
-                        firstReferenceId ===
-                            OPENAPI_CONTROL_MESSAGE_RECONNECT ||
-                        firstReferenceId === OPENAPI_CONTROL_MESSAGE_DISCONNECT)
+                    this.lastMessageId &&
+                    messageId !== this.lastMessageId + 1
                 ) {
-                    log.info(LOG_AREA, 'Message id reset to 1', {
-                        messageId,
-                        lastMessageId: this.lastMessageId,
-                    });
-                } else {
-                    log.error(
-                        LOG_AREA,
-                        'Messages out of order in websocket transport',
-                        {
+                    if (
+                        messageId === 1 &&
+                        ((firstReferenceId ===
+                            OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS &&
+                            !data[0].TargetReferenceIds?.length) ||
+                            firstReferenceId ===
+                                OPENAPI_CONTROL_MESSAGE_RECONNECT ||
+                            firstReferenceId ===
+                                OPENAPI_CONTROL_MESSAGE_DISCONNECT)
+                    ) {
+                        log.info(LOG_AREA, 'Message id reset to 1', {
                             messageId,
                             lastMessageId: this.lastMessageId,
-                        },
-                    );
+                        });
+                    } else {
+                        log.error(
+                            LOG_AREA,
+                            'Messages out of order in websocket transport',
+                            {
+                                messageId,
+                                lastMessageId: this.lastMessageId,
+                            },
+                        );
+                    }
                 }
+
+                this.lastMessageId = messageId;
             }
-            this.lastMessageId = messageId;
 
             index += payloadSize;
 
