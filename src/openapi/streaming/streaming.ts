@@ -16,6 +16,7 @@ import {
     OPENAPI_CONTROL_MESSAGE_PREFIX,
     OPENAPI_CONTROL_MESSAGE_DISCONNECT,
     OPENAPI_CONTROL_MESSAGE_HEARTBEAT,
+    OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT,
     OPENAPI_CONTROL_MESSAGE_RECONNECT,
     OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
 } from './control-messages';
@@ -639,6 +640,9 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 this.handleControlMessageDisconnect();
                 break;
 
+            case OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT:
+                // control mesage to keep streaming connection alive
+                break;
             default:
                 log.warn(LOG_AREA, 'Unrecognised control message', {
                     message,

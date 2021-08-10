@@ -26,6 +26,7 @@ import {
     OPENAPI_CONTROL_MESSAGE_DISCONNECT,
     OPENAPI_CONTROL_MESSAGE_RECONNECT,
     OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
+    OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT,
 } from '../../control-messages';
 
 const LOG_AREA = 'PlainWebSocketsTransport';
@@ -194,8 +195,13 @@ class WebsocketTransport implements StreamingTransportInterface {
             }
 
             const messageId = uint64utils.uint64ToNumber(messageIdBuffer);
-            if (this.lastMessageId && messageId !== this.lastMessageId + 1) {
-                const firstReferenceId = data[0]?.ReferenceId;
+            const firstReferenceId = data[0]?.ReferenceId;
+            if (
+                firstReferenceId !==
+                    OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT &&
+                this.lastMessageId &&
+                messageId !== this.lastMessageId + 1
+            ) {
                 if (
                     messageId === 1 &&
                     ((firstReferenceId ===
@@ -220,7 +226,13 @@ class WebsocketTransport implements StreamingTransportInterface {
                     );
                 }
             }
-            this.lastMessageId = messageId;
+
+            if (
+                firstReferenceId !==
+                OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT
+            ) {
+                this.lastMessageId = messageId;
+            }
 
             index += payloadSize;
 

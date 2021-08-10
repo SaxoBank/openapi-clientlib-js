@@ -6,6 +6,7 @@ import {
 } from '../../../../test/utils';
 import mockMathRandom from '../../../../test/mocks/math-random';
 import mockFetch from '../../../../test/mocks/fetch';
+import log from '../../../../log';
 import * as RequestUtils from '../../../../utils/request';
 import WebSocketTransport from './websocket-transport';
 import * as constants from '../constants';
@@ -346,6 +347,108 @@ describe('openapi WebSocket Transport', () => {
                 expect(spyOnFailCallback).toBeCalledTimes(1);
 
                 done();
+            });
+        });
+
+        describe('incremental message id', () => {
+            it('should log error if received websocket messages are not in incremental id fashion', (done) => {
+                const logSpy = jest.spyOn(log, 'error');
+
+                const spyOnReceivedCallback = jest
+                    .fn()
+                    .mockName('spyReceivedCallback');
+                const spyOnStartCallback = jest
+                    .fn()
+                    .mockName('spyStartCallback');
+
+                const transport = new WebSocketTransport(BASE_URL);
+                transport.setReceivedCallback(spyOnReceivedCallback);
+                transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+                transport.start({}, spyOnStartCallback);
+                fetchMock.resolve(200, {});
+
+                transport.authorizePromise?.then(() => {
+                    const dataBuffer = new window.TextEncoder().encode(
+                        JSON.stringify(jsonPayload),
+                    );
+                    const payload = new Uint8Array(
+                        new ArrayBuffer(dataBuffer.length + 17),
+                    );
+                    payload.set(
+                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 134, 12, 0, 0],
+                        0,
+                    );
+                    payload.set(dataBuffer, 17);
+                    transport.socket?.onmessage?.({
+                        data: payload.buffer,
+                    } as any);
+
+                    // send another message with same id i.e. 1
+                    transport.socket?.onmessage?.({
+                        data: payload.buffer,
+                    } as any);
+
+                    expect(logSpy).toBeCalledWith(
+                        'PlainWebSocketsTransport',
+                        'Messages out of order in websocket transport',
+                        { lastMessageId: 1, messageId: 1 },
+                    );
+                    done();
+                });
+            });
+
+            it('should skip _connectionheartbeat control message from incremental id logic', (done) => {
+                const logSpy = jest.spyOn(log, 'error');
+                const spyOnReceivedCallback = jest
+                    .fn()
+                    .mockName('spyReceivedCallback');
+                const spyOnStartCallback = jest
+                    .fn()
+                    .mockName('spyStartCallback');
+
+                const transport = new WebSocketTransport(BASE_URL);
+                transport.setReceivedCallback(spyOnReceivedCallback);
+                transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+                transport.start({}, spyOnStartCallback);
+                fetchMock.resolve(200, {});
+
+                transport.authorizePromise?.then(() => {
+                    const dataBuffer = new window.TextEncoder().encode(
+                        JSON.stringify(jsonPayload),
+                    );
+                    const payload = new Uint8Array(
+                        new ArrayBuffer(dataBuffer.length + 17),
+                    );
+                    payload.set(
+                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 134, 12, 0, 0],
+                        0,
+                    );
+                    payload.set(dataBuffer, 17);
+                    transport.socket?.onmessage?.({
+                        data: payload.buffer,
+                    } as any);
+
+                    // send _connectionheartbeat control message with same id i.e. 1
+                    const dataBuffer2 = new window.TextEncoder().encode(
+                        JSON.stringify([
+                            { ReferenceId: '_connectionheartbeat' },
+                        ]),
+                    );
+                    const payload2 = new Uint8Array(
+                        new ArrayBuffer(dataBuffer2.length + 17),
+                    );
+                    payload2.set(
+                        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 56, 0, 40, 0, 0, 0],
+                        0,
+                    );
+                    payload2.set(dataBuffer2, 17);
+                    transport.socket?.onmessage?.({
+                        data: payload2.buffer,
+                    } as any);
+
+                    expect(logSpy).toBeCalledTimes(0);
+                    done();
+                });
             });
         });
     });
