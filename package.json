@@ -42,7 +42,7 @@
         "@microsoft/signalr": "5.0.8",
         "@types/jest": "27.0.0",
         "@types/signalr": "2.2.37",
-        "@typescript-eslint/eslint-plugin": "4.28.2",
+        "@typescript-eslint/eslint-plugin": "4.29.1",
         "@typescript-eslint/parser": "4.29.0",
         "babel-jest": "27.0.6",
         "eslint": "7.32.0",
