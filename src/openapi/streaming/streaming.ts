@@ -217,6 +217,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             parserEngines,
             parsers,
             isWebsocketStreamingHeartBeatEnabled,
+            shouldReconnectWSOnceOnline,
         } = options;
 
         this.connectionOptions = {
@@ -228,6 +229,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             // This protocol is used to serialize the message envelope rather than the payload
             messageSerializationProtocol,
             isWebsocketStreamingHeartBeatEnabled,
+            shouldReconnectWSOnceOnline,
         };
 
         if (typeof connectRetryDelay === 'number') {

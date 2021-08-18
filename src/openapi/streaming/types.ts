@@ -17,6 +17,7 @@ export interface ConnectionOptions {
     transport?: Array<TransportTypes>;
     messageSerializationProtocol?: IHubProtocol;
     isWebsocketStreamingHeartBeatEnabled?: boolean;
+    shouldReconnectWSOnceOnline?: boolean;
 }
 
 export type ConnectionState =
@@ -113,6 +114,10 @@ export interface StreamingConfigurableOptions {
      * If true we wll get streaming heartbeat messages for websocket connection
      */
     isWebsocketStreamingHeartBeatEnabled?: boolean;
+    /**
+     * If set we will trigger reconnect once client become online from offline, since last reconnect takes alot of time(30-40 seconds)
+     */
+    shouldReconnectWSOnceOnline?: boolean;
     /**
      *  Flag to control whether we should subscribe before streaming setup during initial subscribe
      */

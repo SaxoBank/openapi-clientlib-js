@@ -96,6 +96,8 @@ class WebsocketTransport implements StreamingTransportInterface {
     isWebsocketStreamingHeartBeatEnabled = false;
     inactivityFinderRunning: boolean;
     inactivityFinderNextUpdateTimeoutId: number | null = null;
+    shouldReconnectWSOnceOnline = false;
+    reconnectOnceOnlineCallback = NOOP;
 
     constructor(
         baseUrl: string,
@@ -107,6 +109,7 @@ class WebsocketTransport implements StreamingTransportInterface {
 
         this.failCallback = failCallback;
         this.inactivityFinderRunning = false;
+        this.reconnectOnceOnlineCallback = this.reconnect.bind(this);
 
         try {
             this.utf8Decoder = new window.TextDecoder();
@@ -139,6 +142,13 @@ class WebsocketTransport implements StreamingTransportInterface {
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
             if (this.isWebsocketStreamingHeartBeatEnabled) {
                 this.startInactivityFinder();
+            }
+
+            if (this.shouldReconnectWSOnceOnline) {
+                window.addEventListener(
+                    'online',
+                    this.reconnectOnceOnlineCallback,
+                );
             }
         }
     };
@@ -390,6 +400,12 @@ class WebsocketTransport implements StreamingTransportInterface {
         socket.onclose = null;
         socket.close(socketCloseCodes.NORMAL_CLOSURE, CLOSE_REASON_DESTROY);
         this.stopInactivityFinder();
+        if (this.shouldReconnectWSOnceOnline) {
+            window.removeEventListener(
+                'online',
+                this.reconnectOnceOnlineCallback,
+            );
+        }
     }
 
     /**
@@ -553,6 +569,10 @@ class WebsocketTransport implements StreamingTransportInterface {
         if (_options && _options.isWebsocketStreamingHeartBeatEnabled) {
             // if set we will recieve _connectionheartbeat after 2 seconds of inactivity on a streaming connection
             this.isWebsocketStreamingHeartBeatEnabled = true;
+        }
+        if (_options && _options.shouldReconnectWSOnceOnline) {
+            // if set we will trigger reconnect once client become online from offline, since last reconnect takes alot of time(30-40 seconds)
+            this.shouldReconnectWSOnceOnline = true;
         }
         if (!this.isSupported()) {
             log.error(LOG_AREA, 'WebSocket Transport is not supported');

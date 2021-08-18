@@ -204,6 +204,47 @@ describe('openapi WebSocket Transport', () => {
             });
         });
 
+        it('should reconnect once online', (done) => {
+            const transport = new WebSocketTransport(BASE_URL, undefined);
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start({ shouldReconnectWSOnceOnline: true });
+            fetchMock.resolve(200, {});
+
+            jest.spyOn(window, 'addEventListener').mockImplementationOnce(
+                () => {},
+            );
+            jest.spyOn(window, 'removeEventListener').mockImplementationOnce(
+                () => {},
+            );
+
+            transport.authorizePromise?.then(() => {
+                expect(global.WebSocket).toBeCalledTimes(1);
+
+                // @ts-expect-error its a readonly property
+                transport.socket.readyState = 1; // WebSocket internal state equal open
+                // @ts-ignore referring to socket method instead of WebSocketTransport
+                transport.socket?.onopen();
+
+                // should add online callback when socket opens
+                expect(window.addEventListener).toBeCalledWith(
+                    'online',
+                    transport.reconnectOnceOnlineCallback,
+                );
+
+                // @ts-expect-error its a readonly property
+                transport.socket.readyState = 3; // WebSocket internal state equal closed
+                // @ts-ignore referring to socket method instead of WebSocketTransport
+                transport.socket?.onclose({ code: 1001 });
+
+                // should remove online callback when socket closes
+                expect(window.removeEventListener).toBeCalledWith(
+                    'online',
+                    transport.reconnectOnceOnlineCallback,
+                );
+                done();
+            });
+        });
+
         it.each([
             [5001, 0, true],
             [2000, 3001, true],
