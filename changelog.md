@@ -1,3 +1,6 @@
+### v10.3.1
+- Added contextual information to some error messages
+
 ### v10.3.0
 - Add new `isReplace` option for more efficient subscription modifications when an endpoint doesn't support `PATCH`.
 
