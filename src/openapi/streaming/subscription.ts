@@ -505,6 +505,8 @@ class Subscription {
                             {
                                 state: this.currentState,
                                 action,
+                                url: this.url,
+                                servicePath: this.servicePath,
                             },
                         );
                 }
@@ -523,6 +525,8 @@ class Subscription {
                             {
                                 state: this.currentState,
                                 action,
+                                url: this.url,
+                                servicePath: this.servicePath,
                             },
                         );
                 }
@@ -550,6 +554,8 @@ class Subscription {
                             {
                                 state: this.currentState,
                                 action,
+                                url: this.url,
+                                servicePath: this.servicePath,
                             },
                         );
                 }
@@ -569,6 +575,8 @@ class Subscription {
                             {
                                 state: this.currentState,
                                 action,
+                                url: this.url,
+                                servicePath: this.servicePath,
                             },
                         );
                 }
@@ -1177,7 +1185,7 @@ class Subscription {
 
             default:
                 log.error(LOG_AREA, 'Unanticipated state onStreamingData', {
-                    currentState: this.currentState,
+                    state: this.currentState,
                     url: this.url,
                     servicePath: this.servicePath,
                 });
