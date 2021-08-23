@@ -3,6 +3,7 @@ import type { IHubProtocol } from '@microsoft/signalr';
 import type {
     OPENAPI_CONTROL_MESSAGE_DISCONNECT,
     OPENAPI_CONTROL_MESSAGE_HEARTBEAT,
+    OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT,
     OPENAPI_CONTROL_MESSAGE_RECONNECT,
     OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
 } from './control-messages';
@@ -52,7 +53,8 @@ export type HeartbeatsControlMessage = StreamingControlMessage<
         Heartbeats: Heartbeats[];
         ReferenceId: typeof OPENAPI_CONTROL_MESSAGE_HEARTBEAT;
     }[],
-    typeof OPENAPI_CONTROL_MESSAGE_HEARTBEAT
+    | typeof OPENAPI_CONTROL_MESSAGE_HEARTBEAT
+    | typeof OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT
 >;
 
 export type ResetControlMessage = StreamingControlMessage<
