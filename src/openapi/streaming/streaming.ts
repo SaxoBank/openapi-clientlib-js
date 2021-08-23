@@ -181,17 +181,12 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         baseUrl: string,
         authProvider: AuthProvider,
         options?: Partial<types.StreamingConfigurableOptions>,
-        callbacks?: {
-            onProbe?: (message: types.ProbeControlMessage) => void
-        },
     ) {
         super();
         this.baseUrl = baseUrl;
         this.authProvider = authProvider;
         this.transport = transport;
-        if (callbacks?.onProbe) {
-            this.onProbe = callbacks.onProbe;
-        }
+        this.onProbe = options?.onProbe;
 
         this.setOptions({ ...DEFAULT_STREAMING_OPTIONS, ...options });
 
@@ -702,12 +697,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     }
 
     /**
-     * Handles probe control messages and calls given callbacks at creation time
-     * 
-     * @param message - the message from server
+     * Handles probe control messages and calls callback if specified in options
      */
     private handleControlMessageProbe(message: types.ProbeControlMessage) {
-        log.debug(LOG_AREA, 'probe received', { message })
+        log.debug(LOG_AREA, 'probe received', { message });
 
         this.onProbe?.(message);
     }

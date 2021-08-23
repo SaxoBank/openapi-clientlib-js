@@ -128,4 +128,8 @@ export interface StreamingConfigurableOptions {
      *  Flag to control whether we should subscribe before streaming setup during initial subscribe
      */
     shouldSubscribeBeforeStreamingSetup?: boolean;
+    /**
+     * Optional callback to handle probe messages
+     */
+    onProbe?: (message: ProbeControlMessage) => void;
 }
