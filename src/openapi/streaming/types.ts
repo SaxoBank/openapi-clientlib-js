@@ -6,6 +6,7 @@ import type {
     OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT,
     OPENAPI_CONTROL_MESSAGE_RECONNECT,
     OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
+    OPENAPI_CONTROL_MESSAGE_PROBE,
 } from './control-messages';
 import type { TRANSPORT_NAME_MAP } from './connection/connection';
 import type * as connectionConstants from './connection/constants';
@@ -64,6 +65,13 @@ export type ResetControlMessage = StreamingControlMessage<
     typeof OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS
 >;
 
+export type ProbeControlMessage = StreamingControlMessage<
+    {
+        ProbeId: number
+    }[],
+    typeof OPENAPI_CONTROL_MESSAGE_PROBE
+>;
+
 type ConnectionControlMessage = StreamingControlMessage<
     any,
     | typeof OPENAPI_CONTROL_MESSAGE_RECONNECT
@@ -73,7 +81,8 @@ type ConnectionControlMessage = StreamingControlMessage<
 export type ControlMessage =
     | HeartbeatsControlMessage
     | ResetControlMessage
-    | ConnectionControlMessage;
+    | ConnectionControlMessage
+    | ProbeControlMessage;
 
 export interface RetryDelayLevel {
     level: number;

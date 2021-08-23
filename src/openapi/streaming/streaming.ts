@@ -19,6 +19,7 @@ import {
     OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT,
     OPENAPI_CONTROL_MESSAGE_RECONNECT,
     OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
+    OPENAPI_CONTROL_MESSAGE_PROBE,
 } from './control-messages';
 
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
@@ -167,6 +168,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     disposed = false;
     private heartBeatLog: Array<[number, ReadonlyArray<string>]> = [];
     shouldSubscribeBeforeStreamingSetup = false;
+    onProbe?: (message: types.ProbeControlMessage) => void;
 
     /**
      * @param transport - The transport to use for subscribing/unsubscribing.
@@ -179,11 +181,17 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         baseUrl: string,
         authProvider: AuthProvider,
         options?: Partial<types.StreamingConfigurableOptions>,
+        callbacks?: {
+            onProbe: (message: types.ProbeControlMessage) => void
+        },
     ) {
         super();
         this.baseUrl = baseUrl;
         this.authProvider = authProvider;
         this.transport = transport;
+        if (callbacks?.onProbe) {
+            this.onProbe = callbacks.onProbe;
+        }
 
         this.setOptions({ ...DEFAULT_STREAMING_OPTIONS, ...options });
 
@@ -644,6 +652,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 // control mesage to keep streaming connection alive
                 break;
 
+            case OPENAPI_CONTROL_MESSAGE_PROBE:
+                this.handleControlMessageProbe(message);
+                break;
+
             default:
                 log.warn(LOG_AREA, 'Unrecognised control message', {
                     message,
@@ -687,6 +699,17 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 );
             }
         }
+    }
+
+    /**
+     * Handles probe control messages and calls given callbacks at creation time
+     * 
+     * @param message - the message from server
+     */
+    private handleControlMessageProbe(message: any) {
+        log.debug(LOG_AREA, 'probe received', { message })
+
+        this.onProbe?.(message);
     }
 
     /**
@@ -852,7 +875,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             for (const servicePath of Object.keys(orphansByServicePath)) {
                 if (
                     orphansByServicePath[servicePath].max -
-                        orphansByServicePath[servicePath].min >
+                    orphansByServicePath[servicePath].min >
                     20 * 1000
                 ) {
                     servicePathFailures++;
