@@ -168,7 +168,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     disposed = false;
     private heartBeatLog: Array<[number, ReadonlyArray<string>]> = [];
     shouldSubscribeBeforeStreamingSetup = false;
-    onProbe?: (message: types.ProbeControlMessage) => void;
+    private onProbe?: (message: types.ProbeControlMessage) => void;
 
     /**
      * @param transport - The transport to use for subscribing/unsubscribing.
@@ -182,7 +182,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         authProvider: AuthProvider,
         options?: Partial<types.StreamingConfigurableOptions>,
         callbacks?: {
-            onProbe: (message: types.ProbeControlMessage) => void
+            onProbe?: (message: types.ProbeControlMessage) => void
         },
     ) {
         super();
@@ -706,7 +706,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * 
      * @param message - the message from server
      */
-    private handleControlMessageProbe(message: any) {
+    private handleControlMessageProbe(message: types.ProbeControlMessage) {
         log.debug(LOG_AREA, 'probe received', { message })
 
         this.onProbe?.(message);
