@@ -67,6 +67,7 @@ type EmittedEvents = {
     [connectionConstants.EVENT_CONNECTION_SLOW]: () => void;
     [connectionConstants.EVENT_DISCONNECT_REQUESTED]: () => void;
     [connectionConstants.EVENT_MULTIPLE_ORPHANS_FOUND]: () => void;
+    [connectionConstants.EVENT_PROBE_MESSAGE]: (message: types.ProbeControlMessage) => void;
 };
 
 /**
@@ -168,7 +169,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     disposed = false;
     private heartBeatLog: Array<[number, ReadonlyArray<string>]> = [];
     shouldSubscribeBeforeStreamingSetup = false;
-    private onProbe?: (message: types.ProbeControlMessage) => void;
 
     /**
      * @param transport - The transport to use for subscribing/unsubscribing.
@@ -186,7 +186,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         this.baseUrl = baseUrl;
         this.authProvider = authProvider;
         this.transport = transport;
-        this.onProbe = options?.onProbe;
 
         this.setOptions({ ...DEFAULT_STREAMING_OPTIONS, ...options });
 
@@ -702,7 +701,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     private handleControlMessageProbe(message: types.ProbeControlMessage) {
         log.debug(LOG_AREA, 'probe received', { message });
 
-        this.onProbe?.(message);
+        this.trigger(connectionConstants.EVENT_PROBE_MESSAGE, message);
     }
 
     /**
