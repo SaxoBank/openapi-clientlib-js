@@ -102,6 +102,11 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         connectionConstants.EVENT_MULTIPLE_ORPHANS_FOUND;
 
     /**
+     * Event that occurs when probe message is received.
+     */
+    EVENT_PROBE_MESSAGE = connectionConstants.EVENT_PROBE_MESSAGE;
+
+    /**
      * Streaming has been created but has not yet started the connection.
      */
     CONNECTION_STATE_INITIALIZING =
