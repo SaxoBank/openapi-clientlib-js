@@ -67,7 +67,9 @@ type EmittedEvents = {
     [connectionConstants.EVENT_CONNECTION_SLOW]: () => void;
     [connectionConstants.EVENT_DISCONNECT_REQUESTED]: () => void;
     [connectionConstants.EVENT_MULTIPLE_ORPHANS_FOUND]: () => void;
-    [connectionConstants.EVENT_PROBE_MESSAGE]: (message: types.ProbeControlMessage) => void;
+    [connectionConstants.EVENT_PROBE_MESSAGE]: (
+        message: types.ProbeControlMessage,
+    ) => void;
 };
 
 /**
@@ -872,7 +874,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             for (const servicePath of Object.keys(orphansByServicePath)) {
                 if (
                     orphansByServicePath[servicePath].max -
-                    orphansByServicePath[servicePath].min >
+                        orphansByServicePath[servicePath].min >
                     20 * 1000
                 ) {
                     servicePathFailures++;

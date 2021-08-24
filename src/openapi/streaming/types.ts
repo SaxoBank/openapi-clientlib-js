@@ -67,7 +67,7 @@ export type ResetControlMessage = StreamingControlMessage<
 
 export type ProbeControlMessage = StreamingControlMessage<
     {
-        ProbeId: number
+        ProbeId: number;
     }[],
     typeof OPENAPI_CONTROL_MESSAGE_PROBE
 >;
