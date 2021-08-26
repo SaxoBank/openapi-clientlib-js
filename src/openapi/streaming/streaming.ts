@@ -19,6 +19,7 @@ import {
     OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT,
     OPENAPI_CONTROL_MESSAGE_RECONNECT,
     OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS,
+    OPENAPI_CONTROL_MESSAGE_PROBE,
 } from './control-messages';
 
 const DEFAULT_CONNECT_RETRY_DELAY = 1000;
@@ -66,6 +67,9 @@ type EmittedEvents = {
     [connectionConstants.EVENT_CONNECTION_SLOW]: () => void;
     [connectionConstants.EVENT_DISCONNECT_REQUESTED]: () => void;
     [connectionConstants.EVENT_MULTIPLE_ORPHANS_FOUND]: () => void;
+    [connectionConstants.EVENT_PROBE_MESSAGE]: (
+        message: types.ProbeControlMessage,
+    ) => void;
 };
 
 /**
@@ -98,6 +102,11 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      */
     EVENT_MULTIPLE_ORPHANS_FOUND =
         connectionConstants.EVENT_MULTIPLE_ORPHANS_FOUND;
+
+    /**
+     * Event that occurs when probe message is received.
+     */
+    EVENT_PROBE_MESSAGE = connectionConstants.EVENT_PROBE_MESSAGE;
 
     /**
      * Streaming has been created but has not yet started the connection.
@@ -644,6 +653,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 // control mesage to keep streaming connection alive
                 break;
 
+            case OPENAPI_CONTROL_MESSAGE_PROBE:
+                this.handleControlMessageProbe(message);
+                break;
+
             default:
                 log.warn(LOG_AREA, 'Unrecognised control message', {
                     message,
@@ -687,6 +700,15 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 );
             }
         }
+    }
+
+    /**
+     * Handles probe control messages and calls callback if specified in options
+     */
+    private handleControlMessageProbe(message: types.ProbeControlMessage) {
+        log.debug(LOG_AREA, 'probe received', { message });
+
+        this.trigger(connectionConstants.EVENT_PROBE_MESSAGE, message);
     }
 
     /**

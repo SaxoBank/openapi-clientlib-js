@@ -21,6 +21,11 @@ export const EVENT_DISCONNECT_REQUESTED =
 export const EVENT_MULTIPLE_ORPHANS_FOUND = 'multipleOrphansFound' as const;
 
 /**
+ * Event that occurs when probe message is received.
+ */
+export const EVENT_PROBE_MESSAGE = 'probeMessage' as const;
+
+/**
  * Streaming has been created but has not yet started the connection.
  */
 export const CONNECTION_STATE_INITIALIZING = 0x1 as const;

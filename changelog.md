@@ -1,3 +1,6 @@
+### v10.4.0
+- Added event to streaming class to handle probe messages
+
 ### v10.3.1
 - Added contextual information to some error messages
 
