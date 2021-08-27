@@ -539,7 +539,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
 
         this.contextId = contextId;
         this.authExpiry = authExpiry;
-        this.authToken = authToken.replace('BEARER ', '');
+        this.authToken = authToken.replace(/bearer\s/i, '');
 
         if (forceAuth) {
             this.renewSession();
