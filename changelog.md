@@ -1,3 +1,6 @@
+### v10.4.1
+- Changed "bearer" removal in network auth handling to work regardless of "bearer" casing
+
 ### v10.4.0
 - Added event to streaming class to handle probe messages
 
