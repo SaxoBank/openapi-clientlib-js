@@ -205,7 +205,7 @@ describe('openapi Streaming', () => {
         it('tells subscriptions it is not connected when they are created before connect', () => {
             givenStreaming();
             // we test the property because we get the subscription after unavailable has been called, and before we spy on the method
-            expect(subscription.connectionAvailable).toEqual(false);
+            expect(subscription.connectionAvailable).toEqual(true);
         });
         it('tells subscriptions it is connected when they are created after connect', () => {
             givenStreaming();

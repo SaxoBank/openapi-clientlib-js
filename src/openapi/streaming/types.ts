@@ -126,6 +126,7 @@ export interface StreamingConfigurableOptions {
     isWebsocketStreamingHeartBeatEnabled?: boolean;
     /**
      *  Flag to control whether we should subscribe before streaming setup during initial subscribe
+     *  This happens only for the first streaming connection setup after that we turn this off
      */
     shouldSubscribeBeforeStreamingSetup?: boolean;
 }

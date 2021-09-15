@@ -175,7 +175,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     reconnectTimer?: number;
     disposed = false;
     private heartBeatLog: Array<[number, ReadonlyArray<string>]> = [];
-    shouldSubscribeBeforeStreamingSetup = false;
+    shouldSubscribeBeforeStreamingSetup: boolean;
 
     /**
      * @param transport - The transport to use for subscribing/unsubscribing.
@@ -207,9 +207,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             this.onOrphanFound.bind(this),
         );
 
-        this.shouldSubscribeBeforeStreamingSetup = Boolean(
-            options?.shouldSubscribeBeforeStreamingSetup,
-        );
+        this.shouldSubscribeBeforeStreamingSetup = true;
 
         this.init();
     }
