@@ -94,7 +94,6 @@ class WebsocketTransport implements StreamingTransportInterface {
     startedCallback = NOOP;
     unauthorizedCallback = NOOP;
     utf8Decoder!: TextDecoder;
-    isWebsocketStreamingHeartBeatEnabled = false;
     inactivityFinderRunning: boolean;
     inactivityFinderNextUpdateTimeoutId: number | null = null;
 
@@ -138,9 +137,7 @@ class WebsocketTransport implements StreamingTransportInterface {
 
             log.debug(LOG_AREA, 'Socket opened');
             this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTED);
-            if (this.isWebsocketStreamingHeartBeatEnabled) {
-                this.startInactivityFinder();
-            }
+            this.startInactivityFinder();
         }
     };
 
@@ -326,13 +323,9 @@ class WebsocketTransport implements StreamingTransportInterface {
 
     private createSocket() {
         try {
-            let url = this.normalizeWebSocketUrl(
+            const url = this.normalizeWebSocketUrl(
                 `${this.connectionUrl}${this.query}`,
             );
-
-            if (this.isWebsocketStreamingHeartBeatEnabled) {
-                url += '&sendHeartbeats=true';
-            }
 
             log.debug(LOG_AREA, 'Creating WebSocket connection', { url });
             const socket = new WebSocket(url);
@@ -563,10 +556,6 @@ class WebsocketTransport implements StreamingTransportInterface {
     }
     start(_options?: ConnectionOptions, callback?: () => void) {
         this.startedCallback = callback || NOOP;
-        if (_options && _options.isWebsocketStreamingHeartBeatEnabled) {
-            // if set we will recieve _connectionheartbeat after 2 seconds of inactivity on a streaming connection
-            this.isWebsocketStreamingHeartBeatEnabled = true;
-        }
         if (!this.isSupported()) {
             log.error(LOG_AREA, 'WebSocket Transport is not supported');
 
@@ -638,9 +627,10 @@ class WebsocketTransport implements StreamingTransportInterface {
         if (contextId !== this.contextId) {
             this.lastMessageId = null;
         }
+        // sendHeartbeats=true server sends _connectionheartbeat after 2 seconds of inactivity on a streaming connection
         let query = `?contextId=${encodeURIComponent(
             contextId,
-        )}&Authorization=${encodeURIComponent(authToken)}`;
+        )}&Authorization=${encodeURIComponent(authToken)}&sendHeartbeats=true`;
 
         if (this.lastMessageId != null) {
             query += `&messageid=${this.lastMessageId}`;
