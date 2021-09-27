@@ -959,6 +959,7 @@ class Subscription {
         } catch (error) {
             log.error(LOG_AREA, 'Error occurred parsing Data', {
                 error,
+                schemaName: this.SchemaName,
                 servicePath: this.servicePath,
                 url: this.url,
             });
@@ -973,25 +974,36 @@ class Subscription {
 
     processSnapshot(response: SubscriptionSuccessResult) {
         if (response.Schema && response.SchemaName) {
-            this.SchemaName = response.SchemaName;
             this.parser.addSchema(response.Schema, response.SchemaName);
         }
 
-        if (!response.SchemaName) {
+        if (response.SchemaName) {
+            this.SchemaName = response.SchemaName;
+        } else {
             // If SchemaName is missing, trying to use last valid schema name from parser as an fallback.
             this.SchemaName = this.parser.getSchemaName();
 
-            if (
-                this.subscriptionData.Format === FORMAT_PROTOBUF &&
-                !this.SchemaName
-            ) {
-                // If SchemaName is missing both in response and parser cache, it means that openapi doesn't support protobuf fot this endpoint.
-                // In such scenario, falling back to default parser.
-                this.parser = ParserFacade.getParser(
-                    ParserFacade.getDefaultFormat(),
-                    this.servicePath,
-                    this.url,
-                );
+            if (this.subscriptionData.Format === FORMAT_PROTOBUF) {
+                if (!this.SchemaName) {
+                    // If SchemaName is missing both in response and parser cache, it means that openapi doesn't support protobuf for this endpoint.
+                    // In such scenario, falling back to default parser.
+                    this.parser = ParserFacade.getParser(
+                        ParserFacade.getDefaultFormat(),
+                        this.servicePath,
+                        this.url,
+                    );
+                } else {
+                    // when open api has upgraded this should be a warn
+                    log.info(
+                        LOG_AREA,
+                        'Missing schema name, may cause protobuf errors',
+                        {
+                            schemaName: this.SchemaName,
+                            servicePath: this.servicePath,
+                            url: this.url,
+                        },
+                    );
+                }
             }
         }
 

@@ -1,3 +1,6 @@
+### v10.4.2
+- Fix an issue with protobuf support if only SchemaName is sent
+
 ### v10.4.1
 - Changed "bearer" removal in network auth handling to work regardless of "bearer" casing
 

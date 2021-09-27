@@ -185,6 +185,7 @@ class ParserProtobuf extends ParserBase {
                 error,
                 base64Data,
                 schema: this.schemasSourceMap[schemaName],
+                schemaName,
             });
             throw new Error('Parsing failed');
         }
