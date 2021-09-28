@@ -253,9 +253,9 @@ class Subscription {
 
     /**
      * If we get 3 resets within 1 minute then we wait for 1 minute
-     * since it may indicate some problem with publishers
+     * since it may indicate some problem with publishers or the frontend
      */
-    private checkIfPublisherDown() {
+    private checkIfPublisherDown(isServerInitiated: boolean) {
         this.resetTimeStamps.push(Date.now());
 
         if (this.resetTimeStamps.length >= 3) {
@@ -265,8 +265,14 @@ class Subscription {
                 this.resetTimeStamps[2] - this.resetTimeStamps[0] <
                     MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS
             ) {
-                // 3 reset within 1 minute so wait for 1 minute for pubslisher to respond
-                log.warn(LOG_AREA, 'Received 3 resets within 1 minute');
+                // 3 reset within 1 minute so wait for 1 minute for publisher to respond
+                // this can also happen due to errors client side and in this case
+                // this code prevents us from spamming the servers
+                log.warn(LOG_AREA, '3 resets occurred within 1 minute.', {
+                    url: this.url,
+                    servicePath: this.servicePath,
+                    isServerInitiated,
+                });
                 this.setState(this.STATE_PUBLISHER_DOWN);
 
                 this.waitForPublisherToRespondTimer = window.setTimeout(() => {
@@ -667,7 +673,13 @@ class Subscription {
         }
         this.updatesBeforeSubscribed = null;
 
-        this.onReadyToPerformNextAction();
+        // if processing the updatesBeforeSubscribed received above goes wrong or there
+        // is a failure to add the schema, a reset
+        // may occur and the state may now be unsubscribe requested.
+        // if that is the case, we should not try and do anything here
+        if (this.currentState === this.STATE_SUBSCRIBED) {
+            this.onReadyToPerformNextAction();
+        }
     }
 
     private cleanUpLeftOverSubscription(referenceId: string) {
@@ -755,12 +767,7 @@ class Subscription {
             );
 
             // Fallback to JSON format if specific endpoint doesn't support PROTOBUF format.
-            this.subscriptionData.Format = FORMAT_JSON;
-            this.parser = ParserFacade.getParser(
-                FORMAT_JSON,
-                this.servicePath,
-                this.url,
-            );
+            this.fallbackToJSON();
 
             if (!willUnsubscribe) {
                 this.tryPerformAction(ACTION_SUBSCRIBE);
@@ -960,17 +967,38 @@ class Subscription {
                 url: this.url,
             });
 
-            // if we cannot understand an update we should re-subscribe to make sure we are updated
-            this.reset();
+            // if we cannot understand an update we should re-subscribe and fallback to JSON
+            this.fallbackToJSON();
+            this.reset(false);
             return;
         }
 
         this.onUpdate?.(nextMessage, type);
     }
 
+    private fallbackToJSON() {
+        this.subscriptionData.Format = FORMAT_JSON;
+        this.parser = ParserFacade.getParser(
+            FORMAT_JSON,
+            this.servicePath,
+            this.url,
+        );
+    }
+
     processSnapshot(response: SubscriptionSuccessResult) {
         if (response.Schema && response.SchemaName) {
-            this.parser.addSchema(response.Schema, response.SchemaName);
+            try {
+                this.parser.addSchema(response.Schema, response.SchemaName);
+            } catch (error) {
+                log.error(
+                    LOG_AREA,
+                    'Fallback to json after failure to add schema',
+                    { error },
+                );
+                this.fallbackToJSON();
+                this.reset(false);
+                return;
+            }
         }
 
         if (response.SchemaName) {
@@ -983,11 +1011,7 @@ class Subscription {
                 if (!this.SchemaName) {
                     // If SchemaName is missing both in response and parser cache, it means that openapi doesn't support protobuf for this endpoint.
                     // In such scenario, falling back to default parser.
-                    this.parser = ParserFacade.getParser(
-                        ParserFacade.getDefaultFormat(),
-                        this.servicePath,
-                        this.url,
-                    );
+                    this.fallbackToJSON();
                 } else {
                     // when open api has upgraded this should be a warn
                     log.info(
@@ -1016,8 +1040,17 @@ class Subscription {
      * can ignore them. It also ensures that we don't hit the subscription limit
      * because the subscribe manages to get to the server before the unsubscribe.
      */
-    reset() {
-        this.checkIfPublisherDown();
+    reset(isServerInitiated: boolean) {
+        this.checkIfPublisherDown(isServerInitiated);
+        this.unsubscribeAndSubscribe();
+    }
+
+    /**
+     * Does a unsubscribe and then schedules a subscribe for when it is finished unsubscribing
+     * Call this only if this is not a error scenario. Normally you should use reset
+     * So that we track the reset
+     */
+    unsubscribeAndSubscribe() {
         switch (this.currentState) {
             case this.STATE_UNSUBSCRIBED:
             case this.STATE_UNSUBSCRIBE_REQUESTED:
@@ -1132,6 +1165,8 @@ class Subscription {
      */
     dispose() {
         this.isDisposed = true;
+        this.currentState = this.STATE_UNSUBSCRIBED;
+        this.queue.reset();
     }
 
     /**

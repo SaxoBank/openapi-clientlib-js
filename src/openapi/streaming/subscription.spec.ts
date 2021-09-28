@@ -1335,7 +1335,7 @@ describe('openapi StreamingSubscription', () => {
                 createdSpy,
             );
 
-            subscription.reset(); // reset before subscribed
+            subscription.reset(true); // reset before subscribed
 
             expect(transport.post.mock.calls.length).toEqual(0);
             expect(transport.delete.mock.calls.length).toEqual(0);
@@ -1352,7 +1352,7 @@ describe('openapi StreamingSubscription', () => {
                 transport.delete.mockClear();
 
                 let oldReferenceId = subscription.referenceId;
-                subscription.reset(); // reset when trying to unsubscribe
+                subscription.reset(true); // reset when trying to unsubscribe
                 expect(oldReferenceId).toEqual(subscription.referenceId); // don't need to change as not subscribing
 
                 expect(transport.post.mock.calls.length).toEqual(0);
@@ -1361,7 +1361,7 @@ describe('openapi StreamingSubscription', () => {
                 transport.deleteResolve({ status: 200 });
                 setTimeout(() => {
                     oldReferenceId = subscription.referenceId;
-                    subscription.reset(); // reset when unsubscribed
+                    subscription.reset(true); // reset when unsubscribed
                     expect(oldReferenceId).toEqual(subscription.referenceId); // don't need to change as not subscribing
 
                     expect(transport.post.mock.calls.length).toEqual(0);
@@ -1383,7 +1383,7 @@ describe('openapi StreamingSubscription', () => {
                 createdSpy,
             );
 
-            subscription.reset(); // reset before subscribed
+            subscription.reset(true); // reset before subscribed
 
             expect(transport.post.mock.calls.length).toEqual(0);
             expect(transport.delete.mock.calls.length).toEqual(0);
@@ -1401,7 +1401,7 @@ describe('openapi StreamingSubscription', () => {
                 transport.delete.mockClear();
 
                 let oldReferenceId = subscription.referenceId;
-                subscription.reset(); // reset when trying to unsubscribe
+                subscription.reset(true); // reset when trying to unsubscribe
                 expect(oldReferenceId).toEqual(subscription.referenceId); // don't need to change as not subscribing
 
                 expect(transport.post.mock.calls.length).toEqual(0);
@@ -1450,7 +1450,7 @@ describe('openapi StreamingSubscription', () => {
                   ],
                 }
             `);
-            subscription.reset();
+            subscription.reset(true);
             expect(subscription.currentState).toEqual(
                 subscription.STATE_SUBSCRIBE_REQUESTED,
             );
@@ -1486,7 +1486,7 @@ describe('openapi StreamingSubscription', () => {
             expect(transport.delete.mock.calls.length).toEqual(0);
 
             const oldReferenceId = subscription.referenceId;
-            subscription.reset(); // reset before subscribe response
+            subscription.reset(true); // reset before subscribe response
             expect(subscription.currentState).toEqual(
                 subscription.STATE_SUBSCRIBE_REQUESTED,
             );
@@ -1567,7 +1567,7 @@ describe('openapi StreamingSubscription', () => {
             expect(transport.delete.mock.calls.length).toEqual(0);
 
             const oldReferenceId = subscription.referenceId;
-            subscription.reset(); // reset before subscribe response
+            subscription.reset(true); // reset before subscribe response
             expect(subscription.currentState).toEqual(
                 subscription.STATE_SUBSCRIBE_REQUESTED,
             );
@@ -1645,7 +1645,7 @@ describe('openapi StreamingSubscription', () => {
                 // normally subscribed
 
                 const oldReferenceId = subscription.referenceId;
-                subscription.reset();
+                subscription.reset(true);
 
                 // sends delete request for old subscription
                 expect(transport.delete.mock.calls.length).toEqual(1);
@@ -1692,7 +1692,7 @@ describe('openapi StreamingSubscription', () => {
                 // normally subscribed
 
                 const oldReferenceId = subscription.referenceId;
-                subscription.reset();
+                subscription.reset(true);
 
                 // sends delete request for old subscription
                 expect(transport.delete.mock.calls.length).toEqual(1);
@@ -1725,9 +1725,9 @@ describe('openapi StreamingSubscription', () => {
                     { onUpdate: updateSpy },
                 );
 
-                subscription.reset();
-                subscription.reset();
-                subscription.reset();
+                subscription.reset(true);
+                subscription.reset(true);
+                subscription.reset(true);
 
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_PUBLISHER_DOWN,
@@ -1758,9 +1758,9 @@ describe('openapi StreamingSubscription', () => {
                     { onUpdate: updateSpy },
                 );
 
-                subscription.reset();
-                subscription.reset();
-                subscription.reset();
+                subscription.reset(true);
+                subscription.reset(true);
+                subscription.reset(true);
 
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_PUBLISHER_DOWN,
@@ -2235,7 +2235,7 @@ describe('openapi StreamingSubscription', () => {
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_PATCH_REQUESTED,
                 );
-                subscription.reset();
+                subscription.reset(true);
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_UNSUBSCRIBE_REQUESTED,
                 );
@@ -2286,7 +2286,7 @@ describe('openapi StreamingSubscription', () => {
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_PATCH_REQUESTED,
                 );
-                subscription.reset();
+                subscription.reset(true);
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_UNSUBSCRIBE_REQUESTED,
                 );
