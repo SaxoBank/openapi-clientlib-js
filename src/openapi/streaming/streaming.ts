@@ -680,7 +680,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 break;
 
             case OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT:
-                // control mesage to keep streaming connection alive
+                // control message to keep streaming connection alive
                 break;
 
             case OPENAPI_CONTROL_MESSAGE_PROBE:
