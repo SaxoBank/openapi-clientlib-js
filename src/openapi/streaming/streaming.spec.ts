@@ -835,8 +835,23 @@ describe('openapi Streaming', () => {
                 {
                     ReferenceId: '_heartbeat',
                     Data: [
-                        { Heartbeats: [{ OriginatingReferenceId: 'MySpy' }] },
+                        {
+                            ReferenceId: '_heartbeat',
+                            Heartbeats: [{ OriginatingReferenceId: 'MySpy' }],
+                        },
                     ],
+                },
+            ]);
+            expect(subscription.onHeartbeat.mock.calls.length).toEqual(1);
+            expect(subscription.onHeartbeat.mock.calls[0]).toEqual([]);
+            expect(subscription.reset.mock.calls.length).toEqual(0);
+        });
+        it('handles heartbeats in data object', () => {
+            expect(subscription.onHeartbeat.mock.calls.length).toEqual(0);
+            receivedCallback([
+                {
+                    ReferenceId: '_heartbeat',
+                    Data: { Heartbeats: [{ OriginatingReferenceId: 'MySpy' }] },
                 },
             ]);
             expect(subscription.onHeartbeat.mock.calls.length).toEqual(1);
@@ -868,7 +883,22 @@ describe('openapi Streaming', () => {
             receivedCallback([
                 {
                     ReferenceId: '_resetsubscriptions',
-                    Data: [{ TargetReferenceIds: ['MySpy'] }],
+                    Data: [
+                        {
+                            ReferenceId: '_resetsubscriptions',
+                            TargetReferenceIds: ['MySpy'],
+                        },
+                    ],
+                },
+            ]);
+            expect(subscription.reset.mock.calls.length).toEqual(1);
+            expect(subscription.reset.mock.calls[0]).toEqual([]);
+        });
+        it('handles reset in data object', () => {
+            receivedCallback([
+                {
+                    ReferenceId: '_resetsubscriptions',
+                    Data: { TargetReferenceIds: ['MySpy'] },
                 },
             ]);
             expect(subscription.reset.mock.calls.length).toEqual(1);
@@ -887,7 +917,21 @@ describe('openapi Streaming', () => {
             receivedCallback([
                 {
                     ReferenceId: '_resetsubscriptions',
-                    Data: [{ TargetReferenceIds: ['foo'] }],
+                    Data: [
+                        {
+                            ReferenceId: '_resetsubscriptions',
+                            TargetReferenceIds: ['foo'],
+                        },
+                    ],
+                },
+            ]);
+            expect(subscription.reset.mock.calls.length).toEqual(0);
+        });
+        it('handles and ignores reset for a subscription not present in data object', () => {
+            receivedCallback([
+                {
+                    ReferenceId: '_resetsubscriptions',
+                    Data: { TargetReferenceIds: ['foo'] },
                 },
             ]);
             expect(subscription.reset.mock.calls.length).toEqual(0);
