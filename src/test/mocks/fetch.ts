@@ -50,7 +50,7 @@ function mockFetch() {
             ) => Promise<any>;
         }
     >;
-    // @ts-expect-error
+
     global.fetch = fetch;
     fetch.mockImplementation(function () {
         return new Promise(function (resolve, reject) {

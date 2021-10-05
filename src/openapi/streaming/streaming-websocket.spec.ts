@@ -86,6 +86,7 @@ describe('openapi Streaming', () => {
             },
         );
 
+        // @ts-ignore
         global.$ = {
             connection: jest.fn().mockReturnValue(mockConnection),
             signalR: {
@@ -98,6 +99,7 @@ describe('openapi Streaming', () => {
             },
         };
 
+        // @ts-ignore
         global.WebSocket = jest.fn().mockImplementation(() => {
             return {
                 close: jest.fn(),

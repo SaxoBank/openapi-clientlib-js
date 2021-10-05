@@ -26,6 +26,7 @@ describe('openapi WebSocket Transport', () => {
     beforeEach(() => {
         spySocketClose = jest.fn().mockName('spySocketClose');
 
+        // @ts-ignore
         global.WebSocket = jest.fn().mockImplementation(() => {
             return {
                 close: spySocketClose,

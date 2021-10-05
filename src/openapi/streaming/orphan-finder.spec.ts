@@ -258,10 +258,11 @@ describe('openapi StreamingOrphanFinder', () => {
             orphanFoundCallback,
         );
 
-        const mockedSetTimeout = global.setTimeout;
-        const spySetTimeout = (global.setTimeout = jest
-            .fn()
-            .mockName('setTimeout')); // hide timeout calls from happening
+        const mockedSetTimeout = window.setTimeout;
+
+        const spySetTimeout =
+            // @ts-ignore
+            (window.setTimeout = jest.fn().mockName('setTimeout')); // hide timeout calls from happening
 
         streamingOrphanFinder.start();
         expect(orphanFoundCallback.mock.calls.length).toEqual(0);
@@ -274,6 +275,7 @@ describe('openapi StreamingOrphanFinder', () => {
         // restore fake setTimeout
         global.setTimeout = mockedSetTimeout;
         tick(30 * 60 * 1000); // now go forward 30 minutes
+        // @ts-ignore
         global.setTimeout = spySetTimeout;
 
         orphanIn20SubscriptionTime.time = -(100000 + INACTIVITY_LENIENCY); // make our subscription orphaned

@@ -19,17 +19,6 @@ import * as connectionConstants from './connection/constants';
 import * as streamingTransports from './connection/transportTypes';
 import 'fast-text-encoding';
 
-declare global {
-    // eslint-disable-next-line @typescript-eslint/no-namespace
-    namespace NodeJS {
-        interface Global {
-            $: any;
-            WebSocket: jest.Mock;
-            signalrCore: any;
-        }
-    }
-}
-
 describe('openapi Streaming', () => {
     let stateChangedCallback: (arg: Record<string, any>) => void;
     let connectionSlowCallback: () => void;
@@ -81,6 +70,7 @@ describe('openapi Streaming', () => {
             connectionSlowCallback = callback;
         });
 
+        // @ts-ignore
         global.$ = {
             connection: jest.fn().mockReturnValue(mockConnection),
             signalR: {
@@ -142,7 +132,9 @@ describe('openapi Streaming', () => {
         it('initializes the connection', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
 
+            // @ts-ignore
             expect(global.$.connection).toHaveBeenCalledTimes(1);
+            // @ts-ignore
             expect(global.$.connection.mock.calls[0]).toEqual([
                 'testUrl/streaming/connection',
             ]);
@@ -1646,6 +1638,7 @@ describe('openapi Streaming', () => {
             spySocketClose = jest.fn().mockName('spySocketClose');
 
             mockPlainWebsocketStart = getResolvablePromise();
+            // @ts-ignore
             global.WebSocket = jest.fn().mockImplementation(() => {
                 const socket = {
                     close: spySocketClose,
@@ -1660,6 +1653,7 @@ describe('openapi Streaming', () => {
                 return socket;
             });
 
+            // @ts-ignore
             global.signalrCore = {
                 HubConnectionBuilder: MockConnectionBuilder,
                 JsonHubProtocol,
