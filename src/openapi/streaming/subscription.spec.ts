@@ -1907,6 +1907,109 @@ describe('openapi StreamingSubscription', () => {
                 done();
             });
         });
+
+        describe('Service Upgrade Scenario', () => {
+            it('should cope with not getting a SchemaName', (done) => {
+                const args = {
+                    Format: 'application/x-protobuf',
+                    Arguments: {
+                        ClientKey: '1234',
+                    },
+                };
+                const subscription = new Subscription(
+                    '123',
+                    transport,
+                    'servicePath',
+                    'src/test/resource',
+                    args,
+                    createdSpy,
+                    { onUpdate: updateSpy },
+                );
+                subscription.onSubscribe();
+
+                subscription.parser.addSchema(mockProtoPrice.schema, 'Price');
+
+                sendInitialResponse({
+                    InactivityTimeout: 100,
+                    Snapshot: mockProtoPrice.objectMessage,
+                });
+
+                setTimeout(() => {
+                    expect(transport.post.mock.calls.length).toEqual(1);
+                    expect(updateSpy.mock.calls[0][0]).toEqual(
+                        expect.objectContaining(mockProtoPrice.objectMessage),
+                    );
+
+                    const parser = subscription.parser;
+
+                    const schemaObject: any = parser.getSchemaType(
+                        'Price',
+                        'PriceResponse',
+                    );
+                    expect(schemaObject).toBeTruthy();
+
+                    const plainFields = JSON.parse(
+                        JSON.stringify(schemaObject.fields),
+                    );
+                    expect(plainFields).toEqual(
+                        expect.objectContaining(mockProtoPrice.fields),
+                    );
+
+                    done();
+                });
+            });
+
+            it('should cope with getting a SchemaName but no Schema', (done) => {
+                const args = {
+                    Format: 'application/x-protobuf',
+                    Arguments: {
+                        ClientKey: '1234',
+                    },
+                };
+                const subscription = new Subscription(
+                    '123',
+                    transport,
+                    'servicePath',
+                    'src/test/resource',
+                    args,
+                    createdSpy,
+                    { onUpdate: updateSpy },
+                );
+                subscription.onSubscribe();
+
+                subscription.parser.addSchema(mockProtoPrice.schema, 'Price');
+
+                sendInitialResponse({
+                    InactivityTimeout: 100,
+                    SchemaName: 'Price',
+                    Snapshot: mockProtoPrice.objectMessage,
+                });
+
+                setTimeout(() => {
+                    expect(transport.post.mock.calls.length).toEqual(1);
+                    expect(updateSpy.mock.calls[0][0]).toEqual(
+                        expect.objectContaining(mockProtoPrice.objectMessage),
+                    );
+
+                    const parser = subscription.parser;
+
+                    const schemaObject: any = parser.getSchemaType(
+                        'Price',
+                        'PriceResponse',
+                    );
+                    expect(schemaObject).toBeTruthy();
+
+                    const plainFields = JSON.parse(
+                        JSON.stringify(schemaObject.fields),
+                    );
+                    expect(plainFields).toEqual(
+                        expect.objectContaining(mockProtoPrice.fields),
+                    );
+
+                    done();
+                });
+            });
+        });
     });
 
     describe('json parsing', () => {
