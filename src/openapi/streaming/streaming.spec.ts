@@ -829,6 +829,35 @@ describe('openapi Streaming', () => {
             expect(subscription.onHeartbeat.mock.calls[0]).toEqual([]);
             expect(subscription.reset.mock.calls.length).toEqual(0);
         });
+        it('handles heartbeats in data array', () => {
+            expect(subscription.onHeartbeat.mock.calls.length).toEqual(0);
+            receivedCallback([
+                {
+                    ReferenceId: '_heartbeat',
+                    Data: [
+                        {
+                            ReferenceId: '_heartbeat',
+                            Heartbeats: [{ OriginatingReferenceId: 'MySpy' }],
+                        },
+                    ],
+                },
+            ]);
+            expect(subscription.onHeartbeat.mock.calls.length).toEqual(1);
+            expect(subscription.onHeartbeat.mock.calls[0]).toEqual([]);
+            expect(subscription.reset.mock.calls.length).toEqual(0);
+        });
+        it('handles heartbeats in data object', () => {
+            expect(subscription.onHeartbeat.mock.calls.length).toEqual(0);
+            receivedCallback([
+                {
+                    ReferenceId: '_heartbeat',
+                    Data: { Heartbeats: [{ OriginatingReferenceId: 'MySpy' }] },
+                },
+            ]);
+            expect(subscription.onHeartbeat.mock.calls.length).toEqual(1);
+            expect(subscription.onHeartbeat.mock.calls[0]).toEqual([]);
+            expect(subscription.reset.mock.calls.length).toEqual(0);
+        });
         it('handles and ignores heartbeats for a subscription not present', () => {
             expect(subscription.onHeartbeat.mock.calls.length).toEqual(0);
             receivedCallback([
@@ -840,11 +869,48 @@ describe('openapi Streaming', () => {
             expect(subscription.onHeartbeat.mock.calls.length).toEqual(0);
             expect(subscription.reset.mock.calls.length).toEqual(0);
         });
+        it('Logs a warning on unsupported heartbeat message format', () => {
+            const warnLogSpy = jest.spyOn(log, 'warn');
+            expect(subscription.onHeartbeat.mock.calls.length).toEqual(0);
+            receivedCallback([
+                {
+                    ReferenceId: '_heartbeat',
+                    SomeProp: { Heartbeats: { foo: 'bar' } },
+                },
+            ]);
+            expect(subscription.onHeartbeat.mock.calls.length).toEqual(0);
+            expect(warnLogSpy).toHaveBeenCalledTimes(1);
+        });
         it('handles reset', () => {
             receivedCallback([
                 {
                     ReferenceId: '_resetsubscriptions',
                     TargetReferenceIds: ['MySpy'],
+                },
+            ]);
+            expect(subscription.reset.mock.calls.length).toEqual(1);
+            expect(subscription.reset.mock.calls[0]).toEqual([]);
+        });
+        it('handles reset in data array', () => {
+            receivedCallback([
+                {
+                    ReferenceId: '_resetsubscriptions',
+                    Data: [
+                        {
+                            ReferenceId: '_resetsubscriptions',
+                            TargetReferenceIds: ['MySpy'],
+                        },
+                    ],
+                },
+            ]);
+            expect(subscription.reset.mock.calls.length).toEqual(1);
+            expect(subscription.reset.mock.calls[0]).toEqual([]);
+        });
+        it('handles reset in data object', () => {
+            receivedCallback([
+                {
+                    ReferenceId: '_resetsubscriptions',
+                    Data: { TargetReferenceIds: ['MySpy'] },
                 },
             ]);
             expect(subscription.reset.mock.calls.length).toEqual(1);
@@ -859,10 +925,35 @@ describe('openapi Streaming', () => {
             ]);
             expect(subscription.reset.mock.calls.length).toEqual(0);
         });
+        it('handles and ignores reset for a subscription not present in data array', () => {
+            receivedCallback([
+                {
+                    ReferenceId: '_resetsubscriptions',
+                    Data: [
+                        {
+                            ReferenceId: '_resetsubscriptions',
+                            TargetReferenceIds: ['foo'],
+                        },
+                    ],
+                },
+            ]);
+            expect(subscription.reset.mock.calls.length).toEqual(0);
+        });
+        it('handles and ignores reset for a subscription not present in data object', () => {
+            receivedCallback([
+                {
+                    ReferenceId: '_resetsubscriptions',
+                    Data: { TargetReferenceIds: ['foo'] },
+                },
+            ]);
+            expect(subscription.reset.mock.calls.length).toEqual(0);
+        });
         it('handles reset all', () => {
+            const warnLogSpy = jest.spyOn(log, 'warn');
             receivedCallback([{ ReferenceId: '_resetsubscriptions' }]);
             expect(subscription.reset.mock.calls.length).toEqual(1);
             expect(subscription.reset.mock.calls[0]).toEqual([]);
+            expect(warnLogSpy).toHaveBeenCalledTimes(1);
         });
         it('handles reset all for empty TargetReferenceIds array', () => {
             receivedCallback([
