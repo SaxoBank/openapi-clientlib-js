@@ -47,6 +47,7 @@ describe('openapi SignalR Transport', () => {
             },
         );
 
+        // @ts-ignore
         global.$ = {
             connection: jest.fn().mockReturnValue(mockConnection),
             signalR: {
@@ -75,7 +76,9 @@ describe('openapi SignalR Transport', () => {
             startCallback();
 
             expect(spyOnStartCallback.mock.calls.length).toEqual(1);
+            // @ts-ignore
             expect(global.$.connection.mock.calls.length).toEqual(1);
+            // @ts-ignore
             expect(global.$.connection.mock.calls[0]).toEqual([
                 'testUrl/streaming/connection',
             ]);

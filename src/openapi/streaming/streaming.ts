@@ -875,7 +875,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             return;
         }
 
-        this.multipleOrphanDetectorTimeoutId = setTimeout(() => {
+        this.multipleOrphanDetectorTimeoutId = window.setTimeout(() => {
             this.multipleOrphanDetectorTimeoutId = null;
 
             const orphansByServicePath: Record<

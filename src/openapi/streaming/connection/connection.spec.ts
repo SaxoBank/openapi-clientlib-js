@@ -41,6 +41,7 @@ describe('openapi Streaming connection', () => {
             }
         }
 
+        // @ts-ignore
         global.signalrCore = {
             HubConnectionBuilder: MockConnectionBuilder,
             JsonHubProtocol: () => {},
@@ -71,6 +72,7 @@ describe('openapi Streaming connection', () => {
                 `${baseUrl}/streaming?contextId=${contextId}`,
                 expect.objectContaining({
                     skipNegotiation: true,
+                    // @ts-ignore
                     transport: global.signalrCore.HttpTransportType.WebSockets,
                 }),
             );
@@ -83,6 +85,7 @@ describe('openapi Streaming connection', () => {
                     expect.objectContaining({
                         skipNegotiation: false,
                         transport:
+                            // @ts-ignore
                             global.signalrCore.HttpTransportType.LongPolling,
                     }),
                 );

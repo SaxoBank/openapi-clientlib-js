@@ -115,7 +115,7 @@ describe('utils fetch', () => {
 
         it('convertFetchSuccess clears timers', () => {
             const timerSpy = jest.fn().mockName('timerSpy');
-            const timerId = setTimeout(timerSpy);
+            const timerId = window.setTimeout(timerSpy);
             const result = new FetchResponse(
                 200,
                 'this is a string',
@@ -129,7 +129,7 @@ describe('utils fetch', () => {
 
         it('convertFetchReject clears timers', () => {
             const timerSpy = jest.fn().mockName('timerSpy');
-            const timerId = setTimeout(timerSpy);
+            const timerId = window.setTimeout(timerSpy);
             const promise = convertFetchReject(
                 'url',
                 'body',
