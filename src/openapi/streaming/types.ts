@@ -50,18 +50,24 @@ type StreamingControlMessage<T = StreamingData, R = string> = StreamingMessage<
 >;
 
 export type HeartbeatsControlMessage = StreamingControlMessage<
-    {
-        Heartbeats: Heartbeats[];
-        ReferenceId: typeof OPENAPI_CONTROL_MESSAGE_HEARTBEAT;
-    }[],
+    | {
+          Heartbeats: Heartbeats[];
+          ReferenceId: typeof OPENAPI_CONTROL_MESSAGE_HEARTBEAT;
+      }[]
+    | {
+          Heartbeats: Heartbeats[];
+      },
     | typeof OPENAPI_CONTROL_MESSAGE_HEARTBEAT
     | typeof OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT
 >;
 
 export type ResetControlMessage = StreamingControlMessage<
-    {
-        TargetReferenceIds: string[];
-    }[],
+    | {
+          TargetReferenceIds: string[];
+      }[]
+    | {
+          TargetReferenceIds: string[];
+      },
     typeof OPENAPI_CONTROL_MESSAGE_RESET_SUBSCRIPTIONS
 >;
 

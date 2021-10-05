@@ -604,7 +604,19 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             return message.Heartbeats;
         }
 
-        if (message.Data && message.Data.length > 0) {
+        if (
+            message.Data &&
+            !Array.isArray(message.Data) &&
+            message.Data.Heartbeats
+        ) {
+            return message.Data.Heartbeats;
+        }
+
+        if (
+            message.Data &&
+            Array.isArray(message.Data) &&
+            message.Data.length > 0
+        ) {
             return message.Data[0].Heartbeats;
         }
 
@@ -616,7 +628,19 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             return message.TargetReferenceIds;
         }
 
-        if (message.Data && message.Data.length > 0) {
+        if (
+            message.Data &&
+            !Array.isArray(message.Data) &&
+            message.Data.TargetReferenceIds
+        ) {
+            return message.Data.TargetReferenceIds;
+        }
+
+        if (
+            message.Data &&
+            Array.isArray(message.Data) &&
+            message.Data.length > 0
+        ) {
             return message.Data[0].TargetReferenceIds;
         }
 
