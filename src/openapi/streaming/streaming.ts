@@ -620,6 +620,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             return message.Data[0].Heartbeats;
         }
 
+        log.warn(LOG_AREA, 'Unrecognised heartbeat message', {
+            message,
+        });
+
         return [];
     }
 
@@ -643,6 +647,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         ) {
             return message.Data[0].TargetReferenceIds;
         }
+
+        log.warn(LOG_AREA, 'Unrecognised reset message', {
+            message,
+        });
 
         return null;
     }
