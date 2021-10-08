@@ -11,7 +11,6 @@ import log from '../../log';
 import Subscription from './subscription';
 import ParserProtobuf from './parser/parser-protobuf';
 import ParserFacade from './parser/parser-facade';
-import { encodedMessage } from '../../test/mocks/proto-price';
 
 ParserFacade.addEngines({
     'application/x-protobuf': protobuf,

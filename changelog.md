@@ -1,3 +1,6 @@
+### v10.6.2
+- Fallback to JSON if protobuf errors occur either during the snapshot or an update
+
 ### v10.6.1
 - Reduce error logs when it is not a error
 
