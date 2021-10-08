@@ -196,14 +196,12 @@ describe('Parser Protobuf', () => {
             );
         });
 
-        it('should skip adding invalid schema', () => {
+        it('should throw when adding invalid schema', () => {
             const parser = new ParserProtobuf('default', protobuf);
-            const done = parser.addSchema(
-                'invalid schema: 123',
-                'InvalidSchema',
-            );
+            expect(() =>
+                parser.addSchema('invalid schema: 123', 'InvalidSchema'),
+            ).toThrow();
 
-            expect(done).toBe(false);
             // @ts-expect-error testing invalid usage
             expect(parser.getSchemaType('InvalidSchema')).toBeFalsy();
         });
