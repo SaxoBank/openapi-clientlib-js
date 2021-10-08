@@ -4,6 +4,9 @@
 ### v10.6.0
 - Tidy up the support for subscribe before streaming setup
 
+### v10.5.1
+- Fallback to JSON if protobuf errors occur either during the snapshot or an update
+
 ### v10.5.0
 - Add support for cloud streaming control message format
 
