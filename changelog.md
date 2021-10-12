@@ -1,3 +1,6 @@
+### v10.6.0
+- Tidy up the support for subscribe before streaming setup
+
 ### v10.5.0
 - Add support for cloud streaming control message format
 
