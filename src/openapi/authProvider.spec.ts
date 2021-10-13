@@ -200,6 +200,37 @@ describe('openapi AuthProvider', () => {
                 });
             });
 
+            it('fires an event if unauthorized - 407', function (done) {
+                const options = {
+                    token: 'TOKEN',
+                    expiry: relativeDate(60),
+                    tokenRefreshUrl: 'http://refresh',
+                };
+                authProvider = new AuthProvider(options);
+
+                const tokenRefreshFailSpy = jest
+                    .fn()
+                    .mockName('tokenRefreshFail listener');
+                const tokenReceivedSpy = jest
+                    .fn()
+                    .mockName('tokenReceived listener');
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_REFRESH_FAILED,
+                    tokenRefreshFailSpy,
+                );
+                authProvider.on(
+                    authProvider.EVENT_TOKEN_RECEIVED,
+                    tokenReceivedSpy,
+                );
+
+                tick(60000);
+                fetch.resolve(407, { error: 'not authorised' });
+                setTimeout(function () {
+                    expect(tokenRefreshFailSpy.mock.calls.length).toEqual(1);
+                    done();
+                });
+            });
+
             it('fires an event if forbidden', function (done) {
                 const options = {
                     token: 'TOKEN',
