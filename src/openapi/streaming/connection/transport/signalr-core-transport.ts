@@ -410,9 +410,18 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         this.messageStream = messageStream;
     }
 
+    isNetworkError(error: Error | undefined) {
+        return error?.message?.match(
+            /WebSocket closed with status code: (1006|1011)|Server timeout elapsed without receiving a message|Failed to fetch|Not found|Network request failed|Invocation canceled due to the underlying connection being closed/,
+        );
+    }
+
     handleConnectionClosure(error?: Error) {
         if (error) {
-            log.error(LOG_AREA, 'connection closed abruptly', { error });
+            log.warn(LOG_AREA, 'connection closed abruptly', {
+                error,
+                isNetworkError: this.isNetworkError(error),
+            });
         }
 
         // Do not trigger disconnect in case of transport fallback to avoid reconnection
@@ -503,17 +512,18 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         }
     }
 
-    handleMessageStreamError(error: unknown) {
+    handleMessageStreamError(error: Error | undefined) {
         // It will be called if signalr failed to send message to start streaming
         // or if connection is closed with some error
         // only handle the 1st case since connection closing with error is already handled in onclose handler
         // It will trigger disconnected state and will eventually try to reconnect again
         if (!this.hasStreamingStarted) {
-            log.error(
+            log.warn(
                 LOG_AREA,
                 'Error occurred while starting message streaming',
                 {
                     error,
+                    isNetworkError: this.isNetworkError(error),
                 },
             );
 
