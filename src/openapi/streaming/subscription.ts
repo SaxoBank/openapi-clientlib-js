@@ -718,7 +718,7 @@ class Subscription {
             'Subscription Key (Streaming Session, Reference Id) already in use';
 
         if (isDupeRequest) {
-            log.error(LOG_AREA, `A duplicate request occurred subscribing`, {
+            log.warn(LOG_AREA, `A duplicate request occurred subscribing`, {
                 response,
                 url: this.url,
                 servicePath: this.servicePath,

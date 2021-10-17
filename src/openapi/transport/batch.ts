@@ -95,11 +95,7 @@ class TransportBatch extends TransportQueue {
     ) => {
         const isAuthFailure = batchResponse?.status === 401;
         const isNetworkError =
-            !batchResponse ||
-            // Some responses same to be in error but not have isNetworkError defined
-            (typeof batchResponse.isNetworkError === 'boolean'
-                ? batchResponse.isNetworkError
-                : !batchResponse.status);
+            !batchResponse || Boolean(batchResponse.isNetworkError);
 
         const logFunction =
             isAuthFailure || isNetworkError ? log.debug : log.error;
