@@ -1037,9 +1037,6 @@ describe('openapi Streaming', () => {
 
             streaming.dispose();
 
-            expect(
-                subscription.onConnectionUnavailable.mock.calls.length,
-            ).toEqual(1);
             expect(subscription.dispose.mock.calls.length).toEqual(1);
             expect(transport.delete.mock.calls.length).toEqual(1);
             expect(transport.delete.mock.calls[0][0]).toEqual('root');
