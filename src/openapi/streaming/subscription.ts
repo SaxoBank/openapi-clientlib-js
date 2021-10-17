@@ -1089,7 +1089,10 @@ class Subscription {
             default:
                 log.error(
                     LOG_AREA,
-                    'Reset was called but subscription is in an unknown state',
+                    'unsubscribeAndSubscribe was called but subscription is in an unknown state',
+                    {
+                        currentState: this.currentState,
+                    },
                 );
                 return;
         }
