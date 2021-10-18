@@ -1048,7 +1048,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 subscription.onUnsubscribeByTagPending();
 
                 if (shouldDisposeSubscription) {
-                    this.removeSubscription(subscription);
+                    subscription.onRemove();
                 }
             }
         }).then(() => {
@@ -1103,14 +1103,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         });
     }
 
-    private removeSubscription(subscription: Subscription) {
-        subscription.dispose();
-        const indexOfSubscription = this.subscriptions.indexOf(subscription);
-        if (indexOfSubscription >= 0) {
-            this.subscriptions.splice(indexOfSubscription, 1);
-        }
-    }
-
     private onSubscribeNetworkError() {
         this.connection.onSubscribeNetworkError();
     }
@@ -1143,19 +1135,28 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             normalizedSubscriptionArgs.Format = ParserFacade.getDefaultFormat();
         }
 
-        options = {
-            onNetworkError: this.onSubscribeNetworkError.bind(this),
+        let subscription: Subscription;
+
+        const internalOptions = {
             ...options,
+            onNetworkError: this.onSubscribeNetworkError.bind(this),
+            onSubscriptionReadyToRemove: () => {
+                const indexOfSubscription =
+                    this.subscriptions.indexOf(subscription);
+                if (indexOfSubscription >= 0) {
+                    this.subscriptions.splice(indexOfSubscription, 1);
+                }
+            },
         };
 
-        const subscription = new Subscription(
+        subscription = new Subscription(
             this.contextId, // assuming contextId exists at this stage
             this.transport,
             servicePath,
             url,
             normalizedSubscriptionArgs,
             this.onSubscriptionCreated.bind(this),
-            options,
+            internalOptions,
         );
 
         this.subscriptions.push(subscription);
@@ -1218,7 +1219,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      */
     disposeSubscription(subscription: Subscription) {
         this.unsubscribe(subscription);
-        this.removeSubscription(subscription);
+        subscription.onRemove();
     }
 
     /**
