@@ -187,7 +187,9 @@ export function convertFetchSuccess(
                 result.status > 499 || result.status < 400 ? 'error' : 'info';
 
             const isNetworkError =
-                !newResult.status ||
+                !result.status ||
+                // proxy errors, never returned by open api
+                result.status === 407 ||
                 // Treat akamai errors as network errors
                 (typeof newResult.response === 'string' &&
                     newResult.response.indexOf('Reference&#32;'));
