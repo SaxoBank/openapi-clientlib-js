@@ -261,14 +261,14 @@ describe('Parser Protobuf', () => {
                         BuySell: 'buy',
                         AccountId: 'ALGO-USD',
                         Price: 1.3423,
-                        OrderTime: '2017-11-08T11:41:44.000Z',
+                        OrderTime: '2017-11-08T11:41:44.000000000Z',
                     },
                     {
                         OrderId: 'xwc456',
                         BuySell: 'sell',
                         AccountId: 'EUR',
                         Price: 9.123,
-                        OrderTime: '2017-11-08T11:41:44.783Z',
+                        OrderTime: '2017-11-08T11:41:44.783859279Z',
                     },
                 ]),
             );

@@ -23,7 +23,12 @@ export default {
                             Math.floor(Number(nanos) / 1000000),
                     );
 
-                    return date.toJSON();
+                    return date
+                        .toISOString()
+                        .replace(
+                            'Z',
+                            `${(nanos % 1000000).toString().padStart(6, '0')}Z`,
+                        );
                 },
             };
         }

@@ -291,25 +291,25 @@ export const decodedObjectMessage = {
         dma: true,
         est_price_buy: 8,
         est_price_sell: 9,
-        expiry_date: '2017-11-08T11:41:44.000Z',
+        expiry_date: '2017-11-08T11:41:44.000000000Z',
         is_market_open: true,
         lower_barrier: 1.3213,
         mid_forward_price: 1.1123,
         mid_spot_price: 1.3231,
         mid_yield: 1.2323,
-        notice_date: '2017-11-08T11:41:44.000Z',
+        notice_date: '2017-11-08T11:41:44.000000000Z',
         open_interest: 0.123,
         paid_cfd_interest: 0.321,
         received_cfd_interest: 0.11112,
         short_trade_disabled: true,
         spot_ask: 1.11,
         spot_bid: 1.32,
-        spot_date: '2017-11-08T11:41:44.000Z',
+        spot_date: '2017-11-08T11:41:44.000000000Z',
         strike_price: 1.3212,
         upper_barrier: 1.3331,
-        value_date: '2017-11-08T11:41:44.000Z',
+        value_date: '2017-11-08T11:41:44.000000000Z',
     },
-    last_updated: '2017-11-08T11:41:44.000Z',
+    last_updated: '2017-11-08T11:41:44.000000000Z',
     margin_impact: {
         impact_buy: 1.32,
         impact_sell: 2.13,
@@ -410,7 +410,7 @@ export const encodedMessage =
     'CghGeE9wdGlvbhI/CUw3iUFgpSRAEfgZFw6EpCZAGQAAAAAAQI9AIdeGinH+JlQ/KSUGgZVDi9Q/MXsUrkfhetQ/OSlcj8L1KLw/GkgJAAAAAAAA8D8RAAAAAACYn0AZAAAAAAAACEAhAAAAAABwn0ApAAAAAAAAFEAxAAAAAACMn0A5AAAAAAAAHEBBAAAAAAAAIEAi1QEJAAAAAAAA8D8RAAAAAAAAAEAZAAAAAAAACEAhAAAAAAAAEEApAAAAAAAAFEAwATgBQQAAAAAAACBASQAAAAAAACJAUgYI+NqL0AVYAWHcRgN4CyT1P2nrc7UV+8vxP3HPZtXnaiv1P3nWxW00gLfzP4IBBgj42ovQBYkBsHJoke18vz+RASUGgZVDi9Q/mQEYeO49XHK8P6ABAakBw/UoXI/C8T+xAR+F61G4HvU/ugEGCPjai9AFwQFrmnecoiP1P8kB+MJkqmBU9T/SAQYI+NqL0AUqBgj42ovQBTIkCR+F61G4HvU/EQrXo3A9CgFAGcP1KFyPwvE/IYlBYOXQIvU/OnIKEIlBYOXQIvU/w/UoXI/C8T8SEPYoXI/C9QhA4XoUrkfhCEAaEAAAAAAAQI9AAAAAAABAn0AiECPb+X5qvPY/iUFg5dAi9T8qELx0kxgEVvg/nu+nxks39z8yEAAAAAAAQJ9AAAAAAADAkkA4IEBISAFCJAmuR+F6FK7zPxHsUbgehevxPxkAAAAAAAAmQCG4HoXrUbi+P0oGTkFTREFRUksIzgkRrkfhehSu8z8Zw/UoXI/C8T8gFyoEMTIzNTFmZmZmZmbyPzoHYXNrdHlwZUIHYmlkdHlwZUoLMTIzMTNjZGFkYWRSBGlkbGVYrGA=';
 
 export const encodedMessageOrder =
-    'Gi0iCEFMR08tVVNEUgNidXn6AQZhYmMxMjOKAggI+NqL0AUQAJECmbuWkA969T8aLSIDRVVSUgRzZWxs+gEGeHdjNDU2igIMCPjai9AFEMDDrvUCkQLl0CLb+T4iQA==';
+    'Gi0iCEFMR08tVVNEUgNidXn6AQZhYmMxMjOKAggI+NqL0AUQAJECmbuWkA969T8aLSIDRVVSUgRzZWxs+gEGeHdjNDU2igIMCPjai9AFEM/84vUCkQLl0CLb+T4iQA==';
 
 export const orderObjectMessage = {
     Collection: [
@@ -431,7 +431,7 @@ export const orderObjectMessage = {
             Price: 9.123,
             OrderTime: {
                 seconds: '1510141304',
-                nanos: '783000000',
+                nanos: '783859279',
             },
         },
     ],
