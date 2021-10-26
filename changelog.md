@@ -1,3 +1,6 @@
+### v10.6.1
+- Reduce error logs when it is not a error
+
 ### v10.6.0
 - Tidy up the support for subscribe before streaming setup
 

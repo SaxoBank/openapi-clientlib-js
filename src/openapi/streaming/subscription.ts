@@ -718,7 +718,7 @@ class Subscription {
             'Subscription Key (Streaming Session, Reference Id) already in use';
 
         if (isDupeRequest) {
-            log.error(LOG_AREA, `A duplicate request occurred subscribing`, {
+            log.warn(LOG_AREA, `A duplicate request occurred subscribing`, {
                 response,
                 url: this.url,
                 servicePath: this.servicePath,
@@ -805,19 +805,15 @@ class Subscription {
         }
 
         if (!isNetworkError) {
-            log.error(
-                LOG_AREA,
-                `An error occurred subscribing to ${this.url}`,
-                {
-                    response,
-                    url: this.url,
-                    servicePath: this.servicePath,
-                    ContextId: this.currentStreamingContextId,
-                    ReferenceId: referenceId,
-                    isReplace,
-                    subscriptionData: this.subscriptionData,
-                },
-            );
+            log.info(LOG_AREA, `An error occurred subscribing to ${this.url}`, {
+                response,
+                url: this.url,
+                servicePath: this.servicePath,
+                ContextId: this.currentStreamingContextId,
+                ReferenceId: referenceId,
+                isReplace,
+                subscriptionData: this.subscriptionData,
+            });
         }
 
         // if we are unsubscribed, do not fire the error handler
@@ -903,7 +899,7 @@ class Subscription {
         }
 
         this.setState(this.STATE_SUBSCRIBED);
-        log.error(LOG_AREA, `An error occurred patching ${this.url}`, {
+        log.warn(LOG_AREA, `An error occurred patching ${this.url}`, {
             response,
             url: this.url,
         });
