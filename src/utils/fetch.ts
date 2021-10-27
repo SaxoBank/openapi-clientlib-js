@@ -183,21 +183,27 @@ export function convertFetchSuccess(
             // Form of correlation header is: {sessionId}#{AppId}#{requestId}#{serverDigits}
             const requestId = correlation.split('#')[2];
 
-            const logFunction =
-                result.status > 499 || result.status < 400
-                    ? log.error
-                    : log.info;
+            const logFunction: 'error' | 'info' =
+                result.status > 499 || result.status < 400 ? 'error' : 'info';
 
-            logFunction(LOG_AREA, 'Rejected server response', {
+            const isNetworkError =
+                !result.status ||
+                // proxy errors, never returned by open api
+                result.status === 407 ||
+                // Treat akamai errors as network errors
+                (typeof newResult.response === 'string' &&
+                    newResult.response.indexOf('Reference&#32;'));
+
+            log[logFunction](LOG_AREA, 'Rejected server response', {
                 url,
                 body,
                 status: newResult.status,
                 response: newResult.response,
                 requestId: requestId || null,
-                isNetworkError: false,
+                isNetworkError,
             });
 
-            throw newResult;
+            return Promise.reject({ ...newResult, isNetworkError, requestId });
         });
     }
 

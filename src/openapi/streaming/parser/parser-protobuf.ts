@@ -94,13 +94,14 @@ class ParserProtobuf extends ParserBase {
             schema = this.protobuf.parse(schemaData, rootSchema.root, {
                 keepCase: true,
             });
-        } catch (e) {
+        } catch (error) {
             log.error(LOG_AREA, 'Schema parsing failed', {
-                error: e.message,
+                error,
                 name,
+                schemaData,
             });
 
-            return false;
+            throw new Error('Protobuf schema parsing failed');
         }
 
         this.schemasSourceMap[name] = schemaData;

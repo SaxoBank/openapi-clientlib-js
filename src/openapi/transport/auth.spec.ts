@@ -269,6 +269,8 @@ describe('openapi TransportAuth', () => {
                           Array [
                             Object {
                               "headers": Headers {},
+                              "isNetworkError": false,
+                              "requestId": undefined,
                               "response": Object {
                                 "error": 401,
                                 "message": "Authorization exception",

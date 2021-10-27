@@ -289,7 +289,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         }
 
         if (!this.hasBeenConnected) {
-            log.error(LOG_AREA, 'websocket error occurred.', {
+            log.warn(LOG_AREA, 'websocket error occurred.', {
                 readyState: this.socket.readyState,
                 code: event.code,
                 reason: event.reason,
