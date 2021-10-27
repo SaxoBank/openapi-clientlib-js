@@ -44,7 +44,7 @@ describe('openapi Streaming connection', () => {
         // @ts-ignore
         global.signalrCore = {
             HubConnectionBuilder: MockConnectionBuilder,
-            JsonHubProtocol: () => {},
+            JsonHubProtocol: class {},
             HttpTransportType: {
                 WebSockets: 1,
                 LongPolling: 4,

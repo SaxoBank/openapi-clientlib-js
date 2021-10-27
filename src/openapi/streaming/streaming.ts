@@ -680,7 +680,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 break;
 
             case OPENAPI_CONTROL_MESSAGE_CONNECTION_HEARTBEAT:
-                // control mesage to keep streaming connection alive
+                // control message to keep streaming connection alive
                 break;
 
             case OPENAPI_CONTROL_MESSAGE_PROBE:
@@ -747,7 +747,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     private resetSubscriptions(subscriptions: Subscription[]) {
         for (let i = 0; i < subscriptions.length; i++) {
             const subscription = subscriptions[i];
-            subscription.reset();
+            subscription.reset(true);
         }
     }
 
@@ -971,7 +971,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         }
 
         this.connection.onOrphanFound();
-        subscription.reset();
+        subscription.reset(false);
     }
 
     private handleSubscriptionReadyForUnsubscribe(
@@ -1250,9 +1250,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
         for (let i = 0; i < this.subscriptions.length; i++) {
             const subscription = this.subscriptions[i];
-            // Reset the subscription and mark it as not having a connection so its state becomes unsubscribed
-            // next action if there is any i.e. subscribe will go in the queue until the connection is available again
-            subscription.reset();
+            // UnsubscribeAndSubscribe will unsubscribe and queue a action to subscribe when we get a result back
+            // we then make the connection unavailable which will stop the subscribe happening until we call
+            // connection available after reconnect
+            subscription.unsubscribeAndSubscribe();
             subscription.onConnectionUnavailable();
         }
 
@@ -1278,10 +1279,9 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
         for (let i = 0; i < this.subscriptions.length; i++) {
             const subscription = this.subscriptions[i];
-            // disconnecting *should* shut down all subscriptions. We also delete all below.
-            // So mark the subscription as not having a connection and reset it so its state becomes unsubscribed
-            subscription.onConnectionUnavailable();
-            subscription.reset();
+            // disconnecting will cause the server to shut down all subscriptions. We also delete all below.
+            // Disposing here causes exceptions if there is any attempt to queue new actions.
+            subscription.dispose();
         }
         this.subscriptions.length = 0;
 
