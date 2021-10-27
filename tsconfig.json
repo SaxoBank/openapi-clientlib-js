@@ -9,6 +9,7 @@
         "isolatedModules": true,
         "resolveJsonModule": true,
         "strict": true,
+        "useUnknownInCatchVariables": false,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noImplicitReturns": true,
