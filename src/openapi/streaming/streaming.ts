@@ -558,8 +558,11 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         if (!Array.isArray(updates)) {
             updates = [updates];
         }
-
         for (const update of updates) {
+            if (update.ResetSubscription) {
+                this.resetSubscriptions(this.subscriptions.slice(0));
+                return;
+            }
             this.contextMessageCount++;
             this.processUpdate(update);
         }

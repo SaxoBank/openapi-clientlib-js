@@ -482,6 +482,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                             messageId: data.MessageId,
                         },
                     );
+                    data.ResetSubscription = true;
                 }
             }
 
