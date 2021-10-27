@@ -37,7 +37,7 @@
     "license": "Apache-2.0",
     "devDependencies": {
         "@babel/core": "7.15.8",
-        "@babel/preset-env": "7.15.6",
+        "@babel/preset-env": "7.15.8",
         "@babel/preset-typescript": "7.15.0",
         "@microsoft/signalr": "5.0.10",
         "@types/jest": "27.0.2",
