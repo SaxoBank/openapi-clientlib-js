@@ -281,7 +281,9 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         this.connection.setConnectionSlowCallback(
             this.onConnectionSlow.bind(this),
         );
-
+        this.connection.setSubscriptionResetCallback(
+            this.onSubscriptionReset.bind(this),
+        );
         // start the connection process
         this.connect();
     }
@@ -559,10 +561,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             updates = [updates];
         }
         for (const update of updates) {
-            if (update.ResetSubscription) {
-                this.resetSubscriptions(this.subscriptions.slice(0));
-                return;
-            }
             this.contextMessageCount++;
             this.processUpdate(update);
         }
@@ -1105,6 +1103,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
     private onSubscribeNetworkError() {
         this.connection.onSubscribeNetworkError();
+    }
+
+    private onSubscriptionReset() {
+        this.resetSubscriptions(this.subscriptions);
     }
 
     /**

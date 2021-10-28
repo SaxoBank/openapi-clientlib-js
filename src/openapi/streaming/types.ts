@@ -42,7 +42,6 @@ export interface StreamingMessage<T = unknown, R = string> {
     Data: T;
     Heartbeats?: Heartbeats[];
     TargetReferenceIds?: string[];
-    ResetSubscription?: boolean;
 }
 
 type StreamingControlMessage<T = StreamingData, R = string> = StreamingMessage<

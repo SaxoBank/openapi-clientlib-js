@@ -63,6 +63,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
     receivedCallback: ReceiveCallback = NOOP;
     unauthorizedCallback = NOOP;
     setConnectionSlowCallback = NOOP;
+    subscriptionResetCallback = NOOP;
     transportFailCallback;
 
     utf8Decoder!: TextDecoder;
@@ -464,7 +465,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         try {
             const normalizedMessage = this.normalizeMessage(message, protocol);
             const data = this.parseMessage(normalizedMessage, this.utf8Decoder);
-
+            let resetSubscriptions = false;
             if (
                 this.lastMessageId &&
                 data.MessageId !== this.lastMessageId + 1
@@ -491,8 +492,13 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                             messageId: data.MessageId,
                         },
                     );
-                    data.ResetSubscription = true;
+                    resetSubscriptions = true;
                 }
+            }
+
+            if (resetSubscriptions) {
+                this.subscriptionResetCallback();
+                return;
             }
 
             this.lastMessageId = data.MessageId as number;
@@ -658,6 +664,10 @@ class SignalrCoreTransport implements StreamingTransportInterface {
 
     setUnauthorizedCallback(callback: () => void) {
         this.unauthorizedCallback = callback;
+    }
+
+    setSubscriptionResetCallback(callback: () => void) {
+        this.subscriptionResetCallback = callback;
     }
 }
 

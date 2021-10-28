@@ -49,6 +49,8 @@ export interface StreamingTransportInterface {
     setUnauthorizedCallback(callback: () => void): void;
 
     setConnectionSlowCallback(callback: () => void): void;
+
+    setSubscriptionResetCallback?(callback: () => void): void;
 }
 
 export type StreamingData =

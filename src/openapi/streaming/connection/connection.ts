@@ -66,6 +66,7 @@ class Connection {
     stateChangedCallback = NOOP;
     receiveCallback: ReceiveCallback = NOOP;
     connectionSlowCallback = NOOP;
+    subscriptionResetCallback = NOOP;
     authToken: string | null = null;
     authExpiry: number | null | undefined = null;
     contextId: string | null = null;
@@ -163,6 +164,10 @@ class Connection {
         this.transport.setStateChangedCallback(this.stateChangedCallback);
         this.transport.setUnauthorizedCallback(this.unauthorizedCallback);
         this.transport.setConnectionSlowCallback(this.connectionSlowCallback);
+
+        if (typeof this.transport.setSubscriptionResetCallback === 'function') {
+            this.transport.setSubscriptionResetCallback(this.subscriptionResetCallback);
+        }
 
         if (this.state === STATE_STARTED) {
             this.transport.updateQuery(
@@ -266,6 +271,19 @@ class Connection {
             );
             this.transport.setConnectionSlowCallback(
                 this.connectionSlowCallback,
+            );
+        }
+    }
+
+    setSubscriptionResetCallback(callback: () => void) {
+        if (this.transport && typeof this.transport.setSubscriptionResetCallback === 'function') {
+            this.setSubscriptionResetCallback = this.ensureValidState.bind(
+                this,
+                callback,
+                'setSubscriptionResetCallback',
+            );
+            this.transport.setSubscriptionResetCallback(
+                this.subscriptionResetCallback,
             );
         }
     }
