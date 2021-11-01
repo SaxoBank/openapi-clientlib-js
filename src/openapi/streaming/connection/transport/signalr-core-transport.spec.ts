@@ -589,13 +589,16 @@ describe('openapi SignalR core Transport', () => {
         const messageId = 10;
         let transport: any;
         let startPromise: Promise<any>;
-        const spyOnSubscriptionResetCallbak = jest.fn()
-        .mockName('subscription reset callback on missing message id');
+        const spyOnSubscriptionResetCallbak = jest
+            .fn()
+            .mockName('subscription reset callback on missing message id');
 
         beforeEach(() => {
             transport = new SignalrCoreTransport(BASE_URL);
             transport.setStateChangedCallback(spyOnStateChangedCallback);
-            transport.setSubscriptionResetCallback(spyOnSubscriptionResetCallbak);
+            transport.setSubscriptionResetCallback(
+                spyOnSubscriptionResetCallbak,
+            );
             transport.updateQuery(
                 authprovider.getToken(),
                 CONTEXT_ID,

@@ -747,7 +747,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * @param subscriptions - subscriptions
      * @param isServerInitiated - (optional) will be false when we do rest due to missing message  Default = true
      */
-    private resetSubscriptions(subscriptions: Subscription[], isServerInitiated = true) {
+    private resetSubscriptions(
+        subscriptions: Subscription[],
+        isServerInitiated = true,
+    ) {
         for (let i = 0; i < subscriptions.length; i++) {
             const subscription = subscriptions[i];
             subscription.reset(isServerInitiated);

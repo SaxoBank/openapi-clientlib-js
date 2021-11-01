@@ -166,7 +166,9 @@ class Connection {
         this.transport.setConnectionSlowCallback(this.connectionSlowCallback);
 
         if (typeof this.transport.setSubscriptionResetCallback === 'function') {
-            this.transport.setSubscriptionResetCallback(this.subscriptionResetCallback);
+            this.transport.setSubscriptionResetCallback(
+                this.subscriptionResetCallback,
+            );
         }
 
         if (this.state === STATE_STARTED) {
@@ -276,7 +278,10 @@ class Connection {
     }
 
     setSubscriptionResetCallback(callback: () => void) {
-        if (this.transport && typeof this.transport.setSubscriptionResetCallback === 'function') {
+        if (
+            this.transport &&
+            typeof this.transport.setSubscriptionResetCallback === 'function'
+        ) {
             this.setSubscriptionResetCallback = this.ensureValidState.bind(
                 this,
                 callback,
