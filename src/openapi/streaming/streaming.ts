@@ -281,7 +281,9 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         this.connection.setConnectionSlowCallback(
             this.onConnectionSlow.bind(this),
         );
-
+        this.connection.setSubscriptionResetCallback(
+            this.onSubscriptionReset.bind(this),
+        );
         // start the connection process
         this.connect();
     }
@@ -558,7 +560,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         if (!Array.isArray(updates)) {
             updates = [updates];
         }
-
         for (const update of updates) {
             this.contextMessageCount++;
             this.processUpdate(update);
@@ -743,11 +744,16 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
     /**
      * Resets subscriptions passed
+     * @param subscriptions - subscriptions
+     * @param isServerInitiated - (optional) will be false when we do rest due to missing message  Default = true
      */
-    private resetSubscriptions(subscriptions: Subscription[]) {
+    private resetSubscriptions(
+        subscriptions: Subscription[],
+        isServerInitiated = true,
+    ) {
         for (let i = 0; i < subscriptions.length; i++) {
             const subscription = subscriptions[i];
-            subscription.reset(true);
+            subscription.reset(isServerInitiated);
         }
     }
 
@@ -1102,6 +1108,10 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
     private onSubscribeNetworkError() {
         this.connection.onSubscribeNetworkError();
+    }
+
+    private onSubscriptionReset() {
+        this.resetSubscriptions(this.subscriptions, false);
     }
 
     /**
