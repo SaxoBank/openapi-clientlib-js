@@ -1,3 +1,7 @@
+### v10.6.3
+
+- Reset messages when we get missing messages on the streaming messages
+
 ### v10.6.2
 - Fallback to JSON if protobuf errors occur either during the snapshot or an update
 

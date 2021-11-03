@@ -484,7 +484,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                         messageId: data.MessageId,
                     });
                 } else {
-                    log.error(
+                    log.warn(
                         LOG_AREA,
                         'Missing a streaming signalr-core message',
                         {
