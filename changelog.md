@@ -1,5 +1,7 @@
-### v10.6.3
+### v10.6.4
+- Do not immediately retry ws auth after a network error
 
+### v10.6.3
 - Reset messages when we get missing messages on the streaming messages
 
 ### v10.6.2
