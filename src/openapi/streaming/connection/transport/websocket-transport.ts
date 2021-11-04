@@ -558,6 +558,13 @@ class WebsocketTransport implements StreamingTransportInterface {
                     return new Promise<OAPIRequestResult | null>(
                         (resolve, reject) => {
                             setTimeout(() => {
+                                // if this call was superseded by another one, then ignore this error
+                                if (
+                                    this.authToken !== authToken ||
+                                    this.contextId !== contextId
+                                ) {
+                                    return;
+                                }
                                 this.getAuthorizePromise(
                                     contextId,
                                     authToken,
@@ -673,6 +680,15 @@ class WebsocketTransport implements StreamingTransportInterface {
         this.authToken = authToken;
 
         if (forceAuth) {
+            if (!this.socket) {
+                // since start waits on a promise, if we recreate, start gets lost forever
+                // so log an error if this scenario is happening
+                log.error(
+                    LOG_AREA,
+                    'updateQuery has been called but the websocket is not started - websocket may hang',
+                );
+            }
+
             const authorizePromise = this.getAuthorizePromise(
                 this.contextId,
                 authToken,

@@ -162,6 +162,61 @@ describe('openapi WebSocket Transport', () => {
             });
         });
 
+        it('should not retry authorization when it gets a network error and while waiting to retry it gets called again', (done) => {
+            const options = {};
+            const spyOnStartCallback = jest.fn().mockName('spyStartCallback');
+
+            const transport = new WebSocketTransport(BASE_URL);
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start(options, spyOnStartCallback);
+
+            expect(fetchMock).toBeCalledTimes(1);
+            expect(fetchMock).toBeCalledWith(
+                'testUrl/streamingws/authorize?contextId=0000000000',
+                expect.objectContaining({
+                    headers: { 'X-Request-Id': '1', Authorization: 'TOKEN' },
+                }),
+            );
+            fetchMock.resolve(200, {});
+            fetchMock.mockClear();
+
+            setTimeout(() => {
+                expect(spyOnStartCallback).toBeCalledTimes(1);
+                transport.updateQuery('NEW_TOKEN', CONTEXT_ID, 100, true);
+
+                fetchMock.reject(new Error('network error'));
+                fetchMock.mockClear();
+
+                setTimeout(() => {
+                    tick(150);
+                    transport.updateQuery(
+                        'ANOTHER_NEW_TOKEN',
+                        CONTEXT_ID,
+                        100,
+                        true,
+                    );
+                    tick(150);
+                    expect(fetchMock).toBeCalledTimes(1);
+                    expect(fetchMock).toBeCalledWith(
+                        'testUrl/streamingws/authorize?contextId=0000000000',
+                        expect.objectContaining({
+                            headers: {
+                                'X-Request-Id': '3', // 1 to start, 2 for NEW_TOKEN, 3 for the next new token
+                                Authorization: 'ANOTHER_NEW_TOKEN',
+                            },
+                        }),
+                    );
+                    fetchMock.resolve(200, {});
+
+                    setTimeout(() => {
+                        expect(fetchMock).toBeCalledTimes(1);
+
+                        done();
+                    });
+                });
+            });
+        });
+
         it('should reconnect immediately and then after initial time, after 2000ms', (done) => {
             const transport = new WebSocketTransport(BASE_URL);
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
