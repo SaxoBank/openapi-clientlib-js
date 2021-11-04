@@ -135,4 +135,9 @@ export interface StreamingConfigurableOptions {
      *  This happens only for the first streaming connection setup after that we turn this off
      */
     shouldSubscribeBeforeStreamingSetup?: boolean;
+    /**
+     *  If true we will clear all subscriptions on dispose. the serverside already does this
+     *  The current default is true, but we plan to disable this
+     */
+    clearSubscriptionsInDispose?: boolean;
 }
