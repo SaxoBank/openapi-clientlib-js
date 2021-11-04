@@ -575,7 +575,7 @@ class WebsocketTransport implements StreamingTransportInterface {
                     );
                 }
 
-                log.error(LOG_AREA, 'Authorization failed', error);
+                log.warn(LOG_AREA, 'Authorization failed', error);
                 this.handleFailure();
                 return Promise.reject(
                     new Error('Failed websocket-transport authorize'),
