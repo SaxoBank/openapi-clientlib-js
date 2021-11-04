@@ -334,7 +334,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                 }
             })
             .catch((error) => {
-                log.error(
+                log.warn(
                     LOG_AREA,
                     'Error occurred while connecting to streaming service',
                     {
