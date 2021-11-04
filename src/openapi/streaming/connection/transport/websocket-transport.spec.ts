@@ -139,9 +139,9 @@ describe('openapi WebSocket Transport', () => {
             fetchMock.mockClear();
 
             fetchMock.reject(new Error('network error'));
-            tick(1);
 
             setTimeout(() => {
+                tick(300);
                 expect(fetchMock).toBeCalledTimes(1);
                 expect(fetchMock).toBeCalledWith(
                     'testUrl/streamingws/authorize?contextId=0000000000',

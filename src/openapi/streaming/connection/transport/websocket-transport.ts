@@ -546,17 +546,33 @@ class WebsocketTransport implements StreamingTransportInterface {
                     this.authToken !== authToken ||
                     this.contextId !== contextId
                 ) {
-                    return Promise.reject();
+                    return Promise.reject(
+                        new Error(
+                            'Failed websocket-transport authorize with a different token',
+                        ),
+                    );
                 }
 
-                // if a network error occurs, retry
+                // if a network error occurs, retry after 300ms
                 if (error?.isNetworkError) {
-                    return this.getAuthorizePromise(contextId, authToken, true);
+                    return new Promise<OAPIRequestResult | null>(
+                        (resolve, reject) => {
+                            setTimeout(() => {
+                                this.getAuthorizePromise(
+                                    contextId,
+                                    authToken,
+                                    true,
+                                ).then(resolve, reject);
+                            }, 300);
+                        },
+                    );
                 }
 
                 log.error(LOG_AREA, 'Authorization failed', error);
                 this.handleFailure();
-                throw error;
+                return Promise.reject(
+                    new Error('Failed websocket-transport authorize'),
+                );
             });
 
         return this.authorizePromise;
@@ -663,12 +679,18 @@ class WebsocketTransport implements StreamingTransportInterface {
                 true,
             );
 
-            authorizePromise.then(() => {
-                if (this.isReconnectPending) {
-                    this.isReconnectPending = false;
-                    this.reconnect(true);
-                }
-            });
+            authorizePromise.then(
+                () => {
+                    if (this.isReconnectPending) {
+                        this.isReconnectPending = false;
+                        this.reconnect(true);
+                    }
+                },
+                () => {
+                    // we handle everything in getAuthorizePromise so we just catch here
+                    // to avoid a unhandled rejection
+                },
+            );
         }
     }
 
