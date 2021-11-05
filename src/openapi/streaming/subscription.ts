@@ -1168,8 +1168,6 @@ class Subscription {
      */
     dispose() {
         this.isDisposed = true;
-        this.currentState = this.STATE_UNSUBSCRIBED;
-        this.queue.reset();
     }
 
     /**

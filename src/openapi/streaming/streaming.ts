@@ -1291,6 +1291,8 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             const subscription = this.subscriptions[i];
             // disconnecting will cause the server to shut down all subscriptions. We also delete all below.
             // Disposing here causes exceptions if there is any attempt to queue new actions.
+            subscription.onConnectionUnavailable();
+            subscription.reset(false);
             subscription.dispose();
         }
         this.subscriptions.length = 0;

@@ -1,3 +1,6 @@
+### v10.6.5
+- Fix a bug introduced in 10.6.2 where removing a subscription may cause the snapshot event to still fire
+
 ### v10.6.4
 - Do not immediately retry ws auth after a network error
 
