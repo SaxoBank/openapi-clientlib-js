@@ -1106,9 +1106,38 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     private onSubscribeNetworkError() {
         this.connection.onSubscribeNetworkError();
     }
-
+    
     private onSubscriptionReset() {
         this.resetSubscriptions(this.subscriptions, false);
+    }
+
+    private onSubscriptionReadyToRemove(subscription: Subscription) {
+        try {
+            const indexOfSubscription =
+                this.subscriptions.indexOf(subscription);
+            const { url, streamingContextId, referenceId, currentState } =
+                subscription;
+            if (indexOfSubscription >= 0) {
+                log.debug(LOG_AREA, 'Removing subscription', {
+                    url,
+                    streamingContextId,
+                    referenceId,
+                    currentState,
+                });
+                this.subscriptions.splice(indexOfSubscription, 1);
+            } else {
+                log.warn(LOG_AREA, 'Unable to find subscription', {
+                    url,
+                    streamingContextId,
+                    referenceId,
+                    currentState,
+                });
+            }
+        } catch (error) {
+            log.error(LOG_AREA, 'Error in onSubscriptionReadyToRemove', {
+                error,
+            });
+        }
     }
 
     /**
@@ -1135,28 +1164,19 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             normalizedSubscriptionArgs.Format = ParserFacade.getDefaultFormat();
         }
 
-        let subscription: Subscription;
-
-        const internalOptions = {
-            ...options,
-            onNetworkError: this.onSubscribeNetworkError.bind(this),
-            onSubscriptionReadyToRemove: () => {
-                const indexOfSubscription =
-                    this.subscriptions.indexOf(subscription);
-                if (indexOfSubscription >= 0) {
-                    this.subscriptions.splice(indexOfSubscription, 1);
-                }
-            },
-        };
-
-        subscription = new Subscription(
+        const subscription: Subscription = new Subscription(
             this.contextId, // assuming contextId exists at this stage
             this.transport,
             servicePath,
             url,
             normalizedSubscriptionArgs,
-            this.onSubscriptionCreated.bind(this),
-            internalOptions,
+            {
+                ...options,
+                onSubscriptionCreated: this.onSubscriptionCreated.bind(this),
+                onNetworkError: this.onSubscribeNetworkError.bind(this),
+                onSubscriptionReadyToRemove:
+                    this.onSubscriptionReadyToRemove.bind(this),
+            },
         );
 
         this.subscriptions.push(subscription);

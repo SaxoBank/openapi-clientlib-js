@@ -118,7 +118,7 @@ describe('openapi Streaming', () => {
             onSubscribe: jest.fn(),
             onUnsubscribe: jest.fn(),
             onModify: jest.fn(),
-            dispose: jest.fn(),
+            onRemove: jest.fn(),
             timeTillOrphaned: jest.fn(),
             addStateChangedCallback,
             removeStateChangedCallback,
@@ -1018,7 +1018,7 @@ describe('openapi Streaming', () => {
         });
     });
 
-    describe('dispose', () => {
+    describe('onRemove', () => {
         it('unsubscribes everything', () => {
             const streaming = new Streaming(transport, 'testUrl', authProvider);
             stateChangedCallback({ newState: 1 /* connected */ });
@@ -1063,6 +1063,7 @@ describe('openapi Streaming', () => {
             subscription.referenceId = 'MySpy';
             // @ts-expect-error using mocked subscription
             streaming.subscriptions.push(subscription);
+
             const subscription2 = mockSubscription();
             subscription2.referenceId = 'MySpy';
             // @ts-expect-error using mocked subscription
@@ -1072,22 +1073,19 @@ describe('openapi Streaming', () => {
             streaming.disposeSubscription(subscription);
 
             expect(subscription.onUnsubscribe.mock.calls.length).toEqual(1);
-            expect(subscription.dispose.mock.calls.length).toEqual(1);
-            expect(streaming.subscriptions.length).toEqual(1);
+            expect(subscription.onRemove.mock.calls.length).toEqual(1);
             // @ts-expect-error using mocked subscription
             streaming.disposeSubscription(subscription2);
 
             expect(subscription2.onUnsubscribe.mock.calls.length).toEqual(1);
-            expect(subscription2.dispose.mock.calls.length).toEqual(1);
-            expect(streaming.subscriptions.length).toEqual(0);
+            expect(subscription2.onRemove.mock.calls.length).toEqual(1);
 
             // copes with being called twice
             // @ts-expect-error using mocked subscription
             streaming.disposeSubscription(subscription2);
 
             expect(subscription2.onUnsubscribe.mock.calls.length).toEqual(2);
-            expect(subscription2.dispose.mock.calls.length).toEqual(2);
-            expect(streaming.subscriptions.length).toEqual(0);
+            expect(subscription2.onRemove.mock.calls.length).toEqual(2);
         });
     });
 

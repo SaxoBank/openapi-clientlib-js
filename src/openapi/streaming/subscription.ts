@@ -60,17 +60,14 @@ export interface StreamingOptions {
      * A callback function that is invoked on network error.
      */
     onNetworkError?: () => void;
-}
-
-export interface InternalStreamingOptions {
     /**
-     * A callback function that is invoked on network error.
+     * A callback function that is invoked when the subscription is created.
      */
-    onNetworkError: () => void;
+    onSubscriptionCreated?: () => void;
     /**
      * A callback function that is invoked when the subscription is ready to be removed.
      */
-    onSubscriptionReadyToRemove: () => void;
+    onSubscriptionReadyToRemove?: (subscription: Subscription) => void;
 }
 
 export interface SubscriptionArgs {
@@ -189,7 +186,7 @@ class Subscription {
      * The action queue.
      */
     queue = new SubscriptionQueue();
-    onSubscriptionReadyToRemove: () => void;
+    onSubscriptionReadyToRemove?: (subscription: Subscription) => void;
     parser;
     onStateChangedCallbacks: Array<(state: SubscriptionState) => void> = [];
     transport: ITransport;
@@ -220,8 +217,7 @@ class Subscription {
         servicePath: string,
         url: string,
         subscriptionArgs: SubscriptionArgs,
-        onSubscriptionCreated: () => void,
-        options: StreamingOptions & InternalStreamingOptions,
+        options?: StreamingOptions,
     ) {
         this.streamingContextId = streamingContextId;
 
@@ -237,18 +233,18 @@ class Subscription {
         this.transport = transport;
         this.servicePath = servicePath;
         this.url = url;
-        this.onSubscriptionCreated = onSubscriptionCreated;
         this.subscriptionData = subscriptionArgs;
 
         /**
          * Setting optional fields.
          */
-        this.onUpdate = options.onUpdate;
-        this.onError = options.onError;
-        this.onQueueEmpty = options.onQueueEmpty;
-        this.headers = options.headers && extend({}, options.headers);
-        this.onNetworkError = options.onNetworkError;
-        this.onSubscriptionReadyToRemove = options.onSubscriptionReadyToRemove;
+        this.onSubscriptionCreated = options?.onSubscriptionCreated;
+        this.onSubscriptionReadyToRemove = options?.onSubscriptionReadyToRemove;
+        this.onUpdate = options?.onUpdate;
+        this.onError = options?.onError;
+        this.onQueueEmpty = options?.onQueueEmpty;
+        this.headers = options?.headers && extend({}, options?.headers);
+        this.onNetworkError = options?.onNetworkError;
 
         if (!this.subscriptionData.RefreshRate) {
             this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
@@ -503,7 +499,7 @@ class Subscription {
                         );
                 }
                 this.dispose();
-                this.onSubscriptionReadyToRemove();
+                this.onSubscriptionReadyToRemove?.(this);
                 break;
 
             case ACTION_SUBSCRIBE:
@@ -680,10 +676,7 @@ class Subscription {
         }
 
         this.onActivity();
-
-        if (this.onSubscriptionCreated) {
-            this.onSubscriptionCreated();
-        }
+        this.onSubscriptionCreated?.();
 
         // do not fire events if we are waiting to unsubscribe
         if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
