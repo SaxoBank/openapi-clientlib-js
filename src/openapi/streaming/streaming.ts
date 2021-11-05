@@ -1111,16 +1111,12 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 });
                 this.subscriptions.splice(indexOfSubscription, 1);
             } else {
-                log.warn(
-                    LOG_AREA,
-                    'Unable to find subscription',
-                    {
-                        url,
-                        streamingContextId,
-                        referenceId,
-                        currentState,
-                    },
-                );
+                log.warn(LOG_AREA, 'Unable to find subscription', {
+                    url,
+                    streamingContextId,
+                    referenceId,
+                    currentState,
+                });
             }
         } catch (error) {
             log.error(LOG_AREA, 'Error in onSubscriptionReadyToRemove', {
