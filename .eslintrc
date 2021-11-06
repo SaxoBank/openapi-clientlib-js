@@ -397,11 +397,10 @@
         "jest/no-disabled-tests": "error",
         "jest/no-identical-title": "error",
         "jest/no-commented-out-tests": "error",
-        "jest/valid-describe": "error",
+        "jest/valid-describe-callback": "error",
         "jest/valid-expect": "error",
         "jest/valid-expect-in-promise": "error",
         "jest/consistent-test-it": "error",
-        "jest/no-try-expect": "error",
         "jest/no-standalone-expect": "error",
         "jest/prefer-hooks-on-top": "error"
     },
@@ -425,10 +424,7 @@
             }
         },
         {
-            "files": [
-                "rollup.config.js",
-                "jest.config.js"
-            ],
+            "files": ["rollup.config.js", "jest.config.js"],
             "env": {
                 "node": true
             },
@@ -441,17 +437,10 @@
             }
         },
         {
-            "files": [
-                "**/*.ts"
-            ],
+            "files": ["**/*.ts"],
             "parser": "@typescript-eslint/parser",
-            "plugins": [
-                "@typescript-eslint",
-                "eslint-plugin-tsdoc"
-            ],
-            "extends": [
-                "plugin:@typescript-eslint/recommended"
-            ],
+            "plugins": ["@typescript-eslint", "eslint-plugin-tsdoc"],
+            "extends": ["plugin:@typescript-eslint/recommended"],
             "rules": {
                 "tsdoc/syntax": "warn",
                 "import/order": "off",
