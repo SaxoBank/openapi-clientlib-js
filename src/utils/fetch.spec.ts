@@ -3,7 +3,7 @@ import { installClock, uninstallClock, tick } from '../test/utils';
 import { convertFetchSuccess, convertFetchReject } from './fetch';
 
 describe('utils fetch', () => {
-    it('images are downloaded as a binary blob', (done) => {
+    it('images are downloaded as a binary blob', async () => {
         const contentType = 'image/jpeg';
         const result = new FetchResponse(
             200,
@@ -12,18 +12,14 @@ describe('utils fetch', () => {
         ) as unknown as Response;
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
-        promise.then((response) => {
-            expect(response.response).toEqual('this is a binary image');
-            expect(response.status).toEqual(200);
-            expect(response.headers.get('content-type')).toEqual(contentType);
-            expect(response.responseType).toEqual('blob');
-            done();
-        });
-
-        Promise.resolve(promise);
+        const response = await promise;
+        expect(response.response).toEqual('this is a binary image');
+        expect(response.status).toEqual(200);
+        expect(response.headers.get('content-type')).toEqual(contentType);
+        expect(response.responseType).toEqual('blob');
     });
 
-    it('octet-stream are downloaded as a binary blob', (done) => {
+    it('octet-stream are downloaded as a binary blob', async () => {
         const contentType = 'application/octet-stream';
         const result = new FetchResponse(
             200,
@@ -32,18 +28,14 @@ describe('utils fetch', () => {
         ) as unknown as Response;
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
-        promise.then((response) => {
-            expect(response.response).toEqual('this is generic binary data');
-            expect(response.status).toEqual(200);
-            expect(response.headers.get('content-type')).toEqual(contentType);
-            expect(response.responseType).toEqual('blob');
-            done();
-        });
-
-        Promise.resolve(promise);
+        const response = await promise;
+        expect(response.response).toEqual('this is generic binary data');
+        expect(response.status).toEqual(200);
+        expect(response.headers.get('content-type')).toEqual(contentType);
+        expect(response.responseType).toEqual('blob');
     });
 
-    it('json is downloaded and converted to an object', (done) => {
+    it('json is downloaded and converted to an object', async () => {
         const contentType = 'application/json';
         const result = new FetchResponse(
             200,
@@ -52,18 +44,14 @@ describe('utils fetch', () => {
         ) as unknown as Response;
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
-        promise.then((response) => {
-            expect(response.response).toEqual({ test: 1 });
-            expect(response.status).toEqual(200);
-            expect(response.headers.get('content-type')).toEqual(contentType);
-            expect(response.responseType).toEqual('json');
-            done();
-        });
-
-        Promise.resolve(promise);
+        const response = await promise;
+        expect(response.response).toEqual({ test: 1 });
+        expect(response.status).toEqual(200);
+        expect(response.headers.get('content-type')).toEqual(contentType);
+        expect(response.responseType).toEqual('json');
     });
 
-    it('xslx is downloaded as a binary blob', (done) => {
+    it('xslx is downloaded as a binary blob', async () => {
         const contentType =
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         const result = new FetchResponse(
@@ -73,18 +61,14 @@ describe('utils fetch', () => {
         ) as unknown as Response;
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
-        promise.then((response) => {
-            expect(response.response).toEqual('this is a binary string');
-            expect(response.status).toEqual(200);
-            expect(response.headers.get('content-type')).toEqual(contentType);
-            expect(response.responseType).toEqual('blob');
-            done();
-        });
-
-        Promise.resolve(promise);
+        const response = await promise;
+        expect(response.response).toEqual('this is a binary string');
+        expect(response.status).toEqual(200);
+        expect(response.headers.get('content-type')).toEqual(contentType);
+        expect(response.responseType).toEqual('blob');
     });
 
-    it('unknown file types are downloaded as text', (done) => {
+    it('unknown file types are downloaded as text', async () => {
         const contentType = 'unknown/file';
         const result = new FetchResponse(
             200,
@@ -93,15 +77,11 @@ describe('utils fetch', () => {
         ) as unknown as Response;
         const promise = convertFetchSuccess('url', 'body', 0, result);
 
-        promise.then((response) => {
-            expect(response.response).toEqual('this is a string');
-            expect(response.status).toEqual(200);
-            expect(response.headers.get('content-type')).toEqual(contentType);
-            expect(response.responseType).toEqual('text');
-            done();
-        });
-
-        Promise.resolve(promise);
+        const response = await promise;
+        expect(response.response).toEqual('this is a string');
+        expect(response.status).toEqual(200);
+        expect(response.headers.get('content-type')).toEqual(contentType);
+        expect(response.responseType).toEqual('text');
     });
 
     describe('clearing timers', () => {
