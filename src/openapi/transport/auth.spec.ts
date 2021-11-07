@@ -278,6 +278,7 @@ describe('openapi TransportAuth', () => {
                               "responseType": "json",
                               "size": 49,
                               "status": 401,
+                              "type": undefined,
                               "url": "localhost/openapi/service_path/url",
                             },
                           ],
