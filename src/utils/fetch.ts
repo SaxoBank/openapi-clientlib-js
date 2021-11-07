@@ -135,8 +135,10 @@ export function convertFetchSuccess(
     const status = result?.status;
     const headers = result?.headers;
     let contentType: string | null | undefined;
+    let didHeadersFail = false;
     try {
         contentType = headers.get('content-type');
+        didHeadersFail = true;
     } catch {
         log.warn(LOG_AREA, 'Failed to get content-type header', {
             url,
@@ -254,7 +256,7 @@ export function convertFetchSuccess(
             });
     }
 
-    if (statusCausesRejection) {
+    if (statusCausesRejection || didHeadersFail) {
         convertedPromise = convertedPromise.then((newResult) => {
             let correlation;
             try {
@@ -276,7 +278,8 @@ export function convertFetchSuccess(
                 newResult.response.indexOf('Reference&#32;');
             let type: NetworkErrorType | undefined;
 
-            const isNetworkError = isNoStatus || isProxyError || isAkamaiError;
+            const isNetworkError =
+                isNoStatus || isProxyError || isAkamaiError || didHeadersFail;
 
             if (isNoStatus) {
                 type = 'no-status';
@@ -284,6 +287,8 @@ export function convertFetchSuccess(
                 type = 'proxy-error';
             } else if (isAkamaiError) {
                 type = 'akamai-error';
+            } else if (didHeadersFail) {
+                type = 'headers-get-failure';
             }
 
             log[logFunction](LOG_AREA, 'Rejected server response', {

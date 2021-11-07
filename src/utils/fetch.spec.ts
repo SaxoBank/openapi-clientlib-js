@@ -84,6 +84,33 @@ describe('utils fetch', () => {
         expect(response.responseType).toEqual('text');
     });
 
+    describe('failures', () => {
+        it('rejects if throwing getting header', async () => {
+            // @ts-ignore
+            result = {
+                headers: {
+                    get() {
+                        throw new Error('header exception');
+                    },
+                },
+                status: 200,
+                text: () => {
+                    return Promise.resolve('');
+                },
+            };
+
+            const promise = convertFetchSuccess(
+                'url',
+                'body',
+                0,
+                // @ts-ignore
+                result,
+            );
+
+            await expect(promise).rejects.toThrowErrorMatchingInlineSnapshot();
+        });
+    });
+
     describe('clearing timers', () => {
         beforeEach(() => {
             installClock();

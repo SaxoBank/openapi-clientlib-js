@@ -269,7 +269,7 @@ describe('openapi TransportAuth', () => {
                           Array [
                             Object {
                               "headers": Headers {},
-                              "isNetworkError": false,
+                              "isNetworkError": true,
                               "requestId": undefined,
                               "response": Object {
                                 "error": 401,
@@ -278,7 +278,7 @@ describe('openapi TransportAuth', () => {
                               "responseType": "json",
                               "size": 49,
                               "status": 401,
-                              "type": undefined,
+                              "type": "headers-get-failure",
                               "url": "localhost/openapi/service_path/url",
                             },
                           ],
