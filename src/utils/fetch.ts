@@ -138,11 +138,11 @@ export function convertFetchSuccess(
     let didHeadersFail = false;
     try {
         contentType = headers.get('content-type');
-        didHeadersFail = true;
     } catch {
         log.warn(LOG_AREA, 'Failed to get content-type header', {
             url,
         });
+        didHeadersFail = true;
     }
 
     const statusCausesRejection =
@@ -275,7 +275,7 @@ export function convertFetchSuccess(
             const isProxyError = status === 407; // never returned by open api
             const isAkamaiError =
                 typeof newResult?.response === 'string' &&
-                newResult.response.indexOf('Reference&#32;');
+                newResult.response.indexOf('Reference&#32;') > 0;
             let type: NetworkErrorType | undefined;
 
             const isNetworkError =

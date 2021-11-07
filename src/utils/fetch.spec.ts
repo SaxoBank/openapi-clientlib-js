@@ -87,7 +87,7 @@ describe('utils fetch', () => {
     describe('failures', () => {
         it('rejects if throwing getting header', async () => {
             // @ts-ignore
-            result = {
+            const result = {
                 headers: {
                     get() {
                         throw new Error('header exception');
@@ -107,7 +107,21 @@ describe('utils fetch', () => {
                 result,
             );
 
-            await expect(promise).rejects.toThrowErrorMatchingInlineSnapshot();
+            await expect(promise).rejects.toMatchInlineSnapshot(`
+                        Object {
+                          "headers": Object {
+                            "get": [Function],
+                          },
+                          "isNetworkError": true,
+                          "requestId": undefined,
+                          "response": "",
+                          "responseType": "text",
+                          "size": 0,
+                          "status": 200,
+                          "type": "headers-get-failure",
+                          "url": "url",
+                        }
+                    `);
         });
     });
 
