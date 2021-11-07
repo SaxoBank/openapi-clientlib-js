@@ -67,7 +67,7 @@ function getNetworkError(
     const networkError: NetworkError = {
         message: error?.message ? error.message : error,
         isNetworkError: true,
-        type: 'initial-rejection',
+        type,
         url,
     };
 
@@ -94,14 +94,12 @@ type ConvertResponse = {
         body: BodyInit | undefined | null,
         type: 'text',
         result: Response,
-        errorType?: NetworkErrorType,
     ): Promise<string>;
     (
         url: string,
         body: BodyInit | undefined | null,
         type: 'blob',
         result: Response,
-        errorType?: NetworkErrorType,
     ): Promise<Blob>;
 };
 
@@ -110,24 +108,13 @@ const convertResponse = function (
     body: BodyInit | undefined | null,
     type: 'text' | 'blob',
     result: Response,
-    errorType?: NetworkErrorType,
 ) {
     try {
         return result[type]().catch((error) => {
-            return getNetworkError(
-                errorType ?? 'convert-response-reject',
-                error,
-                url,
-                body,
-            );
+            return getNetworkError('convert-response-reject', error, url, body);
         });
     } catch (error) {
-        return getNetworkError(
-            errorType ?? 'convert-response-exception',
-            error,
-            url,
-            body,
-        );
+        return getNetworkError('convert-response-exception', error, url, body);
     }
 } as ConvertResponse;
 
@@ -155,6 +142,9 @@ export function convertFetchSuccess(
             url,
         });
     }
+
+    const statusCausesRejection =
+        !status || ((status < 200 || status > 299) && status !== 304);
 
     if (contentType?.includes('application/json')) {
         convertedPromise = convertResponse(url, body, 'text', result).then(
@@ -222,25 +212,49 @@ export function convertFetchSuccess(
             },
         );
     } else {
-        convertedPromise = convertResponse(
-            url,
-            body,
-            'text',
-            result,
-            'convert-response-reject-no-content-type',
-        ).then(function (text) {
-            return {
-                response: text,
-                status,
-                headers,
-                size: text ? text.length : 0,
-                url,
-                responseType: 'text',
-            };
-        });
+        convertedPromise = convertResponse(url, body, 'text', result)
+            .then(function (text) {
+                return {
+                    response: text,
+                    status,
+                    headers,
+                    size: text ? text.length : 0,
+                    url,
+                    responseType: 'text',
+                };
+            })
+            .catch((error: NetworkError) => {
+                // previously threw, so keeping previous behaviour.
+                // as below, aim is to delete the whole catch block
+                if (error.type === 'convert-response-exception') {
+                    return Promise.reject(error);
+                }
+                // since we guess that it can be interpreted as text, do not fail the promise
+                // if we fail to get text
+                // Its not known if this case is covering up network errors
+                // so we may remove this whole catch block in future.
+                // hence logging to work out if/when this is happening
+                // ignoring statuses that will result in a rejection, since removing this catch
+                // won't change anything.
+                if (!statusCausesRejection) {
+                    log.warn(
+                        LOG_AREA,
+                        'Failed to get text on response with no content type',
+                        { url, status, error },
+                    );
+                }
+
+                return {
+                    response: undefined,
+                    status,
+                    headers,
+                    size: 0,
+                    url,
+                };
+            });
     }
 
-    if (!status || ((status < 200 || status > 299) && status !== 304)) {
+    if (statusCausesRejection) {
         convertedPromise = convertedPromise.then((newResult) => {
             let correlation;
             try {
