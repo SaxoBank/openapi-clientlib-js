@@ -105,6 +105,16 @@ const ParserFacade = {
 
         return parsersMap[id];
     },
+
+    /**
+     * Clears the parsers that have been created. It should not be necessary to use this function,
+     * it has been created for testing.
+     */
+    clearParsers() {
+        for (const key of Object.keys(parsersMap)) {
+            delete parsersMap[key];
+        }
+    },
 };
 
 export default ParserFacade;

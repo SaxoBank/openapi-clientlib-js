@@ -289,7 +289,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         }
 
         if (!this.hasBeenConnected) {
-            log.error(LOG_AREA, 'websocket error occurred.', {
+            log.warn(LOG_AREA, 'websocket error occurred.', {
                 readyState: this.socket.readyState,
                 code: event.code,
                 reason: event.reason,
@@ -546,17 +546,40 @@ class WebsocketTransport implements StreamingTransportInterface {
                     this.authToken !== authToken ||
                     this.contextId !== contextId
                 ) {
-                    return Promise.reject();
+                    return Promise.reject(
+                        new Error(
+                            'Failed websocket-transport authorize with a different token',
+                        ),
+                    );
                 }
 
-                // if a network error occurs, retry
+                // if a network error occurs, retry after 300ms
                 if (error?.isNetworkError) {
-                    return this.getAuthorizePromise(contextId, authToken, true);
+                    return new Promise<OAPIRequestResult | null>(
+                        (resolve, reject) => {
+                            setTimeout(() => {
+                                // if this call was superseded by another one, then ignore this error
+                                if (
+                                    this.authToken !== authToken ||
+                                    this.contextId !== contextId
+                                ) {
+                                    return;
+                                }
+                                this.getAuthorizePromise(
+                                    contextId,
+                                    authToken,
+                                    true,
+                                ).then(resolve, reject);
+                            }, 300);
+                        },
+                    );
                 }
 
-                log.error(LOG_AREA, 'Authorization failed', error);
+                log.warn(LOG_AREA, 'Authorization failed', error);
                 this.handleFailure();
-                throw error;
+                return Promise.reject(
+                    new Error('Failed websocket-transport authorize'),
+                );
             });
 
         return this.authorizePromise;
@@ -657,18 +680,33 @@ class WebsocketTransport implements StreamingTransportInterface {
         this.authToken = authToken;
 
         if (forceAuth) {
+            if (!this.socket) {
+                // since start waits on a promise, if we recreate, start gets lost forever
+                // so log an error if this scenario is happening
+                log.error(
+                    LOG_AREA,
+                    'updateQuery has been called but the websocket is not started - websocket may hang',
+                );
+            }
+
             const authorizePromise = this.getAuthorizePromise(
                 this.contextId,
                 authToken,
                 true,
             );
 
-            authorizePromise.then(() => {
-                if (this.isReconnectPending) {
-                    this.isReconnectPending = false;
-                    this.reconnect(true);
-                }
-            });
+            authorizePromise.then(
+                () => {
+                    if (this.isReconnectPending) {
+                        this.isReconnectPending = false;
+                        this.reconnect(true);
+                    }
+                },
+                () => {
+                    // we handle everything in getAuthorizePromise so we just catch here
+                    // to avoid a unhandled rejection
+                },
+            );
         }
     }
 

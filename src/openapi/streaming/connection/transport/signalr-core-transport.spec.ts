@@ -589,10 +589,16 @@ describe('openapi SignalR core Transport', () => {
         const messageId = 10;
         let transport: any;
         let startPromise: Promise<any>;
+        const spyOnSubscriptionResetCallbak = jest
+            .fn()
+            .mockName('subscription reset callback on missing message id');
 
         beforeEach(() => {
             transport = new SignalrCoreTransport(BASE_URL);
             transport.setStateChangedCallback(spyOnStateChangedCallback);
+            transport.setSubscriptionResetCallback(
+                spyOnSubscriptionResetCallbak,
+            );
             transport.updateQuery(
                 authprovider.getToken(),
                 CONTEXT_ID,
@@ -624,7 +630,7 @@ describe('openapi SignalR core Transport', () => {
                 mockReconnect();
                 tick(10);
 
-                const newMessageId = 23;
+                const newMessageId = 11;
                 subscribeNextHandler({
                     PayloadFormat: 1,
                     Payload: window.btoa('{ "a": 32 }'),
@@ -639,6 +645,28 @@ describe('openapi SignalR core Transport', () => {
 
                 done();
             });
+        });
+
+        it('should call reset all subscriptions if message id is missing', () => {
+            mockReconnecting();
+
+            expect(mockHubConnection.baseUrl).toBe(
+                `${BASE_URL}/streaming?contextId=${CONTEXT_ID}&messageId=${messageId}`,
+            );
+            expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
+                constants.CONNECTION_STATE_RECONNECTING,
+            );
+
+            mockReconnect();
+            tick(10);
+
+            const newMessageId = 13;
+            subscribeNextHandler({
+                PayloadFormat: 1,
+                Payload: window.btoa('{ "a": 32 }'),
+                MessageId: newMessageId,
+            });
+            expect(spyOnSubscriptionResetCallbak).toBeCalledTimes(1);
         });
 
         it('should create new message stream on reconnection', () => {

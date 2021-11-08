@@ -4,10 +4,10 @@
             "@babel/preset-env",
             {
                 "loose": true,
-                "spec": false
+                "spec": false,
+                "targets": "node 12"
             }
         ],
         "@babel/preset-typescript"
-    ],
-    "plugins": ["@babel/plugin-proposal-class-properties", ["@babel/plugin-proposal-private-methods", { "loose": false }]]
+    ]
 }

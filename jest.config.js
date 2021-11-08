@@ -8,6 +8,7 @@ const config = {
     testEnvironment: 'jsdom',
     restoreMocks: true,
     coverageDirectory: 'coverage/',
+    coverageReporters: ['html-spa', ['text', { skipFull: true }]],
 };
 
 module.exports = config;
