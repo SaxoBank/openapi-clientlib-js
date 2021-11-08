@@ -227,6 +227,10 @@ describe('openapi AuthProvider', () => {
                 fetch.resolve(407, { error: 'not authorised' });
                 setTimeout(function () {
                     expect(tokenRefreshFailSpy.mock.calls.length).toEqual(1);
+                    expect(tokenRefreshFailSpy).toHaveBeenCalledWith(
+                        expect.objectContaining({ status: 407 }),
+                    );
+
                     done();
                 });
             });
