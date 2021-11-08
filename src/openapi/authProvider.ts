@@ -99,7 +99,7 @@ const EVENT_TOKEN_REFRESH_FAILED = 'tokenRefreshFailed' as const;
 type EmittedEvents = {
     [EVENT_TOKEN_REFRESH]: () => void;
     [EVENT_TOKEN_RECEIVED]: (token?: string, refresh?: number) => void;
-    [EVENT_TOKEN_REFRESH_FAILED]: () => void;
+    [EVENT_TOKEN_REFRESH_FAILED]: (result?: OAPIRequestResult) => void;
 };
 
 /**
@@ -256,7 +256,10 @@ class AuthProvider extends MicroEmitter<EmittedEvents> {
     ) => {
         const currentExpiry = this.getExpiry();
         const isAuthenticationError =
-            result && (result.status === 401 || result.status === 403);
+            result &&
+            (result.status === 401 ||
+                result.status === 403 ||
+                result.status === 407);
 
         // we only log this as an error if its abnormal e.g. it is not
         //   1. a network error
@@ -274,7 +277,11 @@ class AuthProvider extends MicroEmitter<EmittedEvents> {
         }
 
         if (isAuthenticationError) {
-            this.trigger(this.EVENT_TOKEN_REFRESH_FAILED);
+            // status is not present on NetworkError
+            this.trigger(
+                this.EVENT_TOKEN_REFRESH_FAILED,
+                result as OAPIRequestResult,
+            );
             this.state = STATE_FAILED;
             return;
         }

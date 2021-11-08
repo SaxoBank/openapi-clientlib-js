@@ -1,3 +1,6 @@
+### v10.6.6
+- Expose result object when authorization token failure occurs due to auth issue
+
 ### v10.6.5
 - Fix a bug introduced in 10.6.2 where removing a subscription may cause the snapshot event to still fire
 
