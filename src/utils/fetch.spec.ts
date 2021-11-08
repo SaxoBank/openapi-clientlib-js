@@ -123,6 +123,76 @@ describe('utils fetch', () => {
                         }
                     `);
         });
+
+        it('rejects if throwing getting text', async () => {
+            // @ts-ignore
+            const result = {
+                headers: {
+                    get(headerName: string) {
+                        if (headerName === 'content-type') {
+                            return 'multipart/mixed';
+                        }
+                        return undefined;
+                    },
+                },
+                status: 200,
+                text: () => {
+                    throw new Error('Failed to fetch');
+                },
+            };
+
+            const promise = convertFetchSuccess(
+                'url',
+                'body',
+                0,
+                // @ts-ignore
+                result,
+            );
+
+            await expect(promise).rejects.toMatchInlineSnapshot(`
+                        Object {
+                          "isNetworkError": true,
+                          "message": "Failed to fetch",
+                          "networkErrorType": "convert-response-exception",
+                          "url": "url",
+                        }
+                    `);
+        });
+
+        it('rejects if rejection getting text', async () => {
+            // @ts-ignore
+            const result = {
+                headers: {
+                    get(headerName: string) {
+                        if (headerName === 'content-type') {
+                            return 'multipart/mixed';
+                        }
+                        return undefined;
+                    },
+                },
+                status: 200,
+                text: () => {
+                    return Promise.reject('Failed to fetch');
+                },
+            };
+
+            const promise = convertFetchSuccess(
+                'url',
+                'body',
+                0,
+                // @ts-ignore
+                result,
+            );
+
+            await expect(promise).rejects.toMatchInlineSnapshot(`
+                        Object {
+                          "isNetworkError": true,
+                          "message": "Failed to fetch",
+                          "networkErrorType": "convert-response-reject",
+                          "url": "url",
+                        }
+                    `);
+        });
     });
 
     describe('clearing timers', () => {
