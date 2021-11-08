@@ -53,7 +53,7 @@ const binaryContentTypes: Record<string, boolean> = {
 let cacheBreakNum = Date.now();
 
 function getNetworkError(
-    type: NetworkErrorType,
+    networkErrorType: NetworkErrorType,
     error: Error,
     url: string,
     body: BodyInit | undefined | null,
@@ -67,7 +67,7 @@ function getNetworkError(
     const networkError: NetworkError = {
         message: error?.message ? error.message : error,
         isNetworkError: true,
-        type,
+        networkErrorType,
         url,
     };
 
@@ -276,19 +276,19 @@ export function convertFetchSuccess(
             const isAkamaiError =
                 typeof newResult?.response === 'string' &&
                 newResult.response.indexOf('Reference&#32;') > 0;
-            let type: NetworkErrorType | undefined;
+            let networkErrorType: NetworkErrorType | undefined;
 
             const isNetworkError =
                 isNoStatus || isProxyError || isAkamaiError || didHeadersFail;
 
             if (isNoStatus) {
-                type = 'no-status';
+                networkErrorType = 'no-status';
             } else if (isProxyError) {
-                type = 'proxy-error';
+                networkErrorType = 'proxy-error';
             } else if (isAkamaiError) {
-                type = 'akamai-error';
+                networkErrorType = 'akamai-error';
             } else if (didHeadersFail) {
-                type = 'headers-get-failure';
+                networkErrorType = 'headers-get-failure';
             }
 
             log[logFunction](LOG_AREA, 'Rejected server response', {
@@ -298,13 +298,13 @@ export function convertFetchSuccess(
                 response: newResult?.response,
                 requestId: requestId || null,
                 isNetworkError,
-                type,
+                networkErrorType,
             });
 
             return Promise.reject({
                 ...newResult,
                 isNetworkError,
-                type,
+                networkErrorType,
                 url,
                 requestId,
             });

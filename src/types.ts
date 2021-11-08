@@ -33,7 +33,7 @@ export interface NetworkError {
     message?: string | Error;
     isNetworkError: true;
     status?: never;
-    type: NetworkErrorType;
+    networkErrorType: NetworkErrorType;
     url?: string;
 }
 

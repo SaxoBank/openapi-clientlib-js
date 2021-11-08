@@ -113,12 +113,12 @@ describe('utils fetch', () => {
                             "get": [Function],
                           },
                           "isNetworkError": true,
+                          "networkErrorType": "headers-get-failure",
                           "requestId": undefined,
                           "response": "",
                           "responseType": "text",
                           "size": 0,
                           "status": 200,
-                          "type": "headers-get-failure",
                           "url": "url",
                         }
                     `);
