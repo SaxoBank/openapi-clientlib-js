@@ -423,7 +423,7 @@ describe('utils fetch', () => {
             status: 503,
             text: () => {
                 return Promise.resolve(
-                    '<html>Akami Error Reference&#32;83486234237498239423949238</html>',
+                    '<html>Akamai Error Reference&#32;83486234237498239423949238</html>',
                 );
             },
         };
@@ -444,7 +444,7 @@ describe('utils fetch', () => {
                       "isNetworkError": true,
                       "networkErrorType": "akamai-error",
                       "requestId": undefined,
-                      "response": "<html>Akami Error Reference&#32;83486234237498239423949238</html>",
+                      "response": "<html>Akamai Error Reference&#32;83486234237498239423949238</html>",
                       "responseType": "text",
                       "size": 65,
                       "status": 503,
