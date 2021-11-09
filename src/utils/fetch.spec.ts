@@ -446,7 +446,7 @@ describe('utils fetch', () => {
                       "requestId": undefined,
                       "response": "<html>Akamai Error Reference&#32;83486234237498239423949238</html>",
                       "responseType": "text",
-                      "size": 65,
+                      "size": 66,
                       "status": 503,
                       "url": "url",
                     }
