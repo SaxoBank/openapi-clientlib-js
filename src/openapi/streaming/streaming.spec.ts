@@ -124,6 +124,7 @@ describe('openapi Streaming', () => {
             removeStateChangedCallback,
             referenceId: '',
             onActivity: jest.fn(),
+            dispose: jest.fn(),
         };
 
         return mock;

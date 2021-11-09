@@ -547,8 +547,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             subscription.onSubscribe();
@@ -1796,8 +1795,7 @@ describe('openapi StreamingSubscription', () => {
                     'servicePath',
                     'src/test/resource',
                     args,
-                    createdSpy,
-                    { onUpdate: updateSpy },
+                    { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
                 subscription.onSubscribe();
 
@@ -1844,8 +1842,7 @@ describe('openapi StreamingSubscription', () => {
                     'servicePath',
                     'src/test/resource',
                     args,
-                    createdSpy,
-                    { onUpdate: updateSpy },
+                    { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
                 subscription.onSubscribe();
 
@@ -1895,8 +1892,7 @@ describe('openapi StreamingSubscription', () => {
                     'servicePath',
                     'src/test/resource',
                     args,
-                    createdSpy,
-                    { onUpdate: updateSpy },
+                    { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
                 subscription.onSubscribe();
 
@@ -1981,8 +1977,7 @@ describe('openapi StreamingSubscription', () => {
                     'servicePath',
                     'src/test/resource',
                     args,
-                    createdSpy,
-                    { onUpdate: updateSpy },
+                    { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
                 subscription.onSubscribe();
 
