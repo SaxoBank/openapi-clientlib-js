@@ -1,5 +1,10 @@
 ﻿import log from '../log';
-import type { HTTPMethodType, NetworkError, OAPIRequestResult } from '../types';
+import type {
+    HTTPMethodType,
+    NetworkError,
+    NetworkErrorType,
+    OAPIRequestResult,
+} from '../types';
 
 interface Options {
     /**
@@ -47,6 +52,28 @@ const binaryContentTypes: Record<string, boolean> = {
  */
 let cacheBreakNum = Date.now();
 
+function getNetworkError(
+    networkErrorType: NetworkErrorType,
+    error: Error,
+    url: string,
+    body: BodyInit | undefined | null,
+) {
+    log.debug(LOG_AREA, 'Rejected non-response', {
+        url,
+        body,
+        error,
+    });
+
+    const networkError: NetworkError = {
+        message: error?.message ? error.message : error,
+        isNetworkError: true,
+        networkErrorType,
+        url,
+    };
+
+    return Promise.reject(networkError);
+}
+
 /**
  * Returns a rejected promise, needed to keep the promise rejected.
  */
@@ -58,19 +85,38 @@ export function convertFetchReject(
 ) {
     clearTimeout(timerId);
 
-    log.debug(LOG_AREA, 'Rejected non-response', {
-        url,
-        body,
-        error,
-    });
-
-    const networkError: NetworkError = {
-        message: error?.message ? error.message : error,
-        isNetworkError: true,
-    };
-
-    return Promise.reject(networkError);
+    return getNetworkError('initial-rejection', error, url, body);
 }
+
+type ConvertResponse = {
+    (
+        url: string,
+        body: BodyInit | undefined | null,
+        type: 'text',
+        result: Response,
+    ): Promise<string>;
+    (
+        url: string,
+        body: BodyInit | undefined | null,
+        type: 'blob',
+        result: Response,
+    ): Promise<Blob>;
+};
+
+const convertResponse = function (
+    url: string,
+    body: BodyInit | undefined | null,
+    type: 'text' | 'blob',
+    result: Response,
+) {
+    try {
+        return result[type]().catch((error) => {
+            return getNetworkError('convert-response-reject', error, url, body);
+        });
+    } catch (error) {
+        return getNetworkError('convert-response-exception', error, url, body);
+    }
+} as ConvertResponse;
 
 /**
  * Returns either a resolved or rejected Promise.
@@ -86,124 +132,183 @@ export function convertFetchSuccess(
 
     let convertedPromise: Promise<OAPIRequestResult>;
 
-    const contentType = result.headers.get('content-type');
+    const status = result?.status;
+    const headers = result?.headers;
+    let contentType: string | null | undefined;
+    let didHeadersFail = false;
+    try {
+        contentType = headers.get('content-type');
+    } catch {
+        log.warn(LOG_AREA, 'Failed to get content-type header', {
+            url,
+        });
+        didHeadersFail = true;
+    }
+
+    const statusCausesRejection =
+        !status || ((status < 200 || status > 299) && status !== 304);
 
     if (contentType?.includes('application/json')) {
-        convertedPromise = result.text().then(function (text) {
-            try {
-                return {
-                    response: JSON.parse(text),
-                    status: result.status,
-                    headers: result.headers,
-                    size: text.length,
-                    url,
-                    responseType: 'json',
-                };
-            } catch (e) {
-                // We get interrupted downloads causing partial chunks of json
-                // and occasional malformed responses or empty proxy responses
-                log.error(
-                    LOG_AREA,
-                    'Received a JSON response that could not be parsed',
-                    {
-                        text,
-                        response: result,
+        convertedPromise = convertResponse(url, body, 'text', result).then(
+            function (text) {
+                try {
+                    return {
+                        response: JSON.parse(text),
+                        status,
+                        headers,
                         size: text.length,
                         url,
-                    },
-                );
+                        responseType: 'json',
+                    };
+                } catch (e) {
+                    // We get interrupted downloads causing partial chunks of json
+                    // and occasional malformed responses or empty proxy responses
+                    log.warn(
+                        LOG_AREA,
+                        'Received a JSON response that could not be parsed',
+                        {
+                            text,
+                            response: result,
+                            size: text?.length,
+                            url,
+                        },
+                    );
+                    return Promise.reject({
+                        isNetworkError: true,
+                        response: text,
+                        status,
+                        headers,
+                        size: text?.length,
+                        url,
+                        networkErrorType: 'json-parse-failed',
+                    });
+                }
+            },
+        );
+    } else if (contentType?.includes('multipart/mixed')) {
+        convertedPromise = convertResponse(url, body, 'text', result).then(
+            function (text) {
                 return {
                     response: text,
-                    status: result.status,
-                    headers: result.headers,
+                    status,
+                    headers,
                     size: text.length,
                     url,
                     responseType: 'text',
                 };
-            }
-        });
-    } else if (contentType?.includes('multipart/mixed')) {
-        convertedPromise = result.text().then(function (text) {
-            return {
-                response: text,
-                status: result.status,
-                headers: result.headers,
-                size: text.length,
-                url,
-                responseType: 'text',
-            };
-        });
+            },
+        );
     } else if (
         contentType &&
         (contentType.includes('image/') || binaryContentTypes[contentType])
     ) {
-        convertedPromise = result.blob().then(function (blob) {
-            return {
-                response: blob,
-                status: result.status,
-                headers: result.headers,
-                size: blob.size,
-                url,
-                responseType: 'blob',
-            };
-        });
+        convertedPromise = convertResponse(url, body, 'blob', result).then(
+            function (blob) {
+                return {
+                    response: blob,
+                    status,
+                    headers,
+                    size: blob.size,
+                    url,
+                    responseType: 'blob',
+                };
+            },
+        );
     } else {
-        convertedPromise = result
-            .text()
+        convertedPromise = convertResponse(url, body, 'text', result)
             .then(function (text) {
                 return {
                     response: text,
-                    status: result.status,
-                    headers: result.headers,
+                    status,
+                    headers,
                     size: text ? text.length : 0,
                     url,
                     responseType: 'text',
                 };
             })
-            .catch(() => {
+            .catch((error: NetworkError) => {
+                // previously threw, so keeping previous behaviour.
+                // as below, aim is to delete the whole catch block
+                if (error.networkErrorType === 'convert-response-exception') {
+                    return Promise.reject(error);
+                }
                 // since we guess that it can be interpreted as text, do not fail the promise
                 // if we fail to get text
+                // Its not known if this case is covering up network errors
+                // so we may remove this whole catch block in future.
+                // hence logging to work out if/when this is happening
+                // ignoring statuses that will result in a rejection, since removing this catch
+                // won't change anything.
+                if (!statusCausesRejection) {
+                    log.warn(
+                        LOG_AREA,
+                        'Failed to get text on response with no content type',
+                        { url, status, error },
+                    );
+                }
+
                 return {
                     response: undefined,
-                    status: result.status,
-                    headers: result.headers,
+                    status,
+                    headers,
                     size: 0,
                     url,
                 };
             });
     }
 
-    if (
-        !result.status ||
-        ((result.status < 200 || result.status > 299) && result.status !== 304)
-    ) {
+    if (statusCausesRejection || didHeadersFail) {
         convertedPromise = convertedPromise.then((newResult) => {
-            const correlation = result.headers.get('x-correlation') || '';
+            let correlation;
+            try {
+                correlation = headers.get('x-correlation') || '';
+            } catch {
+                log.warn(LOG_AREA, 'Failed to get correlation header', { url });
+            }
 
             // Form of correlation header is: {sessionId}#{AppId}#{requestId}#{serverDigits}
-            const requestId = correlation.split('#')[2];
+            const requestId = correlation?.split('#')[2];
 
             const logFunction: 'error' | 'info' =
-                result.status > 499 || result.status < 400 ? 'error' : 'info';
+                status > 499 || status < 400 ? 'error' : 'info';
+
+            const isNoStatus = !status;
+            const isProxyError = status === 407; // never returned by open api
+            const isAkamaiError =
+                typeof newResult?.response === 'string' &&
+                newResult.response.indexOf('Reference&#32;') > 0;
+            let networkErrorType: NetworkErrorType | undefined;
 
             const isNetworkError =
-                !result.status ||
-                // proxy errors, never returned by open api
-                result.status === 407 ||
-                // Treat akamai errors as network errors
-                (typeof newResult.response === 'string' &&
-                    newResult.response.indexOf('Reference&#32;'));
+                isNoStatus || isProxyError || isAkamaiError || didHeadersFail;
+
+            if (isNoStatus) {
+                networkErrorType = 'no-status';
+            } else if (isProxyError) {
+                networkErrorType = 'proxy-error';
+            } else if (isAkamaiError) {
+                networkErrorType = 'akamai-error';
+            } else if (didHeadersFail) {
+                networkErrorType = 'headers-get-failure';
+            }
 
             log[logFunction](LOG_AREA, 'Rejected server response', {
                 url,
                 body,
-                status: newResult.status,
-                response: newResult.response,
+                status,
+                response: newResult?.response,
                 requestId: requestId || null,
                 isNetworkError,
+                networkErrorType,
             });
 
-            return Promise.reject({ ...newResult, isNetworkError, requestId });
+            return Promise.reject({
+                ...newResult,
+                isNetworkError,
+                networkErrorType,
+                url,
+                requestId,
+            });
         });
     }
 

@@ -17,10 +17,25 @@ export interface OAPIRequestResult<Response = any> {
     isNetworkError?: never;
 }
 
+export type NetworkErrorType =
+    | 'initial-rejection'
+    | 'header-get'
+    | 'convert-response'
+    | 'convert-response-reject'
+    | 'convert-response-reject-no-content-type'
+    | 'convert-response-exception'
+    | 'no-status'
+    | 'proxy-error'
+    | 'akamai-error'
+    | 'headers-get-failure'
+    | 'json-parse-failed';
+
 export interface NetworkError {
     message?: string | Error;
     isNetworkError: true;
     status?: never;
+    networkErrorType: NetworkErrorType;
+    url?: string;
 }
 
 export type StringTemplateArgs = Record<

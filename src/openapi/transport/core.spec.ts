@@ -570,7 +570,7 @@ describe('openapi TransportCore', () => {
             fetch.resolve(200, '{ "test": ', 'application/json; utf-8');
 
             const getSpy = jest.fn().mockName('getSpy');
-            getPromise.then(getSpy);
+            getPromise.catch(getSpy);
 
             setTimeout(() => {
                 expect(getSpy.mock.calls.length).toEqual(1);
