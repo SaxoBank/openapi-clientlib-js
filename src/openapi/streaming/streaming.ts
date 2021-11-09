@@ -1106,7 +1106,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     private onSubscribeNetworkError() {
         this.connection.onSubscribeNetworkError();
     }
-    
+
     private onSubscriptionReset() {
         this.resetSubscriptions(this.subscriptions, false);
     }
