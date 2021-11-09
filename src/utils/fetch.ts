@@ -163,24 +163,25 @@ export function convertFetchSuccess(
                 } catch (e) {
                     // We get interrupted downloads causing partial chunks of json
                     // and occasional malformed responses or empty proxy responses
-                    log.error(
+                    log.warn(
                         LOG_AREA,
                         'Received a JSON response that could not be parsed',
                         {
                             text,
                             response: result,
-                            size: text.length,
+                            size: text?.length,
                             url,
                         },
                     );
-                    return {
+                    return Promise.reject({
+                        isNetworkError: true,
                         response: text,
                         status,
                         headers,
-                        size: text.length,
+                        size: text?.length,
                         url,
-                        responseType: 'text',
-                    };
+                        networkErrorType: 'json-parse-failed',
+                    });
                 }
             },
         );
@@ -228,7 +229,7 @@ export function convertFetchSuccess(
             .catch((error: NetworkError) => {
                 // previously threw, so keeping previous behaviour.
                 // as below, aim is to delete the whole catch block
-                if (error.type === 'convert-response-exception') {
+                if (error.networkErrorType === 'convert-response-exception') {
                     return Promise.reject(error);
                 }
                 // since we guess that it can be interpreted as text, do not fail the promise

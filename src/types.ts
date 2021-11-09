@@ -27,7 +27,8 @@ export type NetworkErrorType =
     | 'no-status'
     | 'proxy-error'
     | 'akamai-error'
-    | 'headers-get-failure';
+    | 'headers-get-failure'
+    | 'json-parse-failed';
 
 export interface NetworkError {
     message?: string | Error;
