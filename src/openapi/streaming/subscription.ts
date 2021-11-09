@@ -7,6 +7,7 @@ import {
     ACTION_MODIFY_PATCH,
     ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
     ACTION_MODIFY_REPLACE,
+    ACTION_REMOVE,
 } from './subscription-actions';
 import SubscriptionQueue from './subscription-queue';
 import type { QueuedItem } from './subscription-queue';
@@ -59,6 +60,14 @@ export interface StreamingOptions {
      * A callback function that is invoked on network error.
      */
     onNetworkError?: () => void;
+    /**
+     * A callback function that is invoked when the subscription is created.
+     */
+    onSubscriptionCreated?: () => void;
+    /**
+     * A callback function that is invoked when the subscription is ready to be removed.
+     */
+    onSubscriptionReadyToRemove?: (subscription: Subscription) => void;
 }
 
 export interface SubscriptionArgs {
@@ -177,6 +186,7 @@ class Subscription {
      * The action queue.
      */
     queue = new SubscriptionQueue();
+    onSubscriptionReadyToRemove?: (subscription: Subscription) => void;
     parser;
     onStateChangedCallbacks: Array<(state: SubscriptionState) => void> = [];
     transport: ITransport;
@@ -207,8 +217,7 @@ class Subscription {
         servicePath: string,
         url: string,
         subscriptionArgs: SubscriptionArgs,
-        onSubscriptionCreated?: () => void,
-        options: StreamingOptions = {},
+        options?: StreamingOptions,
     ) {
         this.streamingContextId = streamingContextId;
 
@@ -224,17 +233,18 @@ class Subscription {
         this.transport = transport;
         this.servicePath = servicePath;
         this.url = url;
-        this.onSubscriptionCreated = onSubscriptionCreated;
         this.subscriptionData = subscriptionArgs;
 
         /**
          * Setting optional fields.
          */
-        this.onUpdate = options.onUpdate;
-        this.onError = options.onError;
-        this.onQueueEmpty = options.onQueueEmpty;
-        this.headers = options.headers && extend({}, options.headers);
-        this.onNetworkError = options.onNetworkError;
+        this.onSubscriptionCreated = options?.onSubscriptionCreated;
+        this.onSubscriptionReadyToRemove = options?.onSubscriptionReadyToRemove;
+        this.onUpdate = options?.onUpdate;
+        this.onError = options?.onError;
+        this.onQueueEmpty = options?.onQueueEmpty;
+        this.headers = options?.headers && extend({}, options?.headers);
+        this.onNetworkError = options?.onNetworkError;
 
         if (!this.subscriptionData.RefreshRate) {
             this.subscriptionData.RefreshRate = DEFAULT_REFRESH_RATE_MS;
@@ -474,6 +484,24 @@ class Subscription {
         const { action, args } = queuedAction;
 
         switch (action) {
+            case ACTION_REMOVE:
+                switch (this.currentState) {
+                    case this.STATE_SUBSCRIBED:
+                        log.error(
+                            LOG_AREA,
+                            'Unanticipated state in performAction Remove',
+                            {
+                                state: this.currentState,
+                                action,
+                                url: this.url,
+                                servicePath: this.servicePath,
+                            },
+                        );
+                }
+                this.dispose();
+                this.onSubscriptionReadyToRemove?.(this);
+                break;
+
             case ACTION_SUBSCRIBE:
                 switch (this.currentState) {
                     case this.STATE_SUBSCRIBED:
@@ -648,10 +676,7 @@ class Subscription {
         }
 
         this.onActivity();
-
-        if (this.onSubscriptionCreated) {
-            this.onSubscriptionCreated();
-        }
+        this.onSubscriptionCreated?.();
 
         // do not fire events if we are waiting to unsubscribe
         if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
@@ -1112,6 +1137,17 @@ class Subscription {
         }
 
         this.tryPerformAction(ACTION_SUBSCRIBE, { replace });
+    }
+
+    /**
+     * Remove the subscription once it has finished processing previous actions
+     */
+    onRemove() {
+        if (this.isDisposed) {
+            throw new Error('Removing a disposed subscription');
+        }
+
+        this.tryPerformAction(ACTION_REMOVE);
     }
 
     /**

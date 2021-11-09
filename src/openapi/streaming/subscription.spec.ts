@@ -29,6 +29,7 @@ function wait() {
 describe('openapi StreamingSubscription', () => {
     let transport: any;
     let updateSpy: jest.Mock;
+    let readyToRemoveSpy: jest.Mock;
     let createdSpy: jest.Mock;
     let errorSpy: jest.Mock;
     let authManager: { getAuth: jest.Mock };
@@ -46,6 +47,7 @@ describe('openapi StreamingSubscription', () => {
         ParserFacade.clearParsers();
         transport = mockTransport();
         updateSpy = jest.fn().mockName('update');
+        readyToRemoveSpy = jest.fn().mockName('readyToRemove');
         createdSpy = jest.fn().mockName('create');
         errorSpy = jest.fn().mockName('error');
         networkErrorSpy = jest.fn().mockName('networkEror');
@@ -162,7 +164,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                undefined,
                 { headers: { Header: 'header' } },
             );
             subscription.onSubscribe();
@@ -203,7 +204,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                undefined,
                 { headers },
             );
 
@@ -246,8 +246,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -270,8 +269,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -293,7 +291,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
                 { onError: errorSpy },
             );
             subscription.onSubscribe();
@@ -320,7 +317,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'test/resource',
                 { Format: 'application/x-protobuf' },
-                createdSpy,
                 { onError: errorSpy },
             );
             subscription.onSubscribe();
@@ -351,8 +347,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -386,8 +381,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
             sendInitialResponse({ Snapshot: { Data: [] } });
@@ -482,8 +476,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -514,8 +507,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             subscription.onStreamingData({
@@ -555,8 +547,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             subscription.onSubscribe();
@@ -579,8 +570,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             subscription.onSubscribe();
@@ -604,8 +594,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             subscription.onSubscribe();
@@ -624,8 +613,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onConnectionUnavailable();
             subscription.onSubscribe();
@@ -639,8 +627,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -667,8 +654,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
             subscription.onConnectionUnavailable();
@@ -694,8 +680,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
             expect(transport.post.mock.calls.length).toEqual(1);
@@ -730,8 +715,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
             expect(transport.post.mock.calls.length).toEqual(1);
@@ -765,7 +749,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
                 {
                     onUpdate: updateSpy,
                     onError: errorSpy,
@@ -802,7 +785,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
                 {
                     onUpdate: updateSpy,
                     onError: errorSpy,
@@ -833,7 +815,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
                 {
                     onUpdate: updateSpy,
                     onError: errorSpy,
@@ -864,7 +845,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
                 {
                     onUpdate: updateSpy,
                     onError: errorSpy,
@@ -895,7 +875,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
                 {
                     onUpdate: updateSpy,
                     onError: errorSpy,
@@ -937,6 +916,32 @@ describe('openapi StreamingSubscription', () => {
         });
     });
 
+    describe('remove', () => {
+        it('should call onSubscriptionReadyToRemove', (done) => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                {
+                    onUpdate: updateSpy,
+                    onSubscriptionCreated: createdSpy,
+                    onSubscriptionReadyToRemove: readyToRemoveSpy,
+                },
+            );
+
+            subscription.onRemove();
+
+            setTimeout(() => {
+                // it does invoke onSubscriptionReadyToRemove callback
+                expect(readyToRemoveSpy.mock.calls.length).toEqual(1);
+                // it does invoke onSubscriptionReadyToRemove callback with reference to subscription
+                expect(readyToRemoveSpy.mock.calls[0][0]).toEqual(subscription);
+                done();
+            });
+        });
+    });
     describe('subscribe/unsubscribe queuing', () => {
         it('ignores multiple commands when already in the right state', async () => {
             const subscription = new Subscription(
@@ -945,8 +950,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             const logError = jest.spyOn(log, 'error');
@@ -1019,8 +1023,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             const logError = jest.spyOn(log, 'error');
@@ -1047,8 +1050,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             subscription.onSubscribe();
@@ -1072,8 +1074,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             jest.spyOn(log, 'error');
@@ -1112,8 +1113,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             expect(subscription.timeTillOrphaned(Date.now())).toEqual(Infinity);
@@ -1157,8 +1157,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -1173,8 +1172,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -1194,8 +1192,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -1231,8 +1228,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -1265,7 +1261,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
             );
 
             subscription.reset(true); // reset before subscribed
@@ -1309,7 +1304,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
             );
 
             subscription.reset(true); // reset before subscribed
@@ -1352,7 +1346,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
             );
 
             expect(transport.post.mock.calls.length).toEqual(0);
@@ -1400,8 +1393,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             subscription.onSubscribe();
@@ -1474,8 +1466,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             subscription.onSubscribe();
@@ -1540,8 +1531,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             subscription.onSubscribe();
@@ -1581,8 +1571,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             subscription.onSubscribe();
@@ -1623,8 +1612,7 @@ describe('openapi StreamingSubscription', () => {
                     'servicePath',
                     'src/test/resource',
                     {},
-                    createdSpy,
-                    { onUpdate: updateSpy },
+                    { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
 
                 subscription.reset(true);
@@ -1654,8 +1642,7 @@ describe('openapi StreamingSubscription', () => {
                     'servicePath',
                     'src/test/resource',
                     {},
-                    createdSpy,
-                    { onUpdate: updateSpy },
+                    { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
 
                 subscription.reset(true);
@@ -1716,8 +1703,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 args,
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -1761,8 +1747,8 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 args,
-                createdSpy,
-                { onUpdate: updateSpy },
+
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -1809,8 +1795,7 @@ describe('openapi StreamingSubscription', () => {
                     'servicePath',
                     'src/test/resource',
                     args,
-                    createdSpy,
-                    { onUpdate: updateSpy },
+                    { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
                 subscription.onSubscribe();
 
@@ -1857,8 +1842,7 @@ describe('openapi StreamingSubscription', () => {
                     'servicePath',
                     'src/test/resource',
                     args,
-                    createdSpy,
-                    { onUpdate: updateSpy },
+                    { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
                 subscription.onSubscribe();
 
@@ -1908,8 +1892,7 @@ describe('openapi StreamingSubscription', () => {
                     'servicePath',
                     'src/test/resource',
                     args,
-                    createdSpy,
-                    { onUpdate: updateSpy },
+                    { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
                 subscription.onSubscribe();
 
@@ -1994,8 +1977,7 @@ describe('openapi StreamingSubscription', () => {
                     'servicePath',
                     'src/test/resource',
                     args,
-                    createdSpy,
-                    { onUpdate: updateSpy },
+                    { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
                 subscription.onSubscribe();
 
@@ -2093,8 +2075,8 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 args,
-                createdSpy,
-                { onUpdate: updateSpy },
+
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -2122,8 +2104,8 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 args,
-                createdSpy,
-                { onUpdate: updateSpy },
+
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -2152,8 +2134,8 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 args,
-                createdSpy,
-                { onUpdate: updateSpy },
+
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
             subscription.onSubscribe();
 
@@ -2190,8 +2172,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             const initialArgs = { initialArgs: 'initialArgs' };
@@ -2230,8 +2211,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             const initialArgs = { initialArgs: 'initialArgs' };
@@ -2275,8 +2255,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             const initialArgs = { initialArgs: 'initialArgs' };
@@ -2305,8 +2284,7 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
-                { onUpdate: updateSpy },
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
 
             const initialArgs = { initialArgs: 'initialArgs' };
@@ -2356,7 +2334,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
             );
             subscription.onSubscribe();
 
@@ -2403,7 +2380,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
             );
             subscription.onSubscribe();
 
@@ -2450,7 +2426,6 @@ describe('openapi StreamingSubscription', () => {
                 'servicePath',
                 'src/test/resource',
                 {},
-                createdSpy,
             );
             subscription.onSubscribe();
 

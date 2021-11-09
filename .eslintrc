@@ -222,7 +222,7 @@
             {
                 "skipBlankLines": true,
                 "skipComments": true,
-                "max": 900
+                "max": 950
             }
         ],
         "max-nested-callbacks": ["error", 3],
