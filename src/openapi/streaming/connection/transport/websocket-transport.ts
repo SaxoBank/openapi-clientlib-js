@@ -9,7 +9,6 @@ import * as constants from '../constants';
 import log from '../../../../log';
 import * as uint64utils from '../../../../utils/uint64';
 import fetch from '../../../../utils/fetch';
-import type { OAPIRequestResult } from '../../../../types';
 import { getRequestId } from '../../../../utils/request';
 import * as transportTypes from '../transportTypes';
 import type {
@@ -47,6 +46,19 @@ const DEFAULT_RECONNECT_DELAY = 2000;
 const DEFAULT_RECONNECT_LIMIT = 10;
 const MAX_INACTIVITY_WAIT_TIME = 3000;
 
+const STATE_NONE = 0;
+const STATE_AWAITING_START = 1;
+const STATE_CONNECTING = 2;
+const STATE_CONNECTED = 3;
+const STATE_AWAITING_RECONNECT = 4;
+
+type WS_STATE =
+    | typeof STATE_NONE
+    | typeof STATE_AWAITING_START
+    | typeof STATE_CONNECTING
+    | typeof STATE_CONNECTED
+    | typeof STATE_AWAITING_RECONNECT;
+
 const NOOP = () => {};
 
 /**
@@ -73,8 +85,6 @@ class WebsocketTransport implements StreamingTransportInterface {
 
     // If true, indicates that transport had at least once successful connection (received onopen).
     hasBeenConnected = false;
-    // If socket closes due to unauthorized token, we wait for authorization with new token before reconnecting
-    isReconnectPending = false;
 
     lastMessageId: null | number = null;
     reconnectTimeout: number | null = null;
@@ -84,7 +94,7 @@ class WebsocketTransport implements StreamingTransportInterface {
     lastMessageTime = 0;
     query: string | null = null;
     contextId: string | null = null;
-    authorizePromise: Promise<OAPIRequestResult | null> | null = null;
+    isAuthorized = false;
     authToken: string | null = null;
     // Callbacks
     failCallback;
@@ -96,6 +106,8 @@ class WebsocketTransport implements StreamingTransportInterface {
     utf8Decoder!: TextDecoder;
     inactivityFinderRunning: boolean;
     inactivityFinderNextUpdateTimeoutId: number | null = null;
+
+    state: WS_STATE = STATE_NONE;
 
     constructor(
         baseUrl: string,
@@ -133,6 +145,7 @@ class WebsocketTransport implements StreamingTransportInterface {
     private handleSocketOpen = () => {
         if (this.socket) {
             this.hasBeenConnected = true;
+            this.state = STATE_CONNECTED;
             this.reconnectCount = 0;
 
             log.debug(LOG_AREA, 'Socket opened');
@@ -285,6 +298,8 @@ class WebsocketTransport implements StreamingTransportInterface {
             return;
         }
 
+        this.state = STATE_NONE;
+
         if (!this.hasBeenConnected) {
             log.warn(LOG_AREA, 'websocket error occurred.', {
                 readyState: this.socket.readyState,
@@ -310,8 +325,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         if (event.code === socketCloseCodes.TOKEN_EXPIRED) {
             this.unauthorizedCallback(this.connectionUrl);
 
-            // reconnect once we authorise with the new token
-            this.isReconnectPending = true;
+            this.state = STATE_AWAITING_RECONNECT;
             return;
         }
 
@@ -323,6 +337,7 @@ class WebsocketTransport implements StreamingTransportInterface {
 
     private createSocket() {
         try {
+            this.state = STATE_CONNECTING;
             const url = this.normalizeWebSocketUrl(
                 `${this.connectionUrl}${this.query}`,
             );
@@ -463,7 +478,7 @@ class WebsocketTransport implements StreamingTransportInterface {
 
         const now = Date.now();
         if (
-            !this.isReconnectPending &&
+            this.state === STATE_CONNECTED &&
             this.lastMessageTime &&
             now - this.lastMessageTime >= MAX_INACTIVITY_WAIT_TIME
         ) {
@@ -499,15 +514,18 @@ class WebsocketTransport implements StreamingTransportInterface {
         this.connectionSlowCallback = callback;
     }
 
-    getAuthorizePromise(
+    authorizeConnection(
         contextId: string | null,
         authToken: string | null,
         forceAuthenticate?: boolean,
-    ): Promise<OAPIRequestResult | null> {
-        if (!forceAuthenticate && this.authorizePromise) {
+    ) {
+        if (!forceAuthenticate && this.isAuthorized) {
             log.debug(LOG_AREA, 'Connection already authorized');
-            return this.authorizePromise;
+            this.onAuthorized();
+            return;
         }
+
+        this.isAuthorized = false;
 
         if (!authToken) {
             const errorMessage = 'Authorization token is not provided';
@@ -515,7 +533,7 @@ class WebsocketTransport implements StreamingTransportInterface {
                 contextId,
             });
 
-            return Promise.reject(new Error(errorMessage));
+            return;
         }
 
         const options: { headers?: Record<string, string> } = {
@@ -526,57 +544,51 @@ class WebsocketTransport implements StreamingTransportInterface {
         };
         const url = `${this.authorizeUrl}?contextId=${contextId}`;
 
-        this.authorizePromise = fetch('put', url, options)
-            .then((response) => {
+        fetch('put', url, options).then(
+            () => {
                 log.debug(LOG_AREA, 'Authorization completed', {
                     contextId,
                 });
-                return response;
-            })
-            .catch((error) => {
+                // if this call was superseded by another one, then ignore this
+                if (
+                    this.authToken !== authToken ||
+                    this.contextId !== contextId
+                ) {
+                    return;
+                }
+                this.isAuthorized = true;
+                this.onAuthorized();
+            },
+            (error) => {
                 // if this call was superseded by another one, then ignore this error
                 if (
                     this.authToken !== authToken ||
                     this.contextId !== contextId
                 ) {
-                    return Promise.reject(
-                        new Error(
-                            'Failed websocket-transport authorize with a different token',
-                        ),
-                    );
+                    return;
                 }
 
                 // if a network error occurs, retry after 300ms
                 if (error?.isNetworkError) {
-                    return new Promise<OAPIRequestResult | null>(
-                        (resolve, reject) => {
-                            setTimeout(() => {
-                                // if this call was superseded by another one, then ignore this error
-                                if (
-                                    this.authToken !== authToken ||
-                                    this.contextId !== contextId
-                                ) {
-                                    return;
-                                }
-                                this.getAuthorizePromise(
-                                    contextId,
-                                    authToken,
-                                    true,
-                                ).then(resolve, reject);
-                            }, 300);
-                        },
-                    );
+                    setTimeout(() => {
+                        // if this call was superseded by another one, then ignore this error
+                        if (
+                            this.authToken !== authToken ||
+                            this.contextId !== contextId
+                        ) {
+                            return;
+                        }
+                        this.authorizeConnection(contextId, authToken, true);
+                    }, 300);
+                    return;
                 }
 
                 log.warn(LOG_AREA, 'Authorization failed', error);
                 this.handleFailure();
-                return Promise.reject(
-                    new Error('Failed websocket-transport authorize'),
-                );
-            });
-
-        return this.authorizePromise;
+            },
+        );
     }
+
     start(_options?: ConnectionOptions, callback?: () => void) {
         this.startedCallback = callback || NOOP;
         if (!this.isSupported()) {
@@ -593,23 +605,40 @@ class WebsocketTransport implements StreamingTransportInterface {
 
         log.debug(LOG_AREA, 'Starting transport');
 
-        const authorizePromise = this.getAuthorizePromise(
-            this.contextId,
-            this.authToken,
-        );
+        this.state = STATE_AWAITING_START;
 
-        authorizePromise.then(
-            () => {
-                this.startedCallback();
-                this.stateChangedCallback(
-                    constants.CONNECTION_STATE_CONNECTING,
-                );
-                this.createSocket();
-            },
-            () => {
-                // we handle everything in authorizePromise, this just stops an unhandled rejection
-            },
-        );
+        this.authorizeConnection(this.contextId, this.authToken);
+    }
+
+    onAuthorized() {
+        switch (this.state) {
+            case STATE_NONE:
+                break;
+
+            case STATE_AWAITING_START:
+                this.onAuthorizedAwaitingStart();
+                break;
+
+            case STATE_AWAITING_RECONNECT:
+                this.onAuthorizedAwaitingReconnect();
+                break;
+
+            default:
+                log.error(LOG_AREA, 'Unexpected state onAuthorized', {
+                    state: this.state,
+                });
+                break;
+        }
+    }
+
+    onAuthorizedAwaitingStart() {
+        this.startedCallback();
+        this.stateChangedCallback(constants.CONNECTION_STATE_CONNECTING);
+        this.createSocket();
+    }
+
+    onAuthorizedAwaitingReconnect() {
+        this.reconnect(true);
     }
 
     stop() {
@@ -621,12 +650,12 @@ class WebsocketTransport implements StreamingTransportInterface {
         this.reconnectTimeout = null;
         this.contextId = null;
         this.lastMessageId = null;
-        this.authorizePromise = Promise.resolve(null);
+        this.isAuthorized = false;
         this.reconnectCount = 0;
         this.hasBeenConnected = false;
         this.lastOrphanFound = 0;
         this.lastSubscribeNetworkError = 0;
-        this.isReconnectPending = false;
+        this.state = STATE_NONE;
 
         this.stateChangedCallback(constants.CONNECTION_STATE_DISCONNECTED);
     }
@@ -649,6 +678,7 @@ class WebsocketTransport implements StreamingTransportInterface {
     ) {
         if (contextId !== this.contextId) {
             this.lastMessageId = null;
+            forceAuth = true;
         }
         // sendHeartbeats=true server sends _connectionheartbeat after 2 seconds of inactivity on a streaming connection
         let query = `?contextId=${encodeURIComponent(
@@ -669,34 +699,8 @@ class WebsocketTransport implements StreamingTransportInterface {
         this.contextId = contextId;
         this.authToken = authToken;
 
-        if (forceAuth) {
-            if (!this.socket) {
-                // since start waits on a promise, if we recreate, start gets lost forever
-                // so log an error if this scenario is happening
-                log.error(
-                    LOG_AREA,
-                    'updateQuery has been called but the websocket is not started - websocket may hang',
-                );
-            }
-
-            const authorizePromise = this.getAuthorizePromise(
-                this.contextId,
-                authToken,
-                true,
-            );
-
-            authorizePromise.then(
-                () => {
-                    if (this.isReconnectPending) {
-                        this.isReconnectPending = false;
-                        this.reconnect(true);
-                    }
-                },
-                () => {
-                    // we handle everything in getAuthorizePromise so we just catch here
-                    // to avoid a unhandled rejection
-                },
-            );
+        if (forceAuth && this.state !== STATE_NONE) {
+            this.authorizeConnection(this.contextId, authToken, true);
         }
     }
 
