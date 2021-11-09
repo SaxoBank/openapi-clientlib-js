@@ -1,3 +1,6 @@
+### v10.7.1
+- Fix a bug where removing a subscription that is not unsubscribed may prevent the subscription being unsubscribed
+
 ### v10.7.0
 - Fetch now rejects with a json error. The isNetworkError property on a fetch rejection is now consistently sent.
 - Added a new option clearSubscriptionsInDispose, which if explicitly set to false will disable a call we believe to be unnecessary
