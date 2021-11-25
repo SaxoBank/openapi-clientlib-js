@@ -1,3 +1,6 @@
+### 10.8.0
+ - Remove streaming heartbeat flag and make it always present
+
 ### v10.7.1
 - Fix a bug where removing a subscription that is not unsubscribed may prevent the subscription being unsubscribed
 
