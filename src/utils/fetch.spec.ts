@@ -68,6 +68,23 @@ describe('utils fetch', () => {
         expect(response.responseType).toEqual('blob');
     });
 
+    it('docx is downloaded as a binary blob', async () => {
+        const contentType =
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        const result = new FetchResponse(
+            200,
+            'this is a binary string',
+            contentType,
+        ) as unknown as Response;
+        const promise = convertFetchSuccess('url', 'body', 0, result);
+
+        const response = await promise;
+        expect(response.response).toEqual('this is a binary string');
+        expect(response.status).toEqual(200);
+        expect(response.headers.get('content-type')).toEqual(contentType);
+        expect(response.responseType).toEqual('blob');
+    });
+
     it('multipart-mixed file types are downloaded as text', async () => {
         const contentType = 'multipart/mixed';
         const result = new FetchResponse(
