@@ -306,7 +306,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * being rejected so we should get a new one.
      */
     private onUnauthorized() {
-        this.authProvider.tokenRejected();
+        this.authProvider.tokenRejected('streaming');
     }
 
     /**
