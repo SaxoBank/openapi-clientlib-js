@@ -63,7 +63,10 @@ describe('openapi TransportAuth', () => {
 
             setTimeout(() => {
                 expect(authProvider.tokenRejected).toBeCalledTimes(1);
-                expect(authProvider.tokenRejected).toHaveBeenCalledWith(1);
+                expect(authProvider.tokenRejected).toHaveBeenCalledWith(
+                    'localhost/openapi/service_path/url',
+                    1,
+                );
                 done();
             });
         });
