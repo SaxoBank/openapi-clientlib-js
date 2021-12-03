@@ -72,7 +72,7 @@ describe('openapi WebSocket Transport', () => {
                 expect(spyOnStartCallback).toBeCalledTimes(1);
                 expect(global.WebSocket).toBeCalledTimes(1);
                 expect(global.WebSocket).toBeCalledWith(
-                    'testUrl/streamingws/connect?contextId=0000000000&Authorization=TOKEN',
+                    'testUrl/streamingws/connect?contextId=0000000000&Authorization=TOKEN&sendHeartbeats=true',
                 );
 
                 done();
@@ -95,7 +95,7 @@ describe('openapi WebSocket Transport', () => {
             transport.authorizePromise?.then(() => {
                 expect(spyOnStartCallback).toBeCalledTimes(1);
                 expect(global.WebSocket).toBeCalledWith(
-                    'testUrl/streamingws/connect?contextId=0000000000&Authorization=TOKEN',
+                    'testUrl/streamingws/connect?contextId=0000000000&Authorization=TOKEN&sendHeartbeats=true',
                 );
 
                 // simulate handshake failure by not calling onopen first
@@ -115,7 +115,7 @@ describe('openapi WebSocket Transport', () => {
 
             transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
             expect(transport.getQuery()).toBe(
-                '?contextId=0000000000&Authorization=TOKEN',
+                '?contextId=0000000000&Authorization=TOKEN&sendHeartbeats=true',
             );
         });
     });
@@ -663,7 +663,7 @@ describe('openapi WebSocket Transport', () => {
                     ]);
 
                     expect(global.WebSocket).toBeCalledWith(
-                        'testUrl/streamingws/connect?contextId=0000000000&Authorization=NEW-TOKEN',
+                        'testUrl/streamingws/connect?contextId=0000000000&Authorization=NEW-TOKEN&sendHeartbeats=true',
                     );
 
                     done();

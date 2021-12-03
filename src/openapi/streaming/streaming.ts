@@ -226,7 +226,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             connectRetryDelayLevels,
             parserEngines,
             parsers,
-            isWebsocketStreamingHeartBeatEnabled,
             clearSubscriptionsInDispose,
         } = options;
 
@@ -240,7 +239,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             // Streaming service relays message payload received from publishers as it is, which could be protobuf encoded.
             // This protocol is used to serialize the message envelope rather than the payload
             messageSerializationProtocol,
-            isWebsocketStreamingHeartBeatEnabled,
         };
 
         if (typeof connectRetryDelay === 'number') {
