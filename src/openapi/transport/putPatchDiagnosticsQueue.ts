@@ -19,7 +19,7 @@ const LOG_AREA = 'TransportPutPatchDiagnosticsQueue';
  *      The transport to wrap.
  * @param transportCore - (optional) The core transport at the bottom of the chain.
  */
-class TransportPutPatchDiagnosticsQueue {
+class TransportPutPatchDiagnosticsQueue implements ITransport {
     isQueueing = true;
     transport: ITransport;
     transportQueue: TransportQueue;
@@ -107,6 +107,10 @@ class TransportPutPatchDiagnosticsQueue {
     delete = this.otherMethodTransport('delete');
     head = this.otherMethodTransport('head');
     options = this.otherMethodTransport('options');
+
+    dispose() {
+        this.transport.dispose();
+    }
 }
 
 export default TransportPutPatchDiagnosticsQueue;

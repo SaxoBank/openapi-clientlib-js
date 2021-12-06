@@ -4,8 +4,8 @@ import type {
     HTTPMethodType,
     NetworkError,
 } from '../../types';
-import type TransportCore from './core';
 import TransportBase from './transport-base';
+import type { ITransport } from './transport-base';
 
 interface TransportCall {
     method: HTTPMethodType;
@@ -56,7 +56,7 @@ interface Options {
 class TransportRetry extends TransportBase {
     retryTimeout = 0;
     methods: HTTPRequestRetryOptions;
-    transport: TransportCore;
+    transport: ITransport;
     failedCalls: TransportCall[] = [];
     individualFailedCalls: TransportCall[] = [];
     retryTimer: number | null = null;
@@ -67,7 +67,7 @@ class TransportRetry extends TransportBase {
      * @param options - (optional) Settings options. Define retry timeout, http methods to retry and max retry limit
      * per http method type. If not given then calls will run with underlying transport without retry logic.
      */
-    constructor(transport: TransportCore, options?: Options) {
+    constructor(transport: ITransport, options?: Options) {
         super();
         if (!transport) {
             throw new Error(
