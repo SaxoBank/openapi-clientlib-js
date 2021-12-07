@@ -17,7 +17,7 @@ class SignalrTransport implements StreamingTransportInterface {
     name = transportTypes.LEGACY_SIGNALR;
     transport = null;
     stateChangedCallback: StateChangeCallback = NOOP;
-    unauthorizedCallback = NOOP;
+    unauthorizedCallback: (url: string) => void = NOOP;
     baseUrl: string;
     connectionUrl: string;
     connection: SignalR.Connection;
@@ -53,7 +53,7 @@ class SignalrTransport implements StreamingTransportInterface {
         log.warn(LOG_AREA, 'Transport error', errorDetail);
         // @ts-expect-error FIXME according to types definition status exists on context not source - verify
         if (errorDetail?.source?.status === 401) {
-            this.unauthorizedCallback();
+            this.unauthorizedCallback(this.connectionUrl);
         }
     };
 
@@ -95,7 +95,7 @@ class SignalrTransport implements StreamingTransportInterface {
         return true;
     }
 
-    setUnauthorizedCallback(callback: () => void) {
+    setUnauthorizedCallback(callback: (url: string) => void) {
         this.unauthorizedCallback = callback;
     }
 

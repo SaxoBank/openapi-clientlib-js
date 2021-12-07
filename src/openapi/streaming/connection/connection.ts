@@ -120,10 +120,10 @@ class Connection {
         };
     }
 
-    private ensureValidState = (
-        callback: (...args: any[]) => void,
+    private ensureValidState = <TArgs extends ReadonlyArray<any>>(
+        callback: (...args: TArgs) => void,
         callbackType: string,
-        ...args: unknown[]
+        ...args: TArgs
     ) => {
         if (this.state === STATE_DISPOSED) {
             log.warn(LOG_AREA, 'callback called after transport was disposed', {
@@ -231,7 +231,7 @@ class Connection {
         return supported;
     }
 
-    setUnauthorizedCallback(callback: () => void) {
+    setUnauthorizedCallback(callback: (url: string) => void) {
         if (this.transport) {
             this.unauthorizedCallback = this.ensureValidState.bind(
                 this,

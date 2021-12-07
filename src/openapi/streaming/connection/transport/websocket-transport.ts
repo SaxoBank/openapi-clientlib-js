@@ -92,7 +92,7 @@ class WebsocketTransport implements StreamingTransportInterface {
     receivedCallback: ReceiveCallback = NOOP;
     connectionSlowCallback = NOOP;
     startedCallback = NOOP;
-    unauthorizedCallback = NOOP;
+    unauthorizedCallback: (url: string) => void = NOOP;
     utf8Decoder!: TextDecoder;
     inactivityFinderRunning: boolean;
     inactivityFinderNextUpdateTimeoutId: number | null = null;
@@ -308,7 +308,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         }
 
         if (event.code === socketCloseCodes.TOKEN_EXPIRED) {
-            this.unauthorizedCallback();
+            this.unauthorizedCallback(this.connectionUrl);
 
             // reconnect once we authorise with the new token
             this.isReconnectPending = true;
@@ -483,7 +483,7 @@ class WebsocketTransport implements StreamingTransportInterface {
 
     isSupported = WebsocketTransport.isSupported;
 
-    setUnauthorizedCallback(callback: () => void) {
+    setUnauthorizedCallback(callback: (url: string) => void) {
         this.unauthorizedCallback = callback;
     }
 
