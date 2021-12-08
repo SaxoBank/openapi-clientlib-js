@@ -61,7 +61,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
 
     stateChangedCallback: StateChangeCallback = NOOP;
     receivedCallback: ReceiveCallback = NOOP;
-    unauthorizedCallback = NOOP;
+    unauthorizedCallback: (url: string) => void = NOOP;
     setConnectionSlowCallback = NOOP;
     subscriptionResetCallback = NOOP;
     transportFailCallback;
@@ -592,7 +592,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                         // if this call was superseded by another one, then ignore this error
                         // else let auth provider know of invalid token
                         if (this.authToken === authToken) {
-                            this.unauthorizedCallback();
+                            this.unauthorizedCallback(this.baseUrl);
                         }
 
                         return;
@@ -662,7 +662,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         this.receivedCallback = callback;
     }
 
-    setUnauthorizedCallback(callback: () => void) {
+    setUnauthorizedCallback(callback: (url: string) => void) {
         this.unauthorizedCallback = callback;
     }
 

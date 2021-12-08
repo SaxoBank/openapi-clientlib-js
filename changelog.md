@@ -1,3 +1,6 @@
+### v10.8.1
+- Pass a url with a error for correlation
+
 ### 10.8.0
  - Remove streaming heartbeat flag and make it always present
 

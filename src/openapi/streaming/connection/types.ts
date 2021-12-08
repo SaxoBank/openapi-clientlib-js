@@ -46,7 +46,7 @@ export interface StreamingTransportInterface {
 
     setStateChangedCallback(callback: StateChangeCallback): void;
 
-    setUnauthorizedCallback(callback: () => void): void;
+    setUnauthorizedCallback(callback: (url: string) => void): void;
 
     setConnectionSlowCallback(callback: () => void): void;
 

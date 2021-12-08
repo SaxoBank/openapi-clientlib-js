@@ -305,8 +305,8 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * The streaming connection received a unauthorized - the token is
      * being rejected so we should get a new one.
      */
-    private onUnauthorized() {
-        this.authProvider.tokenRejected();
+    private onUnauthorized(url: string) {
+        this.authProvider.tokenRejected(url);
     }
 
     /**
