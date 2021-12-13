@@ -43,6 +43,14 @@ const binaryContentTypes: Record<string, boolean> = {
     'application/octet-stream': true,
     'application/vnd.ms-excel': true,
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': true,
+    'application/msword': true,
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        true,
+};
+
+// list of content-types that will be treated as text type
+const textContentTypes: Record<string, boolean> = {
+    'application/problem+json; charset=utf-8': true,
 };
 
 /**
@@ -185,7 +193,10 @@ export function convertFetchSuccess(
                 }
             },
         );
-    } else if (contentType?.includes('multipart/mixed')) {
+    } else if (
+        contentType?.includes('multipart/mixed') ||
+        (contentType && textContentTypes[contentType])
+    ) {
         convertedPromise = convertResponse(url, body, 'text', result).then(
             function (text) {
                 return {
@@ -215,6 +226,9 @@ export function convertFetchSuccess(
             },
         );
     } else {
+        log.warn(LOG_AREA, 'Falling back to content type text', {
+            contentType,
+        });
         convertedPromise = convertResponse(url, body, 'text', result)
             .then(function (text) {
                 return {
