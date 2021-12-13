@@ -49,7 +49,9 @@ const binaryContentTypes: Record<string, boolean> = {
 };
 
 // list of content-types that will be treated as text type
-const textContentTypes: Record<string, boolean> = {};
+const textContentTypes: Record<string, boolean> = {
+    'application/problem+json; charset=utf-8': true,
+};
 
 /**
  * Follows the jQuery way of cache breaking - start with the current time and add 1 per request,
@@ -193,7 +195,7 @@ export function convertFetchSuccess(
         );
     } else if (
         contentType?.includes('multipart/mixed') ||
-        textContentTypes[contentType]
+        (contentType && textContentTypes[contentType])
     ) {
         convertedPromise = convertResponse(url, body, 'text', result).then(
             function (text) {
