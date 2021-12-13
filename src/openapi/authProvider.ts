@@ -365,7 +365,7 @@ class AuthProvider extends MicroEmitter<EmittedEvents> {
     /**
      * Call this method when a 401 unauthenticated is received
      */
-    tokenRejected(expiryOfRejectedToken?: number) {
+    tokenRejected(url: string, expiryOfRejectedToken?: number) {
         const isFetching = this.isFetchingNewToken();
 
         const currentAuthExpiry = this.getExpiry();
@@ -434,6 +434,7 @@ class AuthProvider extends MicroEmitter<EmittedEvents> {
                             expiryOfRejectedToken,
                             currentAuthExpiry,
                             now,
+                            url,
                         },
                     );
                 }

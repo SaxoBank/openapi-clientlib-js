@@ -86,7 +86,7 @@ class TransportAuth extends TransportBase {
 
             log.debug(LOG_AREA, 'Authentication failure', result);
 
-            this.authProvider.tokenRejected(oldTokenExpiry);
+            this.authProvider.tokenRejected(result.url, oldTokenExpiry);
         }
         throw result;
     }

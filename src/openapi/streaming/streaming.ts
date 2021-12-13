@@ -226,7 +226,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             connectRetryDelayLevels,
             parserEngines,
             parsers,
-            isWebsocketStreamingHeartBeatEnabled,
             clearSubscriptionsInDispose,
         } = options;
 
@@ -240,7 +239,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             // Streaming service relays message payload received from publishers as it is, which could be protobuf encoded.
             // This protocol is used to serialize the message envelope rather than the payload
             messageSerializationProtocol,
-            isWebsocketStreamingHeartBeatEnabled,
         };
 
         if (typeof connectRetryDelay === 'number') {
@@ -307,8 +305,8 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * The streaming connection received a unauthorized - the token is
      * being rejected so we should get a new one.
      */
-    private onUnauthorized() {
-        this.authProvider.tokenRejected();
+    private onUnauthorized(url: string) {
+        this.authProvider.tokenRejected(url);
     }
 
     /**

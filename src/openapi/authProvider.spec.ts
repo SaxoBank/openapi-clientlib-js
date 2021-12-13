@@ -522,7 +522,7 @@ describe('openapi AuthProvider', () => {
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();
-            authProvider.tokenRejected();
+            authProvider.tokenRejected('test');
             expect(fetch).toBeCalledTimes(1);
         });
 
@@ -539,15 +539,15 @@ describe('openapi AuthProvider', () => {
             expect(fetch).toBeCalledTimes(1);
 
             // ignored because fetch is in progress
-            authProvider.tokenRejected();
+            authProvider.tokenRejected('test');
             expect(fetch).toBeCalledTimes(1);
             fetch.resolve(200, { token: 'TOK2', expiry: 60 });
             setTimeout(() => {
                 // ignored because lt 10,000 ms has passed since new token
-                authProvider.tokenRejected();
+                authProvider.tokenRejected('test');
                 expect(fetch).toBeCalledTimes(1);
                 tick(10001);
-                authProvider.tokenRejected();
+                authProvider.tokenRejected('test');
                 expect(fetch).toBeCalledTimes(2);
                 done();
             });
@@ -562,7 +562,7 @@ describe('openapi AuthProvider', () => {
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();
-            authProvider.tokenRejected(relativeDate(60));
+            authProvider.tokenRejected('test', relativeDate(60));
             expect(fetch).toBeCalledTimes(1);
         });
 
@@ -575,7 +575,7 @@ describe('openapi AuthProvider', () => {
             authProvider = new AuthProvider(initialOptions);
 
             expect(fetch).not.toBeCalled();
-            authProvider.tokenRejected(relativeDate(-60));
+            authProvider.tokenRejected('test', relativeDate(-60));
             expect(fetch).toBeCalledTimes(0);
         });
 
@@ -592,12 +592,12 @@ describe('openapi AuthProvider', () => {
             expect(fetch).toBeCalledTimes(1);
 
             // ignored because fetch is in progress
-            authProvider.tokenRejected(relativeDate(60));
+            authProvider.tokenRejected('test', relativeDate(60));
             expect(fetch).toBeCalledTimes(1);
             fetch.resolve(200, { token: 'TOK2', expiry: 60 });
             setTimeout(() => {
                 expect(fetch).toBeCalledTimes(1);
-                authProvider.tokenRejected(relativeDate(60));
+                authProvider.tokenRejected('test', relativeDate(60));
                 expect(fetch).toBeCalledTimes(2);
                 done();
             });
@@ -632,7 +632,7 @@ describe('openapi AuthProvider', () => {
             clearTimeout(authProvider.tokenRefreshTimer);
             tick(15000);
 
-            authProvider.tokenRejected(relativeDate(-5));
+            authProvider.tokenRejected('test', relativeDate(-5));
 
             expect(fetch).toBeCalledTimes(1);
         });
