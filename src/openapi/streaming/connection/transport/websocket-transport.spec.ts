@@ -121,6 +121,41 @@ describe('openapi WebSocket Transport', () => {
                 '?contextId=0000000000&Authorization=TOKEN&sendHeartbeats=true',
             );
         });
+
+        it('should cope with a token update after start', async () => {
+            const spyOnStartCallback = jest.fn().mockName('spyStartCallback');
+            const options = {};
+
+            const transport = new WebSocketTransport(BASE_URL);
+            transport.updateQuery(AUTH_TOKEN, CONTEXT_ID);
+            transport.start(options, spyOnStartCallback);
+            const rejectFirst = fetchMock.reject;
+            transport.updateQuery(AUTH_TOKEN + '2', CONTEXT_ID + '2', 0, true);
+
+            rejectFirst(new Error());
+            fetchMock.resolve(200, {});
+
+            await wait();
+            tick(300);
+            await wait();
+
+            expect(fetchMock).toBeCalledTimes(2);
+            expect(fetchMock).toBeCalledWith(
+                'testUrl/streamingws/authorize?contextId=00000000002',
+                expect.objectContaining({
+                    headers: {
+                        'X-Request-Id': '2',
+                        Authorization: 'TOKEN2',
+                    },
+                }),
+            );
+
+            expect(spyOnStartCallback).toBeCalledTimes(1);
+            expect(global.WebSocket).toBeCalledTimes(1);
+            expect(global.WebSocket).toBeCalledWith(
+                'testUrl/streamingws/connect?contextId=00000000002&Authorization=TOKEN2&sendHeartbeats=true',
+            );
+        });
     });
 
     describe('network errors', () => {
