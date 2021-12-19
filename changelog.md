@@ -1,3 +1,7 @@
+### v10.8.3
+
+-   Fix a issue where a network failure followed quickly by a new token can cause the websocket transport to hang
+
 ### v10.8.2
 
 -   Fix a bug where doc/docx are not supporting and add logging so that library can be defaulted to binary type download in future
