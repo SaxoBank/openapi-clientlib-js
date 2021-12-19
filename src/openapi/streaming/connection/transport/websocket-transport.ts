@@ -50,14 +50,14 @@ const STATE_NONE = 0;
 const STATE_AWAITING_START = 1;
 const STATE_CONNECTING = 2;
 const STATE_CONNECTED = 3;
-const STATE_AWAITING_RECONNECT = 4;
+const STATE_AWAITING_NEW_TOKEN_TO_RECONNECT = 4;
 
 type WS_STATE =
     | typeof STATE_NONE
     | typeof STATE_AWAITING_START
     | typeof STATE_CONNECTING
     | typeof STATE_CONNECTED
-    | typeof STATE_AWAITING_RECONNECT;
+    | typeof STATE_AWAITING_NEW_TOKEN_TO_RECONNECT;
 
 const NOOP = () => {};
 
@@ -325,7 +325,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         if (event.code === socketCloseCodes.TOKEN_EXPIRED) {
             this.unauthorizedCallback(this.connectionUrl);
 
-            this.state = STATE_AWAITING_RECONNECT;
+            this.state = STATE_AWAITING_NEW_TOKEN_TO_RECONNECT;
             return;
         }
 
@@ -619,7 +619,7 @@ class WebsocketTransport implements StreamingTransportInterface {
                 this.onAuthorizedAwaitingStart();
                 break;
 
-            case STATE_AWAITING_RECONNECT:
+            case STATE_AWAITING_NEW_TOKEN_TO_RECONNECT:
                 this.onAuthorizedAwaitingReconnect();
                 break;
 
