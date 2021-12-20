@@ -420,6 +420,7 @@ class WebsocketTransport implements StreamingTransportInterface {
         this.destroySocket();
         this.stateChangedCallback(constants.CONNECTION_STATE_FAILED);
         this.failCallback();
+        this.state = STATE_NONE;
     }
 
     private detectNetworkError() {
@@ -613,6 +614,8 @@ class WebsocketTransport implements StreamingTransportInterface {
     onAuthorized() {
         switch (this.state) {
             case STATE_NONE:
+            case STATE_CONNECTED:
+            case STATE_CONNECTING:
                 break;
 
             case STATE_AWAITING_START:
@@ -624,7 +627,7 @@ class WebsocketTransport implements StreamingTransportInterface {
                 break;
 
             default:
-                log.error(LOG_AREA, 'Unexpected state onAuthorized', {
+                log.info(LOG_AREA, 'Unexpected state onAuthorized', {
                     state: this.state,
                 });
                 break;
