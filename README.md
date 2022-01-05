@@ -6,6 +6,14 @@ The OpenApi Client Library a JavaScript library for, among other things, consumi
 The library implements all details regarding security, handshake, heartbeat, endpoint data contracts, subscriptions and batching.
 It also has hooks for custom conversion of data and mocked data as well as a bunch of utility functions.
 
+## Installing
+
+### NPM
+`npm install openapi-clientlib`
+
+### YARN
+`yarn add openapi-clientlib`
+
 ## Building the library
 
 1. Clone the repo  
