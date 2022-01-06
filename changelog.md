@@ -1,3 +1,7 @@
+### v10.8.4
+
+-   Reduce log messages and simplify fetch if there is no content
+
 ### v10.8.3
 
 -   Fix a issue where a network failure followed quickly by a new token can cause the websocket transport to hang
