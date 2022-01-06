@@ -51,6 +51,7 @@ const binaryContentTypes: Record<string, boolean> = {
 // list of content-types that will be treated as text type
 const textContentTypes: Record<string, boolean> = {
     'application/problem+json; charset=utf-8': true,
+    'text/html': true,
 };
 
 /**
@@ -143,8 +144,10 @@ export function convertFetchSuccess(
     const status = result?.status;
     const headers = result?.headers;
     let contentType: string | null | undefined;
+    let contentLength: string | null | undefined;
     let didHeadersFail = false;
     try {
+        contentLength = headers.get('content-length');
         contentType = headers.get('content-type');
     } catch {
         log.warn(LOG_AREA, 'Failed to get content-type header', {
@@ -225,8 +228,17 @@ export function convertFetchSuccess(
                 };
             },
         );
+    } else if (contentLength === '0') {
+        convertedPromise = Promise.resolve({
+            response: undefined,
+            status,
+            headers,
+            size: 0,
+            url,
+        });
     } else {
         log.warn(LOG_AREA, 'Falling back to content type text', {
+            url,
             contentType,
         });
         convertedPromise = convertResponse(url, body, 'text', result)

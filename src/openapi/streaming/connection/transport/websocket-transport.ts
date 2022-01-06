@@ -612,9 +612,6 @@ class WebsocketTransport implements StreamingTransportInterface {
 
     onAuthorized() {
         switch (this.state) {
-            case STATE_NONE:
-                break;
-
             case STATE_AWAITING_START:
                 this.onAuthorizedAwaitingStart();
                 break;
@@ -622,13 +619,9 @@ class WebsocketTransport implements StreamingTransportInterface {
             case STATE_AWAITING_NEW_TOKEN_TO_RECONNECT:
                 this.onAuthorizedAwaitingReconnect();
                 break;
-
-            default:
-                log.error(LOG_AREA, 'Unexpected state onAuthorized', {
-                    state: this.state,
-                });
-                break;
         }
+
+        // All other states are ok - connecting or connected, its fine to re-authorize with the new token
     }
 
     onAuthorizedAwaitingStart() {

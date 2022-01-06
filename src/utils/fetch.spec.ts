@@ -319,6 +319,47 @@ describe('utils fetch', () => {
                 `);
     });
 
+    it('resolves if no content length', async () => {
+        // @ts-ignore
+        const result = {
+            headers: {
+                get(headerName: string) {
+                    if (headerName === 'content-type') {
+                        return undefined;
+                    }
+                    if (headerName === 'content-length') {
+                        return '0';
+                    }
+                    return undefined;
+                },
+            },
+            status: 200,
+            text: () => {
+                return Promise.reject('Should not call text');
+            },
+        };
+
+        const promise = convertFetchSuccess(
+            'url',
+            'body',
+            0,
+            // @ts-ignore
+            result,
+        );
+
+        await expect(promise).resolves.toMatchInlineSnapshot(`
+                    Object {
+                      "headers": Object {
+                        "get": [Function],
+                      },
+                      "response": undefined,
+                      "size": 0,
+                      "status": 200,
+                      "url": "url",
+                    }
+                `);
+    });
+
     // we would like to remove this test case in the future
     it('resolves if no content type and text rejects', async () => {
         // @ts-ignore
@@ -327,6 +368,9 @@ describe('utils fetch', () => {
                 get(headerName: string) {
                     if (headerName === 'content-type') {
                         return 'unknown';
+                    }
+                    if (headerName === 'content-length') {
+                        return '1';
                     }
                     return undefined;
                 },
