@@ -44,7 +44,7 @@
         "@types/signalr": "2.2.37",
         "@typescript-eslint/eslint-plugin": "4.33.0",
         "@typescript-eslint/parser": "4.33.0",
-        "babel-jest": "27.4.2",
+        "babel-jest": "27.4.6",
         "eslint": "7.32.0",
         "eslint-import-resolver-node": "0.3.6",
         "eslint-import-resolver-typescript": "2.5.0",
