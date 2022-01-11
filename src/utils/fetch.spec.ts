@@ -360,6 +360,41 @@ describe('utils fetch', () => {
                 `);
     });
 
+    it('resolves if status 204', async () => {
+        // @ts-ignore
+        const result = {
+            headers: {
+                get() {
+                    return undefined;
+                },
+            },
+            status: 204,
+            text: () => {
+                return Promise.reject('Should not call text');
+            },
+        };
+
+        const promise = convertFetchSuccess(
+            'url',
+            'body',
+            0,
+            // @ts-ignore
+            result,
+        );
+
+        await expect(promise).resolves.toMatchInlineSnapshot(`
+                    Object {
+                      "headers": Object {
+                        "get": [Function],
+                      },
+                      "response": undefined,
+                      "size": 0,
+                      "status": 204,
+                      "url": "url",
+                    }
+                `);
+    });
+
     // we would like to remove this test case in the future
     it('resolves if no content type and text rejects', async () => {
         // @ts-ignore
