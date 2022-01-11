@@ -946,11 +946,9 @@ describe('openapi Streaming', () => {
             expect(subscription.reset.mock.calls.length).toEqual(0);
         });
         it('handles reset all', () => {
-            const warnLogSpy = jest.spyOn(log, 'warn');
             receivedCallback([{ ReferenceId: '_resetsubscriptions' }]);
             expect(subscription.reset.mock.calls.length).toEqual(1);
             expect(subscription.reset.mock.calls[0]).toEqual([true]);
-            expect(warnLogSpy).toHaveBeenCalledTimes(1);
         });
         it('handles reset all for empty TargetReferenceIds array', () => {
             receivedCallback([
