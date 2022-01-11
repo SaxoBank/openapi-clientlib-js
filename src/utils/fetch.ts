@@ -228,7 +228,7 @@ export function convertFetchSuccess(
                 };
             },
         );
-    } else if (contentLength === '0') {
+    } else if (contentLength === '0' || status === 204) {
         convertedPromise = Promise.resolve({
             response: undefined,
             status,

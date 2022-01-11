@@ -1,3 +1,7 @@
+### v10.8.6
+
+-   Assume 204 response has no content
+
 ### v10.8.5
 
 -   Remove unnecessary warning log
