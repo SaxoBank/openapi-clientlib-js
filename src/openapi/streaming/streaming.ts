@@ -650,10 +650,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             return message.Data[0].TargetReferenceIds;
         }
 
-        log.warn(LOG_AREA, 'Unrecognised reset message', {
-            message,
-        });
-
         return null;
     }
 
