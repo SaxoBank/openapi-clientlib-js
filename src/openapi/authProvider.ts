@@ -427,7 +427,9 @@ class AuthProvider extends MicroEmitter<EmittedEvents> {
                         },
                     );
                 } else {
-                    log.error(
+                    // since the expiry is "guessed" (we get a relative expiry, but calls take time, javascript
+                    // time is user based and unreliable) this can happen
+                    log.warn(
                         LOG_AREA,
                         'Unauthorized with a valid token, will fetch a new one',
                         {
@@ -437,6 +439,10 @@ class AuthProvider extends MicroEmitter<EmittedEvents> {
                             url,
                         },
                     );
+                    if (shouldRequest) {
+                        // expire the current token now to avoid more calls using it
+                        this.expiry = now - 1;
+                    }
                 }
             } else if (isCurrentTokenExpired && !isFetching) {
                 const lateBy = now - this.tokenRefreshTimerFireTime;
