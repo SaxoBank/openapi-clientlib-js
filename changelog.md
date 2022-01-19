@@ -1,3 +1,7 @@
+### v10.8.7
+
+-  Reduce some error logs
+
 ### v10.8.6
 
 -   Assume 204 response has no content
