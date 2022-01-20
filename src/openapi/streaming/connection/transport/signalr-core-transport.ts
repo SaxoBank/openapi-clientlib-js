@@ -275,7 +275,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                 transportType: options.transportType,
             });
         } catch (error) {
-            log.error(LOG_AREA, "Couldn't intialize the connection", {
+            log.error(LOG_AREA, "Couldn't initialize the connection", {
                 error,
             });
 
