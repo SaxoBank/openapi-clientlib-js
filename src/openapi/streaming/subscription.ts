@@ -716,7 +716,7 @@ class Subscription {
             .catch((error: any) => {
                 log.debug(
                     LOG_AREA,
-                    'Failed to remove duplicate request subscription',
+                    'Failed to remove left over request subscription',
                     error,
                 );
             });
@@ -745,9 +745,11 @@ class Subscription {
         const willUnsubscribe = nextAction && nextAction & ACTION_UNSUBSCRIBE;
         const isReplace = this.currentState === this.STATE_REPLACE_REQUESTED;
 
-        this.setState(
-            isReplace ? this.STATE_SUBSCRIBED : this.STATE_UNSUBSCRIBED,
-        );
+        if (isReplace) {
+            this.cleanUpLeftOverSubscription(referenceId);
+        }
+
+        this.setState(this.STATE_UNSUBSCRIBED);
 
         // if we are a duplicate response, we should unsubscribe now
         const isDupeRequest =

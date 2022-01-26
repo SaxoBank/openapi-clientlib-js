@@ -2419,13 +2419,17 @@ describe('openapi StreamingSubscription', () => {
             );
         });
 
-        it('handles modify replace error', async () => {
+        it.only('handles modify replace error', async () => {
+            const onError = jest.fn();
             const subscription = new Subscription(
                 '123',
                 transport,
                 'servicePath',
                 'src/test/resource',
                 {},
+                {
+                    onError,
+                },
             );
             subscription.onSubscribe();
 
@@ -2446,6 +2450,7 @@ describe('openapi StreamingSubscription', () => {
             expect(subscription.currentState).toBe(
                 subscription.STATE_REPLACE_REQUESTED,
             );
+            expect(onError).not.toBeCalled();
 
             transport.postReject({
                 status: '500',
@@ -2454,8 +2459,9 @@ describe('openapi StreamingSubscription', () => {
 
             await wait();
             expect(subscription.currentState).toBe(
-                subscription.STATE_SUBSCRIBED,
+                subscription.STATE_UNSUBSCRIBED,
             );
+            expect(onError).toBeCalled();
         });
     });
 });
