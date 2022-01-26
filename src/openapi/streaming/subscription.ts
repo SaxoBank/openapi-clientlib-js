@@ -363,7 +363,13 @@ class Subscription {
         this.transport
             .post(this.servicePath, subscribeUrl, null, options)
             .then(this.onSubscribeSuccess.bind(this, referenceId))
-            .catch(this.onSubscribeError.bind(this, referenceId));
+            .catch(
+                this.onSubscribeError.bind(
+                    this,
+                    referenceId,
+                    previousReferenceId,
+                ),
+            );
     }
 
     /**
@@ -728,6 +734,7 @@ class Subscription {
      */
     private onSubscribeError(
         referenceId: string,
+        previousReferenceId: string | null | undefined,
         response: {
             response?: { Message: string; ErrorCode: string };
             isNetworkError: boolean;
@@ -744,10 +751,6 @@ class Subscription {
         const nextAction = this.queue.peekAction();
         const willUnsubscribe = nextAction && nextAction & ACTION_UNSUBSCRIBE;
         const isReplace = this.currentState === this.STATE_REPLACE_REQUESTED;
-
-        if (isReplace) {
-            this.cleanUpLeftOverSubscription(referenceId);
-        }
 
         this.setState(this.STATE_UNSUBSCRIBED);
 
@@ -773,6 +776,9 @@ class Subscription {
                 this.tryPerformAction(ACTION_SUBSCRIBE);
                 return;
             }
+        } else if (isReplace && previousReferenceId) {
+            // a replace error may have failed to cleanup the current subscription
+            this.cleanUpLeftOverSubscription(previousReferenceId);
         }
 
         const errorCode = response?.response
