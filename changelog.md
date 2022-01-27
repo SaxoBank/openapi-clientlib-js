@@ -1,3 +1,8 @@
+### v10.8.8
+
+-  Handle subscription errors on replace better
+
+
 ### v10.8.7
 
 -  Reduce some error logs

@@ -363,7 +363,13 @@ class Subscription {
         this.transport
             .post(this.servicePath, subscribeUrl, null, options)
             .then(this.onSubscribeSuccess.bind(this, referenceId))
-            .catch(this.onSubscribeError.bind(this, referenceId));
+            .catch(
+                this.onSubscribeError.bind(
+                    this,
+                    referenceId,
+                    previousReferenceId,
+                ),
+            );
     }
 
     /**
@@ -716,7 +722,7 @@ class Subscription {
             .catch((error: any) => {
                 log.debug(
                     LOG_AREA,
-                    'Failed to remove duplicate request subscription',
+                    'Failed to remove left over request subscription',
                     error,
                 );
             });
@@ -728,6 +734,7 @@ class Subscription {
      */
     private onSubscribeError(
         referenceId: string,
+        previousReferenceId: string | null | undefined,
         response: {
             response?: { Message: string; ErrorCode: string };
             isNetworkError: boolean;
@@ -745,9 +752,7 @@ class Subscription {
         const willUnsubscribe = nextAction && nextAction & ACTION_UNSUBSCRIBE;
         const isReplace = this.currentState === this.STATE_REPLACE_REQUESTED;
 
-        this.setState(
-            isReplace ? this.STATE_SUBSCRIBED : this.STATE_UNSUBSCRIBED,
-        );
+        this.setState(this.STATE_UNSUBSCRIBED);
 
         // if we are a duplicate response, we should unsubscribe now
         const isDupeRequest =
@@ -771,6 +776,9 @@ class Subscription {
                 this.tryPerformAction(ACTION_SUBSCRIBE);
                 return;
             }
+        } else if (isReplace && previousReferenceId) {
+            // a replace error may have failed to cleanup the current subscription
+            this.cleanUpLeftOverSubscription(previousReferenceId);
         }
 
         const errorCode = response?.response
