@@ -14,6 +14,7 @@ import type {
     ReceiveCallback,
 } from '../types';
 import type SignalR from '@microsoft/signalr';
+import { HubConnectionState } from '@microsoft/signalr';
 import {
     OPENAPI_CONTROL_MESSAGE_DISCONNECT,
     OPENAPI_CONTROL_MESSAGE_RECONNECT,
@@ -389,6 +390,14 @@ class SignalrCoreTransport implements StreamingTransportInterface {
             log.warn(
                 LOG_AREA,
                 'Trying to create message stream before creating connection',
+            );
+            return;
+        }
+
+        if (this.connection.state !== HubConnectionState.Connected) {
+            log.warn(
+                LOG_AREA,
+                'Trying to create message when connection is not in connected state',
             );
             return;
         }

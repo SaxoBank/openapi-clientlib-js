@@ -10,6 +10,7 @@ import * as constants from '../constants';
 import jsonPayload from './payload.json';
 import SignalrCoreTransport from './signalr-core-transport';
 import 'fast-text-encoding';
+import {HubConnectionState} from "@microsoft/signalr";
 
 const CONTEXT_ID = '0000000000';
 const BASE_URL = 'testUrl';
@@ -114,6 +115,7 @@ describe('openapi SignalR core Transport', () => {
                 return mockStart.promise;
             },
             stream: spyOnMessageStream,
+            state: HubConnectionState.Connected,
             stop: spyOnConnectionStop,
             invoke: (method: string, ...args: any): any => {
                 if (method === 'RenewToken') {
