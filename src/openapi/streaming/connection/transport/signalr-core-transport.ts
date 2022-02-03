@@ -3,15 +3,15 @@ import * as transportTypes from '../transportTypes';
 import * as constants from '../constants';
 import type {
     ConnectionState,
-    TransportTypes,
     StreamingMessage,
+    TransportTypes,
 } from '../../types';
 import type {
-    StreamingTransportOptions,
-    StreamingTransportInterface,
-    StreamingData,
-    StateChangeCallback,
     ReceiveCallback,
+    StateChangeCallback,
+    StreamingData,
+    StreamingTransportInterface,
+    StreamingTransportOptions,
 } from '../types';
 import type SignalR from '@microsoft/signalr';
 import { HubConnectionState } from '@microsoft/signalr';
@@ -359,7 +359,8 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         }
 
         const sendCloseMessage = () =>
-            this.connection
+            this.connection &&
+            this.connection.state === HubConnectionState.Connected
                 ? this.connection.invoke('CloseConnection').catch((err) => {
                       log.info(
                           LOG_AREA,
@@ -372,9 +373,10 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         // close message stream before closing connection
         if (this.messageStream) {
             const closePromise =
-                ( this.connection && this.connection.state === HubConnectionState.Connected)
-                    // @ts-expect-error cancelCallback is no included in the IStreamResult but according to implementation it exists
-                    ? this.messageStream.cancelCallback()
+                this.connection &&
+                this.connection.state === HubConnectionState.Connected
+                    ? // @ts-expect-error cancelCallback is no included in the IStreamResult but according to implementation it exists
+                      this.messageStream.cancelCallback()
                     : Promise.resolve();
             return closePromise
                 .then(sendCloseMessage)
