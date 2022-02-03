@@ -371,13 +371,14 @@ class SignalrCoreTransport implements StreamingTransportInterface {
 
         // close message stream before closing connection
         if (this.messageStream) {
-            return (
-                this.messageStream
+            const closePromise =
+                ( this.connection && this.connection.state === HubConnectionState.Connected)
                     // @ts-expect-error cancelCallback is no included in the IStreamResult but according to implementation it exists
-                    .cancelCallback()
-                    .then(sendCloseMessage)
-                    .then(() => this.connection && this.connection.stop())
-            );
+                    ? this.messageStream.cancelCallback()
+                    : Promise.resolve();
+            return closePromise
+                .then(sendCloseMessage)
+                .then(() => this.connection && this.connection.stop());
         }
 
         return sendCloseMessage().then(
@@ -390,14 +391,6 @@ class SignalrCoreTransport implements StreamingTransportInterface {
             log.warn(
                 LOG_AREA,
                 'Trying to create message stream before creating connection',
-            );
-            return;
-        }
-
-        if (this.connection.state !== HubConnectionState.Connected) {
-            log.warn(
-                LOG_AREA,
-                'Trying to create message when connection is not in connected state',
             );
             return;
         }

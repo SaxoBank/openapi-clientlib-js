@@ -114,8 +114,8 @@ describe('openapi SignalR core Transport', () => {
                 mockStart = getResolvablePromise();
                 return mockStart.promise;
             },
-            stream: spyOnMessageStream,
             state: HubConnectionState.Connected,
+            stream: spyOnMessageStream,
             stop: spyOnConnectionStop,
             invoke: (method: string, ...args: any): any => {
                 if (method === 'RenewToken') {
