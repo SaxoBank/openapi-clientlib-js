@@ -1060,9 +1060,9 @@ class Subscription {
                 }
 
                 // when open api has upgraded this should be a warn, because we should always get the protobuf name
-                log.info(
+                log.warn(
                     LOG_AREA,
-                    'Missing schema name, may cause protobuf errors',
+                    'Missing schema name in open api response, this may cause protobuf errors during service upgrade',
                     {
                         schemaName: this.SchemaName,
                         servicePath: this.servicePath,
