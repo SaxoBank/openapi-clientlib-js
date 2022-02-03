@@ -1059,7 +1059,6 @@ class Subscription {
                     return;
                 }
 
-                // when open api has upgraded this should be a warn, because we should always get the protobuf name
                 log.warn(
                     LOG_AREA,
                     'Missing schema name in open api response, this may cause protobuf errors during service upgrade',
