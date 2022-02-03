@@ -1,7 +1,10 @@
+### v10.8.9
+
+-  Fix an issue with protobuf fallback
+
 ### v10.8.8
 
 -  Handle subscription errors on replace better
-
 
 ### v10.8.7
 
