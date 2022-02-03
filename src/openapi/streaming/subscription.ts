@@ -1042,21 +1042,33 @@ class Subscription {
 
             if (this.subscriptionData.Format === FORMAT_PROTOBUF) {
                 if (!this.SchemaName) {
-                    // If SchemaName is missing both in response and parser cache, it means that openapi doesn't support protobuf for this endpoint.
-                    // In such scenario, falling back to default parser.
-                    this.fallbackToJSON();
-                } else {
-                    // when open api has upgraded this should be a warn
-                    log.info(
+                    log.warn(
                         LOG_AREA,
-                        'Missing schema name, may cause protobuf errors',
+                        'Missing schema name in response and parser, falling back to JSON',
                         {
                             schemaName: this.SchemaName,
                             servicePath: this.servicePath,
                             url: this.url,
                         },
                     );
+                    // If SchemaName is missing both in response and parser cache, it means that openapi doesn't support protobuf for this endpoint.
+                    // In such scenario, falling back to default parser.
+                    this.fallbackToJSON();
+                    // reset otherwise we do nothing and continue to get protobuf
+                    this.reset(false);
+                    return;
                 }
+
+                // when open api has upgraded this should be a warn, because we should always get the protobuf name
+                log.info(
+                    LOG_AREA,
+                    'Missing schema name, may cause protobuf errors',
+                    {
+                        schemaName: this.SchemaName,
+                        servicePath: this.servicePath,
+                        url: this.url,
+                    },
+                );
             }
         }
 
