@@ -791,6 +791,11 @@ class Subscription {
             return;
         }
 
+        // If a modify came in whilst we are subscribing, we want to clear it
+        // we don't want it firing in our error'd - unsubscribed state
+        // and if we do succeed in a new subscribe, it will be with the updated arguments
+        this.queue.clearModifys();
+
         const nextAction = this.queue.peekAction();
         const willUnsubscribe = nextAction && nextAction & ACTION_UNSUBSCRIBE;
         const isReplace = this.currentState === this.STATE_REPLACE_REQUESTED;
