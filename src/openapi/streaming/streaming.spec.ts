@@ -18,7 +18,7 @@ import type { RetryDelayLevel, StreamingConfigurableOptions } from './types';
 import * as connectionConstants from './connection/constants';
 import * as streamingTransports from './connection/transportTypes';
 import 'fast-text-encoding';
-import {HubConnectionState} from "@microsoft/signalr";
+import { HubConnectionState } from '@microsoft/signalr';
 
 describe('openapi Streaming', () => {
     let stateChangedCallback: (arg: Record<string, any>) => void;
