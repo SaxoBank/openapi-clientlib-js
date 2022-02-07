@@ -362,12 +362,12 @@ class SignalrCoreTransport implements StreamingTransportInterface {
             this.connection &&
             this.connection.state === HubConnectionState.Connected
                 ? this.connection.invoke('CloseConnection').catch((err) => {
-                      log.info(
-                          LOG_AREA,
-                          'Error occurred while invoking CloseConnection',
-                          err,
-                      );
-                  })
+                    log.info(
+                        LOG_AREA,
+                        'Error occurred while invoking CloseConnection',
+                        err,
+                    );
+                })
                 : Promise.resolve();
 
         // close message stream before closing connection
