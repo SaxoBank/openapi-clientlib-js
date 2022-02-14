@@ -1,3 +1,7 @@
+### v10.8.10
+
+-  Add an additional content-type that should be text
+
 ### v10.8.9
 
 -  Fix an issue with protobuf fallback
