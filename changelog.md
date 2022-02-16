@@ -1,3 +1,7 @@
+### v10.8.11
+
+-  Remove cleanup subscriptions on close option as we can drop this functionality as it is not needed
+
 ### v10.8.10
 
 -  Add an additional content-type that should be text

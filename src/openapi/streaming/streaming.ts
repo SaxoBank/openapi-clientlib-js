@@ -32,7 +32,6 @@ const DEFAULT_STREAMING_OPTIONS = {
         streamingTransports.LEGACY_SIGNALR_WEBSOCKETS,
         streamingTransports.LEGACY_SIGNALR_LONG_POLLING,
     ],
-    clearSubscriptionsInDispose: true,
 };
 
 /**
@@ -177,7 +176,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     disposed = false;
     private heartBeatLog: Array<[number, ReadonlyArray<string>]> = [];
     shouldSubscribeBeforeStreamingSetup: boolean;
-    clearSubscriptionsInDispose: boolean | undefined;
 
     /**
      * @param transport - The transport to use for subscribing/unsubscribing.
@@ -226,10 +224,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             connectRetryDelayLevels,
             parserEngines,
             parsers,
-            clearSubscriptionsInDispose,
         } = options;
-
-        this.clearSubscriptionsInDispose = clearSubscriptionsInDispose;
 
         this.connectionOptions = {
             // Faster and does not cause problems after IE8
@@ -1316,13 +1311,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             subscription.dispose();
         }
         this.subscriptions.length = 0;
-
-        if (this.clearSubscriptionsInDispose) {
-            // delete all subscriptions on this context id
-            this.transport.delete('root', 'v1/subscriptions/{contextId}', {
-                contextId: this.contextId,
-            });
-        }
 
         this.disconnect();
     }
