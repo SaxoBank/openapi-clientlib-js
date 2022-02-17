@@ -1,4 +1,4 @@
-### v10.8.11
+### v10.9.0
 
 -  Remove cleanup subscriptions on close option as we can drop this functionality as it is not needed
 
