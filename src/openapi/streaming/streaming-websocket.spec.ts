@@ -669,14 +669,6 @@ describe('openapi Streaming', () => {
             streaming.dispose();
 
             expect(subscription.dispose.mock.calls.length).toEqual(1);
-            expect(transport.delete.mock.calls.length).toEqual(1);
-            expect(transport.delete.mock.calls[0][0]).toEqual('root');
-            expect(transport.delete.mock.calls[0][1]).toEqual(
-                'v1/subscriptions/{contextId}',
-            );
-            expect(transport.delete.mock.calls[0][2]).toEqual({
-                contextId: '0000000000',
-            });
 
             expect(orphanFinderStopMethodSpy.mock.calls.length).toEqual(1);
 

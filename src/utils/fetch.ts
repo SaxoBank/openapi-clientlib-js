@@ -50,8 +50,9 @@ const binaryContentTypes: Record<string, boolean> = {
 
 // list of content-types that will be treated as text type
 const textContentTypes: Record<string, boolean> = {
-    'application/problem+json; charset=utf-8': true,
+    'application/problem+json': true,
     'text/html': true,
+    'application/x-javascript': true,
 };
 
 /**
@@ -198,7 +199,7 @@ export function convertFetchSuccess(
         );
     } else if (
         contentType?.includes('multipart/mixed') ||
-        (contentType && textContentTypes[contentType])
+        (contentType && textContentTypes[contentType.split(';')[0]])
     ) {
         convertedPromise = convertResponse(url, body, 'text', result).then(
             function (text) {
@@ -239,6 +240,8 @@ export function convertFetchSuccess(
     } else {
         log.warn(LOG_AREA, 'Falling back to content type text', {
             url,
+            status,
+            contentLength,
             contentType,
         });
         convertedPromise = convertResponse(url, body, 'text', result)

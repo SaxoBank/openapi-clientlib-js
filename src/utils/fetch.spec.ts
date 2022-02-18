@@ -1,6 +1,7 @@
 import { FetchResponse } from '../test/mocks/fetch';
 import { installClock, uninstallClock, tick } from '../test/utils';
 import { convertFetchSuccess, convertFetchReject } from './fetch';
+import log from '../log';
 
 describe('utils fetch', () => {
     it('images are downloaded as a binary blob', async () => {
@@ -358,6 +359,62 @@ describe('utils fetch', () => {
                       "url": "url",
                     }
                 `);
+    });
+
+    it('resolves if text type problem json', async () => {
+        const debugSpy = jest.fn().mockName(log.DEBUG);
+        log.on(log.DEBUG, debugSpy);
+        const infoSpy = jest.fn().mockName(log.INFO);
+        log.on(log.INFO, infoSpy);
+        const warnSpy = jest.fn().mockName(log.WARN);
+        log.on(log.WARN, warnSpy);
+        const errorSpy = jest.fn().mockName(log.ERROR);
+        log.on(log.ERROR, errorSpy);
+
+        // @ts-ignore
+        const result = {
+            headers: {
+                get(headerName: string) {
+                    if (headerName === 'content-type') {
+                        return "application/problem+json; charset=utf-8': true";
+                    }
+                    if (headerName === 'content-length') {
+                        return '4';
+                    }
+                    return undefined;
+                },
+            },
+            status: 200,
+            text: () => {
+                return Promise.resolve('test');
+            },
+        };
+
+        const promise = convertFetchSuccess(
+            'url',
+            'body',
+            0,
+            // @ts-ignore
+            result,
+        );
+
+        await expect(promise).resolves.toMatchInlineSnapshot(`
+                    Object {
+                      "headers": Object {
+                        "get": [Function],
+                      },
+                      "response": "test",
+                      "responseType": "text",
+                      "size": 4,
+                      "status": 200,
+                      "url": "url",
+                    }
+                `);
+
+        expect(debugSpy).not.toBeCalled();
+        expect(infoSpy).not.toBeCalled();
+        expect(warnSpy).not.toBeCalled();
+        expect(errorSpy).not.toBeCalled();
     });
 
     it('resolves if status 204', async () => {
