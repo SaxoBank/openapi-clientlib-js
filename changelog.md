@@ -1,3 +1,9 @@
+### v10.9.1
+
+- Fix an issue where we're trying to create stream when connection is not in connected state
+- Fix an issue where we're trying to invoke 'CloseConnection' callback on stream when connection 
+  is not in connected state
+
 ### v10.9.0
 
 -  Remove cleanup subscriptions on close option as we can drop this functionality as it is not needed
