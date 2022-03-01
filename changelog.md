@@ -1,3 +1,7 @@
+### v10.10.0
+
+- Add a new shouldLoopTransports option to Streaming
+
 ### v10.9.1
 
 - Fix an issue where we're trying to create stream when connection is not in connected state
