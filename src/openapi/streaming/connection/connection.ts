@@ -195,8 +195,12 @@ class Connection {
         }
 
         if (this.transportIndex > this.transports.length - 1) {
-            // No more transports to choose from.
-            return null;
+            if (this.options.shouldLoopTransports) {
+                this.transportIndex = 0;
+            } else {
+                // No more transports to choose from.
+                return null;
+            }
         }
 
         // Create transport from supported transports lists.
@@ -211,9 +215,9 @@ class Connection {
     }
 
     private getSupportedTransports(
-        requestedTrasnports?: Array<TransportTypes>,
+        requestedTransports?: Array<TransportTypes>,
     ) {
-        let transportNames = requestedTrasnports;
+        let transportNames = requestedTransports;
         if (!transportNames) {
             transportNames = DEFAULT_TRANSPORTS;
         }

@@ -430,7 +430,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         }
 
         // Do not trigger disconnect in case of transport fallback to avoid reconnection
-        // the transport explicitely sets this error flag when there is some issue while parsing message
+        // the transport explicitly sets this error flag when there is some issue while parsing message
         // or if unknown status is received during token renewal
         const shouldFallbackToOtherTransport = this.hasTransportError;
 

@@ -19,6 +19,7 @@ export interface ConnectionOptions {
     transport?: Array<TransportTypes>;
     messageSerializationProtocol?: IHubProtocol;
     isWebsocketStreamingHeartBeatEnabled?: boolean;
+    shouldLoopTransports?: boolean;
 }
 
 export type ConnectionState =
@@ -135,4 +136,8 @@ export interface StreamingConfigurableOptions {
      *  This happens only for the first streaming connection setup after that we turn this off
      */
     shouldSubscribeBeforeStreamingSetup?: boolean;
+    /**
+     * Should the transports be retried in a loop
+     */
+    shouldLoopTransports?: boolean;
 }
