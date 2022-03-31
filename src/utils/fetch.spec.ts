@@ -118,6 +118,22 @@ describe('utils fetch', () => {
         expect(response.responseType).toEqual('text');
     });
 
+    it('zip files are downloaded as a binary blob', async () => {
+        const contentType = 'application/zip';
+        const result = new FetchResponse(
+            200,
+            'this is generic binary data',
+            contentType,
+        ) as unknown as Response;
+        const promise = convertFetchSuccess('url', 'body', 0, result);
+
+        const response = await promise;
+        expect(response.response).toEqual('this is generic binary data');
+        expect(response.status).toEqual(200);
+        expect(response.headers.get('content-type')).toEqual(contentType);
+        expect(response.responseType).toEqual('blob');
+    });
+
     it('unknown file types are downloaded as text', async () => {
         const contentType = 'unknown/file';
         const result = new FetchResponse(

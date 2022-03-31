@@ -46,6 +46,7 @@ const binaryContentTypes: Record<string, boolean> = {
     'application/msword': true,
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
         true,
+    'application/zip': true,
 };
 
 // list of content-types that will be treated as text type

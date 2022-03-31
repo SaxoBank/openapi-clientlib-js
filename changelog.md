@@ -1,3 +1,7 @@
+### v10.10.1
+
+- Add new binary content type: application/zip
+
 ### v10.10.0
 
 - Add a new shouldLoopTransports option to Streaming
