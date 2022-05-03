@@ -135,6 +135,13 @@ class SubscriptionQueue {
     }
 
     /**
+     * Peeks the next action
+     */
+    peek(): QueuedItem | undefined {
+        return this.items[0];
+    }
+
+    /**
      * Removes and returns the action from the beginning of a queue.
      * @returns  First action, if queue is not empty. Otherwise undefined.
      */

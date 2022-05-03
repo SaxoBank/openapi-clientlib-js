@@ -1229,7 +1229,9 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * @param subscription - The subscription to stop and remove.
      */
     disposeSubscription(subscription: Subscription) {
-        this.unsubscribe(subscription);
+        // force unsubscribe - this allows the subscription to know it will never
+        // be superceded by a later subscribe
+        subscription.onUnsubscribe(true);
         subscription.onRemove();
     }
 
