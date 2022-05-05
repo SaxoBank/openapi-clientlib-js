@@ -9,9 +9,11 @@ It also has hooks for custom conversion of data and mocked data as well as a bun
 ## Installing
 
 ### NPM
+
 `npm install openapi-clientlib`
 
 ### YARN
+
 `yarn add openapi-clientlib`
 
 ## Building the library
