@@ -1103,6 +1103,43 @@ describe('openapi StreamingSubscription', () => {
 
             expect(log.error).not.toHaveBeenCalled();
         });
+
+        it('should not fire deltas if force unsubscribe has been called', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                {
+                    onUpdate: updateSpy,
+                    onSubscriptionCreated: createdSpy,
+                    onSubscriptionReadyToRemove: readyToRemoveSpy,
+                },
+            );
+
+            subscription.onSubscribe();
+            transport.post.mockClear();
+
+            sendInitialResponse();
+
+            await wait();
+            updateSpy.mockClear();
+            subscription.onConnectionUnavailable();
+            subscription.onUnsubscribe(true);
+            subscription.onRemove();
+
+            subscription.onStreamingData({
+                ReferenceId: subscription.referenceId as string,
+                Data: [1, 3],
+            });
+            expect(updateSpy).not.toBeCalled();
+            expect(transport.delete.mock.calls.length).toEqual(0);
+            subscription.onConnectionAvailable();
+            await wait();
+            expect(updateSpy).not.toBeCalled();
+            expect(transport.delete.mock.calls.length).toEqual(1);
+        });
     });
 
     describe('activity detection', () => {
