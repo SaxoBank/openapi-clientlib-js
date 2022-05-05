@@ -1,36 +1,36 @@
 ### v10.10.1
 
-- Add new binary content type: application/zip
+-   Add new binary content type: application/zip
 
 ### v10.10.0
 
-- Add a new shouldLoopTransports option to Streaming
+-   Add a new shouldLoopTransports option to Streaming
 
 ### v10.9.1
 
-- Fix an issue where we're trying to create stream when connection is not in connected state
-- Fix an issue where we're trying to invoke 'CloseConnection' callback on stream when connection 
-  is not in connected state
+-   Fix an issue where we're trying to create stream when connection is not in connected state
+-   Fix an issue where we're trying to invoke 'CloseConnection' callback on stream when connection
+    is not in connected state
 
 ### v10.9.0
 
--  Remove cleanup subscriptions on close option as we can drop this functionality as it is not needed
+-   Remove cleanup subscriptions on close option as we can drop this functionality as it is not needed
 
 ### v10.8.10
 
--  Add an additional content-type that should be text
+-   Add an additional content-type that should be text
 
 ### v10.8.9
 
--  Fix an issue with protobuf fallback
+-   Fix an issue with protobuf fallback
 
 ### v10.8.8
 
--  Handle subscription errors on replace better
+-   Handle subscription errors on replace better
 
 ### v10.8.7
 
--  Reduce some error logs
+-   Reduce some error logs
 
 ### v10.8.6
 
