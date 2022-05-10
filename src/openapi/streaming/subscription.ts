@@ -501,6 +501,7 @@ class Subscription {
                                 action,
                                 url: this.url,
                                 servicePath: this.servicePath,
+                                connectionAvailable: this.connectionAvailable,
                             },
                         );
                 }
@@ -873,7 +874,7 @@ class Subscription {
         if (referenceId !== this.referenceId) {
             log.debug(
                 LOG_AREA,
-                'Received an error response for subscribing a subscription that has afterwards been reset - ignoring',
+                'Unsubscribed a subscription that has afterwards been reset - ignoring',
             );
             // we were unsubscribing when reset and the unsubscribe succeeded
             // return because we may have been asked to subscribe after resetting
@@ -1106,7 +1107,7 @@ class Subscription {
             case this.STATE_SUBSCRIBED: {
                 // we could have been in the process of subscribing when we got a reset. We can only assume that the new thing we are subscribing to
                 // was also reset. or we are subscribed / patch requested.. either way we now need to unsubscribe.
-                // if it was in process of subscribing it will now unusbscribe once the subscribe returns.
+                // if it was in process of subscribing it will now unsubscribe once the subscribe returns.
 
                 const nextAction = this.queue.peekAction();
                 // If we are going to unsubscribe next already, we can ignore this reset
@@ -1288,6 +1289,17 @@ class Subscription {
                     url: this.url,
                     servicePath: this.servicePath,
                 });
+        }
+
+        const nextAction = this.queue.peek();
+        const willUnsubscribeForced =
+            nextAction &&
+            nextAction.action & ACTION_UNSUBSCRIBE &&
+            nextAction.args?.force;
+        if (willUnsubscribeForced) {
+            // We need to only ignore it if it is a forced unsubscribe. Thats because a normal unsubscribe if we are not
+            // currently subscribed may be cancelled
+            return;
         }
 
         try {

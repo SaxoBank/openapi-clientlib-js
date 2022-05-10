@@ -1,3 +1,7 @@
+### v10.10.2
+
+-   In some situations delta updates would occur after disposing and this should no longer occur
+
 ### v10.10.1
 
 -   Add new binary content type: application/zip
