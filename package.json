@@ -39,7 +39,7 @@
         "@babel/core": "7.17.10",
         "@babel/preset-env": "7.17.10",
         "@babel/preset-typescript": "7.16.7",
-        "@microsoft/signalr": "6.0.4",
+        "@microsoft/signalr": "6.0.5",
         "@types/jest": "27.5.0",
         "@types/signalr": "2.2.37",
         "@typescript-eslint/eslint-plugin": "4.33.0",
