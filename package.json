@@ -38,7 +38,7 @@
     "devDependencies": {
         "@babel/core": "7.18.2",
         "@babel/preset-env": "7.17.10",
-        "@babel/preset-typescript": "7.16.7",
+        "@babel/preset-typescript": "7.17.12",
         "@microsoft/signalr": "6.0.5",
         "@types/jest": "27.5.0",
         "@types/signalr": "2.2.37",
