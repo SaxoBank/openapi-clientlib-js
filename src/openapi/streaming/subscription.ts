@@ -135,6 +135,12 @@ const ERROR_UNSUPPORTED_FORMAT = 'UnsupportedSubscriptionFormat';
 
 const LOG_AREA = 'Subscription';
 
+type LogDiagnostic = {
+    queue: ReadonlyArray<unknown>;
+    type: string;
+    [otherKey: string]: unknown;
+};
+
 /**
  * A subscription to a resource, which streams updates.
  *
@@ -210,6 +216,7 @@ class Subscription {
     // keep track of last 3 reset timestamps
     resetTimeStamps: Array<number> = [];
     waitForPublisherToRespondTimer: null | number = null;
+    logDiagnostics: Array<LogDiagnostic> = [];
 
     constructor(
         streamingContextId: string,
@@ -453,6 +460,12 @@ class Subscription {
             !this.connectionAvailable ||
             this.TRANSITIONING_STATES & this.currentState
         ) {
+            this.addLogDiagnostic({
+                type: 'queingAction',
+                queue: this.queue.items.slice(0),
+                currentState: this.currentState,
+                action,
+            });
             this.queue.enqueue({ action, args });
         } else {
             this.performAction({ action, args });
@@ -473,6 +486,13 @@ class Subscription {
         this.performAction(this.queue.dequeue(), this.queue.isEmpty());
     }
 
+    private addLogDiagnostic(item: LogDiagnostic) {
+        this.logDiagnostics.push(item);
+        if (this.logDiagnostics.length > 10) {
+            this.logDiagnostics.shift();
+        }
+    }
+
     /**
      * Performs an action to a subscription based on the current state.
      * @param queuedAction - queuedAction
@@ -483,6 +503,11 @@ class Subscription {
         queuedAction: QueuedItem | undefined,
         isLastQueuedAction?: boolean,
     ) {
+        this.addLogDiagnostic({
+            type: 'perform',
+            queuedAction,
+            queue: this.queue.items.slice(0),
+        });
         if (!queuedAction) {
             return;
         }
@@ -502,6 +527,7 @@ class Subscription {
                                 url: this.url,
                                 servicePath: this.servicePath,
                                 connectionAvailable: this.connectionAvailable,
+                                logDiagnostics: this.logDiagnostics,
                             },
                         );
                 }
@@ -548,6 +574,7 @@ class Subscription {
                                 action,
                                 url: this.url,
                                 servicePath: this.servicePath,
+                                logDiagnostics: this.logDiagnostics,
                             },
                         );
                 }
@@ -568,6 +595,7 @@ class Subscription {
                                 action,
                                 url: this.url,
                                 servicePath: this.servicePath,
+                                logDiagnostics: this.logDiagnostics,
                             },
                         );
                 }
@@ -752,6 +780,12 @@ class Subscription {
         const nextAction = this.queue.peekAction();
         const willUnsubscribe = nextAction && nextAction & ACTION_UNSUBSCRIBE;
         const isReplace = this.currentState === this.STATE_REPLACE_REQUESTED;
+
+        this.addLogDiagnostic({
+            type: 'SubscribeError',
+            queue: this.queue.items.slice(0),
+            isReplace,
+        });
 
         this.setState(this.STATE_UNSUBSCRIBED);
 
@@ -1096,6 +1130,12 @@ class Subscription {
      * So that we track the reset
      */
     unsubscribeAndSubscribe() {
+        this.addLogDiagnostic({
+            type: 'unsubscribeAndSubscribe',
+            queue: this.queue.items.slice(0),
+            currentState: this.currentState,
+        });
+
         switch (this.currentState) {
             case this.STATE_UNSUBSCRIBED:
             case this.STATE_UNSUBSCRIBE_REQUESTED:

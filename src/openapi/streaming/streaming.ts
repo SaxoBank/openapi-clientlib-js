@@ -468,6 +468,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                     {
                         contextMessageCount: this.contextMessageCount,
                         latestActivity: this.latestActivity,
+                        mechanism: connectionTransport,
                     },
                     { persist: true },
                 );
@@ -924,7 +925,9 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                     inactivityTimeout: sub.inactivityTimeout,
                     referenceId: sub.referenceId,
                 }));
-                log.error(
+                // this could be due to network issues at the client or problems
+                // at the source server
+                log.warn(
                     LOG_AREA,
                     'Detected multiple service paths hitting orphans, multiple times',
                     {
