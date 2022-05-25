@@ -1,4 +1,4 @@
-/* eslint-disable switch-case/no-case-curly */
+/* eslint-disable switch-case/no-case-curly, max-lines */
 import { extend } from '../../utils/object';
 import log from '../../log';
 import {

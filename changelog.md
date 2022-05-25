@@ -1,3 +1,7 @@
+### v10.10.3
+
+-   Added additional logging information
+
 ### v10.10.2
 
 -   In some situations delta updates would occur after disposing and this should no longer occur
