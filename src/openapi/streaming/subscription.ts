@@ -1153,10 +1153,7 @@ class Subscription {
                 // If we were patching we *could* try and ignore the current patch
                 // but that starts getting complicated because the patch callback might change state
                 // if the callback comes back before subscribe changes the reference id.
-
-                // if we have some patches in the queue, we can remove them
-                // as we will be re-subscribing
-                this.queue.clearModifys();
+                // See the PR removing this feature here: https://github.com/SaxoBank/openapi-clientlib-js/pull/747
 
                 // If we are going to unsubscribe as our final action, we shouldn't subscribe
                 // after unsubscribing
