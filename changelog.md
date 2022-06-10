@@ -1,3 +1,7 @@
+### v10.10.4
+
+-   Fix some bugs that can occur with multiple patches and resets that could result in a stalled subscription
+
 ### v10.10.3
 
 -   Added additional logging information
