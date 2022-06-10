@@ -1142,26 +1142,38 @@ class Subscription {
                 // do not do anything - even if the next action is to subscribe, we can go ahead and do that when the unsubscribe response comes back
                 return;
 
+            case this.STATE_PATCH_REQUESTED:
             case this.STATE_SUBSCRIBE_REQUESTED:
             case this.STATE_REPLACE_REQUESTED:
             case this.STATE_SUBSCRIBED: {
                 // we could have been in the process of subscribing when we got a reset. We can only assume that the new thing we are subscribing to
                 // was also reset. or we are subscribed / patch requested.. either way we now need to unsubscribe.
                 // if it was in process of subscribing it will now unsubscribe once the subscribe returns.
+                //
+                // If we were patching we *could* try and ignore the current patch
+                // but that starts getting complicated because the patch callback might change state
+                // if the callback comes back before subscribe changes the reference id.
 
-                const nextAction = this.queue.peekAction();
-                // If we are going to unsubscribe next already, we can ignore this reset
-                if (nextAction && nextAction & ACTION_UNSUBSCRIBE) {
+                // if we have some patches in the queue, we can remove them
+                // as we will be re-subscribing
+                this.queue.clearModifys();
+
+                // If we are going to unsubscribe as our final action, we shouldn't subscribe
+                // after unsubscribing
+                const isSubscribedAfterActions =
+                    this.queue.peekIsSubscribed(true);
+
+                this.onUnsubscribe(true);
+
+                if (!isSubscribedAfterActions) {
+                    // avoid subscribing since we were not before this was called
                     return;
                 }
-                this.onUnsubscribe(true);
+
+                // subscribe... this will go ahead unless the connection is unavailable, after unsubscribe has occurred
+                this.onSubscribe();
                 break;
             }
-            case this.STATE_PATCH_REQUESTED:
-                // we can ignore the patch we are doing and just go ahead and unsubscribe
-                this.setState(this.STATE_SUBSCRIBED);
-                this.onUnsubscribe(true);
-                break;
 
             case this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG:
                 // We are about to unsubscribe by tag, so no need to do anything
@@ -1179,11 +1191,7 @@ class Subscription {
                         currentState: this.currentState,
                     },
                 );
-                return;
         }
-
-        // subscribe... this will go ahead unless the connection is unavailable, after unsubscribe has occurred
-        this.onSubscribe();
     }
 
     /**

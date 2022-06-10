@@ -142,6 +142,24 @@ class SubscriptionQueue {
     }
 
     /**
+     * Looks to see if the end state after processing actions is to be unsubscribed or not
+     * If the actions are indeterminate (for example, no actions) then it returns the current
+     * state passed as a argument
+     */
+    peekIsSubscribed(isSubscribedNow: boolean): boolean {
+        for (let i = this.items.length - 1; i >= 0; i--) {
+            const action = this.items[i].action;
+            if (action === ACTION_SUBSCRIBE) {
+                return true;
+            }
+            if (action === ACTION_UNSUBSCRIBE) {
+                return false;
+            }
+        }
+        return isSubscribedNow;
+    }
+
+    /**
      * Removes and returns the action from the beginning of a queue.
      * @returns  First action, if queue is not empty. Otherwise undefined.
      */
