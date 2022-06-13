@@ -166,6 +166,12 @@ class Subscription {
         this.STATE_REPLACE_REQUESTED |
         this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG;
 
+    SUBSCRIBED_OR_SUBSCRIBING_STATES =
+        this.STATE_SUBSCRIBED |
+        this.STATE_SUBSCRIBE_REQUESTED |
+        this.STATE_PATCH_REQUESTED |
+        this.STATE_REPLACE_REQUESTED;
+
     /**
      * Defines the name of the property on data used to indicate that the data item is a deletion, rather than a
      * insertion / update.
@@ -295,11 +301,9 @@ class Subscription {
                     // only if nothing has changed - subscribed or mid-subscribed and the same reference id we got all the resets on
                     if (
                         referenceId === this.referenceId &&
-                        (this.currentState === this.STATE_SUBSCRIBED ||
-                            this.currentState ===
-                                this.STATE_SUBSCRIBE_REQUESTED ||
-                            this.currentState === this.STATE_PATCH_REQUESTED ||
-                            this.currentState === this.STATE_REPLACE_REQUESTED)
+                        (this.SUBSCRIBED_OR_SUBSCRIBING_STATES |
+                            this.currentState) >
+                            0
                     ) {
                         this.unsubscribeAndSubscribe();
                     }
@@ -308,7 +312,9 @@ class Subscription {
                 return true;
             }
         }
-        return false;
+        // if we have set a timer, ignore any resets - do nothing
+        // if a subscribe occurs it will clear the timeout so that a new reset would work
+        return Boolean(this.waitForPublisherToRespondTimer);
     }
 
     /**
@@ -337,6 +343,11 @@ class Subscription {
      * Call to actually do a subscribe.
      */
     private subscribe({ replace = false } = {}) {
+        if (this.waitForPublisherToRespondTimer) {
+            clearTimeout(this.waitForPublisherToRespondTimer);
+            this.waitForPublisherToRespondTimer = null;
+        }
+
         const previousReferenceId = this.referenceId;
 
         // capture the reference id so we can tell in the response whether it is the latest call
