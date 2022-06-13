@@ -1808,11 +1808,556 @@ describe('openapi StreamingSubscription', () => {
             });
         });
 
-        // TODO - test what happens if a unsubscribe occurs
+        it('should handle resets followed by a unsubscribe - whilst resetting', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
 
-        // test a unsubscribe and then a subscribe
+            subscription.onSubscribe();
 
-        // test patches coming in at certain points
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            await wait();
+
+            // subscribed
+
+            subscription.reset(true);
+            subscription.reset(true);
+            subscription.reset(true);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"1"`,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`
+                    Array [
+                      Object {
+                        "action": 1,
+                        "args": Object {
+                          "replace": false,
+                        },
+                      },
+                    ]
+                `);
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+            transport.deleteResolve({ status: 200 });
+            subscription.reset(true);
+            subscription.onUnsubscribe();
+
+            await wait();
+
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBED,
+            );
+
+            // should reset after 1 minute
+            tick(60000);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBED,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`Array []`);
+        });
+
+        it('should handle resets followed by a unsubscribe - after resetting', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            await wait();
+
+            // subscribed
+
+            subscription.reset(true);
+            subscription.reset(true);
+            subscription.reset(true);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"1"`,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`
+                    Array [
+                      Object {
+                        "action": 1,
+                        "args": Object {
+                          "replace": false,
+                        },
+                      },
+                    ]
+                `);
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+            transport.deleteResolve({ status: 200 });
+            subscription.reset(true);
+
+            await wait();
+
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+            await wait();
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBED,
+            );
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"2"`,
+            );
+
+            subscription.onUnsubscribe();
+
+            // should reset after 1 minute
+            tick(60000);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`Array []`);
+        });
+
+        it('should handle resets followed by a unsubscribe and then a subscribe', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            await wait();
+
+            // subscribed
+
+            subscription.reset(true);
+            subscription.reset(true);
+            subscription.reset(true);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"1"`,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`
+                    Array [
+                      Object {
+                        "action": 1,
+                        "args": Object {
+                          "replace": false,
+                        },
+                      },
+                    ]
+                `);
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+            transport.deleteResolve({ status: 200 });
+            subscription.reset(true);
+
+            await wait();
+
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+            await wait();
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBED,
+            );
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"2"`,
+            );
+
+            subscription.onUnsubscribe();
+            transport.deleteResolve({ status: 200 });
+            await wait();
+
+            subscription.onSubscribe();
+            await wait();
+
+            // should reset after 1 minute
+            tick(60000);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`Array []`);
+        });
+
+        it('should handle resets followed by a subscribe replace', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            await wait();
+
+            // subscribed
+
+            subscription.reset(true);
+            subscription.reset(true);
+            subscription.reset(true);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"1"`,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`
+                    Array [
+                      Object {
+                        "action": 1,
+                        "args": Object {
+                          "replace": false,
+                        },
+                      },
+                    ]
+                `);
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+            transport.deleteResolve({ status: 200 });
+            subscription.reset(true);
+
+            await wait();
+
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+            await wait();
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBED,
+            );
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"2"`,
+            );
+
+            subscription.onModify(
+                {},
+                { isReplace: true, isPatch: false, patchArgsDelta: {} },
+            );
+
+            await wait();
+
+            // should reset after 1 minute
+            tick(60000);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_REPLACE_REQUESTED,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`Array []`);
+        });
+
+        it('should handle resets followed by patches with a final reset', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            await wait();
+
+            // subscribed
+
+            subscription.reset(true);
+            subscription.reset(true);
+            subscription.reset(true);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"1"`,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`
+                    Array [
+                      Object {
+                        "action": 1,
+                        "args": Object {
+                          "replace": false,
+                        },
+                      },
+                    ]
+                `);
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+            transport.deleteResolve({ status: 200 });
+            subscription.reset(true);
+
+            await wait();
+
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+            await wait();
+
+            // reset occurs after subscribed so we need to reset
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBED,
+            );
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"2"`,
+            );
+
+            subscription.onModify(
+                {},
+                { isReplace: false, isPatch: true, patchArgsDelta: {} },
+            );
+
+            await wait();
+
+            // should reset after 1 minute
+            tick(60000);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_PATCH_REQUESTED,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`
+                Array [
+                  Object {
+                    "action": 2,
+                    "args": Object {
+                      "force": true,
+                    },
+                  },
+                  Object {
+                    "action": 1,
+                    "args": Object {
+                      "replace": false,
+                    },
+                  },
+                ]
+            `);
+        });
+
+        it('should handle resets followed by patches without a final reset', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            await wait();
+
+            // subscribed
+
+            subscription.reset(true);
+            subscription.reset(true);
+            subscription.reset(true);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"1"`,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`
+                    Array [
+                      Object {
+                        "action": 1,
+                        "args": Object {
+                          "replace": false,
+                        },
+                      },
+                    ]
+                `);
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+            transport.deleteResolve({ status: 200 });
+            subscription.reset(true);
+
+            await wait();
+
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+            await wait();
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBED,
+            );
+            expect(subscription.waitForPublisherToRespondTimer).toBeTruthy();
+            expect(subscription.publisherDownReferenceId).toMatchInlineSnapshot(
+                `"2"`,
+            );
+
+            subscription.onModify(
+                {},
+                { isReplace: false, isPatch: true, patchArgsDelta: {} },
+            );
+
+            await wait();
+
+            // should reset after 1 minute
+            tick(60000);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_PATCH_REQUESTED,
+            );
+            expect(subscription.queue.items).toMatchInlineSnapshot(`
+                Array [
+                  Object {
+                    "action": 2,
+                    "args": Object {
+                      "force": true,
+                    },
+                  },
+                  Object {
+                    "action": 1,
+                    "args": Object {
+                      "replace": false,
+                    },
+                  },
+                ]
+            `);
+        });
+
+        it('should act normally if resets are far apart', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            await wait();
+
+            // subscribed
+
+            subscription.reset(true);
+            tick(30000);
+            subscription.reset(true);
+            tick(30001);
+            subscription.reset(true);
+
+            expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
+            expect(subscription.publisherDownReferenceId).toEqual(null);
+            expect(subscription.queue.items).toMatchInlineSnapshot(`
+                Array [
+                  Object {
+                    "action": 1,
+                    "args": Object {
+                      "replace": false,
+                    },
+                  },
+                ]
+            `);
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+        });
     });
 
     describe('protobuf parsing', () => {
