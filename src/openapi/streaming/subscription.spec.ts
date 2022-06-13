@@ -8,7 +8,7 @@ import {
 import mockTransport from '../../test/mocks/transport';
 import * as mockProtoPrice from '../../test/mocks/proto-price';
 import log from '../../log';
-import Subscription from './subscription';
+import Subscription, { __forTestingOnlyResetReferenceId } from './subscription';
 import ParserProtobuf from './parser/parser-protobuf';
 import ParserFacade from './parser/parser-facade';
 
@@ -55,6 +55,7 @@ describe('openapi StreamingSubscription', () => {
         authManager.getAuth.mockImplementation(function () {
             return { token: 'TOKEN' };
         });
+        __forTestingOnlyResetReferenceId();
     });
     afterEach(function () {
         uninstallClock();
@@ -1642,7 +1643,7 @@ describe('openapi StreamingSubscription', () => {
         });
 
         describe('3 resets within 1 minute', () => {
-            it('should unsubscribe immediately if unsubscribe requested while waiting for publisher to respond', async () => {
+            it('should handle 3 resets and then nothing else', async () => {
                 const subscription = new Subscription(
                     '123',
                     transport,
@@ -1652,27 +1653,74 @@ describe('openapi StreamingSubscription', () => {
                     { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
 
+                subscription.onSubscribe();
+
+                sendInitialResponse({
+                    InactivityTimeout: 100,
+                    Snapshot: { resetResponse: true },
+                });
+
+                await wait();
+
+                // subscribed
+
                 subscription.reset(true);
                 subscription.reset(true);
                 subscription.reset(true);
 
-                expect(subscription.currentState).toEqual(
-                    subscription.STATE_PUBLISHER_DOWN,
-                );
                 expect(
                     subscription.waitForPublisherToRespondTimer,
                 ).toBeTruthy();
-
-                // should unsubscribe immediately if requested
-                subscription.onUnsubscribe();
+                expect(
+                    subscription.publisherDownReferenceId,
+                ).toMatchInlineSnapshot(`"1"`);
+                expect(subscription.queue.items).toMatchInlineSnapshot(`
+                    Array [
+                      Object {
+                        "action": 1,
+                        "args": Object {
+                          "replace": false,
+                        },
+                      },
+                    ]
+                `);
 
                 expect(subscription.currentState).toEqual(
                     subscription.STATE_UNSUBSCRIBE_REQUESTED,
                 );
+                transport.deleteResolve({ status: 200 });
+                await wait();
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_SUBSCRIBE_REQUESTED,
+                );
+                sendInitialResponse({
+                    InactivityTimeout: 100,
+                    Snapshot: { resetResponse: true },
+                });
+                await wait();
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_SUBSCRIBED,
+                );
+                expect(
+                    subscription.waitForPublisherToRespondTimer,
+                ).toBeTruthy();
+                expect(
+                    subscription.publisherDownReferenceId,
+                ).toMatchInlineSnapshot(`"1"`);
+
+                // should reset after 1 minute
+                tick(60000);
+
                 expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_SUBSCRIBED,
+                );
+                expect(subscription.queue.items).toMatchInlineSnapshot(
+                    `Array []`,
+                );
             });
 
-            it('should wait for publisher to respond', async () => {
+            it('should handle constant resets', async () => {
                 const subscription = new Subscription(
                     '123',
                     transport,
@@ -1682,48 +1730,89 @@ describe('openapi StreamingSubscription', () => {
                     { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
                 );
 
+                subscription.onSubscribe();
+
+                sendInitialResponse({
+                    InactivityTimeout: 100,
+                    Snapshot: { resetResponse: true },
+                });
+
+                await wait();
+
+                // subscribed
+
                 subscription.reset(true);
                 subscription.reset(true);
                 subscription.reset(true);
 
+                expect(
+                    subscription.waitForPublisherToRespondTimer,
+                ).toBeTruthy();
+                expect(
+                    subscription.publisherDownReferenceId,
+                ).toMatchInlineSnapshot(`"1"`);
+                expect(subscription.queue.items).toMatchInlineSnapshot(`
+                    Array [
+                      Object {
+                        "action": 1,
+                        "args": Object {
+                          "replace": false,
+                        },
+                      },
+                    ]
+                `);
+
                 expect(subscription.currentState).toEqual(
-                    subscription.STATE_PUBLISHER_DOWN,
+                    subscription.STATE_UNSUBSCRIBE_REQUESTED,
+                );
+                transport.deleteResolve({ status: 200 });
+                subscription.reset(true);
+                await wait();
+                subscription.reset(true);
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_SUBSCRIBE_REQUESTED,
+                );
+                sendInitialResponse({
+                    InactivityTimeout: 100,
+                    Snapshot: { resetResponse: true },
+                });
+                await wait();
+                subscription.reset(true);
+                expect(subscription.currentState).toEqual(
+                    subscription.STATE_SUBSCRIBED,
                 );
                 expect(
                     subscription.waitForPublisherToRespondTimer,
                 ).toBeTruthy();
-
-                // should queue actions while waiting
-                subscription.onSubscribe();
-                expect(subscription.queue).toMatchInlineSnapshot(`
-                    SubscriptionQueue {
-                      "items": Array [
-                        Object {
-                          "action": 1,
-                          "args": Object {
-                            "replace": false,
-                          },
-                        },
-                      ],
-                    }
-                `);
-                expect(subscription.currentState).toEqual(
-                    subscription.STATE_PUBLISHER_DOWN,
-                );
+                expect(
+                    subscription.publisherDownReferenceId,
+                ).toMatchInlineSnapshot(`"2"`);
 
                 // should reset after 1 minute
                 tick(60000);
+
                 expect(subscription.waitForPublisherToRespondTimer).toBeFalsy();
-                expect(subscription.queue).toMatchInlineSnapshot(`
-                        SubscriptionQueue {
-                          "items": Array [],
-                        }
-                    `);
                 expect(subscription.currentState).toEqual(
-                    subscription.STATE_SUBSCRIBE_REQUESTED,
+                    subscription.STATE_UNSUBSCRIBE_REQUESTED,
                 );
+                expect(subscription.queue.items).toMatchInlineSnapshot(`
+                    Array [
+                      Object {
+                        "action": 1,
+                        "args": Object {
+                          "replace": false,
+                        },
+                      },
+                    ]
+                `);
             });
         });
+
+        // TODO - test what happens if a unsubscribe occurs
+
+        // test a unsubscribe and then a subscribe
+
+        // test patches coming in at certain points
     });
 
     describe('protobuf parsing', () => {

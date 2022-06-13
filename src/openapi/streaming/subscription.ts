@@ -123,6 +123,10 @@ interface SubscriptionSuccessResult {
  */
 let referenceIdCounter = 1;
 
+export function __forTestingOnlyResetReferenceId() {
+    referenceIdCounter = 1;
+}
+
 const DEFAULT_REFRESH_RATE_MS = 1000;
 const MIN_REFRESH_RATE_MS = 100;
 const MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS = 60000;
@@ -191,6 +195,10 @@ class Subscription {
      * The reference id is used to identify this subscription.
      */
     referenceId: string | null = null;
+    /**
+     * The last reference id a reset was called on, if we are throttling resets due to a publisher being down
+     */
+    publisherDownReferenceId: string | null = null;
     /**
      * The action queue.
      */
@@ -293,14 +301,18 @@ class Subscription {
                     servicePath: this.servicePath,
                     isServerInitiated,
                 });
-                const referenceId = this.referenceId;
+                // this is the last reference id a reset was called on
+                this.publisherDownReferenceId = this.referenceId;
 
                 this.waitForPublisherToRespondTimer = window.setTimeout(() => {
                     this.waitForPublisherToRespondTimer = null;
+                    const publisherDownReferenceId =
+                        this.publisherDownReferenceId;
+                    this.publisherDownReferenceId = null;
 
                     // only if nothing has changed - subscribed or mid-subscribed and the same reference id we got all the resets on
                     if (
-                        referenceId === this.referenceId &&
+                        publisherDownReferenceId === this.referenceId &&
                         (this.SUBSCRIBED_OR_SUBSCRIBING_STATES |
                             this.currentState) >
                             0
@@ -310,6 +322,9 @@ class Subscription {
                 }, MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS);
 
                 return true;
+            } else if (this.waitForPublisherToRespondTimer) {
+                // update the reference id since a reset was called on it
+                this.publisherDownReferenceId = this.referenceId;
             }
         }
         // if we have set a timer, ignore any resets - do nothing
@@ -343,11 +358,6 @@ class Subscription {
      * Call to actually do a subscribe.
      */
     private subscribe({ replace = false } = {}) {
-        if (this.waitForPublisherToRespondTimer) {
-            clearTimeout(this.waitForPublisherToRespondTimer);
-            this.waitForPublisherToRespondTimer = null;
-        }
-
         const previousReferenceId = this.referenceId;
 
         // capture the reference id so we can tell in the response whether it is the latest call
