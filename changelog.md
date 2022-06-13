@@ -1,3 +1,7 @@
+### v10.10.5
+
+-   Fix further bugs that can occur with multiple resets that can result in a stalled subscription
+
 ### v10.10.4
 
 -   Fix some bugs that can occur with multiple patches and resets that could result in a stalled subscription

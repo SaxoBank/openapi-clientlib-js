@@ -31,7 +31,6 @@ const stateFlags = {
     PATCH_REQUESTED: 16,
     REPLACE_REQUESTED: 32,
     READY_FOR_UNSUBSCRIBE_BY_TAG: 64,
-    PUBLISHER_DOWN: 128,
 } as const;
 
 export type SubscriptionState = typeof stateFlags[keyof typeof stateFlags];
@@ -124,6 +123,10 @@ interface SubscriptionSuccessResult {
  */
 let referenceIdCounter = 1;
 
+export function __forTestingOnlyResetReferenceId() {
+    referenceIdCounter = 1;
+}
+
 const DEFAULT_REFRESH_RATE_MS = 1000;
 const MIN_REFRESH_RATE_MS = 100;
 const MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS = 60000;
@@ -159,15 +162,19 @@ class Subscription {
     STATE_PATCH_REQUESTED = 16 as const;
     STATE_REPLACE_REQUESTED = 32 as const;
     STATE_READY_FOR_UNSUBSCRIBE_BY_TAG = 64 as const;
-    STATE_PUBLISHER_DOWN = 128 as const;
 
     TRANSITIONING_STATES =
         this.STATE_SUBSCRIBE_REQUESTED |
         this.STATE_UNSUBSCRIBE_REQUESTED |
         this.STATE_PATCH_REQUESTED |
         this.STATE_REPLACE_REQUESTED |
-        this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG |
-        this.STATE_PUBLISHER_DOWN;
+        this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG;
+
+    SUBSCRIBED_OR_SUBSCRIBING_STATES =
+        this.STATE_SUBSCRIBED |
+        this.STATE_SUBSCRIBE_REQUESTED |
+        this.STATE_PATCH_REQUESTED |
+        this.STATE_REPLACE_REQUESTED;
 
     /**
      * Defines the name of the property on data used to indicate that the data item is a deletion, rather than a
@@ -188,6 +195,10 @@ class Subscription {
      * The reference id is used to identify this subscription.
      */
     referenceId: string | null = null;
+    /**
+     * The last reference id a reset was called on, if we are throttling resets due to a publisher being down
+     */
+    publisherDownReferenceId: string | null = null;
     /**
      * The action queue.
      */
@@ -272,7 +283,7 @@ class Subscription {
      * If we get 3 resets within 1 minute then we wait for 1 minute
      * since it may indicate some problem with publishers or the frontend
      */
-    private checkIfPublisherDown(isServerInitiated: boolean) {
+    private checkIfPublisherDown(isServerInitiated: boolean): boolean {
         this.resetTimeStamps.push(Date.now());
 
         if (this.resetTimeStamps.length >= 3) {
@@ -290,15 +301,35 @@ class Subscription {
                     servicePath: this.servicePath,
                     isServerInitiated,
                 });
-                this.setState(this.STATE_PUBLISHER_DOWN);
+                // this is the last reference id a reset was called on
+                this.publisherDownReferenceId = this.referenceId;
 
                 this.waitForPublisherToRespondTimer = window.setTimeout(() => {
                     this.waitForPublisherToRespondTimer = null;
-                    this.setState(this.STATE_UNSUBSCRIBED);
-                    this.tryPerformAction(ACTION_SUBSCRIBE);
+                    const publisherDownReferenceId =
+                        this.publisherDownReferenceId;
+                    this.publisherDownReferenceId = null;
+
+                    // only if nothing has changed - subscribed or mid-subscribed and the same reference id we got all the resets on
+                    if (
+                        publisherDownReferenceId === this.referenceId &&
+                        (this.SUBSCRIBED_OR_SUBSCRIBING_STATES |
+                            this.currentState) >
+                            0
+                    ) {
+                        this.unsubscribeAndSubscribe();
+                    }
                 }, MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS);
+
+                return true;
+            } else if (this.waitForPublisherToRespondTimer) {
+                // update the reference id since a reset was called on it
+                this.publisherDownReferenceId = this.referenceId;
             }
         }
+        // if we have set a timer, ignore any resets - do nothing
+        // if a subscribe occurs it will clear the timeout so that a new reset would work
+        return Boolean(this.waitForPublisherToRespondTimer);
     }
 
     /**
@@ -449,14 +480,6 @@ class Subscription {
         }
 
         if (
-            this.currentState === this.STATE_PUBLISHER_DOWN &&
-            action === ACTION_UNSUBSCRIBE
-        ) {
-            this.performAction({ action, args });
-            return;
-        }
-
-        if (
             !this.connectionAvailable ||
             this.TRANSITIONING_STATES & this.currentState
         ) {
@@ -476,11 +499,7 @@ class Subscription {
      * Callback for when the subscription is ready to perform the next action.
      */
     private onReadyToPerformNextAction() {
-        if (
-            this.currentState === this.STATE_PUBLISHER_DOWN ||
-            !this.connectionAvailable ||
-            this.queue.isEmpty()
-        ) {
+        if (!this.connectionAvailable || this.queue.isEmpty()) {
             return;
         }
         this.performAction(this.queue.dequeue(), this.queue.isEmpty());
@@ -605,12 +624,7 @@ class Subscription {
                 switch (this.currentState) {
                     case this.STATE_SUBSCRIBED:
                     case this.STATE_REPLACE_REQUESTED:
-                    case this.STATE_PUBLISHER_DOWN:
                         this.unsubscribe();
-                        if (this.waitForPublisherToRespondTimer) {
-                            clearTimeout(this.waitForPublisherToRespondTimer);
-                            this.waitForPublisherToRespondTimer = null;
-                        }
                         break;
 
                     case this.STATE_UNSUBSCRIBED:
@@ -1120,8 +1134,9 @@ class Subscription {
      * because the subscribe manages to get to the server before the unsubscribe.
      */
     reset(isServerInitiated: boolean) {
-        this.checkIfPublisherDown(isServerInitiated);
-        this.unsubscribeAndSubscribe();
+        if (!this.checkIfPublisherDown(isServerInitiated)) {
+            this.unsubscribeAndSubscribe();
+        }
     }
 
     /**
@@ -1174,10 +1189,6 @@ class Subscription {
 
             case this.STATE_READY_FOR_UNSUBSCRIBE_BY_TAG:
                 // We are about to unsubscribe by tag, so no need to do anything
-                return;
-
-            case this.STATE_PUBLISHER_DOWN:
-                // We are waiting for publisher to respond, so no need to do anything
                 return;
 
             default:
@@ -1308,10 +1319,6 @@ class Subscription {
             case this.STATE_UNSUBSCRIBE_REQUESTED:
                 return;
 
-            // if we are waiting for publisher to respond then ignore the data
-            case this.STATE_PUBLISHER_DOWN:
-                return;
-
             case this.STATE_UNSUBSCRIBED:
                 return false;
 
@@ -1420,8 +1427,7 @@ class Subscription {
             this.currentState === this.STATE_UNSUBSCRIBED ||
             this.currentState === this.STATE_UNSUBSCRIBE_REQUESTED ||
             this.currentState === this.STATE_SUBSCRIBE_REQUESTED ||
-            this.currentState === this.STATE_REPLACE_REQUESTED ||
-            this.currentState === this.STATE_PUBLISHER_DOWN
+            this.currentState === this.STATE_REPLACE_REQUESTED
         ) {
             return Infinity;
         }
