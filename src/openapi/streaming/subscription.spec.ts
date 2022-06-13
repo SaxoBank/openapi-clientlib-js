@@ -1415,7 +1415,7 @@ describe('openapi StreamingSubscription', () => {
                     Object {
                       "action": 2,
                       "args": Object {
-                        "force": false,
+                        "force": true,
                       },
                     },
                   ],
@@ -2394,7 +2394,7 @@ describe('openapi StreamingSubscription', () => {
             );
             subscription.reset(true);
             expect(subscription.currentState).toEqual(
-                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+                subscription.STATE_PATCH_REQUESTED,
             );
 
             // patch comes back successful
@@ -2402,9 +2402,17 @@ describe('openapi StreamingSubscription', () => {
                 status: '200',
                 response: '',
             });
-            // delete done at the same time comes back
+
+            await wait();
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+
+            // delete is done and can now be resolved
             transport.deleteResolve({ status: '200', response: '' });
             await wait();
+            // subscribe occurs
             expect(subscription.currentState).toEqual(
                 subscription.STATE_SUBSCRIBE_REQUESTED,
             );
@@ -2439,8 +2447,9 @@ describe('openapi StreamingSubscription', () => {
                 subscription.STATE_PATCH_REQUESTED,
             );
             subscription.reset(true);
+
             expect(subscription.currentState).toEqual(
-                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+                subscription.STATE_PATCH_REQUESTED,
             );
 
             // patch comes back
@@ -2448,6 +2457,13 @@ describe('openapi StreamingSubscription', () => {
                 status: '500',
                 response: 'Subscription no longer exists!',
             });
+
+            await wait();
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+
             // delete done at the same time comes back
             transport.deleteResolve({ status: '200', response: '' });
             await wait();
