@@ -11,6 +11,7 @@ import log from '../../log';
 import Subscription, { __forTestingOnlyResetReferenceId } from './subscription';
 import ParserProtobuf from './parser/parser-protobuf';
 import ParserFacade from './parser/parser-facade';
+import * as subscriptionActions from './subscription-actions';
 
 ParserFacade.addEngines({
     'application/x-protobuf': protobuf,
@@ -34,6 +35,7 @@ describe('openapi StreamingSubscription', () => {
     let errorSpy: jest.Mock;
     let authManager: { getAuth: jest.Mock };
     let networkErrorSpy: jest.Mock;
+    let logError: jest.SpyInstance;
 
     function sendInitialResponse(response?: Record<string, any>) {
         if (!response) {
@@ -56,8 +58,10 @@ describe('openapi StreamingSubscription', () => {
             return { token: 'TOKEN' };
         });
         __forTestingOnlyResetReferenceId();
+        logError = jest.spyOn(log, 'error');
     });
     afterEach(function () {
+        expect(logError.mock.calls.length).toEqual(0);
         uninstallClock();
     });
 
@@ -309,6 +313,75 @@ describe('openapi StreamingSubscription', () => {
                     response: { message: 'An error has occurred' },
                 },
             ]);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBED,
+            );
+        });
+
+        it('subscribe error when a modify is queued', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onError: errorSpy },
+            );
+            subscription.onSubscribe();
+
+            const patchArgsDelta = { argsDelta: 'delta' };
+            subscription.onModify(
+                { args: 'test' },
+                { isPatch: true, isReplace: false, patchArgsDelta },
+            );
+
+            expect(subscription.queue.items.length).toEqual(1);
+
+            transport.postReject({
+                status: '401',
+                response: { message: 'An error has occurred' },
+            });
+
+            await wait();
+            expect(errorSpy.mock.calls.length).toEqual(0);
+
+            expect(subscription.queue.items.length).toEqual(0);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
+        });
+
+        it('subscribe error when a modify-replace is queued', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onError: errorSpy },
+            );
+            subscription.onSubscribe();
+
+            const patchArgsDelta = { argsDelta: 'delta' };
+            subscription.onModify(
+                { args: 'test' },
+                { isPatch: false, isReplace: true, patchArgsDelta },
+            );
+
+            expect(subscription.queue.items.length).toEqual(1);
+
+            transport.postReject({
+                status: '401',
+                response: { message: 'An error has occurred' },
+            });
+
+            await wait();
+            expect(errorSpy.mock.calls.length).toEqual(0);
+
+            expect(subscription.queue.items.length).toEqual(0);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
         });
 
         it('handles protobuf format errors fallback to json', async () => {
@@ -368,8 +441,23 @@ describe('openapi StreamingSubscription', () => {
             };
             subscription.onStreamingData(streamingData);
 
-            // check we have not artificiailly set the streaming state as unsubscribed
+            // check we have not artificially set the streaming state as unsubscribed
             expect(updateSpy.mock.calls.length).toEqual(2);
+
+            expect(logError.mock.calls.map((args) => args.slice(0, 2)))
+                .toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    "Subscription",
+                    "Exception occurred in streaming snapshot update callback",
+                  ],
+                  Array [
+                    "Subscription",
+                    "Exception occurred in streaming delta update callback",
+                  ],
+                ]
+            `);
+            logError.mockClear();
         });
     });
 
@@ -450,6 +538,16 @@ describe('openapi StreamingSubscription', () => {
                     Data: 'foo',
                 }),
             ).not.toThrowError();
+            expect(logError.mock.calls.map((args) => args.slice(0, 2)))
+                .toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    "Subscription",
+                    "Exception occurred in streaming delta update callback",
+                  ],
+                ]
+            `);
+            logError.mockClear();
         });
 
         it('handles an unsubscribe from streaming data callback', () => {
@@ -501,6 +599,7 @@ describe('openapi StreamingSubscription', () => {
                 subscription.UPDATE_TYPE_DELTA,
             ]);
         });
+
         it('ignores updates when unsubscribed', async () => {
             const subscription = new Subscription(
                 '123',
@@ -541,6 +640,7 @@ describe('openapi StreamingSubscription', () => {
 
             expect(updateSpy.mock.calls.length).toEqual(2);
         });
+
         it('ignores snapshot when unsubscribed', async () => {
             const subscription = new Subscription(
                 '123',
@@ -564,6 +664,7 @@ describe('openapi StreamingSubscription', () => {
             await wait();
             expect(updateSpy.mock.calls.length).toEqual(0);
         });
+
         it('ignores snapshot when unsubscribed if also disposed', async () => {
             const subscription = new Subscription(
                 '123',
@@ -588,6 +689,7 @@ describe('openapi StreamingSubscription', () => {
             await wait();
             expect(updateSpy.mock.calls.length).toEqual(0);
         });
+
         it('throws an error if you subscribe when disposed', () => {
             const subscription = new Subscription(
                 '123',
@@ -603,6 +705,253 @@ describe('openapi StreamingSubscription', () => {
             subscription.dispose();
 
             expect(() => subscription.onSubscribe()).toThrow();
+        });
+
+        it('handles performAction with no action', () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            // this shouldn't happen, but adding to cover the code
+            // @ts-ignore
+            subscription.performAction(null);
+        });
+
+        it('logs errors for out of state actions - remove if subscribed', () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            // this shouldn't happen, but adding to cover the code
+            subscription.currentState = subscription.STATE_SUBSCRIBED;
+            // @ts-ignore
+            subscription.performAction({
+                action: subscriptionActions.ACTION_REMOVE,
+            });
+
+            expect(logError.mock.calls).toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    "Subscription",
+                    "Unanticipated state in performAction Remove",
+                    Object {
+                      "action": 64,
+                      "connectionAvailable": true,
+                      "logDiagnostics": Array [
+                        Object {
+                          "queue": Array [],
+                          "queuedAction": Object {
+                            "action": 64,
+                          },
+                          "type": "perform",
+                        },
+                      ],
+                      "servicePath": "servicePath",
+                      "state": 2,
+                      "url": "src/test/resource",
+                    },
+                  ],
+                ]
+            `);
+            logError.mockClear();
+        });
+
+        it('logs errors for out of state actions - subscribe if transitioning', () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            // this shouldn't happen, but adding to cover the code
+            subscription.currentState = subscription.STATE_SUBSCRIBE_REQUESTED;
+            // @ts-ignore
+            subscription.performAction({
+                action: subscriptionActions.ACTION_SUBSCRIBE,
+            });
+
+            expect(logError.mock.calls).toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    "Subscription",
+                    "Unanticipated state in performAction Subscribe",
+                    Object {
+                      "action": 1,
+                      "servicePath": "servicePath",
+                      "state": 1,
+                      "url": "src/test/resource",
+                    },
+                  ],
+                ]
+            `);
+            logError.mockClear();
+        });
+
+        it('logs errors for out of state actions - patch if transitioning', () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            // this shouldn't happen, but adding to cover the code
+            subscription.currentState = subscription.STATE_SUBSCRIBE_REQUESTED;
+            // @ts-ignore
+            subscription.performAction({
+                action: subscriptionActions.ACTION_MODIFY_PATCH,
+            });
+
+            expect(logError.mock.calls).toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    "Subscription",
+                    "Unanticipated state in performAction Patch",
+                    Object {
+                      "action": 8,
+                      "logDiagnostics": Array [
+                        Object {
+                          "queue": Array [],
+                          "queuedAction": Object {
+                            "action": 8,
+                          },
+                          "type": "perform",
+                        },
+                      ],
+                      "servicePath": "servicePath",
+                      "state": 1,
+                      "url": "src/test/resource",
+                    },
+                  ],
+                ]
+            `);
+            logError.mockClear();
+        });
+
+        it('logs errors for out of state actions - replace if transitioning', () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            // this shouldn't happen, but adding to cover the code
+            subscription.currentState = subscription.STATE_SUBSCRIBE_REQUESTED;
+            // @ts-ignore
+            subscription.performAction({
+                action: subscriptionActions.ACTION_MODIFY_REPLACE,
+            });
+
+            expect(logError.mock.calls).toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    "Subscription",
+                    "Unanticipated state in performAction Replace",
+                    Object {
+                      "action": 16,
+                      "logDiagnostics": Array [
+                        Object {
+                          "queue": Array [],
+                          "queuedAction": Object {
+                            "action": 16,
+                          },
+                          "type": "perform",
+                        },
+                      ],
+                      "servicePath": "servicePath",
+                      "state": 1,
+                      "url": "src/test/resource",
+                    },
+                  ],
+                ]
+            `);
+            logError.mockClear();
+        });
+
+        it('logs errors for out of state actions - unsubscribe if transitioning', () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            // this shouldn't happen, but adding to cover the code
+            subscription.currentState = subscription.STATE_SUBSCRIBE_REQUESTED;
+            // @ts-ignore
+            subscription.performAction({
+                action: subscriptionActions.ACTION_UNSUBSCRIBE,
+            });
+
+            expect(logError.mock.calls).toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    "Subscription",
+                    "Unanticipated state in performAction Unsubscribe",
+                    Object {
+                      "action": 2,
+                      "servicePath": "servicePath",
+                      "state": 1,
+                      "url": "src/test/resource",
+                    },
+                  ],
+                ]
+            `);
+            logError.mockClear();
+        });
+
+        it('logs errors for out of state actions - unsubscribe by tag if transitioning', () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            // this shouldn't happen, but adding to cover the code
+            subscription.currentState = subscription.STATE_SUBSCRIBE_REQUESTED;
+            // @ts-ignore
+            subscription.performAction({
+                action: subscriptionActions.ACTION_UNSUBSCRIBE_BY_TAG_PENDING,
+            });
+
+            expect(logError.mock.calls).toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    "Subscription",
+                    "Unanticipated state in performAction UnsubscribeByTagPending",
+                    Object {
+                      "action": 32,
+                      "servicePath": "servicePath",
+                      "state": 1,
+                      "url": "src/test/resource",
+                    },
+                  ],
+                ]
+            `);
+            logError.mockClear();
         });
     });
 
@@ -943,6 +1292,7 @@ describe('openapi StreamingSubscription', () => {
             });
         });
     });
+
     describe('subscribe/unsubscribe queuing', () => {
         it('ignores multiple commands when already in the right state', async () => {
             const subscription = new Subscription(
@@ -953,8 +1303,6 @@ describe('openapi StreamingSubscription', () => {
                 {},
                 { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
-
-            const logError = jest.spyOn(log, 'error');
 
             subscription.onUnsubscribe();
             subscription.onUnsubscribe();
@@ -1010,13 +1358,8 @@ describe('openapi StreamingSubscription', () => {
 
             expect(transport.post.mock.calls.length).toEqual(0);
             expect(transport.delete.mock.calls.length).toEqual(0);
-
-            expect(logError.mock.calls.length).toEqual(0);
         });
 
-        /**
-         * Unsubscribe before subscribe is required for modify action.
-         */
         it('accept unsubscribe followed by a subscribe when waiting for an action to respond', async () => {
             const subscription = new Subscription(
                 '123',
@@ -1026,8 +1369,6 @@ describe('openapi StreamingSubscription', () => {
                 {},
                 { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
-
-            const logError = jest.spyOn(log, 'error');
 
             subscription.onSubscribe();
             transport.post.mockClear();
@@ -1040,8 +1381,6 @@ describe('openapi StreamingSubscription', () => {
             await wait();
             expect(transport.post.mock.calls.length).toEqual(0);
             expect(transport.delete.mock.calls.length).toEqual(0);
-
-            expect(logError.mock.calls.length).toEqual(0);
         });
 
         it('if an error occurs unsubscribing then it continues with the next action', async () => {
@@ -2633,6 +2972,28 @@ describe('openapi StreamingSubscription', () => {
                 expect(
                     subscription.parser.getFormatName(),
                 ).toMatchInlineSnapshot(`"application/json"`);
+
+                expect(logError.mock.calls).toMatchInlineSnapshot(`
+                    Array [
+                      Array [
+                        "ParserProtobuf",
+                        "Schema parsing failed",
+                        Object {
+                          "error": [Error: illegal token 'Invalid' (line 1)],
+                          "name": "Price",
+                          "schemaData": "Invalid Schema!",
+                        },
+                      ],
+                      Array [
+                        "Subscription",
+                        "Fallback to json after failure to add schema",
+                        Object {
+                          "error": [Error: Protobuf schema parsing failed],
+                        },
+                      ],
+                    ]
+                `);
+                logError.mockClear();
             });
 
             it('should fallback if there is an error parsing an update', async () => {
@@ -2728,6 +3089,137 @@ describe('openapi StreamingSubscription', () => {
                 expect(
                     subscription.parser.getFormatName(),
                 ).toMatchInlineSnapshot(`"application/json"`);
+                expect(logError.mock.calls).toMatchInlineSnapshot(`
+                    Array [
+                      Array [
+                        "ParserProtobuf",
+                        "Protobuf parsing failed",
+                        Object {
+                          "base64Data": "rubbishCghGeE9wdGlvbhI/CUw3iUFgpSRAEfgZFw6EpCZAGQAAAAAAQI9AIdeGinH+JlQ/KSUGgZVDi9Q/MXsUrkfhetQ/OSlcj8L1KLw/GkgJAAAAAAAA8D8RAAAAAACYn0AZAAAAAAAACEAhAAAAAABwn0ApAAAAAAAAFEAxAAAAAACMn0A5AAAAAAAAHEBBAAAAAAAAIEAi1QEJAAAAAAAA8D8RAAAAAAAAAEAZAAAAAAAACEAhAAAAAAAAEEApAAAAAAAAFEAwATgBQQAAAAAAACBASQAAAAAAACJAUgYI+NqL0AVYAWHcRgN4CyT1P2nrc7UV+8vxP3HPZtXnaiv1P3nWxW00gLfzP4IBBgj42ovQBYkBsHJoke18vz+RASUGgZVDi9Q/mQEYeO49XHK8P6ABAakBw/UoXI/C8T+xAR+F61G4HvU/ugEGCPjai9AFwQFrmnecoiP1P8kB+MJkqmBU9T/SAQYI+NqL0AUqBgj42ovQBTIkCR+F61G4HvU/EQrXo3A9CgFAGcP1KFyPwvE/IYlBYOXQIvU/OnIKEIlBYOXQIvU/w/UoXI/C8T8SEPYoXI/C9QhA4XoUrkfhCEAaEAAAAAAAQI9AAAAAAABAn0AiECPb+X5qvPY/iUFg5dAi9T8qELx0kxgEVvg/nu+nxks39z8yEAAAAAAAQJ9AAAAAAADAkkA4IEBISAFCJAmuR+F6FK7zPxHsUbgehevxPxkAAAAAAAAmQCG4HoXrUbi+P0oGTkFTREFRUksIzgkRrkfhehSu8z8Zw/UoXI/C8T8gFyoEMTIzNTFmZmZmZmbyPzoHYXNrdHlwZUIHYmlkdHlwZUoLMTIzMTNjZGFkYWRSBGlkbGVYrGA=",
+                          "error": [Error: invalid wire type 6 at offset 10],
+                          "schema": "syntax = \\"proto3\\"; 
+                    import \\"google/protobuf/timestamp.proto\\"; 
+
+                    option saxobank_root = \\"PriceResponse\\";
+
+                    message PriceResponse {
+                       message Greeks {
+                          double delta = 1;
+                          double gamma = 2;
+                          double mid_vol = 3;
+                          double phi = 4;
+                          double rho = 5;
+                          double theta = 6;
+                          double vega = 7;
+                       }
+
+                       message HistoricalChanges {
+                          double percent_change1_month = 1;
+                          double percent_change1_year = 2;
+                          double percent_change2_months = 3;
+                          double percent_change2_years = 4;
+                          double percent_change3_months = 5;
+                          double percent_change5_years = 6;
+                          double percent_change6_months = 7;
+                          double percent_change_weekly = 8;
+                       }
+
+                       message InstrumentPriceDetails {
+                          double accrued_interest = 1;
+                          double ask_swap = 2;
+                          double bid_swap = 3;
+                          double cfd_borrowing_cost = 4;
+                          double cfd_hard_to_finance_rate = 5;
+                          bool cfd_price_adjustment = 6;
+                          bool dma = 7;
+                          double est_price_buy = 8;
+                          double est_price_sell = 9;
+                          google.protobuf.Timestamp expiry_date = 10;
+                          bool is_market_open = 11;
+                          double lower_barrier = 12;
+                          double mid_forward_price = 13;
+                          double mid_spot_price = 14;
+                          double mid_yield = 15;
+                          google.protobuf.Timestamp notice_date = 16;
+                          double open_interest = 17;
+                          double paid_cfd_interest = 18;
+                          double received_cfd_interest = 19;
+                          bool short_trade_disabled = 20;
+                          double spot_ask = 21;
+                          double spot_bid = 22;
+                          google.protobuf.Timestamp spot_date = 23;
+                          double strike_price = 24;
+                          double upper_barrier = 25;
+                          google.protobuf.Timestamp value_date = 26;
+                       }
+
+                       message MarginImpact {
+                          double impact_buy = 1;
+                          double impact_sell = 2;
+                          double initial_margin = 3;
+                          double maintenance_margin = 4;
+                       }
+
+                       message MarketDepth {
+                          repeated double ask = 1;
+                          repeated double ask_orders = 2;
+                          repeated double ask_size = 3;
+                          repeated double bid = 4;
+                          repeated double bid_orders = 5;
+                          repeated double bid_size = 6;
+                          int32 no_of_bids = 7;
+                          int32 no_of_offers = 8;
+                          bool using_orders = 9;
+                       }
+
+                       message PriceInfo {
+                          double high = 1;
+                          double low = 2;
+                          double net_change = 3;
+                          double percent_change = 4;
+                       }
+
+                       message TradableQuote {
+                          int32 amount = 1;
+                          double ask = 2;
+                          double bid = 3;
+                          int32 delayed_by_minutes = 4;
+                          string error_code = 5;
+                          double mid = 6;
+                          string price_type_ask = 7;
+                          string price_type_bid = 8;
+                          string quote_id = 9;
+                          string r_f_q_state = 10;
+                       }
+
+                       string asset_type = 1;
+                       Greeks greeks = 2;
+                       HistoricalChanges historical_changes = 3;
+                       InstrumentPriceDetails instrument_price_details = 4;
+                       google.protobuf.Timestamp last_updated = 5;
+                       MarginImpact margin_impact = 6;
+                       MarketDepth market_depth = 7;
+                       PriceInfo price_info = 8;
+                       string price_source = 9;
+                       TradableQuote quote = 10;
+                       int32 uic = 11;
+                    }",
+                          "schemaName": "Price",
+                        },
+                      ],
+                      Array [
+                        "Subscription",
+                        "Error occurred parsing Data",
+                        Object {
+                          "error": [Error: Parsing failed],
+                          "schemaName": "Price",
+                          "servicePath": "servicePath",
+                          "url": "src/test/resource",
+                        },
+                      ],
+                    ]
+                `);
+                logError.mockClear();
             });
         });
     });
@@ -2998,7 +3490,57 @@ describe('openapi StreamingSubscription', () => {
             expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
         });
 
-        it('handles modify patch success and then reset', async () => {
+        it('sends next patch request only after previous patch completed', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            const initialArgs = { initialArgs: 'initialArgs' };
+            subscription.subscriptionData.Arguments = initialArgs;
+            subscription.onSubscribe();
+
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
+            });
+
+            await wait();
+            const args = { args: 'args' };
+            const newArgs = { args: 'newArgs' };
+            subscription.onModify(args, {
+                isPatch: true,
+                isReplace: false,
+                patchArgsDelta: { newArgs: 'firstArgs' },
+            });
+            subscription.onModify(newArgs, {
+                isPatch: true,
+                isReplace: false,
+                patchArgsDelta: { newArgs: 'secondArgs' },
+            });
+
+            expect(transport.patch.mock.calls.length).toEqual(1);
+            // first patch arguments sent
+            expect(transport.patch.mock.calls[0][3].body).toEqual({
+                newArgs: 'firstArgs',
+            });
+
+            transport.patchResolve({ status: '200', response: '' });
+
+            await wait();
+            expect(transport.patch.mock.calls.length).toEqual(2);
+            // second patch arguments sent
+            expect(transport.patch.mock.calls[1][3].body).toEqual({
+                newArgs: 'secondArgs',
+            });
+            expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
+        });
+
+        it('handles modify patch when currently waiting to subscribe', async () => {
             const subscription = new Subscription(
                 '123',
                 transport,
@@ -3014,42 +3556,44 @@ describe('openapi StreamingSubscription', () => {
             });
 
             await wait();
+
+            subscription.onUnsubscribe();
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+
+            subscription.onSubscribe();
+
             const patchArgsDelta = { argsDelta: 'argsDelta' };
             expect(subscription.currentState).toEqual(
-                subscription.STATE_SUBSCRIBED,
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
             );
 
             subscription.onModify(
                 { newArgs: 'test' },
                 { isPatch: true, isReplace: false, patchArgsDelta },
             );
+
+            transport.deleteResolve({ status: '200', response: {} });
+
+            await wait();
+
             expect(subscription.currentState).toEqual(
-                subscription.STATE_PATCH_REQUESTED,
-            );
-            subscription.reset(true);
-            expect(subscription.currentState).toEqual(
-                subscription.STATE_PATCH_REQUESTED,
+                subscription.STATE_SUBSCRIBE_REQUESTED,
             );
 
-            // patch comes back successful
-            transport.patchReject({
-                status: '200',
-                response: '',
+            sendInitialResponse({
+                InactivityTimeout: 100,
+                Snapshot: { resetResponse: true },
             });
 
             await wait();
 
             expect(subscription.currentState).toEqual(
-                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+                subscription.STATE_SUBSCRIBED,
             );
-
-            // delete is done and can now be resolved
-            transport.deleteResolve({ status: '200', response: '' });
-            await wait();
-            // subscribe occurs
-            expect(subscription.currentState).toEqual(
-                subscription.STATE_SUBSCRIBE_REQUESTED,
-            );
+            expect(subscription.queue.items).toHaveLength(0);
         });
 
         it('handles modify patch error and then reset', async () => {

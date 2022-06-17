@@ -98,29 +98,30 @@ class SubscriptionQueue {
     }
 
     /**
-     * This is called at the point of subscribing.
+     * This is called at the point of subscribing or on a subscribe error.
      * We know at that point we do not need any follow up modifys
      * or subscribes.
      */
     clearModifys() {
         const newItems = [];
+        let itemRemoved = false;
         let reachedNonModifySubscribe = false;
         for (let i = 0; i < this.items.length; i++) {
             const action = this.items[i].action;
             if (
-                !reachedNonModifySubscribe &&
-                action !== ACTION_SUBSCRIBE &&
-                action !== ACTION_MODIFY_PATCH &&
-                action !== ACTION_MODIFY_REPLACE
-                //
+                reachedNonModifySubscribe ||
+                (action !== ACTION_SUBSCRIBE &&
+                    action !== ACTION_MODIFY_PATCH &&
+                    action !== ACTION_MODIFY_REPLACE)
             ) {
-                // The unit tests don't hit this and I can't think of a way they would
-                // but I'm keeping it in because I'm not fully confident we can just reset the list
                 newItems.push(this.items[i]);
                 reachedNonModifySubscribe = true;
+            } else {
+                itemRemoved = true;
             }
         }
         this.items = newItems;
+        return itemRemoved;
     }
 
     /**
