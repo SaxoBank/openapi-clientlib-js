@@ -3490,18 +3490,14 @@ describe('openapi StreamingSubscription', () => {
             expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
         });
 
-        it('sends next patch request only after previous patch completed', async () => {
+        it('handles modify patch success and then reset', async () => {
             const subscription = new Subscription(
                 '123',
                 transport,
                 'servicePath',
                 'src/test/resource',
                 {},
-                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
             );
-
-            const initialArgs = { initialArgs: 'initialArgs' };
-            subscription.subscriptionData.Arguments = initialArgs;
             subscription.onSubscribe();
 
             sendInitialResponse({
@@ -3510,34 +3506,42 @@ describe('openapi StreamingSubscription', () => {
             });
 
             await wait();
-            const args = { args: 'args' };
-            const newArgs = { args: 'newArgs' };
-            subscription.onModify(args, {
-                isPatch: true,
-                isReplace: false,
-                patchArgsDelta: { newArgs: 'firstArgs' },
-            });
-            subscription.onModify(newArgs, {
-                isPatch: true,
-                isReplace: false,
-                patchArgsDelta: { newArgs: 'secondArgs' },
-            });
+            const patchArgsDelta = { argsDelta: 'argsDelta' };
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBED,
+            );
 
-            expect(transport.patch.mock.calls.length).toEqual(1);
-            // first patch arguments sent
-            expect(transport.patch.mock.calls[0][3].body).toEqual({
-                newArgs: 'firstArgs',
-            });
+            subscription.onModify(
+                { newArgs: 'test' },
+                { isPatch: true, isReplace: false, patchArgsDelta },
+            );
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_PATCH_REQUESTED,
+            );
+            subscription.reset(true);
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_PATCH_REQUESTED,
+            );
 
-            transport.patchResolve({ status: '200', response: '' });
+            // patch comes back successful
+            transport.patchReject({
+                status: '200',
+                response: '',
+            });
 
             await wait();
-            expect(transport.patch.mock.calls.length).toEqual(2);
-            // second patch arguments sent
-            expect(transport.patch.mock.calls[1][3].body).toEqual({
-                newArgs: 'secondArgs',
-            });
-            expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
+
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_UNSUBSCRIBE_REQUESTED,
+            );
+
+            // delete is done and can now be resolved
+            transport.deleteResolve({ status: '200', response: '' });
+            await wait();
+            // subscribe occurs
+            expect(subscription.currentState).toEqual(
+                subscription.STATE_SUBSCRIBE_REQUESTED,
+            );
         });
 
         it('handles modify patch when currently waiting to subscribe', async () => {
