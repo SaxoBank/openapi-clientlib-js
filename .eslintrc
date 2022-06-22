@@ -401,7 +401,11 @@
         "jest/valid-expect": "error",
         "jest/valid-expect-in-promise": "error",
         "jest/consistent-test-it": "error",
-        "jest/no-standalone-expect": "error",
+        "jest/no-standalone-expect": ["error", {
+            "additionalTestBlockFunctions": [
+                "afterEach"
+            ]
+        }],
         "jest/prefer-hooks-on-top": "error"
     },
     "overrides": [
