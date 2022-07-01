@@ -1,3 +1,8 @@
+### v10.10.7
+
+-   Fix an issue if a modify occurs whilst waiting to retry a subscription that failed due to a network issue, then
+    it would just log a error and not attempt a re-subscribe.
+
 ### v10.10.6
 
 -   Fix errors that can occur if a subscription error occurs

@@ -477,6 +477,32 @@ class Subscription {
             // Clear the timeout - some other external event has happened which overrides the network timeout
             clearTimeout(this.networkErrorSubscribingTimer);
             this.networkErrorSubscribingTimer = null;
+
+            // if a modify is attempted, whilst waiting to re-subscribe after a network error,
+            // then since it is a user action initiated, try to re-subscribe immediately.
+            // we do this by clearing the timer (above) and then converting the action into a subscribe
+            // since if we modify during a unsubscribed state it will just log an error
+            if (
+                action === ACTION_MODIFY_REPLACE ||
+                action === ACTION_MODIFY_PATCH
+            ) {
+                if (this.currentState === this.STATE_UNSUBSCRIBED) {
+                    action = ACTION_SUBSCRIBE;
+                } else {
+                    log.error(
+                        LOG_AREA,
+                        'Unanticipated state in tryPerformAction with networkErrorSubscribingTimer',
+                        {
+                            state: this.currentState,
+                            action,
+                            url: this.url,
+                            servicePath: this.servicePath,
+                            connectionAvailable: this.connectionAvailable,
+                            logDiagnostics: this.logDiagnostics,
+                        },
+                    );
+                }
+            }
         }
 
         if (
@@ -1361,7 +1387,7 @@ class Subscription {
             nextAction.action & ACTION_UNSUBSCRIBE &&
             nextAction.args?.force;
         if (willUnsubscribeForced) {
-            // We need to only ignore it if it is a forced unsubscribe. Thats because a normal unsubscribe if we are not
+            // We need to only ignore it if it is a forced unsubscribe. That's because a normal unsubscribe if we are not
             // currently subscribed may be cancelled
             return;
         }
