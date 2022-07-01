@@ -1211,6 +1211,83 @@ describe('openapi StreamingSubscription', () => {
 
             subscription.onModify();
             tick(5000);
+            await wait();
+            expect(transport.post.mock.calls.length).toEqual(2);
+
+            expect(errorSpy).not.toBeCalled();
+            expect(updateSpy).not.toBeCalled();
+            expect(networkErrorSpy).toBeCalledTimes(1);
+        });
+
+        it('does not retry when a network error occurs subscribing but we afterwards modify replace', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                {
+                    onUpdate: updateSpy,
+                    onError: errorSpy,
+                    onNetworkError: networkErrorSpy,
+                },
+            );
+            subscription.onSubscribe();
+            expect(transport.post.mock.calls.length).toEqual(1);
+
+            transport.postReject({ isNetworkError: true });
+
+            await wait();
+            expect(transport.post.mock.calls.length).toEqual(1);
+
+            subscription.onModify(
+                { test: true },
+                {
+                    isReplace: true,
+                    isPatch: false,
+                    patchArgsDelta: { test: true },
+                },
+            );
+            tick(5000);
+            await wait();
+            expect(transport.post.mock.calls.length).toEqual(2);
+
+            expect(errorSpy).not.toBeCalled();
+            expect(updateSpy).not.toBeCalled();
+            expect(networkErrorSpy).toBeCalledTimes(1);
+        });
+
+        it('does not retry when a network error occurs subscribing but we afterwards modify patch', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                {
+                    onUpdate: updateSpy,
+                    onError: errorSpy,
+                    onNetworkError: networkErrorSpy,
+                },
+            );
+            subscription.onSubscribe();
+            expect(transport.post.mock.calls.length).toEqual(1);
+
+            transport.postReject({ isNetworkError: true });
+
+            await wait();
+            expect(transport.post.mock.calls.length).toEqual(1);
+
+            subscription.onModify(
+                { test: true },
+                {
+                    isReplace: false,
+                    isPatch: true,
+                    patchArgsDelta: { test: true },
+                },
+            );
+            tick(5000);
+            await wait();
             expect(transport.post.mock.calls.length).toEqual(2);
 
             expect(errorSpy).not.toBeCalled();
