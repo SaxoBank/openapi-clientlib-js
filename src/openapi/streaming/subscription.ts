@@ -45,24 +45,28 @@ export interface StreamingOptions {
      * @param data - data received
      * @param updateType - either be subscription.UPDATE_TYPE_DELTA or subscription.UPDATE_TYPE_SNAPSHOT
      */
-    onUpdate?: (data: unknown, updateType: SubscriptionUpdateTypes) => void;
+    onUpdate?: (
+        data: unknown,
+        updateType: SubscriptionUpdateTypes,
+        subscription: Subscription,
+    ) => void;
     /**
      * A callback function that is invoked when an error occurs.
      * @param data - error data
      */
-    onError?: (data: unknown) => void;
+    onError?: (data: unknown, subscription: Subscription) => void;
     /**
      * A callback function that is invoked after the last action is dequeued.
      */
-    onQueueEmpty?: () => void;
+    onQueueEmpty?: (subscription: Subscription) => void;
     /**
      * A callback function that is invoked on network error.
      */
-    onNetworkError?: () => void;
+    onNetworkError?: (subscription: Subscription) => void;
     /**
      * A callback function that is invoked when the subscription is created.
      */
-    onSubscriptionCreated?: () => void;
+    onSubscriptionCreated?: (subscription: Subscription) => void;
     /**
      * A callback function that is invoked when the subscription is ready to be removed.
      */
@@ -696,7 +700,7 @@ class Subscription {
         }
 
         if (this.onQueueEmpty && isLastQueuedAction) {
-            this.onQueueEmpty();
+            this.onQueueEmpty(this);
         }
 
         // Required to manually rerun next action, because if nothing happens in given cycle,
@@ -751,7 +755,7 @@ class Subscription {
         }
 
         this.onActivity();
-        this.onSubscriptionCreated?.();
+        this.onSubscriptionCreated?.(this);
 
         // do not fire events if we are waiting to unsubscribe
         if (this.queue.peekAction() !== ACTION_UNSUBSCRIBE) {
@@ -918,7 +922,7 @@ class Subscription {
             }, 5000);
 
             if (this.onNetworkError) {
-                this.onNetworkError();
+                this.onNetworkError(this);
             }
 
             return;
@@ -946,7 +950,7 @@ class Subscription {
         // if we are unsubscribed, do not fire the error handler
         if (!willUnsubscribe) {
             if (this.onError) {
-                this.onError(response);
+                this.onError(response, this);
             }
         }
 
@@ -1093,7 +1097,7 @@ class Subscription {
             return;
         }
 
-        this.onUpdate?.(nextMessage, type);
+        this.onUpdate?.(nextMessage, type, this);
     }
 
     private fallbackToJSON() {
@@ -1159,7 +1163,7 @@ class Subscription {
         }
 
         // Serialization of Snapshot is not yet supported.
-        this.onUpdate?.(response.Snapshot, this.UPDATE_TYPE_SNAPSHOT);
+        this.onUpdate?.(response.Snapshot, this.UPDATE_TYPE_SNAPSHOT, this);
     }
 
     /**

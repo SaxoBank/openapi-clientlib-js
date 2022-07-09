@@ -1,3 +1,7 @@
+### v10.11.0
+
+-   Pass the subscription object back with updates
+
 ### v10.10.7
 
 -   Fix an issue if a modify occurs whilst waiting to retry a subscription that failed due to a network issue, then
