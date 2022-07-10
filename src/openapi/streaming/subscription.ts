@@ -44,6 +44,7 @@ export interface StreamingOptions {
      * A callback function that is invoked when an initial snapshot or update is received.
      * @param data - data received
      * @param updateType - either be subscription.UPDATE_TYPE_DELTA or subscription.UPDATE_TYPE_SNAPSHOT
+     * @param subscription - the subscription where the update originated from
      */
     onUpdate?: (
         data: unknown,
@@ -53,22 +54,27 @@ export interface StreamingOptions {
     /**
      * A callback function that is invoked when an error occurs.
      * @param data - error data
+     * @param subscription - the subscription the error occurred on
      */
     onError?: (data: unknown, subscription: Subscription) => void;
     /**
      * A callback function that is invoked after the last action is dequeued.
+     * @param subscription - the subscription whose queue became empty
      */
     onQueueEmpty?: (subscription: Subscription) => void;
     /**
      * A callback function that is invoked on network error.
+     * @param subscription - the subscription getting a network error
      */
     onNetworkError?: (subscription: Subscription) => void;
     /**
      * A callback function that is invoked when the subscription is created.
+     * @param subscription - the subscription created
      */
     onSubscriptionCreated?: (subscription: Subscription) => void;
     /**
      * A callback function that is invoked when the subscription is ready to be removed.
+     * @param subscription - the subscription ready to remove
      */
     onSubscriptionReadyToRemove?: (subscription: Subscription) => void;
 }
