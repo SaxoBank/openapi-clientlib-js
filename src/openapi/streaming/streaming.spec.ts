@@ -183,7 +183,7 @@ describe('openapi Streaming', () => {
             );
 
             expect(() => {
-                subscription.onNetworkError?.();
+                subscription.onNetworkError?.(subscription);
             }).not.toThrow();
 
             expect(() => {
@@ -1230,7 +1230,7 @@ describe('openapi Streaming', () => {
                 streaming.orphanFinder,
                 'update',
             );
-            subscription.onSubscriptionCreated?.();
+            subscription.onSubscriptionCreated?.(subscription);
 
             expect(orphanFinderUpdateMethodSpy.mock.calls.length).toEqual(1);
         });

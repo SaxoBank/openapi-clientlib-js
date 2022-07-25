@@ -264,6 +264,7 @@ describe('openapi StreamingSubscription', () => {
             expect(updateSpy.mock.calls[0]).toEqual([
                 { Data: [1, 'fish', 3] },
                 subscription.UPDATE_TYPE_SNAPSHOT,
+                subscription,
             ]);
         });
 
@@ -286,6 +287,7 @@ describe('openapi StreamingSubscription', () => {
             expect(updateSpy.mock.calls[0]).toEqual([
                 'wibble',
                 subscription.UPDATE_TYPE_SNAPSHOT,
+                subscription,
             ]);
         });
 
@@ -312,6 +314,7 @@ describe('openapi StreamingSubscription', () => {
                     status: '401',
                     response: { message: 'An error has occurred' },
                 },
+                subscription,
             ]);
             expect(subscription.currentState).toEqual(
                 subscription.STATE_UNSUBSCRIBED,
@@ -490,6 +493,7 @@ describe('openapi StreamingSubscription', () => {
             expect(updateSpy.mock.calls[0]).toEqual([
                 streamingData,
                 subscription.UPDATE_TYPE_DELTA,
+                subscription,
             ]);
         });
 
@@ -504,6 +508,7 @@ describe('openapi StreamingSubscription', () => {
             expect(updateSpy.mock.calls[0]).toEqual([
                 streamingData,
                 subscription.UPDATE_TYPE_DELTA,
+                subscription,
             ]);
         });
 
@@ -524,6 +529,7 @@ describe('openapi StreamingSubscription', () => {
             expect(updateSpy.mock.calls[0]).toEqual([
                 streamingData,
                 subscription.UPDATE_TYPE_DELTA,
+                subscription,
             ]);
         });
 
@@ -593,10 +599,12 @@ describe('openapi StreamingSubscription', () => {
             expect(updateSpy.mock.calls[0]).toEqual([
                 initialResponse.Snapshot,
                 subscription.UPDATE_TYPE_SNAPSHOT,
+                subscription,
             ]);
             expect(updateSpy.mock.calls[1]).toEqual([
                 streamingDelta,
                 subscription.UPDATE_TYPE_DELTA,
+                subscription,
             ]);
         });
 
@@ -1910,6 +1918,7 @@ describe('openapi StreamingSubscription', () => {
             expect(updateSpy.mock.calls[0]).toEqual([
                 { resetResponse: true },
                 subscription.UPDATE_TYPE_SNAPSHOT,
+                subscription,
             ]);
         });
 
@@ -1975,6 +1984,7 @@ describe('openapi StreamingSubscription', () => {
             expect(updateSpy.mock.calls[0]).toEqual([
                 { resetResponse: true },
                 subscription.UPDATE_TYPE_SNAPSHOT,
+                subscription,
             ]);
         });
 
