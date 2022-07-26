@@ -52,6 +52,7 @@
             }
         ],
         "valid-typeof": "error",
+        "no-constant-binary-expression": "error",
         // Best practices
         "accessor-pairs": "off",
         "array-callback-return": "error",
@@ -401,11 +402,12 @@
         "jest/valid-expect": "error",
         "jest/valid-expect-in-promise": "error",
         "jest/consistent-test-it": "error",
-        "jest/no-standalone-expect": ["error", {
-            "additionalTestBlockFunctions": [
-                "afterEach"
-            ]
-        }],
+        "jest/no-standalone-expect": [
+            "error",
+            {
+                "additionalTestBlockFunctions": ["afterEach"]
+            }
+        ],
         "jest/prefer-hooks-on-top": "error"
     },
     "overrides": [
