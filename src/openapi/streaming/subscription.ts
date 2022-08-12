@@ -1282,13 +1282,17 @@ class Subscription {
         newArgs?: Record<string, unknown>,
         options?:
             | {
-                  isPatch: false;
+                  isPatch?: false;
                   isReplace: true;
               }
             | {
                   isPatch: true;
                   patchArgsDelta: Record<string, unknown>;
-                  isReplace: false;
+                  isReplace?: false;
+              }
+            | {
+                  isPatch?: false;
+                  isReplace?: false;
               },
     ) {
         if (this.isDisposed) {

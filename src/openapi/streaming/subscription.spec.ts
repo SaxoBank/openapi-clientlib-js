@@ -365,11 +365,7 @@ describe('openapi StreamingSubscription', () => {
             );
             subscription.onSubscribe();
 
-            const patchArgsDelta = { argsDelta: 'delta' };
-            subscription.onModify(
-                { args: 'test' },
-                { isPatch: false, isReplace: true, patchArgsDelta },
-            );
+            subscription.onModify({ args: 'test' }, { isReplace: true });
 
             expect(subscription.queue.items.length).toEqual(1);
 
@@ -1289,8 +1285,6 @@ describe('openapi StreamingSubscription', () => {
                 { test: true },
                 {
                     isReplace: true,
-                    isPatch: false,
-                    patchArgsDelta: { test: true },
                 },
             );
             tick(5000);
@@ -2562,10 +2556,7 @@ describe('openapi StreamingSubscription', () => {
                 `"2"`,
             );
 
-            subscription.onModify(
-                {},
-                { isReplace: true, isPatch: false, patchArgsDelta: {} },
-            );
+            subscription.onModify({}, { isReplace: true });
 
             await wait();
 
@@ -3515,9 +3506,7 @@ describe('openapi StreamingSubscription', () => {
             const previousReferenceId = subscription.referenceId;
             const newArgs = { newArgs: 'test' };
             subscription.onModify(newArgs, {
-                isPatch: false,
                 isReplace: true,
-                patchArgsDelta: {},
             });
             // subscribed with new arguments
             expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
@@ -3802,10 +3791,7 @@ describe('openapi StreamingSubscription', () => {
                 subscription.STATE_SUBSCRIBED,
             );
 
-            subscription.onModify(
-                { newArgs: 'test' },
-                { isPatch: false, isReplace: true, patchArgsDelta: {} },
-            );
+            subscription.onModify({ newArgs: 'test' }, { isReplace: true });
             expect(subscription.currentState).toBe(
                 subscription.STATE_REPLACE_REQUESTED,
             );
@@ -3847,10 +3833,7 @@ describe('openapi StreamingSubscription', () => {
                 subscription.STATE_SUBSCRIBED,
             );
 
-            subscription.onModify(
-                { newArgs: 'test' },
-                { isPatch: false, isReplace: true, patchArgsDelta: {} },
-            );
+            subscription.onModify({ newArgs: 'test' }, { isReplace: true });
             expect(subscription.currentState).toBe(
                 subscription.STATE_REPLACE_REQUESTED,
             );

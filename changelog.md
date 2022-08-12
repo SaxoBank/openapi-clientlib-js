@@ -1,3 +1,7 @@
+### v10.11.1
+
+-  Fix a bug causing data updates from a removed subscription
+
 ### v10.11.0
 
 -   Pass the subscription object back with updates
