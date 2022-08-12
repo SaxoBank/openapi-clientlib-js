@@ -59,7 +59,11 @@ class SubscriptionQueue {
                 prevItem.args &&
                 !prevItem.args.force
             ) {
-                prevItem.args.force = true;
+                // remove the unsubscribe without force because we are adding with force
+                this.items.splice(-1);
+                // try again so we process the force remove consequences
+                this.enqueue(queuedItem);
+                return;
             }
 
             return;
@@ -74,8 +78,9 @@ class SubscriptionQueue {
             (prevAction === ACTION_SUBSCRIBE &&
                 (action === ACTION_UNSUBSCRIBE ||
                     action === ACTION_UNSUBSCRIBE_BY_TAG_PENDING)) ||
-            // unsubscribing when we need to patch can happen if we are sure the unsubscribe will happen
-            (prevAction === ACTION_MODIFY_PATCH &&
+            // unsubscribing when we need to patch or replace can happen if we are sure the unsubscribe will happen
+            ((prevAction === ACTION_MODIFY_PATCH ||
+                prevAction === ACTION_MODIFY_REPLACE) &&
                 ((action === ACTION_UNSUBSCRIBE && queuedItem.args?.force) ||
                     action === ACTION_UNSUBSCRIBE_BY_TAG_PENDING)) ||
             // We can switch a force unsubscribe for a unsubscribe by tag because there is no logic

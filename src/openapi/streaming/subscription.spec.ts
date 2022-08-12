@@ -698,6 +698,43 @@ describe('openapi StreamingSubscription', () => {
             expect(updateSpy.mock.calls.length).toEqual(0);
         });
 
+        it('ignores snapshot when going to unsubscribe after modify_replace', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            subscription.onSubscribe();
+
+            subscription.onModify(
+                { test: true },
+                {
+                    isReplace: true,
+                    isPatch: false,
+                },
+            );
+
+            subscription.onUnsubscribe();
+            subscription.onUnsubscribe(true);
+            subscription.onRemove();
+
+            subscription.onStreamingData({
+                ReferenceId: subscription.referenceId as string,
+                Data: 'foo',
+            });
+
+            const initialResponse = { Snapshot: { Data: [1, 'fish', 3] } };
+            sendInitialResponse(initialResponse);
+
+            await wait();
+
+            expect(updateSpy.mock.calls.length).toEqual(0);
+        });
+
         it('throws an error if you subscribe when disposed', () => {
             const subscription = new Subscription(
                 '123',
