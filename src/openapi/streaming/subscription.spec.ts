@@ -365,11 +365,7 @@ describe('openapi StreamingSubscription', () => {
             );
             subscription.onSubscribe();
 
-            const patchArgsDelta = { argsDelta: 'delta' };
-            subscription.onModify(
-                { args: 'test' },
-                { isPatch: false, isReplace: true, patchArgsDelta },
-            );
+            subscription.onModify({ args: 'test' }, { isReplace: true });
 
             expect(subscription.queue.items.length).toEqual(1);
 
@@ -695,6 +691,43 @@ describe('openapi StreamingSubscription', () => {
             sendInitialResponse(initialResponse);
 
             await wait();
+            expect(updateSpy.mock.calls.length).toEqual(0);
+        });
+
+        it('ignores snapshot when going to unsubscribe after modify_replace', async () => {
+            const subscription = new Subscription(
+                '123',
+                transport,
+                'servicePath',
+                'src/test/resource',
+                {},
+                { onUpdate: updateSpy, onSubscriptionCreated: createdSpy },
+            );
+
+            subscription.onSubscribe();
+
+            subscription.onModify(
+                { test: true },
+                {
+                    isReplace: true,
+                    isPatch: false,
+                },
+            );
+
+            subscription.onUnsubscribe();
+            subscription.onUnsubscribe(true);
+            subscription.onRemove();
+
+            subscription.onStreamingData({
+                ReferenceId: subscription.referenceId as string,
+                Data: 'foo',
+            });
+
+            const initialResponse = { Snapshot: { Data: [1, 'fish', 3] } };
+            sendInitialResponse(initialResponse);
+
+            await wait();
+
             expect(updateSpy.mock.calls.length).toEqual(0);
         });
 
@@ -1252,8 +1285,6 @@ describe('openapi StreamingSubscription', () => {
                 { test: true },
                 {
                     isReplace: true,
-                    isPatch: false,
-                    patchArgsDelta: { test: true },
                 },
             );
             tick(5000);
@@ -2525,10 +2556,7 @@ describe('openapi StreamingSubscription', () => {
                 `"2"`,
             );
 
-            subscription.onModify(
-                {},
-                { isReplace: true, isPatch: false, patchArgsDelta: {} },
-            );
+            subscription.onModify({}, { isReplace: true });
 
             await wait();
 
@@ -3478,9 +3506,7 @@ describe('openapi StreamingSubscription', () => {
             const previousReferenceId = subscription.referenceId;
             const newArgs = { newArgs: 'test' };
             subscription.onModify(newArgs, {
-                isPatch: false,
                 isReplace: true,
-                patchArgsDelta: {},
             });
             // subscribed with new arguments
             expect(subscription.subscriptionData.Arguments).toEqual(newArgs);
@@ -3765,10 +3791,7 @@ describe('openapi StreamingSubscription', () => {
                 subscription.STATE_SUBSCRIBED,
             );
 
-            subscription.onModify(
-                { newArgs: 'test' },
-                { isPatch: false, isReplace: true, patchArgsDelta: {} },
-            );
+            subscription.onModify({ newArgs: 'test' }, { isReplace: true });
             expect(subscription.currentState).toBe(
                 subscription.STATE_REPLACE_REQUESTED,
             );
@@ -3810,10 +3833,7 @@ describe('openapi StreamingSubscription', () => {
                 subscription.STATE_SUBSCRIBED,
             );
 
-            subscription.onModify(
-                { newArgs: 'test' },
-                { isPatch: false, isReplace: true, patchArgsDelta: {} },
-            );
+            subscription.onModify({ newArgs: 'test' }, { isReplace: true });
             expect(subscription.currentState).toBe(
                 subscription.STATE_REPLACE_REQUESTED,
             );

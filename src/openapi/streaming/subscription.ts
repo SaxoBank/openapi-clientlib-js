@@ -1280,11 +1280,20 @@ class Subscription {
      */
     onModify(
         newArgs?: Record<string, unknown>,
-        options?: {
-            isPatch: boolean;
-            patchArgsDelta: Record<string, unknown>;
-            isReplace: boolean;
-        },
+        options?:
+            | {
+                  isPatch?: false;
+                  isReplace: true;
+              }
+            | {
+                  isPatch: true;
+                  patchArgsDelta: Record<string, unknown>;
+                  isReplace?: false;
+              }
+            | {
+                  isPatch?: false;
+                  isReplace?: false;
+              },
     ) {
         if (this.isDisposed) {
             throw new Error(
