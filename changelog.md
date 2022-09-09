@@ -1,3 +1,8 @@
+### v11.0.0
+
+-  * Breaking * Remove the orphans found event
+-  Move recionnect into the library and make sure we clear errors and only trigger if we are really dead
+
 ### v10.11.1
 
 -  Fix a bug causing data updates from a removed subscription

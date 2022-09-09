@@ -1112,11 +1112,7 @@ describe('openapi Streaming', () => {
             // @ts-expect-error using mocked subscription
             streaming.subscriptions.push(subscription2);
 
-            const mockEventListener = jest.fn();
-            streaming.on(
-                streaming.EVENT_MULTIPLE_ORPHANS_FOUND,
-                mockEventListener,
-            );
+            jest.spyOn(streaming, 'reconnect');
 
             // @ts-expect-error using mocked subscription
             streaming.orphanFinder.onOrphanFound(subscription1);
@@ -1129,7 +1125,10 @@ describe('openapi Streaming', () => {
             streaming.orphanFinder.onOrphanFound(subscription2);
             tick(16);
 
-            expect(mockEventListener).toHaveBeenCalledTimes(1);
+            expect(streaming.reconnect).toHaveBeenCalledTimes(1);
+
+            // @ts-expect-error orphanEvents is private
+            expect(streaming.orphanEvents.length).toEqual(0);
         });
 
         it('does not fire an error when multiple service paths orphan >70s apart', () => {
@@ -1147,11 +1146,7 @@ describe('openapi Streaming', () => {
             // @ts-expect-error using mocked subscription
             streaming.subscriptions.push(subscription2);
 
-            const mockEventListener = jest.fn();
-            streaming.on(
-                streaming.EVENT_MULTIPLE_ORPHANS_FOUND,
-                mockEventListener,
-            );
+            jest.spyOn(streaming, 'reconnect');
 
             // @ts-expect-error using mocked subscription
             streaming.orphanFinder.onOrphanFound(subscription1);
@@ -1164,7 +1159,7 @@ describe('openapi Streaming', () => {
             streaming.orphanFinder.onOrphanFound(subscription2);
             tick(16);
 
-            expect(mockEventListener).not.toHaveBeenCalled();
+            expect(streaming.reconnect).not.toHaveBeenCalled();
         });
 
         it('does not fire an error when multiple service paths orphan <20s apart', () => {
@@ -1182,11 +1177,7 @@ describe('openapi Streaming', () => {
             // @ts-expect-error using mocked subscription
             streaming.subscriptions.push(subscription2);
 
-            const mockEventListener = jest.fn();
-            streaming.on(
-                streaming.EVENT_MULTIPLE_ORPHANS_FOUND,
-                mockEventListener,
-            );
+            jest.spyOn(streaming, 'reconnect');
 
             // @ts-expect-error using mocked subscription
             streaming.orphanFinder.onOrphanFound(subscription1);
@@ -1199,7 +1190,7 @@ describe('openapi Streaming', () => {
             streaming.orphanFinder.onOrphanFound(subscription2);
             tick(16);
 
-            expect(mockEventListener).not.toHaveBeenCalled();
+            expect(streaming.reconnect).not.toHaveBeenCalled();
         });
 
         it('passes on subscribe calls', () => {

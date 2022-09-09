@@ -8,7 +8,7 @@ const MAX_UPDATE_DELAY = 5000;
 // It is rare that orphan finder is needed and yet it happens all the time - if the socket gets delayed
 // by 10 seconds then we do not get the update - resubscribing is a big operation and we don't want to be
 // doing it all the time
-export const INACTIVITY_LENIENCY = 15000;
+export const INACTIVITY_LENIENCY = 22000;
 
 interface OnOrphanFoundHandler {
     (subscription: Subscription): void;
