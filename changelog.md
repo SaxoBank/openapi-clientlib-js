@@ -1,6 +1,7 @@
-### v10.11.2
+### v11.0.0
 
--  Move reconnect into the library and make sure we clear errors and only trigger if we are really dead
+-  * Breaking * Remove the orphans found event
+-  Move recionnect into the library and make sure we clear errors and only trigger if we are really dead
 
 ### v10.11.1
 
