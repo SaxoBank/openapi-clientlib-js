@@ -15,10 +15,6 @@ export const EVENT_STREAMING_FAILED = 'streamingFailed' as const;
  */
 export const EVENT_DISCONNECT_REQUESTED =
     'streamingDisconnectRequested' as const;
-/**
- * Event that occurs when multiple orphans are detected in a short period.
- */
-export const EVENT_MULTIPLE_ORPHANS_FOUND = 'multipleOrphansFound' as const;
 
 /**
  * Event that occurs when probe message is received.

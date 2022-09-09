@@ -66,7 +66,6 @@ type EmittedEvents = {
     [connectionConstants.EVENT_STREAMING_FAILED]: () => void;
     [connectionConstants.EVENT_CONNECTION_SLOW]: () => void;
     [connectionConstants.EVENT_DISCONNECT_REQUESTED]: () => void;
-    [connectionConstants.EVENT_MULTIPLE_ORPHANS_FOUND]: () => void;
     [connectionConstants.EVENT_PROBE_MESSAGE]: (
         message: types.ProbeControlMessage,
     ) => void;
@@ -96,12 +95,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * Event that occurs when server sends _disconnect control message.
      */
     EVENT_DISCONNECT_REQUESTED = connectionConstants.EVENT_DISCONNECT_REQUESTED;
-
-    /**
-     * Event that occurs when we detect a problem with multiple orphans found
-     */
-    EVENT_MULTIPLE_ORPHANS_FOUND =
-        connectionConstants.EVENT_MULTIPLE_ORPHANS_FOUND;
 
     /**
      * Event that occurs when probe message is received.
@@ -914,8 +907,12 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 }
             }
 
-            // multiple service paths have failed multiple times, more than 20 seconds apart, within the same minute
-            if (servicePathFailures >= 2) {
+            if (
+                // multiple service paths have failed multiple times, more than 20 seconds apart, within the same minute
+                servicePathFailures >= 2 &&
+                // We haven't received updates for 20 seconds
+                Date.now() - this.latestActivity > 20 * 1000
+            ) {
                 // debugging information...
                 const activities = this.subscriptions.map((sub) => ({
                     latestActivity: sub.latestActivity,
@@ -929,7 +926,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 // at the source server
                 log.warn(
                     LOG_AREA,
-                    'Detected multiple service paths hitting orphans, multiple times',
+                    'Detected multiple service paths hitting orphans, multiple times - reconnecting',
                     {
                         now: Date.now(),
                         orphanEvents: this.orphanEvents,
@@ -938,7 +935,11 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                         heartBeatLog: this.heartBeatLog,
                     },
                 );
-                this.trigger(this.EVENT_MULTIPLE_ORPHANS_FOUND);
+                // reset orphan events so we wait until the new connection is established before reconnecting
+                this.orphanEvents = [];
+
+                // reconnect - we may be disconnected and not know it
+                this.reconnect();
             }
         });
     }
@@ -949,11 +950,16 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      */
     private onOrphanFound(subscription: Subscription) {
         try {
-            log.info(LOG_AREA, 'Subscription has become orphaned - resetting', {
-                referenceId: subscription.referenceId,
-                streamingContextId: subscription.streamingContextId,
-                servicePath: subscription.servicePath,
-            });
+            log.info(
+                LOG_AREA,
+                'Subscription has become orphaned - resetting',
+                {
+                    referenceId: subscription.referenceId,
+                    streamingContextId: subscription.streamingContextId,
+                    servicePath: subscription.servicePath,
+                },
+                { persist: true },
+            );
 
             const now = Date.now();
             // most subscriptions time out after 60 seconds. So we use 70s to give us 10s leniency to detect multiple unsubscribes
