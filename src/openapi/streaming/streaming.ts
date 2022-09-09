@@ -439,6 +439,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
                 this.shouldSubscribeBeforeStreamingSetup = false;
                 this.orphanFinder.stop();
+                this.orphanEvents = [];
 
                 if (this.isReset) {
                     this.init();
@@ -476,6 +477,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                 this.updateConnectionQuery();
 
                 this.orphanFinder.stop();
+                this.orphanEvents = [];
                 break;
 
             case this.CONNECTION_STATE_CONNECTED:
@@ -935,8 +937,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                         heartBeatLog: this.heartBeatLog,
                     },
                 );
-                // reset orphan events so we wait until the new connection is established before reconnecting
-                this.orphanEvents = [];
 
                 // reconnect - we may be disconnected and not know it
                 this.reconnect();
@@ -1281,6 +1281,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
      * It *will not* stop the subscription (see dispose for that). It is useful for testing reconnect logic works or for resetting all subscriptions.
      */
     disconnect() {
+        this.orphanEvents = [];
         this.connection.stop();
     }
 
