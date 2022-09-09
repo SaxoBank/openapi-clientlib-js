@@ -1295,6 +1295,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         }
 
         this.orphanFinder.stop();
+        this.orphanEvents = [];
 
         for (let i = 0; i < this.subscriptions.length; i++) {
             const subscription = this.subscriptions[i];
@@ -1324,6 +1325,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         this.disposed = true;
 
         this.orphanFinder.stop();
+        this.orphanEvents = [];
 
         for (let i = 0; i < this.subscriptions.length; i++) {
             const subscription = this.subscriptions[i];
@@ -1351,6 +1353,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         this.isReset = true;
 
         this.orphanFinder.stop();
+        this.orphanEvents = [];
 
         if (this.reconnecting) {
             clearTimeout(this.reconnectTimer);
