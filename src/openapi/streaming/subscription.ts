@@ -1490,7 +1490,8 @@ class Subscription {
             this.currentState === this.STATE_UNSUBSCRIBE_REQUESTED ||
             this.currentState === this.STATE_SUBSCRIBE_REQUESTED ||
             this.currentState === this.STATE_REPLACE_REQUESTED ||
-            // we are waiting a minute as we got so many resets - the subscription will be reset eventually
+            // This means the subscription has been reset and will not get updates - we are waiting
+            // and will eventually reset it, so we should ignore it in the orphan finder.
             this.waitForPublisherToRespondTimer
         ) {
             return Infinity;
