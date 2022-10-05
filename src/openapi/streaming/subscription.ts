@@ -139,7 +139,7 @@ export function __forTestingOnlyResetReferenceId() {
 
 const DEFAULT_REFRESH_RATE_MS = 1000;
 const MIN_REFRESH_RATE_MS = 100;
-const MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS = 60000;
+const MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS = 30000;
 
 const FORMAT_PROTOBUF = 'application/x-protobuf';
 const FORMAT_JSON = 'application/json';
@@ -303,14 +303,19 @@ class Subscription {
                 this.resetTimeStamps[2] - this.resetTimeStamps[0] <
                     MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS
             ) {
-                // 3 reset within 1 minute so wait for 1 minute for publisher to respond
+                // 3 reset within 1 minute so wait for 30 seconds for publisher to respond
                 // this can also happen due to errors client side and in this case
                 // this code prevents us from spamming the servers
-                log.warn(LOG_AREA, '3 resets occurred within 1 minute.', {
-                    url: this.url,
-                    servicePath: this.servicePath,
-                    isServerInitiated,
-                });
+                log.warn(
+                    LOG_AREA,
+                    '3 resets occurred within 1 minute - cooling down subscription for 30 seconds',
+                    {
+                        url: this.url,
+                        servicePath: this.servicePath,
+                        isServerInitiated,
+                        referenceId: this.referenceId,
+                    },
+                );
                 // this is the last reference id a reset was called on
                 this.publisherDownReferenceId = this.referenceId;
 
@@ -1484,7 +1489,9 @@ class Subscription {
             this.currentState === this.STATE_UNSUBSCRIBED ||
             this.currentState === this.STATE_UNSUBSCRIBE_REQUESTED ||
             this.currentState === this.STATE_SUBSCRIBE_REQUESTED ||
-            this.currentState === this.STATE_REPLACE_REQUESTED
+            this.currentState === this.STATE_REPLACE_REQUESTED ||
+            // we are waiting a minute as we got so many resets - the subscription will be reset eventually
+            this.waitForPublisherToRespondTimer
         ) {
             return Infinity;
         }

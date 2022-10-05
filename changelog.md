@@ -1,3 +1,8 @@
+### v11.0.1
+
+-  Do not look for orphans if waiting for the publisher to calm down
+-  Decrease time to cool down from 1 minute to 30 seconds
+
 ### v11.0.0
 
 -  * Breaking * Remove the orphans found event
