@@ -416,8 +416,10 @@ class SignalrCoreTransport implements StreamingTransportInterface {
     }
 
     isNetworkError(error: Error | undefined) {
-        return error?.message?.match(
-            /WebSocket closed with status code: (1006|1011)|Server timeout elapsed without receiving a message|Failed to fetch|Not found|Network request failed|Invocation canceled due to the underlying connection being closed/,
+        return Boolean(
+            error?.message?.match(
+                /WebSocket closed with status code: (1006|1011)|Server timeout elapsed without receiving a message|Failed to fetch|Not found|Network request failed|Invocation canceled due to the underlying connection being closed/,
+            ),
         );
     }
 
