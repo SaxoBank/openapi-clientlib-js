@@ -139,7 +139,8 @@ export function __forTestingOnlyResetReferenceId() {
 
 const DEFAULT_REFRESH_RATE_MS = 1000;
 const MIN_REFRESH_RATE_MS = 100;
-const MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS = 30000;
+const PUBLISHER_ISSUES_LOOK_FOR_RESETS_IN_MS = 60000;
+const PUBLISHER_ISSUES_COOLDOWN_MS = 30000;
 
 const FORMAT_PROTOBUF = 'application/x-protobuf';
 const FORMAT_JSON = 'application/json';
@@ -301,14 +302,18 @@ class Subscription {
             if (
                 !this.waitForPublisherToRespondTimer &&
                 this.resetTimeStamps[2] - this.resetTimeStamps[0] <
-                    MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS
+                    PUBLISHER_ISSUES_LOOK_FOR_RESETS_IN_MS
             ) {
                 // 3 reset within 1 minute so wait for 30 seconds for publisher to respond
                 // this can also happen due to errors client side and in this case
                 // this code prevents us from spamming the servers
                 log.warn(
                     LOG_AREA,
-                    '3 resets occurred within 1 minute - cooling down subscription for 30 seconds',
+                    `3 resets occurred within ${
+                        PUBLISHER_ISSUES_LOOK_FOR_RESETS_IN_MS / 1000
+                    }s - cooling down subscription for ${
+                        PUBLISHER_ISSUES_COOLDOWN_MS / 1000
+                    }s`,
                     {
                         url: this.url,
                         servicePath: this.servicePath,
@@ -334,7 +339,7 @@ class Subscription {
                     ) {
                         this.unsubscribeAndSubscribe();
                     }
-                }, MIN_WAIT_FOR_PUBLISHER_TO_RESPOND_MS);
+                }, PUBLISHER_ISSUES_COOLDOWN_MS);
 
                 return true;
             } else if (this.waitForPublisherToRespondTimer) {
