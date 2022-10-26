@@ -1,3 +1,7 @@
+### v11.0.2
+
+- Do not warn of missing content type if there is no content
+
 ### v11.0.1
 
 -  Do not look for orphans if waiting for the publisher to calm down
