@@ -1,3 +1,9 @@
+### v11.1.0
+
+-  Add experimentalRetryConnectCount which for signalr core will retry after an initial connection error before falling back (e.g. to long polling)
+-  Always subscribe immediately, even after the initial streaming connection is connected or it initially fails
+-  change the connection status to Reconnecting when the initial connect of signalr-streaming fails, to allow the consumer to detect issues
+
 ### v11.0.2
 
 - Do not warn of missing content type if there is no content
@@ -6,7 +12,7 @@
 
 -  Do not look for orphans if waiting for the publisher to calm down
 -  Decrease time to cool down from 1 minute to 30 seconds
-- Make isNetworkError always be a boolean
+-  Make isNetworkError always be a boolean
 
 ### v11.0.0
 

@@ -20,6 +20,7 @@ export interface ConnectionOptions {
     messageSerializationProtocol?: IHubProtocol;
     isWebsocketStreamingHeartBeatEnabled?: boolean;
     shouldLoopTransports?: boolean;
+    experimentalRetryConnectCount?: number;
 }
 
 export type ConnectionState =
@@ -140,4 +141,8 @@ export interface StreamingConfigurableOptions {
      * Should the transports be retried in a loop
      */
     shouldLoopTransports?: boolean;
+    /**
+     * The number of times to retry the initial connect
+     */
+    experimentalRetryConnectCount?: number;
 }

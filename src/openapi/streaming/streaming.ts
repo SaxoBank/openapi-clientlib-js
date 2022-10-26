@@ -218,6 +218,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             parserEngines,
             parsers,
             shouldLoopTransports,
+            experimentalRetryConnectCount,
         } = options;
 
         this.connectionOptions = {
@@ -229,6 +230,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             // This protocol is used to serialize the message envelope rather than the payload
             messageSerializationProtocol,
             shouldLoopTransports,
+            experimentalRetryConnectCount,
         };
 
         if (typeof connectRetryDelay === 'number') {
