@@ -239,14 +239,19 @@ export function convertFetchSuccess(
             url,
         });
     } else {
-        log.warn(LOG_AREA, 'Falling back to content type text', {
-            url,
-            status,
-            contentLength,
-            contentType,
-        });
         convertedPromise = convertResponse(url, body, 'text', result)
             .then(function (text) {
+                if (text?.length) {
+                    // in some browsers even though we get a content length we cannot extract it, so we only
+                    // care about bad behaviour if we actually got something
+                    log.warn(LOG_AREA, 'Falling back to content type text', {
+                        url,
+                        status,
+                        text,
+                        contentLength,
+                        contentType,
+                    });
+                }
                 return {
                     response: text,
                     status,
