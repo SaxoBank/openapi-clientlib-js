@@ -3,7 +3,7 @@ import {
     uninstallClock,
     tick,
     getResolvablePromise,
-    setTimeout,
+    wait,
 } from '../../../../test/utils';
 import mockMathRandom from '../../../../test/mocks/math-random';
 import mockAuthProvider from '../../../../test/mocks/authProvider';
@@ -58,12 +58,6 @@ describe('openapi SignalR core Transport', () => {
         build() {
             return mockHubConnection;
         }
-    }
-
-    function wait() {
-        return new Promise<void>((resolve) => {
-            setTimeout(resolve);
-        });
     }
 
     function MockJsonHubProtocol() {
@@ -310,7 +304,7 @@ describe('openapi SignalR core Transport', () => {
             await startPromise;
 
             expect(spyOnStartCallback).not.toBeCalled();
-            // connecting and then reconnecting
+            // connecting x3 and then reconnecting
             expect(spyOnStateChangedCallback.mock.calls).toMatchInlineSnapshot(`
                 Array [
                   Array [
@@ -323,25 +317,7 @@ describe('openapi SignalR core Transport', () => {
                     4,
                   ],
                   Array [
-                    32,
-                  ],
-                  Array [
-                    32,
-                  ],
-                  Array [
-                    32,
-                  ],
-                  Array [
                     16,
-                  ],
-                  Array [
-                    32,
-                  ],
-                  Array [
-                    32,
-                  ],
-                  Array [
-                    32,
                   ],
                 ]
             `);
@@ -373,7 +349,7 @@ describe('openapi SignalR core Transport', () => {
             await startPromise;
 
             expect(spyOnStartCallback).toBeCalledTimes(1);
-            // connecting and then reconnecting and finally connected
+            // connecting x3 and then connected
             expect(spyOnStateChangedCallback.mock.calls).toMatchInlineSnapshot(`
                 Array [
                   Array [
@@ -384,15 +360,6 @@ describe('openapi SignalR core Transport', () => {
                   ],
                   Array [
                     4,
-                  ],
-                  Array [
-                    32,
-                  ],
-                  Array [
-                    32,
-                  ],
-                  Array [
-                    32,
                   ],
                   Array [
                     8,
@@ -414,6 +381,8 @@ describe('openapi SignalR core Transport', () => {
             mockCloseConnection.resolve();
             await mockCloseConnection.promise;
 
+            await wait();
+
             tick(10);
 
             expect(spyOnTransportFailedCallback).toBeCalledTimes(0);
@@ -424,6 +393,9 @@ describe('openapi SignalR core Transport', () => {
                   ],
                   Array [
                     8,
+                  ],
+                  Array [
+                    32,
                   ],
                 ]
             `);

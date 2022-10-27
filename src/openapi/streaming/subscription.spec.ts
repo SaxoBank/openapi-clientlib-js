@@ -4,6 +4,7 @@ import {
     installClock,
     uninstallClock,
     tick,
+    wait,
 } from '../../test/utils';
 import mockTransport from '../../test/mocks/transport';
 import * as mockProtoPrice from '../../test/mocks/proto-price';
@@ -20,12 +21,6 @@ ParserFacade.addEngines({
 ParserFacade.addParsers({
     'application/x-protobuf': ParserProtobuf,
 });
-
-function wait() {
-    return new Promise<void>((resolve) => {
-        setTimeout(resolve);
-    });
-}
 
 describe('openapi StreamingSubscription', () => {
     let transport: any;

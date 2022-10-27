@@ -53,6 +53,12 @@ const getResolvablePromise = () => {
     };
 };
 
+function wait() {
+    return new Promise<void>((resolve) => {
+        setTimeout(resolve);
+    });
+}
+
 export {
     tick,
     setTimeout,
@@ -61,4 +67,5 @@ export {
     uninstallClock,
     waterfallTimeout,
     getResolvablePromise,
+    wait,
 };

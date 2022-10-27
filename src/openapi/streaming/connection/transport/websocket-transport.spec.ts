@@ -2,7 +2,7 @@ import {
     installClock,
     uninstallClock,
     tick,
-    setTimeout,
+    wait,
 } from '../../../../test/utils';
 import mockMathRandom from '../../../../test/mocks/math-random';
 import mockFetch from '../../../../test/mocks/fetch';
@@ -17,12 +17,6 @@ import type WebsocketTransport from './websocket-transport';
 const CONTEXT_ID = '0000000000';
 const AUTH_TOKEN = 'TOKEN';
 const BASE_URL = 'testUrl';
-
-function wait() {
-    return new Promise<void>((resolve) => {
-        setTimeout(resolve);
-    });
-}
 
 describe('openapi WebSocket Transport', () => {
     let fetchMock: ReturnType<typeof mockFetch>;
