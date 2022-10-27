@@ -347,27 +347,29 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                 }
             })
             .catch((error) => {
-                log.warn(
+                log.info(
                     LOG_AREA,
-                    'Error occurred while connecting to streaming service',
+                    'Failed to connect to streaming',
                     {
                         error,
                     },
+                    { persist: true },
                 );
-
-                if (experimentalRetryConnectCount === 0) {
-                    this.transportFailCallback({
-                        message: 'error occurred while connecting',
-                    });
-                } else {
+                if (experimentalRetryConnectCount > 0) {
                     this.connection?.stop();
                     this.connection = null;
 
                     this.start(
                         options,
                         onStartCallback,
-                        experimentalRetryConnectCount--,
+                        experimentalRetryConnectCount - 1,
                     );
+                } else {
+                    this.setState(constants.CONNECTION_STATE_RECONNECTING);
+
+                    this.transportFailCallback({
+                        message: 'error occurred while connecting',
+                    });
                 }
             });
     }

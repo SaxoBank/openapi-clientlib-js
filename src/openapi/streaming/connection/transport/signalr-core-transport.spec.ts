@@ -3,6 +3,7 @@ import {
     uninstallClock,
     tick,
     getResolvablePromise,
+    setTimeout,
 } from '../../../../test/utils';
 import mockMathRandom from '../../../../test/mocks/math-random';
 import mockAuthProvider from '../../../../test/mocks/authProvider';
@@ -57,6 +58,12 @@ describe('openapi SignalR core Transport', () => {
         build() {
             return mockHubConnection;
         }
+    }
+
+    function wait() {
+        return new Promise<void>((resolve) => {
+            setTimeout(resolve);
+        });
     }
 
     function MockJsonHubProtocol() {
@@ -144,7 +151,7 @@ describe('openapi SignalR core Transport', () => {
             tokenFactory();
             setTimeout(() => {
                 reconnectedCallbacks.forEach((callback) => callback());
-            }, 0);
+            });
         };
 
         mockReconnecting = () => {
@@ -181,7 +188,6 @@ describe('openapi SignalR core Transport', () => {
     });
 
     describe('start', () => {
-        let startPromise: Promise<any>;
         let transport: any;
 
         beforeEach(() => {
@@ -196,10 +202,11 @@ describe('openapi SignalR core Transport', () => {
                 CONTEXT_ID,
                 authprovider.getExpiry(),
             );
-            startPromise = transport.start({}, spyOnStartCallback);
         });
 
-        it('should create message stream and call state change handler upon transport start invocation', (done) => {
+        it('should create message stream and call state change handler upon transport start invocation', async () => {
+            const startPromise = transport.start({}, spyOnStartCallback);
+
             expect(spyOnStartCallback).not.toBeCalled();
             expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
                 1,
@@ -209,19 +216,19 @@ describe('openapi SignalR core Transport', () => {
             // resolve handshake request
             mockStart.resolve();
 
-            startPromise.then(() => {
-                expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
-                    2,
-                    constants.CONNECTION_STATE_CONNECTED,
-                );
-                expect(spyOnStartCallback).toBeCalledTimes(1);
-                expect(spyOnMessageStream).toBeCalledTimes(1);
+            await startPromise;
 
-                done();
-            });
+            expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
+                2,
+                constants.CONNECTION_STATE_CONNECTED,
+            );
+            expect(spyOnStartCallback).toBeCalledTimes(1);
+            expect(spyOnMessageStream).toBeCalledTimes(1);
         });
 
-        it('should renew session with new token if token was updated while response was in flight', (done) => {
+        it('should renew session with new token if token was updated while response was in flight', async () => {
+            const startPromise = transport.start({}, spyOnStartCallback);
+
             expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
                 1,
                 constants.CONNECTION_STATE_CONNECTING,
@@ -233,18 +240,19 @@ describe('openapi SignalR core Transport', () => {
             // resolve handshake request
             mockStart.resolve();
 
-            startPromise.then(() => {
-                expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
-                    2,
-                    constants.CONNECTION_STATE_CONNECTED,
-                );
+            await startPromise;
 
-                expect(mockRenewToken).toBeDefined();
-                done();
-            });
+            expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
+                2,
+                constants.CONNECTION_STATE_CONNECTED,
+            );
+
+            expect(mockRenewToken).toBeDefined();
         });
 
-        it('should call transport fail callback if handshake request fails with valid status code', (done) => {
+        it('should call transport fail callback if handshake request fails with valid status code', async () => {
+            const startPromise = transport.start({}, spyOnStartCallback);
+
             expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
                 constants.CONNECTION_STATE_CONNECTING,
             );
@@ -255,34 +263,170 @@ describe('openapi SignalR core Transport', () => {
             error.statusCode = 500;
             mockStart.reject(error);
 
-            startPromise.then(() => {
-                expect(spyOnStartCallback).not.toBeCalled();
-                expect(spyOnStateChangedCallback).toBeCalledTimes(1);
-                expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
-                done();
-            });
+            await startPromise;
+
+            expect(spyOnStartCallback).not.toBeCalled();
+            // connecting and then reconnecting
+            expect(spyOnStateChangedCallback.mock.calls).toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    4,
+                  ],
+                  Array [
+                    16,
+                  ],
+                ]
+            `);
+            expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
         });
 
-        it('should trigger disconnect if error is received while starting message streaming', (done) => {
+        it('should retry if experimentalRetryConnectCount is set and then call transport fail callback if handshake request fails', async () => {
+            const startPromise = transport.start(
+                { experimentalRetryConnectCount: 2 },
+                spyOnStartCallback,
+            );
+
+            expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
+                constants.CONNECTION_STATE_CONNECTING,
+            );
+
+            // fail handshake request with valid server error
+            const error = new Error('Internal server error');
+            // @ts-ignore
+            error.statusCode = 500;
+            mockStart.reject(error);
+
+            await wait();
+            mockStart.reject(error);
+
+            await wait();
+            mockStart.reject(error);
+
+            expect(spyOnTransportFailedCallback).toBeCalledTimes(0);
+
+            await wait();
+            mockStart.reject(error);
+
+            await startPromise;
+
+            expect(spyOnStartCallback).not.toBeCalled();
+            // connecting and then reconnecting
+            expect(spyOnStateChangedCallback.mock.calls).toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    4,
+                  ],
+                  Array [
+                    4,
+                  ],
+                  Array [
+                    4,
+                  ],
+                  Array [
+                    32,
+                  ],
+                  Array [
+                    32,
+                  ],
+                  Array [
+                    32,
+                  ],
+                  Array [
+                    16,
+                  ],
+                  Array [
+                    32,
+                  ],
+                  Array [
+                    32,
+                  ],
+                  Array [
+                    32,
+                  ],
+                ]
+            `);
+            expect(spyOnTransportFailedCallback).toBeCalledTimes(1);
+        });
+
+        it('should retry if experimentalRetryConnectCount is set and eventually succeed', async () => {
+            const startPromise = transport.start(
+                { experimentalRetryConnectCount: 2 },
+                spyOnStartCallback,
+            );
+
+            expect(spyOnStateChangedCallback).toHaveBeenCalledWith(
+                constants.CONNECTION_STATE_CONNECTING,
+            );
+
+            // fail handshake request with valid server error
+            const error = new Error('Internal server error');
+            // @ts-ignore
+            error.statusCode = 500;
+            mockStart.reject(error);
+
+            await wait();
+            mockStart.reject(error);
+
+            await wait();
+            mockStart.resolve();
+
+            await startPromise;
+
+            expect(spyOnStartCallback).toBeCalledTimes(1);
+            // connecting and then reconnecting and finally connected
+            expect(spyOnStateChangedCallback.mock.calls).toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    4,
+                  ],
+                  Array [
+                    4,
+                  ],
+                  Array [
+                    4,
+                  ],
+                  Array [
+                    32,
+                  ],
+                  Array [
+                    32,
+                  ],
+                  Array [
+                    32,
+                  ],
+                  Array [
+                    8,
+                  ],
+                ]
+            `);
+            expect(spyOnTransportFailedCallback).toBeCalledTimes(0);
+        });
+
+        it('should trigger disconnect if error is received while starting message streaming', async () => {
+            const startPromise = transport.start({}, spyOnStartCallback);
+
             // resolve handshake request
             mockStart.resolve();
 
-            startPromise
-                .then(() => {
-                    subscribeErrorHandler(new Error('Streaming error'));
-                    mockCloseConnection.resolve();
-                    return mockCloseConnection.promise;
-                })
-                .then(() => {
-                    tick(10);
+            await startPromise;
 
-                    expect(spyOnTransportFailedCallback).toBeCalledTimes(0);
-                    expect(spyOnStateChangedCallback).toHaveBeenNthCalledWith(
-                        3,
-                        constants.CONNECTION_STATE_DISCONNECTED,
-                    );
-                    done();
-                });
+            subscribeErrorHandler(new Error('Streaming error'));
+            mockCloseConnection.resolve();
+            await mockCloseConnection.promise;
+
+            tick(10);
+
+            expect(spyOnTransportFailedCallback).toBeCalledTimes(0);
+            expect(spyOnStateChangedCallback.mock.calls).toMatchInlineSnapshot(`
+                Array [
+                  Array [
+                    4,
+                  ],
+                  Array [
+                    8,
+                  ],
+                ]
+            `);
         });
     });
 
