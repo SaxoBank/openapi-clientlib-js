@@ -20,6 +20,7 @@ export interface ConnectionOptions {
     messageSerializationProtocol?: IHubProtocol;
     isWebsocketStreamingHeartBeatEnabled?: boolean;
     shouldLoopTransports?: boolean;
+    experimentalRetryConnectCount?: number;
 }
 
 export type ConnectionState =
@@ -132,12 +133,11 @@ export interface StreamingConfigurableOptions {
      */
     isWebsocketStreamingHeartBeatEnabled?: boolean;
     /**
-     *  Flag to control whether we should subscribe before streaming setup during initial subscribe
-     *  This happens only for the first streaming connection setup after that we turn this off
-     */
-    shouldSubscribeBeforeStreamingSetup?: boolean;
-    /**
      * Should the transports be retried in a loop
      */
     shouldLoopTransports?: boolean;
+    /**
+     * The number of times to retry the initial connect
+     */
+    experimentalRetryConnectCount?: number;
 }

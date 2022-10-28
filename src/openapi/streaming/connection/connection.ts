@@ -138,10 +138,15 @@ class Connection {
     };
 
     private onTransportFail = (error?: Record<string, unknown>) => {
-        log.info(LOG_AREA, 'Transport failed', {
-            error,
-            ...this.getLogDetails(),
-        });
+        log.info(
+            LOG_AREA,
+            'Transport failed',
+            {
+                error,
+                ...this.getLogDetails(),
+            },
+            { persist: true },
+        );
 
         // Try to create next possible transport.
         this.transport = this.createTransport(this.baseUrl);

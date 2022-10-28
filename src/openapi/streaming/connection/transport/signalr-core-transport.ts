@@ -65,11 +65,14 @@ class SignalrCoreTransport implements StreamingTransportInterface {
     unauthorizedCallback: (url: string) => void = NOOP;
     setConnectionSlowCallback = NOOP;
     subscriptionResetCallback = NOOP;
-    transportFailCallback;
+    transportFailCallback: (error: Record<string, unknown>) => void;
 
     utf8Decoder!: TextDecoder;
 
-    constructor(baseUrl: string, transportFailCallback = NOOP) {
+    constructor(
+        baseUrl: string,
+        transportFailCallback: (error?: Record<string, unknown>) => void = NOOP,
+    ) {
         this.baseUrl = baseUrl;
         // callbacks
         this.transportFailCallback = transportFailCallback;
@@ -85,7 +88,9 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                 },
             );
 
-            transportFailCallback();
+            transportFailCallback({
+                message: 'Failed to initialize text decoder',
+            });
         }
     }
 
@@ -245,7 +250,12 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         };
     }
 
-    start(options: StreamingTransportOptions, onStartCallback?: () => void) {
+    start(
+        options: StreamingTransportOptions,
+        onStartCallback?: () => void,
+        experimentalRetryConnectCount = options.experimentalRetryConnectCount ??
+            0,
+    ) {
         if (this.connection) {
             log.warn(
                 LOG_AREA,
@@ -280,7 +290,9 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                 error,
             });
 
-            this.transportFailCallback();
+            this.transportFailCallback({
+                message: "Couldn't initialize the connection",
+            });
             return;
         }
 
@@ -335,15 +347,30 @@ class SignalrCoreTransport implements StreamingTransportInterface {
                 }
             })
             .catch((error) => {
-                log.warn(
+                log.info(
                     LOG_AREA,
-                    'Error occurred while connecting to streaming service',
+                    'Failed to connect to streaming',
                     {
                         error,
                     },
+                    { persist: true },
                 );
+                if (experimentalRetryConnectCount > 0) {
+                    this.connection?.stop();
+                    this.connection = null;
 
-                this.transportFailCallback();
+                    this.start(
+                        options,
+                        onStartCallback,
+                        experimentalRetryConnectCount - 1,
+                    );
+                } else {
+                    this.setState(constants.CONNECTION_STATE_RECONNECTING);
+
+                    this.transportFailCallback({
+                        message: 'error occurred while connecting',
+                    });
+                }
             });
     }
 
@@ -375,7 +402,7 @@ class SignalrCoreTransport implements StreamingTransportInterface {
             const closePromise =
                 this.connection &&
                 this.connection.state === HubConnectionState.Connected
-                    ? // @ts-expect-error cancelCallback is no included in the IStreamResult but according to implementation it exists
+                    ? // @ts-expect-error cancelCallback is not included in the IStreamResult but according to implementation it exists
                       this.messageStream.cancelCallback()
                     : Promise.resolve();
             return closePromise
@@ -444,7 +471,9 @@ class SignalrCoreTransport implements StreamingTransportInterface {
         this.hasTransportError = false;
 
         if (shouldFallbackToOtherTransport) {
-            this.transportFailCallback();
+            this.transportFailCallback({
+                message: 'Permanent transport error',
+            });
             return;
         }
 

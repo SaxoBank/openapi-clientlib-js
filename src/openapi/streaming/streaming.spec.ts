@@ -335,8 +335,9 @@ describe('openapi Streaming', () => {
 
         it('tells subscriptions it is not connected when they are created before connect', () => {
             givenStreaming();
-            // we test the property because we get the subscription after unavailable has been called, and before we spy on the method
-            expect(subscription.connectionAvailable).toEqual(true);
+
+            // the createSubscription calls subscribe, then makes it unavailable, then we mock it afterwards
+            expect(subscription.connectionAvailable).toEqual(false);
         });
 
         it('tells subscriptions it is connected when they are created after connect', () => {
@@ -1305,21 +1306,18 @@ describe('openapi Streaming', () => {
             );
 
             // streaming Initializing state
-            expect(streaming.shouldSubscribeBeforeStreamingSetup).toBe(true);
             streaming.createSubscription('root', '/test/test', {});
-            expect(streaming.subscriptions[0].connectionAvailable).toBe(true);
+            expect(streaming.subscriptions[0].connectionAvailable).toBe(false);
 
             // streaming Connected state
             expect(streaming.subscriptions[0].latestActivity).toBeFalsy();
             stateChangedCallback({ newState: 1 /* Connected */ });
             expect(streaming.subscriptions[0].latestActivity).toBeTruthy();
-            expect(streaming.shouldSubscribeBeforeStreamingSetup).toBe(false);
             streaming.createSubscription('root', '/test/test', {});
             expect(streaming.subscriptions[1].connectionAvailable).toBe(true);
 
             // // streaming Disconnected state
             stateChangedCallback({ newState: 4 /* Disconnected */ });
-            expect(streaming.shouldSubscribeBeforeStreamingSetup).toBe(false);
             streaming.createSubscription('root', '/test/test', {});
             expect(streaming.subscriptions[2].connectionAvailable).toBe(false);
         });

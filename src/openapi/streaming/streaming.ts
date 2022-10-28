@@ -168,7 +168,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
     reconnectTimer?: number;
     disposed = false;
     private heartBeatLog: Array<[number, ReadonlyArray<string>]> = [];
-    shouldSubscribeBeforeStreamingSetup: boolean;
 
     /**
      * @param transport - The transport to use for subscribing/unsubscribing.
@@ -200,8 +199,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             this.onOrphanFound.bind(this),
         );
 
-        this.shouldSubscribeBeforeStreamingSetup = true;
-
         this.init();
     }
 
@@ -218,6 +215,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             parserEngines,
             parsers,
             shouldLoopTransports,
+            experimentalRetryConnectCount,
         } = options;
 
         this.connectionOptions = {
@@ -229,6 +227,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             // This protocol is used to serialize the message envelope rather than the payload
             messageSerializationProtocol,
             shouldLoopTransports,
+            experimentalRetryConnectCount,
         };
 
         if (typeof connectRetryDelay === 'number') {
@@ -310,7 +309,11 @@ class Streaming extends MicroEmitter<EmittedEvents> {
             log.warn(
                 LOG_AREA,
                 'Only call connect on a disconnected streaming connection',
-                new Error(),
+                {
+                    connectionState: this.connectionState,
+                    // for stack
+                    error: new Error(),
+                },
             );
             return;
         }
@@ -399,7 +402,7 @@ class Streaming extends MicroEmitter<EmittedEvents> {
         const connectionTransport = this.getActiveTransportName();
 
         if (nextState === this.connectionState) {
-            log.warn(LOG_AREA, 'Trying to set same state as current one', {
+            log.debug(LOG_AREA, 'Trying to set same state as current one', {
                 connectionState:
                     this.connectionState &&
                     this.READABLE_CONNECTION_STATE_MAP[this.connectionState],
@@ -437,7 +440,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                     { persist: true },
                 );
 
-                this.shouldSubscribeBeforeStreamingSetup = false;
                 this.orphanFinder.stop();
                 this.orphanEvents = [];
 
@@ -467,7 +469,6 @@ class Streaming extends MicroEmitter<EmittedEvents> {
                     { persist: true },
                 );
 
-                this.shouldSubscribeBeforeStreamingSetup = false;
                 // tell all subscriptions not to do anything
                 // as we may have lost internet and the subscriptions may not be reset
                 for (let i = 0; i < this.subscriptions.length; i++) {
@@ -492,17 +493,11 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
                 for (let i = 0; i < this.subscriptions.length; i++) {
                     this.subscriptions[i].onConnectionAvailable();
-                    if (this.shouldSubscribeBeforeStreamingSetup) {
-                        // trigger onActivity of subscribed subscriptions before streaming setup to avoid reset by orphan finder
-                        this.subscriptions[i].onActivity();
-                    }
+                    // trigger onActivity of subscribed subscriptions before streaming setup to avoid reset by orphan finder
+                    // in case streaming connect took some time
+                    this.subscriptions[i].onActivity();
                 }
-                this.shouldSubscribeBeforeStreamingSetup = false;
                 this.orphanFinder.start();
-                break;
-
-            case this.CONNECTION_STATE_FAILED:
-                this.shouldSubscribeBeforeStreamingSetup = false;
                 break;
         }
     }
@@ -1181,15 +1176,14 @@ class Streaming extends MicroEmitter<EmittedEvents> {
 
         this.subscriptions.push(subscription);
 
-        // set the subscription to connection unavailable, the subscription will then subscribe when the connection becomes available.
-        // if shouldSubscribeBeforeStreamingSetup is set it will subscribe immediately
-        if (
-            !this.shouldSubscribeBeforeStreamingSetup &&
-            this.connectionState !== this.CONNECTION_STATE_CONNECTED
-        ) {
+        subscription.onSubscribe();
+
+        // The above will immediately send a subscribe request, but now if the connection is not connected, we
+        // set the subscription to unavailable. This stops the subscription retrying etc. when streaming is not
+        // available which can lead to alot of subscription requests
+        if (this.connectionState !== this.CONNECTION_STATE_CONNECTED) {
             subscription.onConnectionUnavailable();
         }
-        subscription.onSubscribe();
 
         return subscription;
     }
